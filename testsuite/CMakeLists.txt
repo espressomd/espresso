@@ -33,13 +33,17 @@ macro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
   cmake_path(GET TEST_SRC STEM TEST_NAME)
   add_test(NAME ${TEST_NAME} COMMAND ${CMAKE_BINARY_DIR}/pypresso
                                      ${PYPRESSO_OPTIONS} ${TEST_SRC})
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=1")
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_SETUP "FIXTURE_${TEST_TYPE}"
                             SKIP_RETURN_CODE 5
                             PROCESSORS 1
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=1")
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}")
   # cmake-format: on
 endmacro(ESPRESSO_IMPORTLIB_BASED_FIXTURE)
 
@@ -65,14 +69,18 @@ macro(ESPRESSO_IMPORTLIB_BASED_TEST)
            COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
                    ${TEST_FILE_CONFIGURED})
   list(APPEND TEST_LABELS "${TYPE}_test")
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=1")
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES FIXTURES_REQUIRED "FIXTURE_${TEST_TYPE}"
                             LABELS "${TEST_LABELS}"
                             SKIP_RETURN_CODE 5
                             PROCESSORS 1
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=1")
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}")
   # cmake-format: on
   if("gpu" IN_LIST TEST_LABELS AND ESPRESSO_BUILD_WITH_CUDA)
     set_tests_properties(${TEST_NAME} PROPERTIES RESOURCE_LOCK GPU)

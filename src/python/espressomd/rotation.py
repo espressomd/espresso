@@ -131,6 +131,10 @@ def diagonalized_inertia_tensor(positions, masses):
         center_of_mass(positions, masses)
     inertia = inertia_tensor(positions, masses)
     eig, eigv = np.linalg.eig(inertia)
+    assert np.sum(np.abs(eig.imag)) < 1e-12
+    assert np.sum(np.abs(eigv.imag)) < 1e-12
+    eig = eig.real
+    eigv = eigv.real
     eigv = np.transpose(eigv)
     # check for right-handedness
     if not np.allclose(np.cross(eigv[0], eigv[1]), eigv[2]):

@@ -122,7 +122,7 @@ DV_MAX = 0.2
 steps = args.steps
 warmup = args.warmup
 # Perform about 100 system checks during the simulation
-check = int(steps / 1000)
+check = max(1, steps // 100)
 
 # Trial move probabilities
 MOVE_CHANCE = 0.5
@@ -402,99 +402,99 @@ def choose_move():
 
 # -------------------- Start of program -------------------- #
 
-# Lists for boxes and pipes
-boxes = []
-pipes = []
+if __name__ == "__main__":
+    # Lists for boxes and pipes
+    boxes = []
+    pipes = []
 
-# Start processes
-for i in range(NUM_OF_CLIENTS):
-    pipes.append(multiprocessing.Pipe())
-    boxes.append(Box(f"Box0{i}",
-                     pipes[i],
-                     box_seeds[i],
-                     init_box_length,
-                     int(GLOBAL_NUM_PART / 2)))
+    # Start processes
+    for i in range(NUM_OF_CLIENTS):
+        pipes.append(multiprocessing.Pipe())
+        boxes.append(Box(f"Box0{i}",
+                         pipes[i],
+                         box_seeds[i],
+                         init_box_length,
+                         int(GLOBAL_NUM_PART / 2)))
 
-    # Start the client
-    boxes[i].client.start()
+        # Start the client
+        boxes[i].client.start()
 
-    # Receive initial energy
-    boxes[i].recv_energy()
+        # Receive initial energy
+        boxes[i].recv_energy()
 
-logging.info("-------------------- Start of program --------------------")
+    logging.info("-------------------- Start of program --------------------")
 
-logging.info(f"Simulation parameters:\nRandom seed: {args.seed},\tWarmup "
-             f"steps: {warmup},\tSteps: {steps},\tFilename: {filename}")
+    logging.info(f"Simulation parameters:\nRandom seed: {args.seed},\tWarmup "
+                 f"steps: {warmup},\tSteps: {steps},\tFilename: {filename}")
 
-logging.info("Warming up.")
+    logging.info("Warming up.")
 
-# Warmup
-for _ in (tqdm.tqdm(range(warmup)) if not args.log else range(warmup)):
-    acceptance_flag = perform_move_particle(boxes)
-    if acceptance_flag:
-        num_accepted_moves[Moves.MOVE_PARTICLE] += 1
+    # Warmup
+    for _ in (tqdm.tqdm(range(warmup)) if not args.log else range(warmup)):
+        acceptance_flag = perform_move_particle(boxes)
+        if acceptance_flag:
+            num_accepted_moves[Moves.MOVE_PARTICLE] += 1
 
-logging.info(
-    "Particle move acceptance rate during warmup: {:.2f}%".format(
-        num_accepted_moves[Moves.MOVE_PARTICLE] / warmup * 100))
+    logging.info(
+        "Particle move acceptance rate during warmup: {:.2f}%".format(
+            num_accepted_moves[Moves.MOVE_PARTICLE] / warmup * 100))
 
-# Reset the counter for particle moves
-num_accepted_moves[Moves.MOVE_PARTICLE] = 0
+    # Reset the counter for particle moves
+    num_accepted_moves[Moves.MOVE_PARTICLE] = 0
 
-# List of observables we want to measure during the simulation
-densities_box01 = []
-densities_box02 = []
+    # List of observables we want to measure during the simulation
+    densities_box01 = []
+    densities_box02 = []
 
-logging.info("Starting simulation.")
+    logging.info("Starting simulation.")
 
-# Run the simulation
-for count in (tqdm.tqdm(range(steps)) if not args.log else range(steps)):
+    # Run the simulation
+    for count in (tqdm.tqdm(range(steps)) if not args.log else range(steps)):
 
-    current_move = choose_move()
+        current_move = choose_move()
 
-    if current_move == Moves.MOVE_PARTICLE:
-        accepted = perform_move_particle(boxes)
-    elif current_move == Moves.EXCHANGE_VOLUME:
-        accepted = perform_volume_change(boxes)
-    else:
-        accepted = perform_particle_exchange(boxes)
+        if current_move == Moves.MOVE_PARTICLE:
+            accepted = perform_move_particle(boxes)
+        elif current_move == Moves.EXCHANGE_VOLUME:
+            accepted = perform_volume_change(boxes)
+        else:
+            accepted = perform_particle_exchange(boxes)
 
-    # Add current move to counter
-    num_moves[current_move] += 1
-    if accepted:
-        num_accepted_moves[current_move] += 1
+        # Add current move to counter
+        num_moves[current_move] += 1
+        if accepted:
+            num_accepted_moves[current_move] += 1
 
-    # Append simulation observables
-    densities_box01.append(boxes[0].density)
-    densities_box02.append(boxes[1].density)
+        # Append simulation observables
+        densities_box01.append(boxes[0].density)
+        densities_box02.append(boxes[1].density)
 
-    if count % check == 0:
-        validate_info(boxes)
+        if count % check == 0:
+            validate_info(boxes)
 
+    logging.info("Percentage of moves done:\n \
+        Particle moves, Volume changes, Particle exchanges:\n \
+        {:.2f}%, {:.2f}%, {:.2f}% \n \
+        Acceptance rates for each:\n \
+        {:.2f}%, {:.2f}%, {:.2f}%".format(
+        num_moves[Moves.MOVE_PARTICLE] / steps * 100, num_moves[Moves.EXCHANGE_VOLUME] /
+        steps * 100, num_moves[Moves.EXCHANGE_PARTICLE] / steps * 100,
+        num_accepted_moves[Moves.MOVE_PARTICLE] / num_moves[Moves.MOVE_PARTICLE] * 100, num_accepted_moves[Moves.EXCHANGE_VOLUME] /
+        num_moves[Moves.EXCHANGE_VOLUME] * 100, num_accepted_moves[Moves.EXCHANGE_PARTICLE] /
+        num_moves[Moves.EXCHANGE_PARTICLE] * 100
+    ))
 
-logging.info("Percentage of moves done:\n \
-    Particle moves, Volume changes, Particle exchanges:\n \
-    {:.2f}%, {:.2f}%, {:.2f}% \n \
-    Acceptance rates for each:\n \
-    {:.2f}%, {:.2f}%, {:.2f}%".format(
-    num_moves[Moves.MOVE_PARTICLE] / steps * 100, num_moves[Moves.EXCHANGE_VOLUME] /
-    steps * 100, num_moves[Moves.EXCHANGE_PARTICLE] / steps * 100,
-    num_accepted_moves[Moves.MOVE_PARTICLE] / num_moves[Moves.MOVE_PARTICLE] * 100, num_accepted_moves[Moves.EXCHANGE_VOLUME] /
-    num_moves[Moves.EXCHANGE_VOLUME] * 100, num_accepted_moves[Moves.EXCHANGE_PARTICLE] /
-    num_moves[Moves.EXCHANGE_PARTICLE] * 100
-))
+    logging.info("Sending close signal to boxes.")
+    [box.send_data([MessageID.END]) for box in boxes]
 
-logging.info("Sending close signal to boxes.")
-[box.send_data([MessageID.END]) for box in boxes]
+    logging.info("Saving data.")
+    with gzip.open(filename + ".dat.gz", 'wb') as f:
+        pickle.dump({
+            'args': args,
+            'steps': steps,
+            'temperature': kT,
+            'densities_box01': [float(i) for i in densities_box01],
+            'densities_box02': [float(i) for i in densities_box02],
+        }, f)
 
-logging.info("Saving data.")
-with gzip.open(filename + ".dat.gz", 'wb') as f:
-    pickle.dump({
-        'args': args,
-        'steps': steps,
-        'temperature': kT,
-        'densities_box01': [float(i) for i in densities_box01],
-        'densities_box02': [float(i) for i in densities_box02],
-    }, f)
-
-logging.info("-------------------- End of program --------------------")
+    logging.info("-------------------- End of program --------------------")
