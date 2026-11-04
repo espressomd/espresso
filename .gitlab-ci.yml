@@ -64,9 +64,9 @@ default:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-14'
-     CXX: 'g++-14'
-     GCOV: 'gcov-14'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
      with_cuda: 'false'
      myconfig: 'default'
      with_coverage: 'true'
@@ -86,9 +86,9 @@ maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-14'
-     CXX: 'g++-14'
-     GCOV: 'gcov-14'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
      with_cuda: 'false'
      myconfig: 'maxset'
      with_coverage: 'true'
@@ -111,9 +111,9 @@ no_rotation:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-14'
-     CXX: 'g++-14'
-     GCOV: 'gcov-14'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
      with_cuda: 'false'
      myconfig: 'no_rotation'
      with_coverage: 'true'
