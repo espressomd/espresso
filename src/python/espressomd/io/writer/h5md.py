@@ -20,7 +20,7 @@
 import sys
 import pathlib
 
-from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import
+from ...script_interface import script_interface_register, ScriptInterfaceHelper  # pylint: disable=import-error
 
 
 class UnitSystem:
