@@ -144,6 +144,15 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, "Parameter 'timings' must be > 0"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'timings': -2})
+        with self.assertRaisesRegex(TypeError, "Parameter 'tune_with_integration' has to be a boolean"):
+            espressomd.magnetostatics.DipolarP3M(
+                **{**dp3m_params, 'tune_with_integration': 1})
+        with self.assertRaisesRegex(TypeError, "Parameter 'tune_skin' has to be a boolean"):
+            espressomd.magnetostatics.DipolarP3M(
+                **{**dp3m_params, 'tune_skin': 1})
+        with self.assertRaisesRegex(ValueError, "Parameter 'tune_skin' requires 'tune_with_integration'"):
+            espressomd.magnetostatics.DipolarP3M(
+                **{**dp3m_params, 'tune_skin': True})
         with self.assertRaisesRegex(ValueError, "Parameter 'mesh' has to be an integer or integer list of length 3"):
             espressomd.magnetostatics.DipolarP3M(
                 **{**dp3m_params, 'mesh': [49, 49]})

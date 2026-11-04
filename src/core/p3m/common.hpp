@@ -264,6 +264,13 @@ struct TuningParameters {
   int timings;
   std::pair<std::optional<int>, std::optional<int>> limits;
   bool verbose;
+  /** @brief Propagate the particles during the timing measurements. */
+  bool with_integration = false;
+  /**
+   * @brief Tune the Verlet skin for the fastest parameter sets.
+   * Requires @ref with_integration.
+   */
+  bool tune_skin = false;
 };
 
 /**

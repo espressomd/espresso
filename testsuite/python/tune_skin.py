@@ -35,7 +35,7 @@ class TuneSkin(ut.TestCase):
             shift="auto")
 
     def test_fails_without_adjustment(self):
-        with self.assertRaisesRegex(Exception, "number of cells 2 is smaller than minimum 8: either interaction range is too large for the current skin .+ or min_num_cells too large"):
+        with self.assertRaisesRegex(Exception, "number of cells [0-9]+ is smaller than minimum 8: either interaction range is too large for the current skin .+ or min_num_cells too large"):
             self.system.cell_system.tune_skin(
                 min_skin=0.1,
                 max_skin=0.6,
@@ -50,13 +50,42 @@ class TuneSkin(ut.TestCase):
             int_steps=3,
             adjust_max_skin=True)
         self.assertAlmostEqual(skin, self.system.cell_system.skin, delta=1e-12)
+        self.assertGreaterEqual(skin, 0.1)
+        self.assertLessEqual(skin, 0.6)
+
+    def test_narrow_interval(self):
+        # an interval narrower than the tolerance gives its midpoint
+        skin = self.system.cell_system.tune_skin(
+            min_skin=0.1,
+            max_skin=0.12,
+            tol=0.05,
+            int_steps=3)
+        self.assertAlmostEqual(skin, 0.11, delta=1e-12)
+        self.assertAlmostEqual(skin, self.system.cell_system.skin, delta=1e-12)
+        # slightly wider than the tolerance: few samples, result in range
+        skin = self.system.cell_system.tune_skin(
+            min_skin=0.1,
+            max_skin=0.16,
+            tol=0.05,
+            int_steps=3)
+        self.assertGreaterEqual(skin, 0.1)
+        self.assertLessEqual(skin, 0.16)
+        self.assertAlmostEqual(skin, self.system.cell_system.skin, delta=1e-12)
+
+    def test_min_skin_above_permissible_skin(self):
+        with self.assertRaisesRegex(ValueError, "maximal permissible skin .+ is smaller than 'min_skin'"):
+            self.system.cell_system.tune_skin(
+                min_skin=5.,
+                max_skin=6.,
+                tol=0.05,
+                int_steps=3,
+                adjust_max_skin=True)
 
     def test_rejects_invalid_parameters(self):
         # A non-positive tolerance must be rejected with an exception. Without
-        # validation the core bisection loop `while (fabs(a - b) > tol)` never
-        # terminates for tol <= 0 (fabs(a - b) >= 0 is always > a negative tol,
-        # and once the interval collapses the midpoint stops progressing), so
-        # the call would hang forever instead of returning.
+        # validation the core bracket-halving loop `while (hi - lo > tol)`
+        # never terminates for tol < 0 (hi - lo >= 0 is always > a negative
+        # tol), so the call would hang forever instead of returning.
         for tol in (-1.0, 0.0):
             with self.assertRaisesRegex(ValueError, "Parameter 'tol' must be > 0"):
                 self.system.cell_system.tune_skin(

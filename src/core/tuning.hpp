@@ -36,10 +36,14 @@ public:
 /**
  * @brief Benchmark the integration loop.
  * Call @ref System::System::integrate() several times and measure the elapsed
- * time without propagating the system. It therefore doesn't include e.g.
- * Verlet list updates.
+ * time. By default the system is not propagated: each sample is a force
+ * calculation on fixed particle positions, which doesn't include e.g.
+ * Verlet list updates. With @p with_integration, each sample is a full
+ * integration step and the particles move.
  * @param system The system to tune.
  * @param int_steps   Number of integration steps.
+ * @param with_integration  Propagate the particles during the measurement.
  * @return Average time per integration loop in milliseconds.
  */
-double benchmark_integration_step(System::System &system, int int_steps);
+double benchmark_integration_step(System::System &system, int int_steps,
+                                  bool with_integration = false);

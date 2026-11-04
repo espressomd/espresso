@@ -179,6 +179,21 @@ class P3M(ElectrostaticInteraction):
         Defaults to ``[None, None]``.
     timings : :obj:`int`
         Number of force calculations during tuning.
+    tune_with_integration : :obj:`bool`, optional
+        If ``True``, every timing sample is a full integration step
+        instead of a force calculation on fixed particle positions.
+        The timings then include particle propagation, the thermostat
+        and Verlet list updates, which makes them closer to the cost of
+        the production run. The particles move during tuning, which
+        changes the trajectory. Defaults to ``False``.
+    tune_skin : :obj:`bool`, optional
+        If ``True``, tune the Verlet skin for the six fastest parameter
+        sets found by the tuning algorithm, time them again with their tuned
+        skin and keep the fastest combination. The Verlet skin of the cell
+        system is set to the tuned value. Every timing in this phase
+        integrates ten times ``timings`` steps, because the cost of the
+        Verlet list updates only shows in long samples. Requires
+        ``tune_with_integration=True``. Defaults to ``False``.
     verbose : :obj:`bool`, optional
         If ``False``, disable log output during tuning.
     check_neutrality : :obj:`bool`, optional
@@ -209,6 +224,8 @@ class P3M(ElectrostaticInteraction):
                 "gpu": False,
                 "tune": True,
                 "timings": 10,
+                "tune_with_integration": False,
+                "tune_skin": False,
                 "verbose": True}
 
     def validate_params(self, params):
@@ -219,6 +236,11 @@ class P3M(ElectrostaticInteraction):
         utils.check_type_or_throw_except(
             params["mesh"], 3, int,
             "Parameter 'mesh' has to be an integer or integer list of length 3")
+        if not utils.is_valid_type(params["tune_with_integration"], bool):
+            raise TypeError(
+                "Parameter 'tune_with_integration' has to be a boolean")
+        if not utils.is_valid_type(params["tune_skin"], bool):
+            raise TypeError("Parameter 'tune_skin' has to be a boolean")
         if (params["mesh"][0] % 2 != 0 and params["mesh"][0] != -1) or \
            (params["mesh"][1] % 2 != 0 and params["mesh"][1] != -1) or \
            (params["mesh"][2] % 2 != 0 and params["mesh"][2] != -1):

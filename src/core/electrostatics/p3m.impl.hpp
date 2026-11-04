@@ -140,6 +140,10 @@ public:
     if (tuning.timings <= 0) {
       throw std::domain_error("Parameter 'timings' must be > 0");
     }
+    if (tuning.tune_skin and not tuning.with_integration) {
+      throw std::domain_error(
+          "Parameter 'tune_skin' requires 'tune_with_integration'");
+    }
     m_is_tuned = not p3m.params.tuning;
     p3m.params.tuning = false;
     set_prefactor(prefactor);
