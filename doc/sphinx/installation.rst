@@ -233,7 +233,7 @@ mixing the ``libgomp`` and ``libnvomp`` OpenMP runtime libraries.
       .. code-block:: bash
 
          CC=gcc-15 CXX=g++-15 CUDAHOSTCXX=g++-13 CUDACXX=/usr/lib/nvidia-cuda-toolkit/bin/nvcc \
-           CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/15 cmake .. \
+           CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/13 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/lib/nvidia-cuda-toolkit
 
