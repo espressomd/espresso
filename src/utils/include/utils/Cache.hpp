@@ -35,6 +35,7 @@ public:
   using value_type = const Value *;
   using size_type = typename map_type::size_type;
 
+  // NOLINTNEXTLINE(bugprone-random-generator-seed)
   Cache() {
     /* Default to maximal size of our map. */
     m_max_size = m_cache.max_size();

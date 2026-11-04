@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(ek_poisson_solver_none_cuda) {
 
 BOOST_AUTO_TEST_SUITE_END()
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
   Vector3i mpi_shape{};
 
