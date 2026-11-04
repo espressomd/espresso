@@ -149,6 +149,7 @@ clang-sanitizer:
      with_nlopt: 'true'
      with_coverage: 'false'
      with_coverage_python: 'false'
+     cmake_params: '-D Kokkos_ENABLE_DEBUG=ON -D Kokkos_ENABLE_DEBUG_BOUNDS_CHECK=ON'
   script:
     - bash maintainer/CI/build_cmake.sh
   timeout: 2h

@@ -248,8 +248,8 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 12.
          CC=clang-19 CXX=clang++-19 CUDACXX=clang++-19 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
-           -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12" \
-           -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0"
+           -D CMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/12" \
+           -D CMAKE_CUDA_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/12 --cuda-path=/usr/local/cuda-12.0"
 
       with compiler dependencies:
 
@@ -323,8 +323,8 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
          CC=clang-20 CXX=clang++-20 CUDACXX=clang++-20 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/lib/cuda \
-           -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/15 -I/usr/include/c++/15" \
-           -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/15 -I/usr/include/c++/15 --cuda-path=/usr/lib/cuda"
+           -D CMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15" \
+           -D CMAKE_CUDA_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15 --cuda-path=/usr/lib/cuda"
 
       with compiler dependencies:
 

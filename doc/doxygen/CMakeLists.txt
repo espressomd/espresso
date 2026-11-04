@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-find_package(Doxygen)
 if(DOXYGEN_FOUND)
   add_custom_command(
     OUTPUT doxy-features
