@@ -75,8 +75,8 @@ class p3m_interpolation_cache {
 
 public:
   p3m_interpolation_cache()
-      : ca_frac("p3m_interpolation_cache::ca_frac", 0, 0),
-        ca_fmp("p3m_interpolation_cache::ca_fmp", 0, 0) {}
+      : ca_frac("p3m_interpolation_cache::ca_frac", 0),
+        ca_fmp("p3m_interpolation_cache::ca_fmp", 0) {}
 
   /**
    * @brief Number of points in the cache.
