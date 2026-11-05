@@ -28,8 +28,10 @@ stages:
 
 variables:
   GET_SOURCES_ATTEMPTS: 3
+  FF_DISABLE_UMASK_FOR_DOCKER_EXECUTOR: true
   CCACHE_DIR: /cache
   CCACHE_MAXSIZE: 100G
+  CCACHE_SLOPPINESS: include_file_mtime,include_file_ctime
   with_ccache: 'true'
 
 status_pending:

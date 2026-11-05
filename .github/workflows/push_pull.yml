@@ -91,6 +91,7 @@ jobs:
           with_hdf5: 'true'
           with_fftw: 'true'
           with_gsl: 'false'
+          with_nlopt: 'true'
           with_scafacos: 'false'
           with_stokesian_dynamics: 'false'
           make_check_unit_tests: 'true'
