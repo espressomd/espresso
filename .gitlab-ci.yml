@@ -581,7 +581,9 @@ maxset_1_cores:
     - tar -xf build.tar
     - rm build.tar
     - cd build
+    - cp _deps/cabana-build/core/src/Cabana_Core_Config.hpp /tmp/cabana_before.hpp
     - cmake -D ESPRESSO_TEST_NP=1 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
+    - diff /tmp/cabana_before.hpp _deps/cabana-build/core/src/Cabana_Core_Config.hpp || true
     - ninja -d explain check_unit_tests
     - ninja check_python
   timeout: 90m
