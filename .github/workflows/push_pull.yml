@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   macos:
-    runs-on: macos-27
+    runs-on: macos-26
     if: ${{ github.repository == 'espressomd/espresso' }}
     steps:
       - name: Checkout
@@ -30,7 +30,7 @@ jobs:
          echo "::group::List available Xcode compilers"
          ls /Applications | grep Xcode
          echo "::endgroup::"
-         sudo xcode-select -switch /Applications/Xcode_27.1.0.app
+         sudo xcode-select -switch /Applications/Xcode_26.6.0.app
          # Python dependencies
          python -m venv venv
          . venv/bin/activate
