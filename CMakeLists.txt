@@ -676,6 +676,40 @@ endif()
 # for the CUDA component
 find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
 
+# We need the parallel hdf5 version! Has to appear before Cabana.
+if(ESPRESSO_BUILD_WITH_HDF5)
+  # The FindHDF5 function will fall back to the serial version if no parallel
+  # version was found, and print to the CMake log that HDF5 was found. There is
+  # no QUIET argument to override that message. This can be confusing to people
+  # who are not familiar with the way hdf5 is distributed in Linux package
+  # repositories (libhdf5-dev is the serial version).
+  set(HDF5_PREFER_PARALLEL 1)
+  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
+  if(HDF5_FOUND)
+    if(HDF5_IS_PARALLEL)
+      add_feature_info(HDF5 ON "parallel")
+    else()
+      set(HDF5_FOUND FALSE)
+      message(FATAL_ERROR "HDF5 parallel version not found.")
+    endif()
+  endif()
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
+    find_package(HighFive 3.3.0 QUIET)
+  endif()
+  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      HighFive
+      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+      GIT_TAG        v3.3.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(HighFive)
+  endif()
+endif()
+
 if(ESPRESSO_BUILD_WITH_FFTW)
   find_package(fftw3 REQUIRED COMPONENTS omp)
 
@@ -827,40 +861,6 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
   set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
   set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
   FetchContent_MakeAvailable(cabana)
-endif()
-
-# We need the parallel hdf5 version!
-if(ESPRESSO_BUILD_WITH_HDF5)
-  # The FindHDF5 function will fall back to the serial version if no parallel
-  # version was found, and print to the CMake log that HDF5 was found. There is
-  # no QUIET argument to override that message. This can be confusing to people
-  # who are not familiar with the way hdf5 is distributed in Linux package
-  # repositories (libhdf5-dev is the serial version).
-  set(HDF5_PREFER_PARALLEL 1)
-  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
-  if(HDF5_FOUND)
-    if(HDF5_IS_PARALLEL)
-      add_feature_info(HDF5 ON "parallel")
-    else()
-      set(HDF5_FOUND FALSE)
-      message(FATAL_ERROR "HDF5 parallel version not found.")
-    endif()
-  endif()
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
-    find_package(HighFive 3.3.0 QUIET)
-  endif()
-  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      HighFive
-      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-      GIT_TAG        v3.3.0
-      GIT_SHALLOW    TRUE
-      GIT_SUBMODULES ""  # don't clone submodules
-    )
-    # cmake-format: on
-    FetchContent_MakeAvailable(HighFive)
-  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
