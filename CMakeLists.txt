@@ -726,6 +726,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       GIT_SUBMODULES ""  # don't clone submodules
       PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
       OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
@@ -859,6 +860,7 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
   # cmake-format: on
   set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
   set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
+  set(Cabana_ENABLE_GRID OFF CACHE BOOL "") # fix for regression in 0.8.0
   set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
   FetchContent_MakeAvailable(cabana)
 endif()
@@ -880,6 +882,7 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
     GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
     GIT_SHALLOW    FALSE
     GIT_SUBMODULES ""  # don't clone submodules
+    SYSTEM
   )
   # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
