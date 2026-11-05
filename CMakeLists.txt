@@ -817,8 +817,9 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     kokkoscore
     PRIVATE
       $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+      $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>
       $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
-      $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>)
+  )
 endif()
 
 if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
@@ -1058,8 +1059,8 @@ if(ESPRESSO_BUILD_TESTS)
               espresso_tests_compiler_flags)
   target_compile_options(
     espresso_tests_compiler_flags
-    INTERFACE $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>
-              $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>)
+    INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>
+              $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>)
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
