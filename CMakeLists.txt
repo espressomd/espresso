@@ -1209,6 +1209,10 @@ endif()
 # Set source file properties
 #
 
+# C++20 modules aren't used by the project; skip the per-TU dependency scan.
+# Must be set after all FetchContent projects so their targets keep the default.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 function(espresso_set_common_target_properties)
   set(TARGET_NAME "${ARGV0}")
   get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)

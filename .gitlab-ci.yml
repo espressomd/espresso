@@ -446,7 +446,7 @@ check_sphinx:
     - tar -xf build.tar
     - rm build.tar
     - cd build
-    - ninja -d explain sphinx
+    - ninja sphinx
     - ninja -j2 tutorials
     - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
     - python3 ${CI_PROJECT_DIR}/maintainer/CI/jupyter_warnings.py
@@ -539,7 +539,7 @@ maxset_no_gpu:
     - rm build.tar
     - cd build
     - export CUDA_VISIBLE_DEVICES=""
-    - ninja -d explain check
+    - ninja check
   tags:
     - espresso
     - no-cuda
@@ -559,7 +559,7 @@ maxset_3_cores:
     - rm build.tar
     - cd build
     - cmake -D ESPRESSO_TEST_NP=3 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
-    - ninja -d explain check_unit_tests
+    - ninja check_unit_tests
     - ninja check_python_parallel_odd
   timeout: 90m
   tags:
@@ -582,7 +582,7 @@ maxset_1_cores:
     - rm build.tar
     - cd build
     - cmake -D ESPRESSO_TEST_NP=1 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
-    - ninja -d explain check_unit_tests
+    - ninja check_unit_tests
     - ninja check_python
   timeout: 90m
   tags:
