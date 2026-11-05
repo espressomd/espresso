@@ -31,7 +31,7 @@ fi
 
 lcov --gcov-tool "${GCOV:-gcov}" \
      --quiet \
-     --ignore-errors graph,mismatch,mismatch,gcov,unused \
+     --ignore-errors graph,mismatch,mismatch,inconsistent,inconsistent,gcov,unused \
      --directory . \
      --filter brace,blank,range,region \
      --capture \
