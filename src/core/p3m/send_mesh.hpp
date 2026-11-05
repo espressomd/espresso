@@ -58,7 +58,7 @@ template <typename FloatType> class p3m_send_mesh {
   /** sizes for recv buffers. */
   int r_size[6];
   /** maximal size for send/recv buffers. */
-  int max;
+  int max = -1;
 
   /** vector to store grid points to send. */
   std::vector<FloatType> send_grid;

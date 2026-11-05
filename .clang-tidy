@@ -10,10 +10,12 @@ Checks: |
    -bugprone-dynamic-static-initializers,
    -bugprone-easily-swappable-parameters,
    -bugprone-implicit-widening-of-multiplication-result,
+   -bugprone-signed-bitwise,
    -bugprone-macro-parentheses,
    -bugprone-reserved-identifier,
    -bugprone-switch-missing-default-case,
    -bugprone-unchecked-optional-access,
+   -bugprone-std-exception-baseclass,
    clang-analyzer-alpha.*,
    modernize-deprecated-headers,
    modernize-make-shared,
@@ -61,6 +63,8 @@ CheckOptions:
     value:           '8388608'
   - key:             bugprone-string-constructor.WarnOnLargeLength
     value:           '1'
+  - key:             bugprone-signed-bitwise.IgnorePositiveIntegerLiterals
+    value:           true
   - key:             google-readability-braces-around-statements.ShortStatementLines
     value:           '1'
   - key:             google-readability-function-size.StatementThreshold

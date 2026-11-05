@@ -50,7 +50,8 @@ public:
   /** Size of the flat array returned by the observable */
   std::size_t n_values() const {
     auto const v = shape();
-    return std::accumulate(v.begin(), v.end(), 1u, std::multiplies<>());
+    return std::accumulate(v.begin(), v.end(), std::size_t{1u},
+                           std::multiplies<>());
   }
 
   /** Dimensions needed to reshape the flat array returned by the observable */
