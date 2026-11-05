@@ -28,6 +28,7 @@
 #include "Particle.hpp"
 #include "ghosts.hpp"
 
+#include <utils/attributes.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
@@ -83,13 +84,15 @@ enum class SerializationDirection { SAVE, LOAD };
  * Used by @ref serialize_and_reduce and by the flat position packer in
  * @ref pack_cells, so that both always write the same bytes; the receiver
  * decodes either with @ref serialize_and_reduce.
+ * Forced inline: it runs once per ghost particle in every position update,
+ * and GCC otherwise keeps it as an out-of-line call.
  */
 template <class Archive>
-static void serialize_position(Archive &ar, Particle &p,
-                               [[maybe_unused]] unsigned int data_parts,
-                               SerializationDirection direction,
-                               BoxGeometry const &box_geo,
-                               Utils::Vector3d const *ghost_shift) {
+ESPRESSO_ATTR_ALWAYS_INLINE static inline void
+serialize_position(Archive &ar, Particle &p,
+                   [[maybe_unused]] unsigned int data_parts,
+                   SerializationDirection direction, BoxGeometry const &box_geo,
+                   Utils::Vector3d const *ghost_shift) {
   if (direction == SerializationDirection::SAVE and ghost_shift != nullptr) {
     auto pos = p.pos() + *ghost_shift;
     auto img = p.image_box();
