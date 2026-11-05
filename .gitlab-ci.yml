@@ -230,10 +230,14 @@ cuda12-maxset:
      with_stokesian_dynamics: 'true'
      with_nlopt: 'true'
   script:
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
     - bash maintainer/CI/build_cmake.sh
+    - cd ${CI_PROJECT_DIR}
+    - tar --format=posix -cf build.tar build
   artifacts:
     paths:
-    - build/
+    - build.tar
     expire_in: 1 week
   timeout: 90m
   tags:
@@ -435,7 +439,11 @@ check_sphinx:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - ninja -d explain sphinx
     - ninja -j2 tutorials
     - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
@@ -457,8 +465,11 @@ check_sphinx:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - ninja tutorials
     - ninja -j2 tutorials_html
     - cd doc/tutorials
@@ -494,7 +505,11 @@ run_doxygen:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - ninja doxygen
   artifacts:
     paths:
@@ -516,9 +531,12 @@ maxset_no_gpu:
     - job: cuda12-maxset
       artifacts: true
   script:
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - export CUDA_VISIBLE_DEVICES=""
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
     - ninja -d explain check
   tags:
     - espresso
@@ -533,10 +551,12 @@ maxset_3_cores:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
-    - cmake -D ESPRESSO_TEST_NP=3 .
-    - ninja -t restat
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
+    - cmake -D ESPRESSO_TEST_NP=3 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
     - ninja -d explain check_unit_tests
     - ninja check_python_parallel_odd
   timeout: 90m
@@ -554,10 +574,12 @@ maxset_1_cores:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
-    - cmake -D ESPRESSO_TEST_NP=1 .
-    - ninja -t restat
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
+    - cmake -D ESPRESSO_TEST_NP=1 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
     - ninja -d explain check_unit_tests
     - ninja check_python
   timeout: 90m
