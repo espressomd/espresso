@@ -539,6 +539,7 @@ unsigned map_data_parts(unsigned data_parts) {
          | ((data_parts & DATA_PART_FORCE) ? GHOSTTRANS_FORCE : 0u)
 #ifdef ESPRESSO_BOND_CONSTRAINT
          | ((data_parts & DATA_PART_RATTLE) ? GHOSTTRANS_RATTLE : 0u)
+         | ((data_parts & DATA_PART_POS_LAST) ? GHOSTTRANS_POS_LAST : 0u)
 #endif
 #ifdef ESPRESSO_ROTATION
          | ((data_parts & DATA_PART_QUAT) ? GHOSTTRANS_QUAT : 0u)
