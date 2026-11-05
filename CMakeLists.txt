@@ -816,6 +816,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   target_compile_options(
     kokkoscore
     PRIVATE
+      $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
       $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
       $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>)
 endif()
@@ -833,6 +834,7 @@ if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
       GIT_SHALLOW    TRUE
       GIT_SUBMODULES ""  # don't clone submodules
       OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
@@ -860,7 +862,7 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
   # cmake-format: on
   set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
   set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
-  set(Cabana_ENABLE_GRID OFF CACHE BOOL "") # fix for regression in 0.8.0
+  set(Cabana_ENABLE_GRID OFF CACHE BOOL "")
   set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
   FetchContent_MakeAvailable(cabana)
 endif()
