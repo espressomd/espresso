@@ -40,6 +40,7 @@ function(ESPRESSO_ADD_TEST)
     OpenMP::OpenMP_CXX
     espresso::walberla
     espresso::walberla_deps
+    espresso::walberla_sweepgen_includes
     espresso::compiler_flags
     espresso::walberla::compiler_flags
     espresso::utils)
@@ -48,8 +49,16 @@ function(ESPRESSO_ADD_TEST)
 endfunction()
 
 espresso_add_test(SRC ResourceManager_test.cpp)
+espresso_add_test(SRC field_index_range_test.cpp)
 espresso_add_test(SRC lb_kernels_unit_tests.cpp)
 espresso_add_test(SRC ek_kernels_unit_tests.cpp)
+espresso_add_test(SRC ek_flux_kernels_unit_tests.cpp)
+espresso_add_test(SRC IndexVectorBoundary_test.cpp)
+if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+  espresso_add_test(SRC IndexVectorBoundary_test_cuda.cu DEPENDS CUDA::cudart)
+  target_compile_definitions(IndexVectorBoundary_test_cuda
+                             PRIVATE ESPRESSO_TEST_BUILD_FOR_GPU)
+endif()
 espresso_add_test(SRC LatticeWalberla_unit_tests.cpp DEPENDS Boost::mpi
                   NUM_PROC 2)
 espresso_add_test(SRC LBWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi NUM_PROC

@@ -1,0 +1,343 @@
+[
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "add",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "value",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1>*",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "add",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3>*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "value",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1>*",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1>*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3>*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3>*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "add_to_all",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "value"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1>*",
+   "double"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "add_to_all",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3>*",
+   "Vector3<double> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,13> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,13> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get_vector",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,13> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get_vector",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,13> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "ek::accessor::Flux",
+  "parameter names": [
+   "flux_field",
+   "values"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,13>*",
+   "std::array<double,13> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "ek::accessor::Scalar",
+  "parameter names": [
+   "scalar_field",
+   "value"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,1>*",
+   "double"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "ek::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec"
+  ],
+  "parameter types": [
+   "GhostLayerField<double,3>*",
+   "Vector3<double> const&"
+  ],
+  "return type": "void"
+ }
+]

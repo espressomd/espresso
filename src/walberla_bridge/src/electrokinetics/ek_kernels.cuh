@@ -19,27 +19,28 @@
 
 #pragma once
 
-#include "generated_kernels/AdvectiveFluxKernel_double_precision_CUDA.h"
-#include "generated_kernels/AdvectiveFluxKernel_single_precision_CUDA.h"
-#include "generated_kernels/ContinuityKernel_double_precision_CUDA.h"
-#include "generated_kernels/ContinuityKernel_single_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernelThermalized_double_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernelThermalized_single_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalized_double_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalized_single_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_double_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernelWithElectrostatic_single_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernel_double_precision_CUDA.h"
-#include "generated_kernels/DiffusiveFluxKernel_single_precision_CUDA.h"
-#include "generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
-#include "generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
-#include "generated_kernels/FrictionCouplingKernel_double_precision_CUDA.h"
-#include "generated_kernels/FrictionCouplingKernel_single_precision_CUDA.h"
-
-#include "generated_kernels/Dirichlet_double_precision_CUDA.h"
-#include "generated_kernels/Dirichlet_single_precision_CUDA.h"
-#include "generated_kernels/FixedFlux_double_precision_CUDA.h"
-#include "generated_kernels/FixedFlux_single_precision_CUDA.h"
+#include "generated_kernels/AdvectiveFluxKernelDoublePrecisionCUDA.h"
+#include "generated_kernels/AdvectiveFluxKernelSinglePrecisionCUDA.h"
+#include "generated_kernels/ContinuityKernelDoublePrecisionCUDA.h"
+#include "generated_kernels/ContinuityKernelSinglePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelDoublePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelSinglePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelThermalizedDoublePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelThermalizedSinglePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticDoublePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticSinglePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalizedDoublePrecisionCUDA.h"
+#include "generated_kernels/DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecisionCUDA.h"
+#include "generated_kernels/DirichletDoublePrecisionCUDA.h"
+#include "generated_kernels/DirichletSinglePrecisionCUDA.h"
+#include "generated_kernels/EKFieldAccessorsDoublePrecisionCUDA.cuh"
+#include "generated_kernels/EKFieldAccessorsSinglePrecisionCUDA.cuh"
+#include "generated_kernels/FixedFluxDoublePrecisionCUDA.h"
+#include "generated_kernels/FixedFluxSinglePrecisionCUDA.h"
+#include "generated_kernels/FrictionCouplingKernelDoublePrecisionCUDA.h"
+#include "generated_kernels/FrictionCouplingKernelSinglePrecisionCUDA.h"
+#include "generated_kernels/PackInfoScalarDoublePrecisionCUDA.h"
+#include "generated_kernels/PackInfoScalarSinglePrecisionCUDA.h"
 
 namespace walberla {
 namespace detail {
@@ -47,40 +48,44 @@ namespace detail {
 using lbmpy::Arch;
 
 template <> struct KernelTrait<double, Arch::GPU> {
-  using ContinuityKernel = pystencils::ContinuityKernel_double_precision_CUDA;
+  using ContinuityKernel = pystencils::ContinuityKernelDoublePrecisionCUDA;
   using DiffusiveFluxKernel =
-      pystencils::DiffusiveFluxKernel_double_precision_CUDA;
+      pystencils::DiffusiveFluxKernelDoublePrecisionCUDA;
   using DiffusiveFluxKernelThermalized =
-      pystencils::DiffusiveFluxKernelThermalized_double_precision_CUDA;
+      pystencils::DiffusiveFluxKernelThermalizedDoublePrecisionCUDA;
   using AdvectiveFluxKernel =
-      pystencils::AdvectiveFluxKernel_double_precision_CUDA;
+      pystencils::AdvectiveFluxKernelDoublePrecisionCUDA;
   using FrictionCouplingKernel =
-      pystencils::FrictionCouplingKernel_double_precision_CUDA;
+      pystencils::FrictionCouplingKernelDoublePrecisionCUDA;
   using DiffusiveFluxKernelElectrostatic =
-      pystencils::DiffusiveFluxKernelWithElectrostatic_double_precision_CUDA;
+      pystencils::DiffusiveFluxKernelWithElectrostaticDoublePrecisionCUDA;
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
-      DiffusiveFluxKernelWithElectrostaticThermalized_double_precision_CUDA;
+      DiffusiveFluxKernelWithElectrostaticThermalizedDoublePrecisionCUDA;
 
-  using Dirichlet = pystencils::Dirichlet_double_precision_CUDA;
-  using FixedFlux = pystencils::FixedFlux_double_precision_CUDA;
+  using Dirichlet = ek::DirichletDoublePrecisionCUDA;
+  using FixedFlux = ek::FixedFluxDoublePrecisionCUDA;
+
+  using PackInfoScalar = pystencils::PackInfoScalarDoublePrecisionCUDA;
 };
 template <> struct KernelTrait<float, Arch::GPU> {
-  using ContinuityKernel = pystencils::ContinuityKernel_single_precision_CUDA;
+  using ContinuityKernel = pystencils::ContinuityKernelSinglePrecisionCUDA;
   using DiffusiveFluxKernel =
-      pystencils::DiffusiveFluxKernel_single_precision_CUDA;
+      pystencils::DiffusiveFluxKernelSinglePrecisionCUDA;
   using DiffusiveFluxKernelThermalized =
-      pystencils::DiffusiveFluxKernelThermalized_single_precision_CUDA;
+      pystencils::DiffusiveFluxKernelThermalizedSinglePrecisionCUDA;
   using AdvectiveFluxKernel =
-      pystencils::AdvectiveFluxKernel_single_precision_CUDA;
+      pystencils::AdvectiveFluxKernelSinglePrecisionCUDA;
   using FrictionCouplingKernel =
-      pystencils::FrictionCouplingKernel_single_precision_CUDA;
+      pystencils::FrictionCouplingKernelSinglePrecisionCUDA;
   using DiffusiveFluxKernelElectrostatic =
-      pystencils::DiffusiveFluxKernelWithElectrostatic_single_precision_CUDA;
+      pystencils::DiffusiveFluxKernelWithElectrostaticSinglePrecisionCUDA;
   using DiffusiveFluxKernelElectrostaticThermalized = pystencils::
-      DiffusiveFluxKernelWithElectrostaticThermalized_single_precision_CUDA;
+      DiffusiveFluxKernelWithElectrostaticThermalizedSinglePrecisionCUDA;
 
-  using Dirichlet = pystencils::Dirichlet_single_precision_CUDA;
-  using FixedFlux = pystencils::FixedFlux_single_precision_CUDA;
+  using Dirichlet = ek::DirichletSinglePrecisionCUDA;
+  using FixedFlux = ek::FixedFluxSinglePrecisionCUDA;
+
+  using PackInfoScalar = pystencils::PackInfoScalarSinglePrecisionCUDA;
 };
 } // namespace detail
 } // namespace walberla

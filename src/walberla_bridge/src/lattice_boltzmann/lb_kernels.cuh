@@ -36,6 +36,8 @@
 #include "generated_kernels/UpdateVelFromPDFDoublePrecisionCUDA.h"
 #include "generated_kernels/UpdateVelFromPDFSinglePrecisionCUDA.h"
 
+#include "generated_kernels/StreamCollideSweepAthermalDoublePrecisionCUDA.h"
+#include "generated_kernels/StreamCollideSweepAthermalSinglePrecisionCUDA.h"
 #include "generated_kernels/StreamCollideSweepLeesEdwardsDoublePrecisionCUDA.h"
 #include "generated_kernels/StreamCollideSweepLeesEdwardsSinglePrecisionCUDA.h"
 #include "generated_kernels/StreamCollideSweepThermalizedDoublePrecisionCUDA.h"
@@ -47,6 +49,8 @@ namespace detail {
 template <> struct KernelTrait<double, lbmpy::Arch::GPU> {
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedDoublePrecisionCUDA;
+  using StreamCollisionModelAthermal =
+      pystencils::StreamCollideSweepAthermalDoublePrecisionCUDA;
   using StreamCollisionModelLeesEdwards =
       pystencils::StreamCollideSweepLeesEdwardsDoublePrecisionCUDA;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterDoublePrecisionCUDA;
@@ -59,6 +63,8 @@ template <> struct KernelTrait<double, lbmpy::Arch::GPU> {
 template <> struct KernelTrait<float, lbmpy::Arch::GPU> {
   using StreamCollisionModelThermalized =
       pystencils::StreamCollideSweepThermalizedSinglePrecisionCUDA;
+  using StreamCollisionModelAthermal =
+      pystencils::StreamCollideSweepAthermalSinglePrecisionCUDA;
   using StreamCollisionModelLeesEdwards =
       pystencils::StreamCollideSweepLeesEdwardsSinglePrecisionCUDA;
   using InitialPDFsSetter = pystencils::InitialPDFsSetterSinglePrecisionCUDA;

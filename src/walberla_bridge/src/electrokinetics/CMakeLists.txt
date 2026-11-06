@@ -18,7 +18,6 @@
 #
 
 add_subdirectory(generated_kernels)
-add_subdirectory(reactions)
 
 target_sources(espresso_walberla PRIVATE ek_walberla_init.cpp)
 target_sources(espresso_walberla PRIVATE ek_poisson_none_init.cpp)

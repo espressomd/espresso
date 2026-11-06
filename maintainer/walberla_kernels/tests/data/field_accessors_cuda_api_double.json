@@ -1,0 +1,675 @@
+[
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Force",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "u",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Force",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "values",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double>*",
+   "std::vector<double> const&",
+   "double",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "pop",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double> const*",
+   "std::array<double,19> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double> const*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "u",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double> const*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double>*",
+   "gpu::GPUField<double> const*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "add_force",
+  "namespace": "lbm::accessor::Interpolation",
+  "parameter names": [
+   "field",
+   "pos",
+   "forces",
+   "gl"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "std::vector<double> const&",
+   "std::vector<double> const&",
+   "uint"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "get_rho",
+  "namespace": "lbm::accessor::Interpolation",
+  "parameter names": [
+   "field",
+   "pos",
+   "density",
+   "gl"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "std::vector<double> const&",
+   "double",
+   "uint"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "rho",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "double",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "values",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::vector<double> const&",
+   "double",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set_from_list",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "field",
+   "indices",
+   "values",
+   "gl"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "thrust::device_vector<int> const&",
+   "thrust::device_vector<double> const&",
+   "uint"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "add",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "double"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "double",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::PressureTensor",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "double",
+   "Cell const&"
+  ],
+  "return type": "Matrix3<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::PressureTensor",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "double",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "force_field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "Vector3<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "force_field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get_vel",
+  "namespace": "lbm::accessor::Interpolation",
+  "parameter names": [
+   "field",
+   "pos",
+   "gl"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "std::vector<double> const&",
+   "uint"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "reduce",
+  "namespace": "lbm::accessor::MomentumDensity",
+  "parameter names": [
+   "pdf_field",
+   "force_field",
+   "density"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "gpu::GPUField<double> const*",
+   "double"
+  ],
+  "return type": "Vector3<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "pop",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::array<double,19> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::vector<double> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "add_to_all",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "std::array<double,19>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "field",
+   "cell"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "Cell const&"
+  ],
+  "return type": "Vector3<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "ci"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<double>"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "pop"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "std::array<double,19> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "field",
+   "vec"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double>*",
+   "Vector3<double> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "reduce",
+  "namespace": "lbm::accessor::PressureTensor",
+  "parameter names": [
+   "pdf_field",
+   "density"
+  ],
+  "parameter types": [
+   "gpu::GPUField<double> const*",
+   "double"
+  ],
+  "return type": "Matrix3<double>"
+ }
+]

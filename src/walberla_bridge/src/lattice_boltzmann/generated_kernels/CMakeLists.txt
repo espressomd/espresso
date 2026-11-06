@@ -41,6 +41,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
   list(REMOVE_ITEM backends ".cpp")
   list(APPEND backends "AVX.cpp")
 endif()
+configure_codegen_kernel(StreamCollideSweepAthermal)
 configure_codegen_kernel(StreamCollideSweepLeesEdwards)
 configure_codegen_kernel(StreamCollideSweepThermalized)
 
