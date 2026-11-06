@@ -257,6 +257,12 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), dt * v0 / 2. - v0)
 
+    def test_exceptions(self):
+        self.assertIsNone(self.system.thermostat.call_method(
+            "unknown"))
+        self.assertIsNone(self.system.thermostat.langevin.call_method(
+            "unknown"))
+
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "WALBERLA"])
     def test_virtual_sites_relative(self):
         Propagation = espressomd.propagation.Propagation

@@ -327,6 +327,7 @@ class LBTest:
         self.system.lbcontainer.clear()
         self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
         self.assertIsNone(self.system.lbcontainer.solver)
+        self.assertIsNone(self.system.lbcontainer.call_method("unknown"))
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)

@@ -145,7 +145,7 @@ clang-sanitizer:
      with_cuda_compiler: 'clang'
      with_static_analysis: 'true'
      check_skip_long: 'true'
-     with_asan: 'false'
+     with_asan: 'true'
      with_ubsan: 'true'
      with_scafacos: 'true'
      with_walberla: 'true'

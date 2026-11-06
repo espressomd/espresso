@@ -382,9 +382,9 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     gpg --import "${CODECOV_PUBLIC_KEY}"
 
     # download uploader and signatures
-    curl -Os https://cli.codecov.io/latest/linux/codecov
-    curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
-    curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
+    curl -OSs https://cli.codecov.io/latest/linux/codecov
+    curl -OSs https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+    curl -OSs https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
 
     # check uploader integrity, exit script in case of failure
     gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
@@ -403,10 +403,12 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
         python3 -m coverage xml
         codecov_opts="${codecov_opts} -f coverage.xml"
     fi
+    echo "Checking Codecov availability..."
+    curl -sS -o /dev/null https://ingest.codecov.io
     echo "Uploading to Codecov..."
     for codecov_trial in 1 2 3; do
         codecov_errno="0"
-        ./codecov upload-coverage ${codecov_opts} -t "${CODECOV_TOKEN}" --git-service github --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
+        ./codecov upload-coverage ${codecov_opts} --network-root-folder "${srcdir}" -t "${CODECOV_TOKEN}" --git-service github --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
         if [ "${codecov_errno}" = "0" ]; then
             break
         fi

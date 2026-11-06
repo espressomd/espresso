@@ -340,6 +340,7 @@ class EKTest:
         with self.assertRaisesRegex(RuntimeError, "EK species and EK container must have the same tau"):
             self.system.ekcontainer.add(self.make_default_ek_species(tau=200.))
         self.assertEqual(len(self.system.ekcontainer), 1)
+        self.assertIsNone(self.system.ekcontainer.call_method("unknown"))
 
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
