@@ -94,10 +94,10 @@ class CpuBackend(AccessorBackend):
 
     # ---- kinds CELL and INTERVAL
 
-    def emit_cell(self, acc, spec, kernel):
+    def emit_cell(self, acc, _spec, kernel):
         self.emit_slice(acc, kernel)
 
-    def emit_interval(self, acc, spec, kernel):
+    def emit_interval(self, acc, _spec, kernel):
         self.emit_slice(acc, kernel)
 
     def emit_slice(self, acc, kernel):
@@ -163,7 +163,7 @@ class CpuBackend(AccessorBackend):
 
     # ---- kind REDUCE
 
-    def emit_reduce(self, acc, spec, kernel):
+    def emit_reduce(self, acc, _spec, kernel):
         """The kernel adds the values of the cells of the interior to local
         accumulators, in the order of the cells."""
         T = self.T
@@ -192,7 +192,7 @@ class CpuBackend(AccessorBackend):
 
     # ---- kind POINT
 
-    def emit_point(self, acc, spec, kernel):
+    def emit_point(self, acc, _spec, _kernel):
         """A function of a stencil direction, the velocity and the density
         that returns an expression per direction.
 

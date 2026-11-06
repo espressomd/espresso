@@ -158,10 +158,10 @@ class CudaBackend(AccessorBackend):
 
     # ---- kinds CELL and INTERVAL
 
-    def emit_cell(self, acc, spec, kernel):
+    def emit_cell(self, acc, _spec, kernel):
         self.emit_slice(acc, kernel)
 
-    def emit_interval(self, acc, spec, kernel):
+    def emit_interval(self, acc, _spec, kernel):
         self.emit_slice(acc, kernel)
 
     def emit_slice(self, acc, kernel):
@@ -214,7 +214,7 @@ class CudaBackend(AccessorBackend):
 
     # ---- kind REDUCE
 
-    def emit_reduce(self, acc, spec, kernel):
+    def emit_reduce(self, acc, _spec, kernel):
         """The values of all cells of the interior are summed on the host,
         in a fixed order: the reduction is deterministic."""
         T = self.T
@@ -239,7 +239,7 @@ class CudaBackend(AccessorBackend):
 
     # ---- kind LIST
 
-    def emit_list(self, acc, spec, kernel):
+    def emit_list(self, acc, _spec, kernel):
         """Set field values at the cells of a list (COO format) with
         indices relative to the origin of the halo of ``gl`` ghost layers."""
         T, D = self.T, acc.dims
@@ -290,7 +290,7 @@ class CudaBackend(AccessorBackend):
 
     # ---- kind GATHER
 
-    def emit_gather(self, acc, spec, kernel):
+    def emit_gather(self, acc, _spec, kernel):
         """
         Function that runs ``kernel`` over the flat list ``pos`` of particle
         positions (``dim`` values per particle) and returns the ``dims``
@@ -335,7 +335,7 @@ class CudaBackend(AccessorBackend):
 
     # ---- kind SCATTER
 
-    def emit_scatter(self, acc, spec, kernel):
+    def emit_scatter(self, acc, _spec, kernel):
         """
         Spread forces onto the lattice nodes. The nodes are shared by
         several particles, which needs ``atomicAdd``; pystencils kernels

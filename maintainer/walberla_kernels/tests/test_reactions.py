@@ -25,7 +25,6 @@ into the same library.
 """
 
 import pathlib
-import re
 import shutil
 import subprocess
 import sys
@@ -62,7 +61,7 @@ class ReactionAssignmentsTest(unittest.TestCase):
         # of before the reaction
         for indexed in (False, True):
             for num in NUMBERS:
-                collection, inlined = self.inlined(num, indexed)
+                _, inlined = self.inlined(num, indexed)
                 lhs = [a.lhs for a in inlined.main_assignments]
                 symbols = {s.name: s for a in inlined.main_assignments
                            for s in a.rhs.atoms(ps.TypedSymbol)}
