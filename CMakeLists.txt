@@ -1102,7 +1102,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     FetchContent_Declare(
       walberla
       GIT_REPOSITORY https://gitos.rrze.fau.de/cs10/walberla/walberla.git
-      GIT_TAG        ecbe131514531813defc2f6d8cfd2c1c17a5df2c # fhennig/pystencils-2.1
+      GIT_TAG        a7ac6d0b13273d9886bd1cde7c6016176b6cab06 # v7.4
       GIT_SHALLOW    FALSE
       GIT_SUBMODULES ""  # don't clone submodules
       SYSTEM
