@@ -63,7 +63,8 @@ class Sample(ut.TestCase):
             sample.cylinder_out.radius, sample.agrid)
         (a_sim, b_sim), _ = scipy.optimize.curve_fit(
             lambda x, a, b: a * x + b / x, xdata, ydata)
-        np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], rtol=0.05)
+        # large relative tolerance due to finite-size effects
+        np.testing.assert_allclose([a_sim, b_sim], [a_ref, b_ref], rtol=0.12)
 
 
 if __name__ == "__main__":

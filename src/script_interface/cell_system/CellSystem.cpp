@@ -65,7 +65,7 @@ static int coord(std::string const &s) {
   throw std::invalid_argument("Invalid Cartesian coordinate: '" + s + "'");
 }
 
-static std::string coord_letter(int c) {
+static std::string coord_letter(int c) { // NOLINT(modernize-use-string-view)
   if (c == 0)
     return "x";
   if (c == 1)

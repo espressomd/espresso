@@ -66,6 +66,7 @@ BOOST_AUTO_TEST_CASE(shape_based_constraint) {
     BOOST_TEST(constraint.constraint()->fits_in_box({}));
     BOOST_TEST(std::as_const(constraint).constraint()->fits_in_box({}));
     BOOST_TEST(constraint.shape_based_constraint()->fits_in_box({}));
+    BOOST_TEST(constraint.shape_based_constraint()->type() == 0);
   }
   {
     // check shape setter and getter

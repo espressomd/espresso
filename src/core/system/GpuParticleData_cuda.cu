@@ -54,33 +54,6 @@ template <class SpanLike> std::size_t byte_size(SpanLike const &v) {
   return v.size() * sizeof(typename SpanLike::value_type);
 }
 
-/**
- * @brief Resize a @c thrust::device_vector.
- *
- * Due to a bug in thrust (https://github.com/thrust/thrust/issues/939),
- * resizing or appending to default constructed containers causes undefined
- * behavior by dereferencing a null-pointer for certain types. This
- * function is used instead of the resize member function to side-step
- * the problem. This is done by replacing the existing vector by a new
- * one constructed with the desired size if resizing from capacity zero.
- * Behaves as-if @c vec.resize(n) was called.
- * This is fixed in Thrust 1.11, shipped in CUDA 11.3
- * (https://github.com/NVIDIA/thrust/commit/1c4f25d9).
- * But Clang 20's UBSAN still triggers a runtime error as of CUDA 12.0
- *
- * @tparam T Type contained in the vector.
- * @param vec Vector to resize.
- * @param n Desired new size of the vector.
- */
-template <class T>
-void resize_or_replace(thrust::device_vector<T> &vec, std::size_t n) {
-  if (vec.capacity() == 0) {
-    vec = thrust::device_vector<T>(n);
-  } else {
-    vec.resize(n);
-  }
-}
-
 template <typename T> void free_device_vector(thrust::device_vector<T> &vec) {
   vec.clear();
   thrust::device_vector<T>().swap(vec);
@@ -251,18 +224,18 @@ void GpuParticleData::gpu_init_particle_comm() {
 void GpuParticleData::Storage::copy_particles_to_device() {
   // resize buffers
   auto const n_part = particle_data_host.size();
-  resize_or_replace(particle_data_device, n_part);
+  particle_data_device.resize(n_part);
   particle_forces_host.resize(3ul * n_part);
-  resize_or_replace(particle_forces_device, 3ul * n_part);
+  particle_forces_device.resize(3ul * n_part);
 
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   particle_dip_fld_host.resize(3ul * n_part);
-  resize_or_replace(particle_dip_fld_device, 3ul * n_part);
+  particle_dip_fld_device.resize(3ul * n_part);
 #endif
 
 #ifdef ESPRESSO_ROTATION
   particle_torques_host.resize(3ul * n_part);
-  resize_or_replace(particle_torques_device, 3ul * n_part);
+  particle_torques_device.resize(3ul * n_part);
 #endif
 
   // zero out device memory for forces and torques

@@ -1,4 +1,4 @@
-image: ghcr.io/espressomd/docker/ubuntu:c6ad9809eed1d0e9f26f4968559b234ea3b8bf82
+image: ghcr.io/espressomd/docker/ubuntu:d5ac9f0a0e44f3ade96f58672b311147851855d3
 
 stages:
   - prepare
@@ -16,7 +16,7 @@ stages:
 
 .notification_job_template: &notification_job_definition
   <<: *global_job_definition
-  image: ghcr.io/espressomd/docker/alpine:c6ad9809eed1d0e9f26f4968559b234ea3b8bf82
+  image: ghcr.io/espressomd/docker/alpine:d5ac9f0a0e44f3ade96f58672b311147851855d3
   variables:
     GET_SOURCES_ATTEMPTS: 3
   dependencies: []
@@ -28,8 +28,10 @@ stages:
 
 variables:
   GET_SOURCES_ATTEMPTS: 3
+  FF_DISABLE_UMASK_FOR_DOCKER_EXECUTOR: true
   CCACHE_DIR: /cache
   CCACHE_MAXSIZE: 100G
+  CCACHE_SLOPPINESS: include_file_mtime,include_file_ctime
   with_ccache: 'true'
 
 status_pending:
@@ -64,9 +66,9 @@ default:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-14'
-     CXX: 'g++-14'
-     GCOV: 'gcov-14'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
      with_cuda: 'false'
      myconfig: 'default'
      with_coverage: 'true'
@@ -86,9 +88,9 @@ maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-14'
-     CXX: 'g++-14'
-     GCOV: 'gcov-14'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
      with_cuda: 'false'
      myconfig: 'maxset'
      with_coverage: 'true'
@@ -111,9 +113,9 @@ no_rotation:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-14'
-     CXX: 'g++-14'
-     GCOV: 'gcov-14'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
      with_cuda: 'false'
      myconfig: 'no_rotation'
      with_coverage: 'true'
@@ -133,15 +135,17 @@ clang-sanitizer:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'clang-19'
-     CXX: 'clang++-19'
-     CUDACXX: 'clang++-19'
+     CC: 'clang-22'
+     CXX: 'clang++-22'
+     CUDACXX: 'clang++-22'
+     CXXFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
+     CUDAFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_cuda_compiler: 'clang'
      with_static_analysis: 'true'
      check_skip_long: 'true'
-     with_asan: 'false'
+     with_asan: 'true'
      with_ubsan: 'true'
      with_scafacos: 'true'
      with_walberla: 'true'
@@ -162,9 +166,11 @@ fast_math:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -183,9 +189,11 @@ cuda12-coverage:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'true'
@@ -206,9 +214,11 @@ cuda12-maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -222,10 +232,14 @@ cuda12-maxset:
      with_stokesian_dynamics: 'true'
      with_nlopt: 'true'
   script:
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
     - bash maintainer/CI/build_cmake.sh
+    - cd ${CI_PROJECT_DIR}
+    - tar --format=posix -cf build.tar build
   artifacts:
     paths:
-    - build/
+    - build.tar
     expire_in: 1 week
   timeout: 90m
   tags:
@@ -239,9 +253,11 @@ tutorials-samples-maxset:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -268,9 +284,11 @@ tutorials-samples-default:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'default'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -297,9 +315,11 @@ tutorials-samples-empty:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'empty'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -324,9 +344,11 @@ tutorials-samples-no-gpu:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -353,9 +375,11 @@ installation:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'gcc-12'
-     CXX: 'g++-12'
-     GCOV: 'gcov-12'
+     CC: 'gcc-15'
+     CXX: 'g++-15'
+     GCOV: 'gcov-15'
+     CUDAHOSTCXX: 'g++-13'
+     CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE: '/usr/lib/gcc/x86_64-linux-gnu/13'
      myconfig: 'maxset'
      with_cuda: 'true'
      with_coverage: 'false'
@@ -387,9 +411,11 @@ empty:
   <<: *global_job_definition
   stage: build
   variables:
-     CC: 'clang-19'
-     CXX: 'clang++-19'
-     CUDACXX: 'clang++-19'
+     CC: 'clang-22'
+     CXX: 'clang++-22'
+     CUDACXX: 'clang++-22'
+     CXXFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
+     CUDAFLAGS: '--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15'
      myconfig: 'empty'
      with_cuda: 'true'
      with_cuda_compiler: 'clang'
@@ -400,6 +426,7 @@ empty:
      with_fpe: 'true'
      with_coverage: 'false'
      with_coverage_python: 'true'
+     cmake_params: '-D CMAKE_CXX_SCAN_FOR_MODULES=OFF'
   script:
     - bash maintainer/CI/build_cmake.sh
   tags:
@@ -414,8 +441,12 @@ check_sphinx:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -d explain sphinx
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
+    - ninja sphinx
     - ninja -j2 tutorials
     - bash ${CI_PROJECT_DIR}/maintainer/CI/doc_warnings.sh
     - python3 ${CI_PROJECT_DIR}/maintainer/CI/jupyter_warnings.py
@@ -436,8 +467,11 @@ check_sphinx:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - ninja tutorials
     - ninja -j2 tutorials_html
     - cd doc/tutorials
@@ -473,7 +507,11 @@ run_doxygen:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - ninja doxygen
   artifacts:
     paths:
@@ -495,10 +533,13 @@ maxset_no_gpu:
     - job: cuda12-maxset
       artifacts: true
   script:
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
     - export CUDA_VISIBLE_DEVICES=""
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
-    - ninja -d explain check
+    - ninja check
   tags:
     - espresso
     - no-cuda
@@ -512,11 +553,13 @@ maxset_3_cores:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
-    - cmake -D ESPRESSO_TEST_NP=3 .
-    - ninja -t restat
-    - ninja -d explain check_unit_tests
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
+    - cmake -D ESPRESSO_TEST_NP=3 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
+    - ninja check_unit_tests
     - ninja check_python_parallel_odd
   timeout: 90m
   tags:
@@ -533,11 +576,13 @@ maxset_1_cores:
     - job: cuda12-maxset
       artifacts: true
   script:
-    - cd ${CI_PROJECT_DIR}/build
-    - ninja -t restat
-    - cmake -D ESPRESSO_TEST_NP=1 .
-    - ninja -t restat
-    - ninja -d explain check_unit_tests
+    - cd ${CI_PROJECT_DIR}
+    - git ls-files -z | xargs -0 touch -h -d '2000-01-01T00:00:00Z'
+    - tar -xf build.tar
+    - rm build.tar
+    - cd build
+    - cmake -D ESPRESSO_TEST_NP=1 -D FETCHCONTENT_FULLY_DISCONNECTED=ON .
+    - ninja check_unit_tests
     - ninja check_python
   timeout: 90m
   tags:

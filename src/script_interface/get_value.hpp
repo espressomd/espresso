@@ -316,7 +316,7 @@ template <> struct get_value_helper<std::filesystem::path> {
 };
 
 /** Custom error for a conversion that fails when the value is a nullptr. */
-class bad_get_nullptr : public std::bad_variant_access {};
+class bad_get_nullptr : public std::bad_variant_access {}; // LCOV_EXCL_LINE
 
 /* This allows direct retrieval of a shared_ptr to the object from
  * an ObjectRef variant. If the type is a derived type, the type is

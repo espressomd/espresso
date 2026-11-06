@@ -71,6 +71,7 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-shadow=compatible-local>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-conditionally-supported>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-suggest-attribute=format>
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-unused-template>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-deprecated-volatile>

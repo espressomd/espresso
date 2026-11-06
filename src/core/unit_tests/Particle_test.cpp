@@ -328,37 +328,37 @@ BOOST_AUTO_TEST_CASE(particle_bitfields) {
   // check default values
   BOOST_CHECK(not p.has_fixed_coordinates());
   BOOST_CHECK(not p.can_rotate());
-  BOOST_CHECK(not p.is_fixed_along(1));
-  BOOST_CHECK(not p.can_rotate_around(1));
+  BOOST_CHECK(not p.is_fixed_along(1u));
+  BOOST_CHECK(not p.can_rotate_around(1u));
 
   // check setting of one axis
 #ifdef ESPRESSO_EXTERNAL_FORCES
-  p.set_fixed_along(1, true);
-  BOOST_CHECK(p.is_fixed_along(1));
+  p.set_fixed_along(1u, true);
+  BOOST_CHECK(p.is_fixed_along(1u));
   BOOST_CHECK(p.has_fixed_coordinates());
 #endif
 #ifdef ESPRESSO_ROTATION
-  p.set_can_rotate_around(1, true);
-  BOOST_CHECK(p.can_rotate_around(1));
+  p.set_can_rotate_around(1u, true);
+  BOOST_CHECK(p.can_rotate_around(1u));
   BOOST_CHECK(p.can_rotate());
 #endif
 
   // check that unsetting is properly registered
 #ifdef ESPRESSO_EXTERNAL_FORCES
-  p.set_fixed_along(1, false);
+  p.set_fixed_along(1u, false);
   BOOST_CHECK(not p.has_fixed_coordinates());
 #endif
 #ifdef ESPRESSO_ROTATION
-  p.set_can_rotate_around(1, false);
+  p.set_can_rotate_around(1u, false);
   BOOST_CHECK(not p.can_rotate());
 #endif
 
   // check setting of all flags at once
 #ifdef ESPRESSO_ROTATION
   p.set_can_rotate_all_axes();
-  BOOST_CHECK(p.can_rotate_around(0));
-  BOOST_CHECK(p.can_rotate_around(1));
-  BOOST_CHECK(p.can_rotate_around(2));
+  BOOST_CHECK(p.can_rotate_around(0u));
+  BOOST_CHECK(p.can_rotate_around(1u));
+  BOOST_CHECK(p.can_rotate_around(2u));
   p.set_cannot_rotate_all_axes();
   BOOST_CHECK(not p.can_rotate());
 #endif
