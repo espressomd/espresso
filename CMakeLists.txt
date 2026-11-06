@@ -1087,8 +1087,28 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  # runtime headers of the generated kernels, see requirements.txt
-  find_package(Pystencils 2.1...<2.2 REQUIRED)
+  # runtime headers of the generated kernels: from the pystencils package of the
+  # Python environment (see requirements.txt), else from its sources
+  find_package(Pystencils 2.1...<2.2 QUIET)
+  if(NOT Pystencils_FOUND)
+    message(STATUS "Fetching the pystencils runtime headers")
+    # cmake-format: off
+    FetchContent_Declare(
+      pystencils
+      GIT_REPOSITORY https://gitos.rrze.fau.de/cs10/pycodegen/pystencils.git
+      GIT_TAG        release/2.1
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SOURCE_SUBDIR  src/pystencils/include  # header-only, not a CMake project
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(pystencils)
+    add_library(Pystencils::runtime INTERFACE IMPORTED)
+    set_target_properties(
+      Pystencils::runtime
+      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                 "${pystencils_SOURCE_DIR}/src/pystencils/include")
+  endif()
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/walberla-src)
     find_package(waLBerla 7.3 QUIET)
     if(waLBerla_FOUND AND NOT TARGET walberla::core AND DEFINED

@@ -167,11 +167,9 @@ To run |es|, install the following Python dependencies:
     python3 -m venv espresso_env # here other virtual environment tools are also ok
     . espresso_env/bin/activate
     python3 -m pip install -c requirements.txt \
-      numpy scipy packaging setuptools h5py vtk pystencils
+      numpy scipy packaging setuptools h5py vtk
 
-These are the only hard requirements. pystencils provides the runtime
-headers of the waLBerla kernels and is only needed when building with
-waLBerla support (the default). In the following subsections,
+These are the only hard requirements. In the following subsections,
 only optional dependencies will be discussed. Unless you need extra features,
 you can jump directly to the next section :ref:`Quick installation`.
 
@@ -900,8 +898,9 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 * ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
-  Requires pystencils (see :file:`requirements.txt`) in the Python
-  environment used by CMake.
+  The runtime headers of the waLBerla kernels are taken from the pystencils
+  package of the Python environment used by CMake (see :file:`requirements.txt`),
+  or else downloaded from the pystencils sources.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 

@@ -350,8 +350,10 @@ The only difference is the `CMakeLists.txt` of the folder, which is not generate
 The kernels include the pystencils runtime headers (`pystencils_runtime/`).
 They are not copied into ESPResSo: at configure time, CMake takes them from
 the pystencils package of the Python interpreter it uses
-(`cmake/FindPystencils.cmake`). Building with waLBerla therefore requires
-pystencils from `requirements.txt` in that Python environment.
+(`cmake/FindPystencils.cmake`), if that is pystencils 2.1. Otherwise it fetches
+them from the pystencils sources (tag `release/2.1`, see the top-level
+`CMakeLists.txt`), so building ESPResSo doesn't need pystencils. Bump that tag
+together with the toolchain.
 
 ## Hand-written C++ headers of the bridge
 
