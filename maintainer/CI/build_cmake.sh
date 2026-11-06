@@ -408,7 +408,7 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     echo "Uploading to Codecov..."
     for codecov_trial in 1 2 3; do
         codecov_errno="0"
-        ./codecov upload-coverage ${codecov_opts} --network-root-folder "${srcdir}" -t "${CODECOV_TOKEN}" --git-service github --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
+        ./codecov upload-coverage ${codecov_opts} --network-root-folder "${srcdir}" -t "${CODECOV_TOKEN}" --git-service github --disable-file-fixes --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
         if [ "${codecov_errno}" = "0" ]; then
             break
         fi
