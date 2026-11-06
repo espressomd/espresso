@@ -368,7 +368,7 @@ class GenerateMainTest(unittest.TestCase):
 
     @staticmethod
     def kernels():
-        def generate(sfg, ctx, name):
+        def generate(sfg, _ctx, name):
             sfg.code(f"// {name}")
         return {
             "foo": sfg_driver.Kernel("Foo", ("cpu", "cuda"), generate),

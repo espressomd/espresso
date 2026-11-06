@@ -91,7 +91,7 @@ def flux_kernels():
     return kernels
 
 
-def generate_accessors(sfg, ctx, name):
+def generate_accessors(sfg, ctx, _name):
     ek_accessors.generate_field_accessors(sfg, ctx)
 
 

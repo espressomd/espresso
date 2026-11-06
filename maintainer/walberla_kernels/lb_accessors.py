@@ -410,7 +410,7 @@ class LbAccessors:
             temporaries, subs = _instantiate(scaled, reads, f"_{n}")
             return temporaries, [subs[sp.Symbol("rho")]]
 
-        def cell_velocity(cell, n):
+        def cell_velocity(cell, _n):
             return [], [self.f_vec_abs.absolute_access(cell, (cf,))
                         for cf in range(D)]
 

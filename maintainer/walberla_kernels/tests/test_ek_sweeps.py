@@ -113,7 +113,7 @@ class DiscreteFluxTest(unittest.TestCase):
     ext_efield = (sp.Rational(1, 20), sp.Rational(-1, 10), sp.Rational(1, 5))
     diffusion, kT, valency = sp.Rational(37, 100), sp.Rational(13, 10), 2
 
-    def evaluate(self, store, electrostatic):
+    def evaluate(self, store):
         """The value of the right-hand side for the linear fields."""
         values = {}
         for access in store.rhs.atoms(ps.Field.Access):
@@ -153,7 +153,7 @@ class DiscreteFluxTest(unittest.TestCase):
             for edge, store in zip(flux_layout.STORED_DIRECTIONS, stores):
                 with self.subTest(electrostatic=electrostatic, edge=edge):
                     self.assertAlmostEqual(
-                        float(self.evaluate(store, electrostatic)),
+                        float(self.evaluate(store)),
                         float(self.expected(edge, electrostatic)),
                         places=13)
 

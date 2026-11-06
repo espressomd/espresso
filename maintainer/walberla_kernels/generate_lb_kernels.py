@@ -172,7 +172,7 @@ def generate_vel_update(sfg, ctx, name):
     sfg_driver.generate_sweep(sfg, name, assignments)
 
 
-def generate_accessors(sfg, ctx, name):
+def generate_accessors(sfg, ctx, _name):
     fields = pystencils_espresso.generate_fields(STENCIL, ctx.data_type)
     method = create_lb_method(fields)
     lb_accessors.generate_field_accessors(sfg, ctx, method)

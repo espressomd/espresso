@@ -167,7 +167,7 @@ class LinkAssignmentsTest(unittest.TestCase):
                 if a.field.name == field.name}
 
     def test_force_and_populations_are_written(self):
-        elements, pdfs, index_field, force_field = self.assignments()
+        elements, pdfs, index_field, _ = self.assignments()
         written = [e.lhs for e in elements
                    if isinstance(e.lhs, ps.Field.Access)]
         self.assertEqual(
