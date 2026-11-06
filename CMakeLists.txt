@@ -1064,7 +1064,7 @@ if(ESPRESSO_BUILD_TESTS)
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
-      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
+      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-inline>
                 $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
   endif()
   if(ESPRESSO_BUILD_WITH_PYTHON)

@@ -130,6 +130,12 @@ function(python_test)
       set_property(TEST ${TEST_NAME} PROPERTY TIMEOUT ${TEST_TIMEOUT})
     endif()
   endif()
+  if(ESPRESSO_INSIDE_DOCKER)
+    set_tests_properties(${TEST_NAME} PROPERTIES COST 10)
+    if("long" IN_LIST TEST_LABELS)
+      set_tests_properties(${TEST_NAME} PROPERTIES COST 20)
+    endif()
+  endif()
 
   math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
 

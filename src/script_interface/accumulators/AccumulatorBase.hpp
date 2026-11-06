@@ -34,7 +34,8 @@
 namespace ScriptInterface {
 namespace Accumulators {
 
-class AccumulatorBase : public AutoParameters<AccumulatorBase> {
+class AccumulatorBase
+    : public AutoParameters<AccumulatorBase> { // LCOV_EXCL_LINE
 public:
   AccumulatorBase() {
     add_parameters({{"delta_N",
