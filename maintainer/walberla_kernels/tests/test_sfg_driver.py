@@ -200,8 +200,6 @@ FetchContent_Declare(
     def test_walberla_commit_of_cmakelists(self):
         commit = sfg_driver.walberla_commit()
         self.assertRegex(commit, "^[0-9a-f]{40}$")
-        self.assertTrue(commit.startswith(
-            sfg_driver.SWEEPGEN_COMMIT_RE.search(sweepgen.__version__)[1]))
 
     def test_sweepgen_commit_match(self):
         commit = "0123456789abcdef0123456789abcdef01234567"
@@ -214,6 +212,24 @@ FetchContent_Declare(
         self.assertIn("0123456", errors[0])
         errors = sfg_driver.check_sweepgen_commit("7.3", commit)
         self.assertEqual(len(errors), 1)
+
+    def test_sweepgen_commit_of_the_checkout(self):
+        # a checkout of a release tag has a version without the commit
+        commit = "0123456789abcdef0123456789abcdef01234567"
+        other = "fedcba9876543210fedcba9876543210fedcba98"
+        self.assertEqual(
+            sfg_driver.check_sweepgen_commit("7.4", commit, commit), [])
+        errors = sfg_driver.check_sweepgen_commit("7.4", commit, other)
+        self.assertEqual(len(errors), 1)
+        self.assertIn("fedcba98", errors[0])
+        # the checkout takes precedence over a stale version of the install
+        errors = sfg_driver.check_sweepgen_commit(
+            "7.3+8.g0123456", commit, other)
+        self.assertEqual(len(errors), 1)
+
+    def test_sweepgen_source_commit(self):
+        self.assertEqual(sfg_driver.sweepgen_source_commit(),
+                         sfg_driver.walberla_commit())
 
 
 class GenerateSweepTest(unittest.TestCase):

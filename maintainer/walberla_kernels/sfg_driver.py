@@ -28,6 +28,7 @@ import dataclasses
 import itertools
 import pathlib
 import re
+import subprocess
 import typing
 import warnings
 
@@ -61,7 +62,7 @@ TESTED_TOOLCHAIN = {
     lbmpy: "2.1.1",
     pystencilssfg: "0.3.0",
 }
-# The abbreviated commit hash of a sweepgen version, ``7.3+8.gecbe1315``
+# The abbreviated commit hash of a sweepgen version, ``7.3+8.g0123abc``
 SWEEPGEN_COMMIT_RE = re.compile(r"\.g([0-9a-f]+)$")
 CMAKELISTS = pathlib.Path(__file__).resolve().parents[2] / "CMakeLists.txt"
 KERNEL_NAMESPACE = "walberla::pystencils"
@@ -174,16 +175,39 @@ def walberla_commit(cmake_text=None):
     return tag.group(1)
 
 
-def check_sweepgen_commit(version, commit):
+def sweepgen_source_commit():
     """
-    List the problem if the sweepgen ``version`` (``X+N.g<abbrev>``) doesn't
-    come from the waLBerla commit ``commit``.
+    The commit of the git checkout that sweepgen is imported from (an
+    editable install from ``<build-dir>/_deps/walberla-src/sweepgen``), or
+    ``None`` if it isn't imported from a git checkout.
     """
-    match = SWEEPGEN_COMMIT_RE.search(version)
-    if match and commit.startswith(match.group(1)):
-        return []
-    return [f"sweepgen version {version} doesn't come from waLBerla commit "
-            f"{commit[:8]}: reinstall it from "
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True,
+            cwd=pathlib.Path(sweepgen.__file__).parent, check=True)
+    except (OSError, subprocess.CalledProcessError):
+        return None
+    return result.stdout.strip()
+
+
+def check_sweepgen_commit(version, commit, source_commit=None):
+    """
+    List the problem if sweepgen doesn't come from the waLBerla commit
+    ``commit``: compare ``source_commit``, the commit of the checkout it is
+    imported from (see `sweepgen_source_commit`), or else the abbreviated
+    commit of its ``version`` (``X+N.g<abbrev>``). A checkout of a release
+    tag has a plain version (``7.4``) without the commit.
+    """
+    if source_commit is not None:
+        if source_commit == commit:
+            return []
+    else:
+        match = SWEEPGEN_COMMIT_RE.search(version)
+        if match and commit.startswith(match.group(1)):
+            return []
+    found = f" (checkout {source_commit[:8]})" if source_commit else ""
+    return [f"sweepgen version {version}{found} doesn't come from waLBerla "
+            f"commit {commit[:8]}: reinstall it from "
             f"<build-dir>/_deps/walberla-src/sweepgen after configuring "
             f"ESPResSo with that commit"]
 
@@ -199,7 +223,8 @@ def check_toolchain():
     the test suite catches changed behaviour.
     """
     errors = check_versions()
-    errors += check_sweepgen_commit(sweepgen.__version__, walberla_commit())
+    errors += check_sweepgen_commit(
+        sweepgen.__version__, walberla_commit(), sweepgen_source_commit())
     if errors:
         raise RuntimeError(
             "unsupported code generation toolchain:\n  "
