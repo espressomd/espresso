@@ -331,6 +331,15 @@ class RegularDecomposition(ut.TestCase):
                 f"{[0, y_bot, z_hi]} and {[0, y_top, z_lo]} "
                 f"(iteration {i})")
 
+    def restore_system_state(self, min_global_cut, skin, periodicity, box_l):
+        system = self.system
+        system.part.clear()
+        system.non_bonded_inter.reset()
+        system.periodicity = periodicity
+        system.box_l = box_l
+        system.min_global_cut = min_global_cut
+        system.cell_system.skin = skin
+
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_small_cell_grids(self):
         """Check the cell pairing on systems with only one to four cells per
@@ -339,6 +348,10 @@ class RegularDecomposition(ut.TestCase):
         exactly once and the forces must match the all-pairs (N-square)
         result."""
         system = self.system
+        # restore the global state even if an assertion fails
+        self.addCleanup(self.restore_system_state, system.min_global_cut,
+                        system.cell_system.skin, system.periodicity,
+                        system.box_l)
         system.part.clear()
         system.non_bonded_inter.reset()
         system.min_global_cut = 0.
@@ -392,10 +405,6 @@ class RegularDecomposition(ut.TestCase):
             np.testing.assert_allclose(f_rd, f_n2, rtol=0., atol=1e-10)
             np.testing.assert_allclose(f_rd_cells, f_n2, rtol=0., atol=1e-10)
         self.assertGreater(n_cases, 0)
-        system.part.clear()
-        system.non_bonded_inter.reset()
-        system.periodicity = 3 * [True]
-        system.box_l = 3 * [50.]
 
     def test_fully_connected_boundary_periodicity_check(self):
         """Check that setting up a fully connected boundary raises an error
