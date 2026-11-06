@@ -258,8 +258,9 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(physical.f), dt * v0 / 2. - v0)
 
     def test_exceptions(self):
-        self.assertIsNone(self.system.thermostat.call_method(
-            "unknown"))
+        with self.assertRaisesRegex(RuntimeError, "Unknown method unknown"):
+            self.assertIsNone(self.system.thermostat.call_method(
+                "unknown"))
         self.assertIsNone(self.system.thermostat.langevin.call_method(
             "unknown"))
 
