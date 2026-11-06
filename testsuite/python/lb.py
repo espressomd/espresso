@@ -391,6 +391,7 @@ class LBTest:
         densities = np.copy(lbf[:, :, :].density)
         np.testing.assert_allclose(densities, ref_density, rtol=1e-5)
         self.assertIsNone(lbf[:1, 0, 0].boundary[0])
+        self.assertIsNone(lbf[:1, 0, 0].call_method("unknown"))
 
         # prepare various slicing operations
         slices = []
@@ -475,6 +476,7 @@ class LBTest:
 
         shape_ref = np.copy(self.system.box_l) / self.params['agrid']
         np.testing.assert_array_equal(lbf.shape, shape_ref.astype(int))
+        self.assertIsNone(lbf[0, 0, 0].call_method("unknown"))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
         lbf[0, 0, 0].velocity = v_fluid

@@ -382,9 +382,9 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     gpg --import "${CODECOV_PUBLIC_KEY}"
 
     # download uploader and signatures
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+    curl -Os https://cli.codecov.io/latest/linux/codecov
+    curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+    curl -Os https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
 
     # check uploader integrity, exit script in case of failure
     gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
@@ -393,19 +393,20 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
 
     codecov_opts=""
     if [ "${with_coverage}" = true ]; then
-        echo "Running lcov and gcov..."
-        codecov_opts="${codecov_opts} --gcov"
+        echo "Running lcov..."
         "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
+        codecov_opts="${codecov_opts} -f coverage.info"
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."
         python3 -m coverage combine testsuite/python testsuite/tutorials testsuite/samples testsuite/benchmarks testsuite/scripts
         python3 -m coverage xml
+        codecov_opts="${codecov_opts} -f coverage.xml"
     fi
     echo "Uploading to Codecov..."
     for codecov_trial in 1 2 3; do
         codecov_errno="0"
-        ./codecov ${codecov_opts} -t "${CODECOV_TOKEN}" --nonZero || codecov_errno="${?}"
+        ./codecov upload-coverage ${codecov_opts} -t "${CODECOV_TOKEN}" --git-service github --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
         if [ "${codecov_errno}" = "0" ]; then
             break
         fi
