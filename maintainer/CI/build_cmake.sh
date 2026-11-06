@@ -237,9 +237,8 @@ cd "${builddir}"
 
 # load modules
 if [ -f "/etc/os-release" ]; then
-    if grep -qP 'NAME="(openSUSE|SLES|SLED)' /etc/os-release; then
-        . /etc/profile.d/modules.sh
-        module load gnu-openmpi
+    if grep -q 'NAME="Ubuntu"' /etc/os-release; then
+        export OMPI_MCA_opal_abort_print_stack=1
     elif grep -qP 'NAME="(Fedora|Red Hat Enterprise) Linux"' /etc/os-release; then
         for f in /etc/profile.d/*module*.sh; do
             . "${f}"
@@ -247,16 +246,6 @@ if [ -f "/etc/os-release" ]; then
         module load mpi
         # Fedora's Kokkos is missing feature ENABLE_IMPL_VIEW_LEGACY
         sed -i "/find_package(Kokkos/d" ${srcdir}/CMakeLists.txt
-    elif grep -q 'NAME="Ubuntu"' /etc/os-release; then
-        default_gcov="$(which "gcov")"
-        custom_gcov="$(which "${GCOV:-gcov}")"
-        if [ ! "${custom_gcov}" = "${default_gcov}" ] && [ -d "${HOME}/.local/var/lib/alternatives" ]; then
-            update-alternatives --altdir "${HOME}/.local/etc/alternatives" \
-                                --admindir "${HOME}/.local/var/lib/alternatives" \
-                                --install "${HOME}/.local/bin/gcov" "gcov" "${custom_gcov}" 10
-        fi
-        export OMPI_MCA_mpi_abort_print_stack=enabled
-        export OMPI_MCA_hwloc_base_binding_policy=none
     fi
 fi
 
