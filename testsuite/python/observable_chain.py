@@ -19,6 +19,8 @@ import unittest as ut
 import espressomd
 import numpy as np
 import espressomd.observables
+import sys
+import subprocess
 
 
 def cos_persistence_angles(positions):
@@ -243,6 +245,83 @@ class ObservableTests(ut.TestCase):
         for i in range(3):
             with self.assertRaises(RuntimeError):
                 espressomd.observables.CosPersistenceAngles(ids=np.arange(i))
+
+    def test_nonexistent_id_is_rejected(self):
+        """
+        Bug #23: the documented "(existing) particle" precondition for
+        observable ids is unenforced. Passing a nonexistent id to a
+        get_all_particle_positions-family chain observable (here
+        ParticleDistances) makes fetch_particles silently drop the id, so
+        detail::get_argsort produces an out-of-range index that
+        detail::get_all_particle_positions consumes as an out-of-bounds read
+        (assert-abort in debug builds, garbage/SIGSEGV in release).
+
+        Correct behavior is a clear RuntimeError at calculate() time.
+        """
+        # Only particles 0..n_parts-1 exist; 99 does not.
+        nonexistent = 99
+        self.assertNotIn(nonexistent, list(range(self.n_parts)))
+        obs = espressomd.observables.ParticleDistances(
+            ids=[0, 1, 2, nonexistent])
+        self.system.integrator.run(0)
+        with self.assertRaises(RuntimeError):
+            obs.calculate()
+        # Removing the offending particle is not possible here (it never
+        # existed), but valid ids must still work afterwards.
+        obs_ok = espressomd.observables.ParticleDistances(ids=[0, 1, 2])
+        np.testing.assert_array_equal(obs_ok.calculate().shape, (2,))
+
+    @ut.skipIf(
+        system.cell_system.get_state()["n_nodes"] > 1,
+        "subprocess re-initializes espressomd; only safe outside an MPI run")
+    def test_nonexistent_id_does_not_crash_subprocess(self):
+        """
+        Bug #23 (crash-safety): the out-of-bounds read on the unfixed code can
+        abort or segfault the whole process. Run the trigger out-of-process so
+        a crash surfaces as a non-zero/negative return code rather than as a
+        clean Python exception. After the fix the child must exit cleanly and
+        report that the nonexistent id was REJECTED with an exception.
+
+        This runs only single-rank; the multi-rank collective existence check
+        is exercised by ``test_nonexistent_id_is_rejected``.
+        """
+        child_script = r"""
+import espressomd
+import espressomd.observables
+
+system = espressomd.System(box_l=[10., 10., 10.])
+system.time_step = 0.01
+system.cell_system.skin = 0.4
+for i in range(3):
+    system.part.add(pos=[1. + i, 1. + i, 1. + i], id=i)
+system.integrator.run(0)
+try:
+    obs = espressomd.observables.ParticleDistances(ids=[0, 1, 2, 99])
+    res = obs.calculate()
+except Exception as err:
+    print("REJECTED:" + type(err).__name__)
+else:
+    print("NO_REJECTION:" + str(res))
+"""
+        # Run the child with the same interpreter/environment as the parent
+        # (pypresso sets PYTHONPATH in os.environ, inherited by the child).
+        proc = subprocess.run(
+            [sys.executable, "-c", child_script],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, timeout=300)
+        out = proc.stdout + proc.stderr
+        self.assertGreaterEqual(
+            proc.returncode, 0,
+            msg=f"child killed by signal {-proc.returncode} (OOB/crash); "
+            f"output was:\n{out}")
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=f"child exited with code {proc.returncode}; output:\n{out}")
+        self.assertIn(
+            "REJECTED:", proc.stdout,
+            msg=f"nonexistent observable id was not rejected with an "
+            f"exception (OOB read / silently-wrong result); "
+            f"output:\n{out}")
 
 
 if __name__ == "__main__":
