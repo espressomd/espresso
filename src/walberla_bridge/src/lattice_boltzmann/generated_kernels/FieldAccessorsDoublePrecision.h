@@ -18,7 +18,6 @@
 #include "core/math/Matrix3.h"
 #include "core/math/Vector3.h"
 #include "field/GhostLayerField.h"
-#include "pystencils_runtime/generic_cpu.hpp"
 #include "stencil/D3Q19.h"
 #include "stencil/Directions.h"
 #include <array>

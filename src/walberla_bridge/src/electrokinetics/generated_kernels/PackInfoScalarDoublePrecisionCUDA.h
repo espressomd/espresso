@@ -40,81 +40,31 @@ public:
                    walberla::stencil::Direction dir, cudaStream_t stream) const;
   walberla::uint_t elementsPerCell(walberla::stencil::Direction dir) const {
     switch (dir) {
-    case walberla::stencil::Direction::BSW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::SW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TSW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::W: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BNW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::NW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TNW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BS: {
-      return 1;
-    }
-    case walberla::stencil::Direction::S: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TS: {
-      return 1;
-    }
-    case walberla::stencil::Direction::B: {
-      return 1;
-    }
-    case walberla::stencil::Direction::T: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BN: {
-      return 1;
-    }
-    case walberla::stencil::Direction::N: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TN: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BSE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::SE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TSE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::E: {
-      return 1;
-    }
-    case walberla::stencil::Direction::TE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BNE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::NE: {
-      return 1;
-    }
+    case walberla::stencil::Direction::BSW:
+    case walberla::stencil::Direction::SW:
+    case walberla::stencil::Direction::TSW:
+    case walberla::stencil::Direction::BW:
+    case walberla::stencil::Direction::W:
+    case walberla::stencil::Direction::TW:
+    case walberla::stencil::Direction::BNW:
+    case walberla::stencil::Direction::NW:
+    case walberla::stencil::Direction::TNW:
+    case walberla::stencil::Direction::BS:
+    case walberla::stencil::Direction::S:
+    case walberla::stencil::Direction::TS:
+    case walberla::stencil::Direction::B:
+    case walberla::stencil::Direction::T:
+    case walberla::stencil::Direction::BN:
+    case walberla::stencil::Direction::N:
+    case walberla::stencil::Direction::TN:
+    case walberla::stencil::Direction::BSE:
+    case walberla::stencil::Direction::SE:
+    case walberla::stencil::Direction::TSE:
+    case walberla::stencil::Direction::BE:
+    case walberla::stencil::Direction::E:
+    case walberla::stencil::Direction::TE:
+    case walberla::stencil::Direction::BNE:
+    case walberla::stencil::Direction::NE:
     case walberla::stencil::Direction::TNE: {
       return 1;
     }

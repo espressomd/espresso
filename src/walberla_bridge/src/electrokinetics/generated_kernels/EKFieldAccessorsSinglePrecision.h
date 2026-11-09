@@ -15,7 +15,6 @@
 #include "core/math/Matrix3.h"
 #include "core/math/Vector3.h"
 #include "field/GhostLayerField.h"
-#include "pystencils_runtime/generic_cpu.hpp"
 #include <array>
 #include <cassert>
 #include <cmath>

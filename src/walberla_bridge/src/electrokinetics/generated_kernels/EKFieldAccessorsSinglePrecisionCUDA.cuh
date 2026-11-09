@@ -25,15 +25,15 @@ namespace Scalar {
 float get(const walberla::gpu::GPUField<float> *field,
           const walberla::Cell &cell);
 
-void set(walberla::gpu::GPUField<float> *field, const float value,
+void set(walberla::gpu::GPUField<float> *field, float value,
          const walberla::Cell &cell);
 
-void add(walberla::gpu::GPUField<float> *field, const float value,
+void add(walberla::gpu::GPUField<float> *field, float value,
          const walberla::Cell &cell);
 
-void initialize(walberla::gpu::GPUField<float> *field, const float value);
+void initialize(walberla::gpu::GPUField<float> *field, float value);
 
-void add_to_all(walberla::gpu::GPUField<float> *field, const float value);
+void add_to_all(walberla::gpu::GPUField<float> *field, float value);
 
 std::vector<float> get(const walberla::gpu::GPUField<float> *field,
                        const walberla::CellInterval &ci);

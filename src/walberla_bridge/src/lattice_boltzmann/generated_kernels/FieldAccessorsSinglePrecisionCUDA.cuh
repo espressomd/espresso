@@ -80,7 +80,7 @@ void set_from_list(const walberla::gpu::GPUField<float> *field,
 
 namespace Interpolation {
 std::vector<float> get_rho(const walberla::gpu::GPUField<float> *field,
-                           const std::vector<float> &pos, const float density,
+                           const std::vector<float> &pos, float density,
                            uint gl);
 
 std::vector<float> get_vel(const walberla::gpu::GPUField<float> *field,
@@ -92,17 +92,17 @@ void add_force(const walberla::gpu::GPUField<float> *field,
 } // namespace Interpolation
 
 namespace Density {
-float get(const walberla::gpu::GPUField<float> *pdf_field, const float density,
+float get(const walberla::gpu::GPUField<float> *pdf_field, float density,
           const walberla::Cell &cell);
 
 std::vector<float> get(const walberla::gpu::GPUField<float> *pdf_field,
-                       const float density, const walberla::CellInterval &ci);
+                       float density, const walberla::CellInterval &ci);
 
-void set(walberla::gpu::GPUField<float> *pdf_field, const float rho,
-         const float density, const walberla::Cell &cell);
+void set(walberla::gpu::GPUField<float> *pdf_field, float rho, float density,
+         const walberla::Cell &cell);
 
 void set(walberla::gpu::GPUField<float> *pdf_field,
-         const std::vector<float> &values, const float density,
+         const std::vector<float> &values, float density,
          const walberla::CellInterval &ci);
 } // namespace Density
 
@@ -130,30 +130,30 @@ namespace Force {
 void set(const walberla::gpu::GPUField<float> *pdf_field,
          walberla::gpu::GPUField<float> *velocity_field,
          walberla::gpu::GPUField<float> *force_field,
-         const walberla::Vector3<float> &u, const float density,
+         const walberla::Vector3<float> &u, float density,
          const walberla::Cell &cell);
 
 void set(const walberla::gpu::GPUField<float> *pdf_field,
          walberla::gpu::GPUField<float> *velocity_field,
          walberla::gpu::GPUField<float> *force_field,
-         const std::vector<float> &values, const float density,
+         const std::vector<float> &values, float density,
          const walberla::CellInterval &ci);
 } // namespace Force
 
 namespace MomentumDensity {
 walberla::Vector3<float>
 reduce(const walberla::gpu::GPUField<float> *pdf_field,
-       const walberla::gpu::GPUField<float> *force_field, const float density);
+       const walberla::gpu::GPUField<float> *force_field, float density);
 } // namespace MomentumDensity
 
 namespace PressureTensor {
 walberla::Matrix3<float> get(const walberla::gpu::GPUField<float> *pdf_field,
-                             const float density, const walberla::Cell &cell);
+                             float density, const walberla::Cell &cell);
 
 std::vector<float> get(const walberla::gpu::GPUField<float> *pdf_field,
-                       const float density, const walberla::CellInterval &ci);
+                       float density, const walberla::CellInterval &ci);
 
 walberla::Matrix3<float> reduce(const walberla::gpu::GPUField<float> *pdf_field,
-                                const float density);
+                                float density);
 } // namespace PressureTensor
 } // namespace walberla::lbm::accessor

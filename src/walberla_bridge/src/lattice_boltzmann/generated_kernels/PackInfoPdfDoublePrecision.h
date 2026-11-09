@@ -36,59 +36,27 @@ public:
                    walberla::stencil::Direction dir) const;
   walberla::uint_t elementsPerCell(walberla::stencil::Direction dir) const {
     switch (dir) {
-    case walberla::stencil::Direction::SW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::W: {
-      return 5;
-    }
-    case walberla::stencil::Direction::TW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::NW: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BS: {
-      return 1;
-    }
-    case walberla::stencil::Direction::S: {
-      return 5;
-    }
-    case walberla::stencil::Direction::TS: {
-      return 1;
-    }
-    case walberla::stencil::Direction::B: {
-      return 5;
-    }
-    case walberla::stencil::Direction::T: {
-      return 5;
-    }
-    case walberla::stencil::Direction::BN: {
-      return 1;
-    }
-    case walberla::stencil::Direction::N: {
-      return 5;
-    }
-    case walberla::stencil::Direction::TN: {
-      return 1;
-    }
-    case walberla::stencil::Direction::SE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::BE: {
-      return 1;
-    }
-    case walberla::stencil::Direction::E: {
-      return 5;
-    }
-    case walberla::stencil::Direction::TE: {
-      return 1;
-    }
+    case walberla::stencil::Direction::SW:
+    case walberla::stencil::Direction::BW:
+    case walberla::stencil::Direction::TW:
+    case walberla::stencil::Direction::NW:
+    case walberla::stencil::Direction::BS:
+    case walberla::stencil::Direction::TS:
+    case walberla::stencil::Direction::BN:
+    case walberla::stencil::Direction::TN:
+    case walberla::stencil::Direction::SE:
+    case walberla::stencil::Direction::BE:
+    case walberla::stencil::Direction::TE:
     case walberla::stencil::Direction::NE: {
       return 1;
+    }
+    case walberla::stencil::Direction::W:
+    case walberla::stencil::Direction::S:
+    case walberla::stencil::Direction::B:
+    case walberla::stencil::Direction::T:
+    case walberla::stencil::Direction::N:
+    case walberla::stencil::Direction::E: {
+      return 5;
     }
     default: {
       return 0;
