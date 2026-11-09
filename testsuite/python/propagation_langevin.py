@@ -257,6 +257,44 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), dt * v0 / 2. - v0)
 
+    @utx.skipIfMissingFeatures(["ROTATION", "VIRTUAL_SITES_RELATIVE"])
+    def test_08__virtual_rotation(self):
+        """
+        A virtual site with ``TRANS_VS_RELATIVE | ROT_LANGEVIN`` is
+        rotationally thermalized on its own: the friction torque acts on
+        the virtual site and is not transferred to the real particle.
+
+        """
+        Propagation = espressomd.propagation.Propagation
+        system = self.system
+        o0 = np.array([5., 5., 5.])
+        gamma_r = 3.
+        rinertia = np.array([1., 1., 1.])
+
+        system.time_step = 0.0001
+        physical = system.part.add(pos=(0, 0, 0), rotation=3 * [True])
+        virtual = system.part.add(
+            pos=(0, 0, 0), omega_body=o0, rotation=3 * [True])
+        if espressomd.has_features("ROTATIONAL_INERTIA"):
+            rinertia = np.array([2., 2., 2.])
+            virtual.rinertia = rinertia
+        virtual.vs_relative = (physical.id, 0.01, (1., 0., 0., 0.))
+        virtual.propagation = (Propagation.TRANS_VS_RELATIVE |
+                               Propagation.ROT_LANGEVIN)
+        system.thermostat.set_langevin(
+            kT=0, gamma=2., gamma_rotation=gamma_r, seed=41)
+
+        system.time = 0
+        for _ in range(100):
+            system.integrator.run(10)
+            ref_omega_body = o0 * np.exp(-gamma_r / rinertia * system.time)
+            np.testing.assert_allclose(
+                np.copy(virtual.omega_body), ref_omega_body, atol=5E-4)
+            np.testing.assert_allclose(
+                np.copy(physical.torque_lab), np.zeros(3), atol=1e-12)
+            np.testing.assert_allclose(
+                np.copy(physical.omega_body), np.zeros(3), atol=1e-12)
+
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "WALBERLA"])
     def test_virtual_sites_relative(self):
         Propagation = espressomd.propagation.Propagation

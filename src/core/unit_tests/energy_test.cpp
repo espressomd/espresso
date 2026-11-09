@@ -87,5 +87,24 @@ BOOST_AUTO_TEST_CASE(rotational_kinetic_energy_) {
     BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
 #endif
   }
+
+  // virtual particle with its own rotational propagation
+  {
+#ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
+
+    Particle p;
+#ifdef ESPRESSO_ROTATIONAL_INERTIA
+    p.rinertia() = {1., 2., 3.};
+#endif
+    p.propagation() =
+        PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_EULER;
+    p.omega() = {3., 4., 5.};
+    p.set_can_rotate_all_axes();
+
+    auto const expected =
+        0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia());
+    BOOST_CHECK_EQUAL(rotational_kinetic_energy(p), expected);
+#endif
+  }
 #endif
 }

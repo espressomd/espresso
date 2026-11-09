@@ -280,8 +280,23 @@ around the non-virtual particles center.
 
 To use this implementation of virtual sites, activate the feature
 ``VIRTUAL_SITES_RELATIVE``. Furthermore, particles have to be set up with the
-propagation modes :attr:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE`
-and, :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` or :attr:`~espressomd.propagation.Propagation.ROT_VS_INDEPENDENT`.
+propagation mode :attr:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE`
+combined with one of the following rotation modes:
+
+* :attr:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE`: the orientation
+  of the virtual site follows the orientation of the non-virtual particle, and
+  torques acting on the virtual site are transferred to the non-virtual particle.
+* :attr:`~espressomd.propagation.Propagation.ROT_VS_INDEPENDENT`: the orientation
+  of the virtual site is not updated by the integrator (it is left to an
+  external model, e.g. thermal Stoner-Wohlfarth), but torques acting on the
+  virtual site are still transferred to the non-virtual particle.
+* :attr:`~espressomd.propagation.Propagation.ROT_EULER` or
+  :attr:`~espressomd.propagation.Propagation.ROT_LANGEVIN`: the virtual site
+  rotates on its own, like a free particle. Its orientation is integrated from
+  its own angular velocity and torque, and torques acting on the virtual site
+  are not transferred to the non-virtual particle. Rotation of the non-virtual
+  particle still moves the virtual site along its orbit, but doesn't change
+  its orientation.
 
 #. Place the particle to which the virtual site should be related.
    It needs to be in the center of mass of the rigid arrangement of
@@ -498,6 +513,10 @@ Which equations of motion are being used can be controlled on a per-particle lev
 This is achieved by setting the particle
 :attr:`~espressomd.particle_data.ParticleHandle.propagation` attribute with a
 combination of propagation flags from :class:`~espressomd.propagation.Propagation`.
+The default value :class:`~espressomd.propagation.Propagation.SYSTEM_DEFAULT`
+resolves to the propagation modes of the active integrator and thermostat
+combination; the resolved modes can be queried with
+:attr:`system.integrator.default_propagation <espressomd.integrate.IntegratorHandle.default_propagation>`.
 
 Depending on which main integrator is selected, different "secondary" integrators
 become available. The velocity Verlet integrator is available as a secondary
@@ -509,7 +528,10 @@ can be decoupled from a thermostat.
 :ref:`Virtual sites` also rely on secondary integrators, such as
 :class:`~espressomd.propagation.Propagation.TRANS_VS_RELATIVE` and
 :class:`~espressomd.propagation.Propagation.ROT_VS_RELATIVE` or :class:`~espressomd.propagation.Propagation.ROT_VS_INDEPENDENT` for
-:ref:`Rigid arrangements of particles` or
+:ref:`Rigid arrangements of particles` (where
+:class:`~espressomd.propagation.Propagation.ROT_EULER` or
+:class:`~espressomd.propagation.Propagation.ROT_LANGEVIN` can take the place
+of the virtual site rotation mode to let the virtual site rotate freely), or
 :class:`~espressomd.propagation.Propagation.TRANS_LB_TRACER` for
 :ref:`Inertialess lattice-Boltzmann tracers`.
 

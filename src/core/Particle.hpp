@@ -610,8 +610,17 @@ public:
                              PropagationMode::ROT_VS_INDEPENDENT |
                              PropagationMode::TRANS_LB_TRACER)) != 0;
   }
+  /** @brief Whether the orientation is controlled by the virtual sites
+   *  machinery, i.e. slaved to the reference particle or set by an external
+   *  model, instead of being integrated by a rotational propagator.
+   */
+  constexpr auto has_virtual_rotation() const {
+    return (p.propagation & (PropagationMode::ROT_VS_RELATIVE |
+                             PropagationMode::ROT_VS_INDEPENDENT)) != 0;
+  }
 #else
   constexpr auto is_virtual() const { return false; }
+  constexpr auto has_virtual_rotation() const { return false; }
 #endif // ESPRESSO_VIRTUAL_SITES
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
   constexpr auto const &vs_relative() const { return p.vs_relative; }

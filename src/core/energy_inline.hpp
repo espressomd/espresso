@@ -305,12 +305,28 @@ inline double translational_kinetic_energy(Particle const &p) {
   return p.is_virtual() ? 0. : 0.5 * p.mass() * p.v().norm2();
 }
 
+#ifdef ESPRESSO_ROTATION
+/** @brief Whether the rotational degrees of freedom of a particle are
+ *  integrated by a rotational propagator. False for virtual sites whose
+ *  orientation is slaved to a reference particle or set by an external model.
+ */
+inline bool has_propagated_rotation(Particle const &p) {
+  if (not p.is_virtual()) {
+    return true;
+  }
+  using namespace PropagationMode;
+  return not p.has_virtual_rotation() and
+         (p.propagation() &
+          (ROT_EULER | ROT_LANGEVIN | ROT_BROWNIAN | ROT_STOKESIAN)) != 0;
+}
+#endif // ESPRESSO_ROTATION
+
 /** Calculate kinetic energies from rotation for one particle.
  *  @param p   particle for which to calculate energies
  */
 inline double rotational_kinetic_energy([[maybe_unused]] Particle const &p) {
 #ifdef ESPRESSO_ROTATION
-  return (p.can_rotate() and not p.is_virtual())
+  return (p.can_rotate() and has_propagated_rotation(p))
              ? 0.5 * (hadamard_product(p.omega(), p.omega()) * p.rinertia())
              : 0.0;
 #else
