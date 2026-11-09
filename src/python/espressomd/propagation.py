@@ -62,3 +62,10 @@ class Propagation(enum.IntFlag):
     """Euler algorithm that integrates Stokes' equations of rotation."""
     ROT_VS_INDEPENDENT = 2**15
     """Algorithm for virtual sites rotation where the quaternion of the virtual doesn't follow the quaternion of the real particle."""
+
+    # Since Python 3.11, IntFlag mixes in ReprEnum, which makes str(),
+    # format() and f-strings fall back to int.__str__() and print the
+    # raw bitmask instead of the flag names. Restore the descriptive
+    # enum.Flag formatting so printing a particle's propagation shows
+    # the flag names, e.g. "Propagation.TRANS_LANGEVIN".
+    __str__ = enum.Flag.__str__

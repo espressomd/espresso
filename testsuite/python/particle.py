@@ -122,6 +122,17 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(flags_si, flags_core)
         self.assertIsInstance(self.partcl.propagation, Propagation)
         self.assertIsInstance(getattr(self.partcl, "propagation"), Propagation)
+        # printing/formatting must show the flag names, not a raw int
+        # (regression test: Python 3.11+ IntFlag mixes in ReprEnum,
+        # which makes str() fall back to int.__str__() unless overridden)
+        self.partcl.propagation = Propagation.TRANS_LANGEVIN
+        self.assertEqual(str(self.partcl.propagation),
+                         "Propagation.TRANS_LANGEVIN")
+        self.assertEqual(f"{self.partcl.propagation}",
+                         "Propagation.TRANS_LANGEVIN")
+        combo = Propagation.TRANS_LANGEVIN | Propagation.ROT_LANGEVIN
+        self.assertEqual(str(combo), "Propagation.TRANS_LANGEVIN|ROT_LANGEVIN")
+        self.assertEqual(str(Propagation.NONE), "Propagation.NONE")
 
     test_bonds_property = generateTestForScalarProperty(
         "bonds", ((f1, 1), (f2, 2)))
