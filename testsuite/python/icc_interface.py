@@ -127,6 +127,18 @@ class Test(ut.TestCase):
             with self.assertRaisesRegex((ValueError, RuntimeError), error):
                 espressomd.electrostatic_extensions.ICC(**params)
 
+    def test_unknown_kwarg_rejected(self):
+        part_slice, normals, areas = self.add_icc_particles()
+        with self.assertRaises((RuntimeError, ValueError, TypeError)):
+            espressomd.electrostatic_extensions.ICC(
+                n_icc=len(part_slice),
+                normals=normals,
+                areas=areas,
+                epsilons=np.ones_like(areas),
+                first_id=part_slice.id[0],
+                relaxaton=0.9,  # typo: should be 'relaxation'
+            )
+
     @utx.skipIfMissingFeatures(["P3M"])
     def test_exceptions_small_r_cut(self):
         icc, _ = self.setup_icc_particles_and_solver(max_iterations=1)
