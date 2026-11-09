@@ -32,12 +32,14 @@
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/mpi.hpp>
 #include <boost/mpi/collectives.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <initializer_list>
 #include <map>
 #include <optional>
 #include <utility>
@@ -105,23 +107,22 @@ BOOST_AUTO_TEST_CASE(red_black_balance) {
     for (auto neighbor : cell->neighbors().red()) {
       auto const ind2 = global_index(neighbor);
       BOOST_CHECK_NE(ind1, ind2);
-      local_pairs.push_back(std::min(ind1, ind2));
-      local_pairs.push_back(std::max(ind1, ind2));
+      local_pairs.emplace_back(std::min(ind1, ind2));
+      local_pairs.emplace_back(std::max(ind1, ind2));
     }
   }
 
-  std::vector<std::vector<int>> all_pairs;
-  boost::mpi::all_gather(::communicator.comm, local_pairs, all_pairs);
-  std::map<std::pair<int, int>, int> counts;
-  for (auto const &rank_pairs : all_pairs) {
-    for (std::size_t k = 0; k < rank_pairs.size(); k += 2) {
-      ++counts[{rank_pairs[k], rank_pairs[k + 1]}];
+  Utils::Mpi::gather_buffer(local_pairs, ::communicator.comm);
+  if (::communicator.comm.rank() == 0) {
+    std::map<std::pair<int, int>, int> counts;
+    for (std::size_t k = 0; k < local_pairs.size(); k += 2) {
+      ++counts[{local_pairs[k], local_pairs[k + 1]}];
     }
+    // 13 pairs per cell (26 neighbors, each pair counted once), every pair
+    // occurs exactly once
+    BOOST_CHECK_EQUAL(counts.size(),
+                      static_cast<std::size_t>(13 * n_cells_global));
+    BOOST_CHECK(std::ranges::all_of(
+        counts, [](auto const &kv) { return kv.second == 1; }));
   }
-  // 13 pairs per cell (26 neighbors, each pair counted once), every pair
-  // occurs exactly once
-  BOOST_CHECK_EQUAL(counts.size(),
-                    static_cast<std::size_t>(13 * n_cells_global));
-  BOOST_CHECK(std::ranges::all_of(
-      counts, [](auto const &kv) { return kv.second == 1; }));
 }
