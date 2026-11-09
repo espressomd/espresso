@@ -517,6 +517,31 @@ class GenerateSparseSweepTest(unittest.TestCase):
         self.assertIn("runOnCellInterval", header)
 
 
+class RemoveRuntimeIncludeTest(unittest.TestCase):
+
+    def test_only_the_runtime_include_is_removed(self):
+        header = ('#include "core/Abort.h"\n'
+                  '#include "pystencils_runtime/generic_cpu.hpp"\n'
+                  '#include <array>\n')
+        self.assertEqual(sfg_driver.remove_runtime_include(header),
+                         '#include "core/Abort.h"\n#include <array>\n')
+        self.assertEqual(sfg_driver.remove_runtime_include("int x;\n"),
+                         "int x;\n")
+
+
+class RemoveConstValuesTest(unittest.TestCase):
+
+    def test_only_by_value_scalars_are_changed(self):
+        header = ("void set(const walberla::Cell &cell, const double rho,\n"
+                  "         const double *data, const float &u,\n"
+                  "         const float value);\n")
+        self.assertEqual(
+            sfg_driver.remove_const_values(header),
+            "void set(const walberla::Cell &cell, double rho,\n"
+            "         const double *data, const float &u,\n"
+            "         float value);\n")
+
+
 class PatchKernelSourceTest(unittest.TestCase):
 
     def test_rng_namespace_is_global(self):

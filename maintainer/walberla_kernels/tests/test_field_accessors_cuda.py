@@ -146,6 +146,12 @@ class FieldAccessorsCudaTest(unittest.TestCase):
             rf"^\s*[A-Za-z][^;{{}}]*?\b{name}\s*\([^;{{}}]*\)\s*\{{",
             block, re.M))
 
+    def test_declarations_have_no_const_values(self):
+        # clang-tidy: readability-avoid-const-params-in-decls
+        for header in self.headers.values():
+            self.assertIsNone(
+                re.search(r"\bconst (double|float) \w+\s*[,)]", header))
+
     def test_functions_are_defined(self):
         # every declared function (overload) is defined exactly once in the
         # source file, in the same namespace

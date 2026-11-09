@@ -159,6 +159,16 @@ def vector_sets(stencil, n_components):
             if d in velocities}
 
 
+def case_labels(directions):
+    """
+    Labels of a ``switch`` case that several directions share. A label of
+    pystencils-sfg is the text between ``case`` and ``:``, which here is the
+    first direction followed by the ``case`` labels of the other ones.
+    """
+    return ": case ".join(
+        str(Direction.from_offset(d)) for d in directions)
+
+
 class ReversedAxesExtraction(GhostLayerFieldExtraction):
     """
     Binds the symbolic field axes ``(a0, a1, a2)`` to ``(z, y, x)`` of a
@@ -292,9 +302,12 @@ class FieldPackInfo(CustomGenerator):
                 Direction.from_offset(d): call(kernels[d][index])
                 for d in self._comm_sets}).default("/* unreachable */")
 
+        by_count = {}
+        for d, components in self._comm_sets.items():
+            by_count.setdefault(len(components), []).append(d)
         elements_per_cell = sfg.switch(dir_var, autobreak=False).cases({
-            Direction.from_offset(d): f"return {len(components)};"
-            for d, components in self._comm_sets.items()
+            case_labels(directions): f"return {count};"
+            for count, directions in by_count.items()
         }).default("return 0;")
 
         sfg.klass(self._name, bases=[f"public {base}"])(

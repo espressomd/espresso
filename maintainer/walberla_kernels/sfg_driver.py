@@ -377,6 +377,8 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
     def __init__(self, basename, ctx, output_dir, generator_script,
                  header_only=False, header_extension="h"):
         self._basename = basename
+        self._header_only = header_only
+        self._header_extension = header_extension
         self._generator_script = generator_script
         sweepgen.build_config.DEBUG.BUILD_CONFIG = ctx.build_config()
         config = pystencilssfg.SfgConfig()
@@ -406,7 +408,42 @@ class KernelFileGenerator(pystencilssfg.SourceFileGenerator):
                     patched = patch_kernel_source(source)
                     if patched != source:
                         path.write_text(patched, encoding="utf-8")
+            path = self._output_dir / (
+                f"{self._basename}.{self._header_extension}")
+            header = path.read_text(encoding="utf-8")
+            patched = header
+            if self._header_only:
+                patched = remove_runtime_include(patched)
+            if self._header_extension == "cuh":
+                patched = remove_const_values(patched)
+            if patched != header:
+                path.write_text(patched, encoding="utf-8")
         return result
+
+
+RUNTIME_INCLUDE = '#include "pystencils_runtime/generic_cpu.hpp"\n'
+
+
+def remove_runtime_include(header):
+    """
+    Remove the include of the CPU runtime header of pystencils from the
+    header of the field accessors. Their inline kernels don't use it, but it
+    includes the x86 intrinsics, which clang can't compile in a CUDA
+    translation unit that includes the accessors (the bridge sources that are
+    compiled with ``nvcc``/``clang`` for CUDA).
+    """
+    return header.replace(RUNTIME_INCLUDE, "", 1)
+
+
+def remove_const_values(header):
+    """
+    Remove the top-level ``const`` of the by-value scalar parameters of the
+    functions declared in a CUDA header: it is not part of the signature, and
+    clang-tidy (``readability-avoid-const-params-in-decls``) flags it. The
+    scalar parameters of the host functions are the parameters of the CUDA
+    kernels, which pystencils declares ``const``.
+    """
+    return re.sub(r"\bconst (double|float) (?=\w+\s*[,)])", r"\1 ", header)
 
 
 def patch_kernel_source(source):

@@ -71,10 +71,18 @@ generate = functools.cache(generate_uncached)
 
 
 def elements_per_cell(header):
-    """Number of components per direction from ``elementsPerCell()``."""
-    return {m.group(1): int(m.group(2)) for m in re.finditer(
-        r"case walberla::stencil::Direction::(\w+): \{\s*return (\d+);",
-        header)}
+    """
+    Number of components per direction from ``elementsPerCell()``, where the
+    directions with the same number share a case.
+    """
+    counts = {}
+    for m in re.finditer(
+            r"((?:case walberla::stencil::Direction::\w+:\s*)+)\{\s*"
+            r"return (\d+);", header):
+        for direction in re.findall(r"Direction::(\w+):", m.group(1)):
+            assert direction not in counts, direction
+            counts[direction] = int(m.group(2))
+    return counts
 
 
 class CommunicationSetsTest(unittest.TestCase):

@@ -151,9 +151,11 @@ class FieldAccessorsTest(unittest.TestCase):
             self.assertEqual(sfg_driver.patch_kernel_source(header), header)
             self.assertNotIn("pystencils::runtime::", header)
 
-    def test_header_includes_the_pystencils_runtime(self):
+    def test_header_does_not_include_the_pystencils_runtime(self):
+        # it includes x86 intrinsics, which clang can't compile in a CUDA
+        # translation unit that includes the accessors
         for header in self.headers.values():
-            self.assertIn("pystencils_runtime/generic_cpu.hpp", header)
+            self.assertNotIn("pystencils_runtime/generic_cpu.hpp", header)
 
     def test_no_cuda_or_device_buffers(self):
         for header in self.headers.values():

@@ -197,7 +197,7 @@ class EkAccessorsTest(unittest.TestCase):
         # files, but not the headers
         for header in self.cpu.values():
             self.assertEqual(sfg_driver.patch_kernel_source(header), header)
-            self.assertIn("pystencils_runtime/generic_cpu.hpp", header)
+            self.assertNotIn("pystencils_runtime/generic_cpu.hpp", header)
 
     def test_no_cuda_in_the_cpu_header(self):
         for header in self.cpu.values():

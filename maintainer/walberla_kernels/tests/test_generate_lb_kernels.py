@@ -94,7 +94,9 @@ class GenerateLbKernelsTest(unittest.TestCase):
         self.assertIn("inline auto", header)
         # the kernels are defined in the header
         self.assertIn("namespace cpu_kernels", header)
-        self.assertIn("pystencils_runtime/generic_cpu.hpp", header)
+        # the x86 intrinsics of the runtime header can't be compiled in a
+        # CUDA translation unit with clang
+        self.assertNotIn("pystencils_runtime/generic_cpu.hpp", header)
 
     def test_field_accessors_cuda_is_skipped(self):
         tmp, result = self.run_script("--kernels", "field_accessors",
