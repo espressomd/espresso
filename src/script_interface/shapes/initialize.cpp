@@ -28,9 +28,12 @@
 #include "SpheroCylinder.hpp"
 #include "Torus.hpp"
 #include "Union.hpp"
+#include "VoxelMask.hpp"
 #include "Wall.hpp"
 
 #include "initialize.hpp"
+
+#include "config/config.hpp"
 
 namespace ScriptInterface {
 namespace Shapes {
@@ -47,6 +50,9 @@ void initialize(Utils::Factory<ObjectHandle> *f) {
   f->register_new<Slitpore>("Shapes::Slitpore");
   f->register_new<SimplePore>("Shapes::SimplePore");
   f->register_new<Torus>("Shapes::Torus");
+#ifdef ESPRESSO_H5MD
+  f->register_new<VoxelMask>("Shapes::VoxelMask");
+#endif
 }
 } /* namespace Shapes */
 } /* namespace ScriptInterface */

@@ -232,6 +232,37 @@ BOOST_DATA_TEST_CASE(update_boundary_from_shape, bdata::make(all_lbs()),
   }
 }
 
+BOOST_DATA_TEST_CASE(update_boundary_from_predicate, bdata::make(all_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(params);
+  auto const grid_size = params.grid_dimensions;
+  auto const vel = Vector3d{{0.2, 3.8, 4.2}};
+  // the plane x = 0 and its periodic images
+  auto const is_boundary = [grid_size](Vector3i const &node) {
+    return (node[0] + grid_size[0]) % grid_size[0] == 0;
+  };
+
+  lb->update_boundary_from_predicate(is_boundary, vel);
+  lb->ghost_communication();
+
+  for (auto const &node : local_nodes_incl_ghosts(lb->get_lattice())) {
+    auto const res = lb->get_node_is_boundary(node, true);
+    BOOST_REQUIRE(res);
+    BOOST_CHECK_EQUAL(*res, is_boundary(node));
+    if (is_boundary(node)) {
+      auto const vel_check = lb->get_node_velocity_at_boundary(node, true);
+      BOOST_REQUIRE(vel_check);
+      BOOST_CHECK_SMALL((*vel_check - vel).norm(), 1E-12);
+    }
+  }
+
+  lb->clear_boundaries();
+  lb->ghost_communication();
+  for (auto const &node : local_nodes_incl_ghosts(lb->get_lattice())) {
+    BOOST_CHECK(!(*lb->get_node_is_boundary(node, true)));
+  }
+}
+
 BOOST_DATA_TEST_CASE(domain_and_halo, bdata::make(all_lbs()), lb_generator) {
   auto lb = lb_generator(params);
   auto const n_ghost_layers = lb->get_lattice().get_ghost_layers();

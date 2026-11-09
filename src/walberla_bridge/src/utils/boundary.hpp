@@ -27,6 +27,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <iterator>
 #include <vector>
 
@@ -108,6 +109,44 @@ void set_boundary_from_grid(BoundaryModel &boundary,
             auto const &value = data_flat[index];
             auto const bc = BlockAndCell{&block, Cell(i, j, k)};
             boundary.set_node_value_at_boundary(node, conv(value), bc);
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @brief Set boundary conditions from a node predicate.
+ * Each MPI rank only visits its own nodes, including the ghost layers.
+ * @param boundary      Boundary model.
+ * @param lattice       LB lattice.
+ * @param is_boundary   Predicate on the unfolded global node index. The index
+ *                      of a ghost-layer node may be negative or at least the
+ *                      grid size.
+ * @param value         Uniform boundary value.
+ */
+template <class BoundaryModel, class DataType>
+void set_boundary_from_predicate(
+    BoundaryModel &boundary, LatticeWalberla const &lattice,
+    std::function<bool(Utils::Vector3i const &)> const &is_boundary,
+    DataType const &value) {
+
+  auto const &conv = es2walberla<DataType, typename BoundaryModel::value_type>;
+  auto const gl = static_cast<int>(lattice.get_ghost_layers());
+  auto const converted_value = conv(value);
+
+  for (auto &block : *lattice.get_blocks()) {
+    auto const [size_i, size_j, size_k] = boundary.block_dims(block);
+    auto const offset = lattice.get_block_corner(block, true);
+    // In the loop, i,j,k are in block-local coordinates
+    for (int i = -gl; i < size_i + gl; ++i) {
+      for (int j = -gl; j < size_j + gl; ++j) {
+        for (int k = -gl; k < size_k + gl; ++k) {
+          auto const node = offset + Utils::Vector3i{{i, j, k}};
+          if (is_boundary(node)) {
+            auto const bc = BlockAndCell{&block, Cell(i, j, k)};
+            boundary.set_node_value_at_boundary(node, converted_value, bc);
           }
         }
       }

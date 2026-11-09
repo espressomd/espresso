@@ -518,6 +518,26 @@ the x-axis will set all LB nodes in the left side of the box as boundary
 nodes with thickness 1. The same outcome is obtained with ``dist=1.49``,
 but with ``dist=1.51`` the thickness will be 2.
 
+With a uniform slip velocity, each MPI rank evaluates the shape on its own
+LB nodes only, so no global grid of the shape is assembled.
+A :class:`~espressomd.shapes.VoxelMask` shape only supports a uniform slip
+velocity. A node is a boundary node if the voxel that contains the node
+center is solid. Choose ``voxel_size`` equal to ``agrid`` and an ``origin``
+that is a multiple of ``agrid``; otherwise a warning is emitted, because
+the mask is then sampled rather than mapped one voxel per node.
+Each rank also evaluates the shape on its LB ghost layers, so the shape
+``halo`` must satisfy ``halo * voxel_size > (n_ghost_layers - 0.5) * agrid``;
+otherwise a :exc:`ValueError` is raised::
+
+    import espressomd.shapes
+    mask = espressomd.shapes.VoxelMask(file="mask.h5", dataset="mask",
+                                       voxel_size=lbf.agrid)
+    lbf.add_boundary_from_shape(shape=mask)
+
+:meth:`~espressomd.lb.LBFluid.get_boundary_force_from_shape` and the
+EK boundary methods still rasterize the shape on a global grid,
+so they raise an error for a :class:`~espressomd.shapes.VoxelMask`.
+
 .. _Prototyping new LB methods:
 
 Prototyping new LB methods

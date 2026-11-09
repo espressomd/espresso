@@ -57,6 +57,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <exception>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -252,6 +253,8 @@ void System::on_node_grid_change() {
   dipoles.on_node_grid_change();
 #endif
   rebuild_cell_structure();
+  // last: may throw on all ranks, after the other parts are updated
+  constraints->on_node_grid_change();
 }
 
 void System::on_periodicity_change() {
@@ -271,6 +274,8 @@ void System::on_periodicity_change() {
   }
 #endif
   on_verlet_skin_change();
+  // last: may throw on all ranks, after the other parts are updated
+  constraints->on_periodicity_change();
 }
 
 void System::on_cell_structure_change() {
@@ -494,6 +499,12 @@ void System::on_integration_start() {
   long_range_interactions_sanity_checks();
   lb.sanity_checks();
   ek.sanity_checks();
+  try {
+    // collective: every rank throws, or none does
+    constraints->on_integration_start();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
 
 #ifdef ESPRESSO_NPT
   if (propagation->integ_switch == INTEG_METHOD_NPT_ISO_AND ||

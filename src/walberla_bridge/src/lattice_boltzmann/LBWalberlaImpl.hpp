@@ -641,6 +641,9 @@ public:
   void
   update_boundary_from_shape(std::vector<int> const &raster_flat,
                              std::vector<double> const &data_flat) override;
+  void update_boundary_from_predicate(
+      std::function<bool(Utils::Vector3i const &)> const &is_boundary,
+      Utils::Vector3d const &velocity) override;
   std::optional<Utils::Vector3d>
   get_node_velocity_at_boundary(Utils::Vector3i const &node,
                                 bool consider_ghosts = false) const override;

@@ -201,6 +201,67 @@ class Wall(Shape, ScriptInterfaceHelper):
 
 
 @script_interface_register
+class VoxelMask(Shape, ScriptInterfaceHelper):
+    """
+    Solid/pore mask on a regular voxel grid, read from an HDF5 file.
+
+    Each MPI rank reads and stores only the voxels of its local box plus
+    a halo. Nonzero voxels are solid. The mask is periodic with the box
+    length in periodic directions. Positions outside of the mask are pore.
+
+    Parameters
+    ----------
+    file : :obj:`str`
+        Path to the HDF5 file.
+    dataset : :obj:`str`
+        Name of the 3D dataset, indexed ``[x][y][z]``.
+    voxel_size : :obj:`float`
+        Edge length of a voxel.
+    origin : (3,) array_like of :obj:`float`, optional
+        Position of the lower corner of the mask.
+    halo : :obj:`int`, optional
+        Number of voxels stored beyond the local box. Distances are
+        exact up to ``halo * voxel_size``, which must be at least
+        ``max_cutoff + skin / 2``. The integrator checks this rule.
+        Beyond the halo, the distance is reported as ``1e100``.
+        As an LB boundary, ``halo * voxel_size`` must also exceed
+        ``(n_ghost_layers - 0.5) * agrid`` of the LB lattice; this rule
+        is checked by :meth:`espressomd.lb.LBFluid.add_boundary_from_shape`.
+        A VoxelMask cannot be part of a :class:`Union`.
+
+    Attributes
+    ----------
+    mask_shape : (3,) array_like of :obj:`int`
+        Shape of the dataset.
+
+    Methods
+    -------
+    get_local_voxel_counts()
+        Number of stored voxels on each MPI rank, in rank order.
+
+    get_local_memory_bytes()
+        Memory used for the voxels on each MPI rank, in rank order.
+
+    """
+    _so_name = "Shapes::VoxelMask"
+    _so_features = ("H5MD",)
+    _so_bind_methods = Shape._so_bind_methods + (
+        "get_local_voxel_counts", "get_local_memory_bytes")
+
+    def __init__(self, file=None, dataset=None, voxel_size=None,
+                 origin=(0., 0., 0.), halo=2, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+            return
+        params = {"file": file, "dataset": dataset, "voxel_size": voxel_size}
+        params = {key: value for key, value in params.items()
+                  if value is not None}
+        if "file" in params:
+            params["file"] = str(params["file"])
+        super().__init__(origin=origin, halo=halo, **params, **kwargs)
+
+
+@script_interface_register
 class SimplePore(Shape, ScriptInterfaceHelper):
     """
     Two parallel infinite planes, and a cylindrical channel connecting them.

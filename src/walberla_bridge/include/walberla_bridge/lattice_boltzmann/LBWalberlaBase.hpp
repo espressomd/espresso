@@ -237,6 +237,18 @@ public:
   virtual void update_boundary_from_shape(std::vector<int> const &,
                                           std::vector<double> const &) = 0;
 
+  /**
+   * @brief Update boundary conditions from a node predicate.
+   * Each MPI rank evaluates the predicate on its own nodes, including
+   * the ghost layers. The predicate receives the unfolded global node
+   * index, which may be negative or at least the grid size.
+   * @param is_boundary  Predicate that marks boundary nodes.
+   * @param velocity     Uniform slip velocity in LB units.
+   */
+  virtual void update_boundary_from_predicate(
+      std::function<bool(Utils::Vector3i const &)> const &is_boundary,
+      Utils::Vector3d const &velocity) = 0;
+
   /** @brief Configure the default collision model. */
   virtual void set_collision_model(double kT, unsigned int seed) = 0;
 

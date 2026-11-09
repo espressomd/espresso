@@ -18,6 +18,7 @@
 #
 
 import itertools
+import warnings
 import numpy as np
 
 from . import utils
@@ -299,8 +300,16 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
             Slip velocity. By default no-slip boundary conditions are used.
             If a vector of 3 values, a uniform slip velocity is used,
             otherwise ``L, M, N`` must be equal to the LB grid dimensions.
+            A :class:`~espressomd.shapes.VoxelMask` only supports a uniform
+            slip velocity.
         boundary_type : Union[:class:`~espressomd.lb.VelocityBounceBack`] (optional)
             Type of the boundary condition.
+
+        Notes
+        -----
+        With a uniform slip velocity, each MPI rank evaluates the shape
+        on its own LB nodes only. A node is a boundary node if the shape
+        contains its center.
 
         """
         if not issubclass(boundary_type, VelocityBounceBack):
@@ -312,6 +321,13 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
         if np.shape(velocity) not in [(3,), tuple(self.shape) + (3,)]:
             raise ValueError(
                 f'Cannot process velocity value grid of shape {np.shape(velocity)}')
+        is_uniform = np.shape(velocity) == (3,)
+        is_voxel_mask = isinstance(shape, espressomd.shapes.VoxelMask)
+        if is_voxel_mask and not is_uniform:
+            raise ValueError(
+                "A VoxelMask only supports a uniform slip velocity")
+        if is_voxel_mask:
+            self._check_voxel_mask_alignment(shape)
 
         # range checks
         lattice_speed = self.call_method("get_lattice_speed")
@@ -319,11 +335,31 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
         velocity *= 1. / lattice_speed
         self._check_mach_limit(velocity)
 
+        if is_uniform:
+            self.call_method("add_boundary_from_shape_local", shape=shape,
+                             velocity=velocity[0])
+            return
+
         mask = self.get_shape_bitmask(shape=shape).astype(int)
         self.call_method(
             "add_boundary_from_shape",
             raster=array_variant(mask.flatten()),
             values=array_variant(velocity.flatten()))
+
+    def _check_voxel_mask_alignment(self, shape):
+        agrid = self.agrid
+        tol = 1e-10
+        if abs(shape.voxel_size - agrid) > tol * agrid:
+            warnings.warn(
+                f"VoxelMask voxel_size {shape.voxel_size} differs from the "
+                f"LB agrid {agrid}; boundary nodes are sampled at the LB node "
+                "centers", UserWarning, stacklevel=3)
+        origin = np.asarray(shape.origin, dtype=float) / agrid
+        if np.any(np.abs(origin - np.round(origin)) > tol):
+            warnings.warn(
+                f"VoxelMask origin {list(shape.origin)} is not a multiple of "
+                f"the LB agrid {agrid}; boundary nodes are sampled at the LB "
+                "node centers", UserWarning, stacklevel=3)
 
     def get_boundary_force_from_shape(self, shape):
         """

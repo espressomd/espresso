@@ -31,3 +31,5 @@ espresso_unit_test(SRC NoWhere_test.cpp DEPENDS espresso::shapes
 espresso_unit_test(SRC Torus_test.cpp DEPENDS espresso::shapes espresso::utils)
 espresso_unit_test(SRC SpheroCylinder_test.cpp DEPENDS espresso::shapes
                    espresso::utils)
+espresso_unit_test(SRC VoxelMask_test.cpp DEPENDS espresso::shapes
+                   espresso::utils)
