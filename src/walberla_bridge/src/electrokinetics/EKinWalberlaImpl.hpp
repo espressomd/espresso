@@ -474,7 +474,7 @@ private:
     }
     // placeholder with an invalid potential field ID: it is constructed again
     // at the first integration with electrostatics, when the ID of the
-    // potential field is known (see @ref kernel_diffusion_electrostatic)
+    // potential field is known (see kernel_diffusion_electrostatic)
     set_electrostatic_diffusion_kernel(thermalized, BlockDataID{});
   }
 
@@ -482,7 +482,7 @@ private:
    * @brief Construct the diffusive flux kernel with electrostatics. The ID of
    * the potential field is read-only in a generated kernel, so the kernel is
    * constructed again when the ID changes (see
-   * @ref kernel_diffusion_electrostatic).
+   * @c kernel_diffusion_electrostatic).
    */
   void set_electrostatic_diffusion_kernel(bool thermalized,
                                           BlockDataID const &potential_id) {

@@ -84,12 +84,12 @@
  * - @ref walberla::FluidLinks (the default): the cells are the fluid cells,
  *   the links have all the directions of the stencil. This is the policy of
  *   the lattice Boltzmann boundaries.
- * - @ref walberla::DomainLinksNoCenter: all domain cells, boundary cells
+ * - @ref walberla::DomainLinksNoCenter takes all domain cells, boundary cells
  *   included, and all directions but @c stencil::C. This is the policy of the
  *   fixed flux boundary of the electrokinetics, which stores a flux for
  *   each face between a cell and a boundary neighbor.
  * - @ref walberla::DomainLinksWithGhostLayers with
- *   @ref walberla::CellStencil: the boundary cells themselves, in the
+ *   @ref walberla::CellStencil takes the boundary cells themselves, in the
  *   interior and in all ghost layers (the link of a cell points to the cell
  *   itself). This is the policy of the Dirichlet boundary of the
  *   electrokinetics, which stores a value in each boundary cell.
