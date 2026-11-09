@@ -50,10 +50,10 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <bit>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
-#include <cstring>
 #include <functional>
 #include <memory>
 #include <stdexcept>
@@ -401,6 +401,14 @@ BOOST_AUTO_TEST_CASE(reaction_kernel_selector_size_limit) {
   }
 }
 
+/** @brief Bit pattern of a floating-point number, for exact comparisons. */
+template <typename FT> static auto bit_pattern(FT value) {
+  static_assert(sizeof(FT) == 4 or sizeof(FT) == 8);
+  using Bits =
+      std::conditional_t<sizeof(FT) == 4, std::uint32_t, std::uint64_t>;
+  return std::bit_cast<Bits>(value);
+}
+
 /**
  * @brief Communicate the ghost layers of a scalar field with the generic
  * waLBerla pack info and with the generated one, and count the cells of the
@@ -462,7 +470,7 @@ static std::size_t compare_scalar_pack_infos(
          ++it, ++it_generated) {
       // no ghost cell is left at its initial value
       BOOST_REQUIRE(*it != FT(-1));
-      n_differences += std::memcmp(&*it, &*it_generated, sizeof(FT)) != 0;
+      n_differences += bit_pattern(*it) != bit_pattern(*it_generated);
     }
   }
   return n_differences;

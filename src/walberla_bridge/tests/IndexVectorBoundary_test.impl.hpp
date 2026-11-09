@@ -73,7 +73,9 @@
 #include <functional>
 #include <memory>
 #include <random>
+#include <string>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 using namespace walberla;
@@ -143,7 +145,10 @@ class Boundary : public IndexVectorBoundary<Boundary, IndexInfo, ForceStruct,
 
 public:
   using PdfField_T = PdfField;
-  using Base::Base;
+  // the constructor of the base is private: it can't be inherited
+  Boundary(shared_ptr<StructuredBlockForest> const &blocks, BlockDataID pdfsID,
+           typename Base::ValueCallback valueCallback, std::string const &name)
+      : Base(blocks, pdfsID, std::move(valueCallback), name) {}
 
   static void assignValue(IndexInfo &element, Vector3<double> const &value) {
     element.value = value[0] + 0.1 * value[1] + 0.01 * value[2];
@@ -209,7 +214,11 @@ class ValueBoundary
 
 public:
   using PdfField_T = PdfField;
-  using Base::Base;
+  // the constructor of the base is private: it can't be inherited
+  ValueBoundary(shared_ptr<StructuredBlockForest> const &blocks,
+                BlockDataID pdfsID, typename Base::ValueCallback valueCallback,
+                std::string const &name)
+      : Base(blocks, pdfsID, std::move(valueCallback), name) {}
 
   static void assignValue(IndexInfo &element, double const &value) {
     element.value = value;

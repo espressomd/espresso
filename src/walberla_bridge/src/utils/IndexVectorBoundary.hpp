@@ -450,6 +450,11 @@ public:
   using stream_t = std::nullptr_t;
 #endif
 
+  // The derived classes define their own constructors, which call this one:
+  // the CRTP base can't be constructed on its own.
+  friend Impl;
+
+private:
   /**
    * @param blocks          the block storage that holds the vectors
    * @param pdfsID          the field of the kernel
@@ -475,6 +480,7 @@ public:
     }
   }
 
+public:
   /** @brief Run the kernel on all links of the block. */
   void run(IBlock *block, stream_t stream = nullptr) {
     run_impl(block, IndexVectors::ALL, stream);

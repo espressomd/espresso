@@ -658,6 +658,19 @@ make_potential(double scale) {
   return solver;
 }
 
+/** Periodic wrapping of a node coordinate into the range [0, n). */
+std::size_t wrap_index(int i, int n) {
+  return static_cast<std::size_t>(((i % n) + n) % n);
+}
+
+/** Index in the density of a node, which is wrapped into the lattice. */
+std::size_t wrapped_index(Vector3i const &node, Vector3i const &grid) {
+  return (wrap_index(node[0], grid[0]) * static_cast<std::size_t>(grid[1]) +
+          wrap_index(node[1], grid[1])) *
+             static_cast<std::size_t>(grid[2]) +
+         wrap_index(node[2], grid[2]);
+}
+
 } // namespace
 
 BOOST_AUTO_TEST_CASE(diffusion_conserves_mass) {
@@ -679,10 +692,11 @@ BOOST_AUTO_TEST_CASE(diffusion_conserves_mass) {
   // have the same density
   auto const density = gather_density(*ek);
   auto const index = [&](Vector3i const &node) {
-    return static_cast<std::size_t>(
-        (node[0] * params.grid_dimensions[1] + node[1]) *
-            params.grid_dimensions[2] +
-        node[2]);
+    auto const &grid = params.grid_dimensions;
+    return (static_cast<std::size_t>(node[0]) * grid[1] +
+            static_cast<std::size_t>(node[1])) *
+               grid[2] +
+           static_cast<std::size_t>(node[2]);
   };
   BOOST_CHECK_LT(density[index(spike)], 2.4);
   for (auto const &d : {Vector3i{1, 0, 0}, Vector3i{0, 1, 0}, Vector3i{0, 0, 1},
@@ -864,16 +878,9 @@ BOOST_AUTO_TEST_CASE(rng_state_continues_across_potential_fields) {
   // a fresh species with the same seed, the density after the first step and
   // the counter of the first step, which only knows the second potential,
   // does the second step in the same way
-  auto const &grid = params.grid_dimensions;
-  auto const wrap = [](int i, int n) { return ((i % n) + n) % n; };
   auto const fresh = make_ek(0.02, 0.5, 1., Vector3d{0.01, 0., 0.}, true);
   set_density(*fresh, [&](Vector3i const &node) {
-    auto const index =
-        (static_cast<std::size_t>(wrap(node[0], grid[0])) * grid[1] +
-         static_cast<std::size_t>(wrap(node[1], grid[1]))) *
-            grid[2] +
-        static_cast<std::size_t>(wrap(node[2], grid[2]));
-    return after_first_step[index];
+    return after_first_step[wrapped_index(node, params.grid_dimensions)];
   });
   BOOST_REQUIRE(gather_density(*fresh) == after_first_step);
   fresh->set_rng_state(1u);

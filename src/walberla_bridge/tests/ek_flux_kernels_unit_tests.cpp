@@ -199,8 +199,8 @@ template <typename T> struct Fixture {
            ++it) {
         for (cell_idx_t f = 0; f < cell_idx_t(field->fSize()); ++f) {
           auto const value =
-              function(int64_t(lower[0] + it.x()), int64_t(lower[1] + it.y()),
-                       int64_t(lower[2] + it.z()), int(f));
+              function(int64_t(lower[0]) + it.x(), int64_t(lower[1]) + it.y(),
+                       int64_t(lower[2]) + it.z(), int(f));
           field->get(it.x(), it.y(), it.z(), f) = static_cast<T>(value);
         }
       }

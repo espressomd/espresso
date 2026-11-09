@@ -82,6 +82,9 @@ public:
    * @param fieldId ID of the field in the block storage
    * @param sliceWidth Number of ghost layers to communicate
    */
+  // The generated derived classes inherit this constructor with a
+  // using-declaration, which doesn't work with a protected constructor.
+  // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
   explicit UniformCpuFieldPackInfoBase(BlockDataID fieldId,
                                        uint_t sliceWidth = 1u)
       : fieldId_{fieldId}, sliceWidth_{cell_idx_c(sliceWidth)} {}
@@ -118,6 +121,8 @@ public:
   }
 
   /** Pack the slice of the block next to the ghost layer of @c dir. */
+  // The buffer is written through a cast.
+  // NOLINTNEXTLINE(readability-non-const-parameter)
   void pack(stencil::Direction dir, unsigned char *rawBuffer,
             IBlock *block) const {
     using Field_T = typename Impl::Field_T;
@@ -132,6 +137,9 @@ public:
   }
 
   /** Unpack into the ghost layer of @c dir of the block. */
+  // doUnpack takes a mutable span, the buffer is only read by the derived
+  // class.
+  // NOLINTNEXTLINE(readability-non-const-parameter)
   void unpack(stencil::Direction dir, unsigned char *rawBuffer,
               IBlock *block) const {
     using Field_T = typename Impl::Field_T;

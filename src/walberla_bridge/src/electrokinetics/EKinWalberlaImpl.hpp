@@ -569,7 +569,7 @@ private:
   }
 
   void kernel_diffusion() {
-    std::visit([this](auto &kernel) { run_flux_kernel(kernel); },
+    std::visit([this](auto &kernel) { this->run_flux_kernel(kernel); },
                *m_diffusive_flux);
     advance_rng_counter();
   }
@@ -599,7 +599,7 @@ private:
     if (current_phi_id != phi_id) {
       set_electrostatic_diffusion_kernel(is_thermalized(), phi_id);
     }
-    std::visit([this](auto &kernel) { run_flux_kernel(kernel); },
+    std::visit([this](auto &kernel) { this->run_flux_kernel(kernel); },
                *m_diffusive_flux_electrostatic);
     advance_rng_counter();
   }
