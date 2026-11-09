@@ -147,18 +147,18 @@ system.integrator.run(500)
 # observables for core analysis
 #############################################################
 obs_persistence_angles = espressomd.observables.CosPersistenceAngles(
-    ids=monomers.id)
+    particles=monomers.id)
 acc_persistence_angles = espressomd.accumulators.MeanVarianceCalculator(
     obs=obs_persistence_angles, delta_N=1)
 system.auto_update_accumulators.add(acc_persistence_angles)
 
 obs_bond_length = espressomd.observables.ParticleDistances(
-    ids=monomers.id)
+    particles=monomers.id)
 acc_bond_length = espressomd.accumulators.MeanVarianceCalculator(
     obs=obs_bond_length, delta_N=1)
 system.auto_update_accumulators.add(acc_bond_length)
 
-obs_pos = espressomd.observables.ParticlePositions(ids=range(N_MONOMERS))
+obs_pos = espressomd.observables.ParticlePositions(particles=range(N_MONOMERS))
 acc_pos = espressomd.accumulators.TimeSeries(obs=obs_pos, delta_N=100)
 system.auto_update_accumulators.add(acc_pos)
 

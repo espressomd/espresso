@@ -214,7 +214,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
 
         # linear vel
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=system.part.all().id)
+            particles=system.part.all().id)
         corr_vel = espressomd.accumulators.Correlator(
             obs1=vel_obs, tau_lin=10, tau_max=1.4, delta_N=2,
             corr_operation="componentwise_product", compress1="discard1")
@@ -222,7 +222,7 @@ class LangevinThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         # angular vel
         if espressomd.has_features("ROTATION"):
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=system.part.all().id)
+                particles=system.part.all().id)
             corr_omega = espressomd.accumulators.Correlator(
                 obs1=omega_obs, tau_lin=10, tau_max=1.5, delta_N=2,
                 corr_operation="componentwise_product", compress1="discard1")

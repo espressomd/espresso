@@ -51,7 +51,7 @@ class RdfTest(ut.TestCase):
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        obs = espressomd.observables.RDF(ids1=system.part.all().id, min_r=r_min,
+        obs = espressomd.observables.RDF(particles1=system.part.all().id, min_r=r_min,
                                          max_r=r_max, n_r_bins=r_bins)
         rdf = obs.calculate()
         r = obs.bin_centers()
@@ -77,8 +77,8 @@ class RdfTest(ut.TestCase):
         r_bins = 50
         r_min = 0.5 * dx
         r_max = r_bins * dx
-        obs = espressomd.observables.RDF(ids1=partcls.id[0::2],
-                                         ids2=partcls.id[1::2],
+        obs = espressomd.observables.RDF(particles1=partcls.id[0::2],
+                                         particles2=partcls.id[1::2],
                                          min_r=r_min, max_r=r_max,
                                          n_r_bins=r_bins)
         rdf01 = obs.calculate()
@@ -94,8 +94,8 @@ class RdfTest(ut.TestCase):
         np.testing.assert_allclose(parts_in_bin[1::2], 0.0)
 
         # Check symmetry
-        obs = espressomd.observables.RDF(ids1=partcls.id[1::2],
-                                         ids2=partcls.id[0::2],
+        obs = espressomd.observables.RDF(particles1=partcls.id[1::2],
+                                         particles2=partcls.id[0::2],
                                          min_r=r_min, max_r=r_max,
                                          n_r_bins=r_bins)
         rdf10 = obs.calculate()
@@ -109,8 +109,8 @@ class RdfTest(ut.TestCase):
         pids1 = partcls.id[0::2]
         pids2 = partcls.id[1::2]
         params = {
-            'ids1': pids1,
-            'ids2': pids2,
+            'particles1': pids1,
+            'particles2': pids2,
             'min_r': 1,
             'max_r': 2,
             'n_r_bins': 3}
@@ -121,7 +121,7 @@ class RdfTest(ut.TestCase):
         new_pids1 = [partcls.id[0]]
         new_pids2 = [partcls.id[1]]
         observable = espressomd.observables.RDF(
-            **{**params, 'ids1': new_pids1, 'ids2': new_pids2})
+            **{**params, 'particles1': new_pids1, 'particles2': new_pids2})
         np.testing.assert_array_equal(np.copy(observable.ids1), new_pids1)
         np.testing.assert_array_equal(np.copy(observable.ids2), new_pids2)
         # check bins

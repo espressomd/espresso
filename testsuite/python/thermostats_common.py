@@ -93,13 +93,13 @@ class ThermostatsCommon:
         system.integrator.run(20)
 
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=partcls.id)
+            particles=partcls.id)
         vel_acc = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_acc)
 
         if espressomd.has_features("ROTATION"):
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=partcls.id)
+                particles=partcls.id)
             omega_acc = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_acc)
 
@@ -157,13 +157,13 @@ class ThermostatsCommon:
         system.integrator.run(50)
 
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=partcls.id)
+            particles=partcls.id)
         vel_acc = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_acc)
 
         if espressomd.has_features("ROTATION"):
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=partcls.id)
+                particles=partcls.id)
             omega_acc = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_acc)
 
@@ -192,13 +192,13 @@ class ThermostatsCommon:
         system = self.system
         partcls = system.part.all()
         vel_obs = espressomd.observables.ParticleVelocities(
-            ids=partcls.id)
+            particles=partcls.id)
         vel_series = espressomd.accumulators.TimeSeries(obs=vel_obs)
         system.auto_update_accumulators.add(vel_series)
         if espressomd.has_features("ROTATION"):
             partcls.rotation = 3 * [True]
             omega_obs = espressomd.observables.ParticleBodyAngularVelocities(
-                ids=partcls.id)
+                particles=partcls.id)
             omega_series = espressomd.accumulators.TimeSeries(obs=omega_obs)
             system.auto_update_accumulators.add(omega_series)
 

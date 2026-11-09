@@ -43,8 +43,8 @@ system.thermostat.set_langevin(kT=kT, gamma=gamma, seed=42)
 system.cell_system.skin = 0.4
 system.integrator.run(1000)
 
-pos_obs = espressomd.observables.ParticlePositions(ids=(p.id,))
-vel_obs = espressomd.observables.ParticleVelocities(ids=(p.id,))
+pos_obs = espressomd.observables.ParticlePositions(particles=(p.id,))
+vel_obs = espressomd.observables.ParticleVelocities(particles=(p.id,))
 
 c_pos = espressomd.accumulators.Correlator(
     obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=10, compress1="discard1",
