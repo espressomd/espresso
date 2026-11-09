@@ -361,6 +361,11 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.12 REQUIRED COMPONENTS Interpreter Development NumPy)
   find_package(Cython 3.0.11...<4.0.0 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
+  if(${Python_NumPy_VERSION} VERSION_LESS 2.2.4)
+    message(
+      FATAL_ERROR "NumPy >= 2.2.4 required, found ${Python_NumPy_VERSION} "
+                  "(${Python_NumPy_INCLUDE_DIRS})")
+  endif()
   if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
      OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
     # NumPy isn't necessarily installed in Python_SITEARCH. EasyBuild packages

@@ -117,8 +117,9 @@ foreach(cython_file ${cython_SRC})
     set_target_properties(
       ${target} PROPERTIES SUFFIX ".so" LINK_FLAGS "-undefined dynamic_lookup")
   endif()
-  target_compile_definitions(${target}
-                             PRIVATE NPY_NO_DEPRECATED_API=NPY_1_26_API_VERSION)
+  target_compile_definitions(
+    ${target} PRIVATE NPY_NO_DEPRECATED_API=NPY_2_2_API_VERSION
+                      NPY_TARGET_VERSION=NPY_2_2_API_VERSION)
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
   if(CMAKE_CXX_COMPILER_ID STREQUAL CrayClang AND target STREQUAL
                                                   espressomd__init
