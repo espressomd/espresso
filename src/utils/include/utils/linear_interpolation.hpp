@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 
@@ -33,9 +34,10 @@ namespace Utils {
 template <typename T, typename Container>
 T linear_interpolation(Container const &table, T hi, T offset, T x) {
   auto const dind = (x - offset) * hi;
-  auto const ind = static_cast<int>(dind);
+  auto const ind =
+      std::min(static_cast<int>(dind), static_cast<int>(table.size()) - 2);
   assert(ind <= dind);
-  assert((ind >= 0) and (static_cast<std::size_t>(ind) < table.size()));
+  assert((ind >= 0) and (static_cast<std::size_t>(ind) < table.size() - 1));
   auto const dx = dind - static_cast<T>(ind);
   auto const uind = static_cast<unsigned int>(ind);
 
