@@ -272,9 +272,12 @@ template <typename FloatType, class Build, std::size_t... Ns>
 std::function<void(IBlock *)> select_size(std::size_t const size, Build &build,
                                           std::index_sequence<Ns...>) {
   std::function<void(IBlock *)> sweep;
-  ((size == Ns ? void(sweep = build.template operator()<FloatType, Ns>())
-               : void()),
-   ...);
+  auto const select = [&]<std::size_t N>() {
+    if (size == N) {
+      sweep = build.template operator()<FloatType, N>();
+    }
+  };
+  (select.template operator()<Ns>(), ...);
   return sweep;
 }
 
