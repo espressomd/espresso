@@ -71,16 +71,24 @@ std::vector<std::string> Scafacos::available_methods() {
 }
 
 Scafacos::Scafacos(MPI_Comm comm, std::string method, std::string parameters)
-    : m_method_name{std::move(method)}, m_parameters{std::move(parameters)} {
+    : exObj(comm), m_method_name{std::move(method)},
+      m_parameters{std::move(parameters)} {
 
   handle_error(fcs_init(&m_handle, m_method_name.c_str(), comm));
 
   fcs_set_resort(m_handle, 0);
 
   handle_error(fcs_parser(m_handle, m_parameters.c_str(), 0));
+
+  exData.globalComm(comm);
+  exObj.create(exData);
+  setupExscalicos = 1;
 }
 
-Scafacos::~Scafacos() { fcs_destroy(m_handle); }
+Scafacos::~Scafacos() {
+  fcs_destroy(m_handle);
+  exObj.destroy(exData);
+}
 
 void Scafacos::set_runtime_parameters(double const *box_l,
                                       int const *periodicity,
@@ -93,6 +101,27 @@ void Scafacos::set_runtime_parameters(double const *box_l,
   double off[3] = {0., 0., 0.};
   handle_error(fcs_set_common(m_handle, near_field_flag, boxa, boxb, boxc, off,
                               periodicity, total_particles));
+
+  handle_error(fcs_set_common(m_handle, 1, boxa, boxb, boxc, off, periodicity,
+                              total_particles));
+
+  exData.sysSize(0, box_l[0]);
+  exData.sysSize(1, box_l[1]);
+  exData.sysSize(2, box_l[2]);
+
+  exData.periodicity(0, periodicity[0]);
+  exData.periodicity(1, periodicity[1]);
+  exData.periodicity(2, periodicity[2]);
+
+  exData.nSysParticles((long)total_particles);
+
+  int tol_type;
+  double tolerance;
+  fcs_get_tolerance(m_handle, &tol_type, &tolerance);
+  exData.accuracy(tolerance);
+
+  exObj.setNearFieldFlag(fcs_get_near_field_flag(m_handle) != 0);
+  exObj.setNearFieldFlag(true);
 }
 
 } // namespace Scafacos

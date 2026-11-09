@@ -1,0 +1,244 @@
+--- a/include/Exscalicos.hpp
++++ b/include/Exscalicos.hpp
+@@ -25,3 +25,3 @@
+  */
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace, int VectorLength = 8>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace, int VectorLength = 8>
+ class Exscalicos
+@@ -136,3 +136,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::create(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data)
+@@ -157,3 +157,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::tune(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, ExscalicosParticleList<FPT, MemorySpace, VectorLength> &pl)
+@@ -174,3 +174,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::tune(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, std::vector<FPT> &positions, std::vector<FPT> &charges)
+@@ -191,3 +191,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::tune(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, FPT *x, FPT *y, FPT *z, FPT *q, long n)
+@@ -208,3 +208,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::run(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, std::vector<FPT> &positions, std::vector<FPT> &charges, std::vector<FPT> &potentials, std::vector<FPT> &fields)
+@@ -225,3 +225,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::run(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, FPT *x, FPT *y, FPT *z, FPT *fx, FPT *fy, FPT *fz, FPT *q, FPT *E, long n)
+@@ -242,3 +242,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::run(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, ExscalicosParticleList<FPT, MemorySpace, VectorLength> &pl)
+@@ -259,3 +259,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::destroy(ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data)
+@@ -276,3 +276,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setRMax(FPT &rMax)
+@@ -291,3 +291,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ const FPT Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::getRMax() const
+@@ -306,3 +306,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setAlpha(FPT &alpha)
+@@ -321,3 +321,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ const FPT Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::getAlpha() const
+@@ -336,3 +336,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setCAO(int &cao)
+@@ -351,3 +351,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ int Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::getCAO() const
+@@ -366,3 +366,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setKMax(FPT &kMax)
+@@ -381,3 +381,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ const FPT Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::getKMax() const
+@@ -396,3 +396,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setNGrid(std::span<int, 3> nGrid)
+@@ -411,3 +411,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ const std::array<int, 3> Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::getNGrid() const
+@@ -426,3 +426,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setNearFieldFlag(bool flag)
+@@ -434,3 +434,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ bool Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::getNearFieldFlag() const
+@@ -440,3 +440,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setDomainAnchor(FPT x, FPT y, FPT z)
+@@ -449,3 +449,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setDomainSize(FPT x, FPT y, FPT z)
+@@ -458,3 +458,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setSystemSize(FPT x, FPT y, FPT z)
+@@ -467,3 +467,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ KOKKOS_INLINE_FUNCTION FPT Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::shortRangePotential(FPT dist) const
+@@ -481,3 +481,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ KOKKOS_INLINE_FUNCTION FPT Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::shortRangeField(FPT dist) const
+@@ -495,3 +495,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setParameter(ExscalicosEwaldLongRangeProcess p, ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, int first, int last)
+@@ -501,3 +501,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setParameter(ExscalicosEwaldShortRangeProcess p, ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, int first, int last)
+@@ -507,3 +507,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setParameter(ExscalicosP3MLongRangeProcess p, ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, int first, int last)
+@@ -513,3 +513,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::setParameter(ExscalicosP3MShortRangeProcess p, ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data, int first, int last)
+@@ -519,3 +519,3 @@
+ #ifdef EXSCALICOS_ADJUST_PARTITIONS
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::autoAdjustPartitions(ExscalicosEwaldObject p, ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data)
+@@ -525,3 +525,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT, Kokkos::ExecutionSpace ExecutionSpace, Kokkos::MemorySpace MemorySpace, int VectorLength>
++template <ExscalicosSolver S, std::floating_point FPT, class ExecutionSpace, class MemorySpace, int VectorLength>
+ ExscalicosReturn Exscalicos<S, FPT, ExecutionSpace, MemorySpace, VectorLength>::autoAdjustPartitions(ExscalicosP3MObject p, ExscalicosData<FPT, ExecutionSpace, MemorySpace> &data)
+--- a/include/common/ExscalicosData.hpp
++++ b/include/common/ExscalicosData.hpp
+@@ -14,3 +14,3 @@
+ 
+-template <std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+ class ExscalicosData
+diff --git a/include/solvers/ExscalicosEwald.hpp b/include/solvers/ExscalicosEwald.hpp
+index adc98a4..f7b6ed1 100644
+--- a/include/solvers/ExscalicosEwald.hpp
++++ b/include/solvers/ExscalicosEwald.hpp
+@@ -9,3 +9,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosEwald<S>
+@@ -16,3 +16,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosEwald<S>
+@@ -23,3 +23,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosEwald<S>
+@@ -30,3 +30,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosEwald<S>
+--- a/include/solvers/ExscalicosP3M.hpp
++++ b/include/solvers/ExscalicosP3M.hpp
+@@ -9,3 +9,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosP3M<S>
+@@ -16,3 +16,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosP3M<S>
+@@ -23,3 +23,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosP3M<S>
+@@ -30,3 +30,3 @@
+ 
+-template <ExscalicosSolver S, std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace>
++template <ExscalicosSolver S, std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace>
+     requires IsExscalicosP3M<S>
+--- a/include/solvers/ewald/Ewald.hpp
++++ b/include/solvers/ewald/Ewald.hpp
+@@ -21,3 +21,3 @@
+ 
+-template <std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace, int VectorLength = 8>
++template <std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace, int VectorLength = 8>
+ class ExscalicosEwald
+--- a/include/solvers/p3m/P3M.hpp
++++ b/include/solvers/p3m/P3M.hpp
+@@ -24,3 +24,3 @@
+ 
+-template <std::floating_point FPT = double, Kokkos::ExecutionSpace ExecutionSpace = Kokkos::OpenMP, Kokkos::MemorySpace MemorySpace = Kokkos::HostSpace, int VectorLength = 8>
++template <std::floating_point FPT = double, class ExecutionSpace = Kokkos::OpenMP, class MemorySpace = Kokkos::HostSpace, int VectorLength = 8>
+ class ExscalicosP3M
+@@ -1870,3 +1870,3 @@
+         return ExscalicosReturn(true, "");
+-    };
++    }
+ 
+@@ -1897,3 +1897,3 @@
+         return ExscalicosReturn(true, "");
+-    };
++    }
+ 
+@@ -1974,3 +1974,3 @@
+         return ExscalicosReturn(true, "");
+-    };
++    }
+ 
