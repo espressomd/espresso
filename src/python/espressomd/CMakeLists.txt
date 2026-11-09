@@ -78,6 +78,7 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-signedness>
     $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=set_but_not_used>
     $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=identifier_not_keyword>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>
     -Wno-cast-align
     -Wno-unused-variable)
 

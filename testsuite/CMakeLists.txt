@@ -68,7 +68,7 @@ macro(ESPRESSO_IMPORTLIB_BASED_TEST)
   add_test(NAME ${TEST_NAME}
            COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
                    ${TEST_FILE_CONFIGURED})
-  list(APPEND TEST_LABELS "${TYPE}_test")
+  list(APPEND TEST_LABELS "${TEST_TYPE}_test")
   list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
   list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
   list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")

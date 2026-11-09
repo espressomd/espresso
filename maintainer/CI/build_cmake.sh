@@ -104,7 +104,7 @@ set_default_value with_coverage false
 set_default_value with_coverage_python ${with_coverage}
 set_default_value with_ubsan false
 set_default_value with_asan false
-set_default_value with_static_analysis false
+set_default_value with_clang_tidy false
 set_default_value with_caliper false
 set_default_value with_fpe false
 set_default_value myconfig "default"
@@ -171,7 +171,7 @@ cmake_param_list+=(
   -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON:BOOL=${with_coverage_python}
   -D ESPRESSO_BUILD_WITH_ASAN:BOOL=${with_asan}
   -D ESPRESSO_BUILD_WITH_UBSAN:BOOL=${with_ubsan}
-  -D ESPRESSO_BUILD_WITH_CLANG_TIDY:BOOL=${with_static_analysis}
+  -D ESPRESSO_BUILD_WITH_CLANG_TIDY:BOOL=${with_clang_tidy}
   -D ESPRESSO_BUILD_WITH_CUDA:BOOL=${with_cuda}
 )
 
