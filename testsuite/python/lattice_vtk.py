@@ -40,8 +40,11 @@ class TestVTK:
     system.time_step = 0.1
     system.cell_system.skin = 0.4
 
+    lattice_params = {}
+
     def setUp(self):
-        self.lattice = self.lattice_class(n_ghost_layers=2, agrid=0.5)
+        self.lattice = self.lattice_class(
+            n_ghost_layers=2, agrid=0.5, **self.lattice_params)
         self.actor = self.add_actor()
 
     def tearDown(self):
@@ -580,6 +583,20 @@ class LBWalberlaVTKDoublePrecisionCPU(TestLBVTK, ut.TestCase):
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False, "gpu": False}
     vtk_id = "lb_double_precision_cpu"
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBWalberlaVTKDoublePrecisionBlocksCPU(TestLBVTK, ut.TestCase):
+    vtk_class = espressomd.lb.VTKOutput
+    lattice_class = espressomd.lb.Lattice
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
+    # use more than one waLBerla block per MPI rank: with box_l=[6,7,3] and
+    # agrid=0.5 the lattice is 12x14x6, so [2,1,1] splits it into two blocks
+    # along x on a single rank. The VTK field writers must export each block's
+    # own data, not the last block's data for every block.
+    lattice_params = {"blocks_per_mpi_rank": [2, 1, 1]}
+    vtk_id = "lb_double_precision_blocks_cpu"
 
 
 @utx.skipIfMissingGPU()

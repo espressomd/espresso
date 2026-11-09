@@ -27,6 +27,9 @@
 
 #include <field/iterators/IteratorMacros.h>
 
+#include <domain_decomposition/IBlock.h>
+
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,27 +52,54 @@ public:
   VTKWriter(ConstBlockDataID const &block_id, std::string const &id,
             FloatType unit_conversion)
       : vtk::BlockCellDataWriter<OutputType, F_SIZE_ARG>(id),
-        m_conversion(unit_conversion), m_content{} {}
+        m_conversion(unit_conversion), m_content{nullptr}, m_dims{nullptr} {}
 
 protected:
-  void configure() override { WALBERLA_ASSERT_NOT_NULLPTR(this->block_); }
+  /**
+   * Resolve the per-block buffer for the block currently being written.
+   * waLBerla runs the registering before-function exactly once (filling
+   * @ref m_block_content / @ref m_block_dims for every local block) and then
+   * iterates all blocks, calling @c configure() with @ref block_ set to the
+   * current block. Selecting the buffer by block pointer here is required so
+   * that ranks holding more than one block do not all read the last block's
+   * data.
+   */
+  void configure() override {
+    WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
+    auto const content_it = m_block_content.find(this->block_);
+    auto const dims_it = m_block_dims.find(this->block_);
+    WALBERLA_ASSERT(content_it != m_block_content.end());
+    WALBERLA_ASSERT(dims_it != m_block_dims.end());
+    m_content = &(content_it->second);
+    m_dims = &(dims_it->second);
+  }
 
   std::size_t get_first_index(cell_idx_t const x, cell_idx_t const y,
                               cell_idx_t const z) {
-    return (static_cast<std::size_t>(x) * m_dims[2] * m_dims[1] +
-            static_cast<std::size_t>(y) * m_dims[2] +
+    auto const &dims = *m_dims;
+    return (static_cast<std::size_t>(x) * dims[2] * dims[1] +
+            static_cast<std::size_t>(y) * dims[2] +
             static_cast<std::size_t>(z)) *
            F_SIZE_ARG;
   }
 
   FloatType m_conversion;
-  VecType m_content;
-  Vector3<uint_t> m_dims;
+  /** Buffer of the block currently being written (set in @c configure()). */
+  VecType const *m_content;
+  Vector3<uint_t> const *m_dims;
+  /** Per-block buffers, keyed by block pointer and filled by the
+   *  before-function before any block is written. */
+  std::map<IBlock const *, VecType> m_block_content;
+  std::map<IBlock const *, Vector3<uint_t>> m_block_dims;
 
 public:
-  void set_content(VecType content) { m_content = std::move(content); }
+  void set_content(IBlock const *block, VecType content) {
+    m_block_content[block] = std::move(content);
+  }
 
-  void set_dims(Vector3<uint_t> dims) { m_dims = dims; }
+  void set_dims(IBlock const *block, Vector3<uint_t> dims) {
+    m_block_dims[block] = dims;
+  }
 };
 
 template <typename FloatType, typename OutputType = float>
@@ -83,8 +113,8 @@ public:
 protected:
   OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                       cell_idx_t const z, cell_idx_t const) override {
-    WALBERLA_ASSERT(!this->m_content.empty());
-    auto const density = this->m_content[this->get_first_index(x, y, z)];
+    WALBERLA_ASSERT_NOT_NULLPTR(this->m_content);
+    auto const density = (*this->m_content)[this->get_first_index(x, y, z)];
     return numeric_cast<OutputType>(this->m_conversion * density);
   }
 };
@@ -100,8 +130,8 @@ public:
 protected:
   OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                       cell_idx_t const z, cell_idx_t const f) override {
-    WALBERLA_ASSERT(!this->m_content.empty());
-    auto velocity = this->m_content[this->get_first_index(x, y, z) + f];
+    WALBERLA_ASSERT_NOT_NULLPTR(this->m_content);
+    auto velocity = (*this->m_content)[this->get_first_index(x, y, z) + f];
     return numeric_cast<OutputType>(this->m_conversion * velocity);
   }
 };
@@ -117,8 +147,8 @@ public:
 protected:
   OutputType evaluate(cell_idx_t const x, cell_idx_t const y,
                       cell_idx_t const z, cell_idx_t const f) override {
-    WALBERLA_ASSERT(!this->m_content.empty());
-    auto pressure = this->m_content[this->get_first_index(x, y, z) + f];
+    WALBERLA_ASSERT_NOT_NULLPTR(this->m_content);
+    auto pressure = (*this->m_content)[this->get_first_index(x, y, z) + f];
     return numeric_cast<OutputType>(this->m_conversion * pressure);
   }
 };
@@ -170,9 +200,9 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
         auto *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
         auto const bci = pdf_field->xyzSize();
         density_writer->set_content(
-            lbm::accessor::Density::get(pdf_field, m_density, bci));
+            &block, lbm::accessor::Density::get(pdf_field, m_density, bci));
         density_writer->set_dims(
-            Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
+            &block, Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
       }
     };
     vtk_obj.addBeforeFunction(std::move(before_function));
@@ -205,9 +235,9 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
 
         auto const bci = velocity_field->xyzSize();
         velocity_writer->set_content(
-            lbm::accessor::Vector::get(velocity_field, bci));
+            &block, lbm::accessor::Vector::get(velocity_field, bci));
         velocity_writer->set_dims(
-            Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
+            &block, Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
       }
     };
 
@@ -231,9 +261,9 @@ void LBWalberlaImpl<FloatType, Architecture>::register_vtk_field_writers(
           pressure_tensor_correction(
               std::span<FloatType, 9ul>(&values[n], 9ul));
         }
-        pressure_writer->set_content(std::move(values));
+        pressure_writer->set_content(&block, std::move(values));
         pressure_writer->set_dims(
-            Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
+            &block, Vector3<uint_t>(bci.xSize(), bci.ySize(), bci.zSize()));
       }
     };
     vtk_obj.addBeforeFunction(std::move(before_function));
