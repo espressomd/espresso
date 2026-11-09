@@ -99,6 +99,75 @@ class IBM(ut.TestCase):
         self.assertAlmostEqual(energy['bonded'], 0., delta=1e-10)
         self.assertAlmostEqual(pressure['bonded'], 0., delta=1e-10)
 
+    def tribend_equilibrium_force(self, height):
+        """Build two triangles (1,2,3) and (1,3,4) sharing the edge 1-3,
+        with the off-edge vertices lifted by ``height`` out of the edge
+        plane. With the core's conventions the concavity indicator
+        ``desc = dx1 . (n1 x n2)`` equals ``-2*height``, so ``height > 0``
+        gives a CONCAVE reference dihedral and ``height < 0`` a CONVEX one.
+        The IBM_Tribend bond uses ``refShape="Initial"`` so its reference
+        angle ``theta0`` is taken from these very positions. Forces are
+        then evaluated WITHOUT moving anything; at the reference shape the
+        bending force must vanish for any geometry (concave or convex).
+        Returns the largest force magnitude over the four particles."""
+        system = self.system
+        center = np.array(system.box_l) / 2.
+        p1 = system.part.add(pos=center + [1.0, 0.0, 0.0])
+        p2 = system.part.add(pos=center + [0.5, 1.0, height])
+        p3 = system.part.add(pos=center + [0.0, 0.0, 0.0])
+        p4 = system.part.add(pos=center + [0.5, -1.0, height])
+
+        # cross-check the intended concavity with the core's conventions:
+        # dx1 = p1 - p3, dx2 = p2 - p3, dx3 = p4 - p3,
+        # n1 = dx1 x dx2, n2 = dx3 x dx1, desc = dx1 . (n1 x n2)
+        dx1 = np.copy(p1.pos) - np.copy(p3.pos)
+        dx2 = np.copy(p2.pos) - np.copy(p3.pos)
+        dx3 = np.copy(p4.pos) - np.copy(p3.pos)
+        n1 = np.cross(dx1, dx2)
+        n2 = np.cross(dx3, dx1)
+        n1 /= np.linalg.norm(n1)
+        n2 /= np.linalg.norm(n2)
+        desc = np.dot(dx1, np.cross(n1, n2))
+        if height > 0.:
+            self.assertLess(desc, 0., msg="setup error: expected concave")
+        else:
+            self.assertGreater(desc, 0., msg="setup error: expected convex")
+
+        tribend = espressomd.interactions.IBM_Tribend(
+            ind1=p1.id, ind2=p2.id, ind3=p3.id, ind4=p4.id,
+            kb=1., refShape="Initial")
+        system.bonded_inter.add(tribend)
+        p1.add_bond((tribend, p2, p3, p4))
+        self.assertTrue(tribend.is_initialized)
+
+        # evaluate forces at the unmoved reference configuration
+        system.integrator.run(0, recalc_forces=True)
+        forces = np.copy(system.part.all().f)
+        return np.max(np.linalg.norm(forces, axis=1))
+
+    def test_tribend_convex_reference_control(self):
+        """Positive control: a convex reference dihedral (desc > 0) where
+        both initialize() and calc_forces() use the same acos branch, so
+        the bending force vanishes at the reference shape even on buggy
+        code. Proves the harness measures what it claims."""
+        fmax = self.tribend_equilibrium_force(height=-0.3)
+        self.assertLess(
+            fmax, 1e-6,
+            msg="convex control broken: non-zero force at reference shape")
+
+    def test_tribend_concave_reference_equilibrium(self):
+        """Regression test: with a concave reference dihedral (desc < 0)
+        the dynamic angle (theta in [-pi, pi]) and the reference angle
+        (theta0 in [pi, 2*pi]) live on different branches, so the unwrapped
+        DTh = theta - theta0 = -2*pi instead of 0 at the unmoved reference
+        shape, applying a spurious ~2*pi*kb bending force at equilibrium."""
+        fmax = self.tribend_equilibrium_force(height=+0.3)
+        self.assertLess(
+            fmax, 1e-6,
+            msg=f"spurious bending force {fmax:.6g} at the concave "
+            "reference (equilibrium) shape; dynamic angle and "
+            "reference angle use different branches so DTh != 0")
+
     def test_triel(self):
         system = self.system
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
