@@ -57,6 +57,7 @@ class ShapeTests(ut.TestCase):
         self.assertTrue(union.call_method('empty'))
         self.assertEqual(union.size(), 0)
         self.assertEqual(union.calc_distance(position=[1, 2, 6.5])[0], np.inf)
+        self.assertIsNone(union.call_method('unknown'))
 
         union.add([wall1, wall2])
         union.remove(wall2)

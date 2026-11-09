@@ -293,6 +293,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
+      // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();

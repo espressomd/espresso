@@ -82,6 +82,9 @@ if(ESPRESSO_BUILD_WITH_COVERAGE AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   target_compile_options(espresso_script_interface
                          PRIVATE -fno-default-inline -fno-elide-constructors)
 endif()
+target_compile_options(
+  espresso_script_interface
+  PUBLIC $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-analyzer-malloc-leak>)
 
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)

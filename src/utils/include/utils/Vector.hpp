@@ -50,6 +50,12 @@
 #include <utility>
 #include <vector>
 
+// GCC 16 -fanalyzer reports false positives with range-based algorithms
+#if defined(__GNUC__) and not defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wanalyzer-out-of-bounds"
+#endif
+
 namespace Utils {
 
 template <typename T, std::size_t N> class Vector : public Array<T, N> {
@@ -497,3 +503,7 @@ UTILS_ARRAY_BOOST_MPI_T(Utils::Vector, N)
 UTILS_ARRAY_BOOST_BIT_S(Utils::Vector, N)
 UTILS_ARRAY_BOOST_CLASS(Utils::Vector, N, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::Vector, N, track_never)
+
+#if defined(__GNUC__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

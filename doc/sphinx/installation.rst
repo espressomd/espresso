@@ -92,7 +92,7 @@ are required to be able to compile and use |es|:
     CUDA
         For some algorithms like |p3m| and lattice-Boltzmann,
         |es| provides GPU-accelerated implementations for NVIDIA GPUs.
-        CUDA 12.0 or later [6]_ is required.
+        CUDA 12.4 or later [6]_ is required.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -152,13 +152,13 @@ are required to be able to compile and use |es|:
 Installing requirements on Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To compile |es| on Ubuntu 24.04 LTS, install the following build dependencies:
+To compile |es| on Ubuntu 26.04 LTS, install the following build dependencies:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cmake-curses-gui python3-dev openmpi-bin \
+    sudo apt install build-essential cmake cmake-curses-gui python3-dev cython3 openmpi-bin \
       libboost-all-dev libfftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-pip libgsl-dev freeglut3-dev
+      python3-pip libgsl-dev freeglut3-dev libnlopt-cxx-dev
 
 To run |es|, install the following Python dependencies:
 
@@ -167,7 +167,7 @@ To run |es|, install the following Python dependencies:
     python3 -m venv espresso_env # here other virtual environment tools are also ok
     . espresso_env/bin/activate
     python3 -m pip install -c requirements.txt \
-      cmake cython numpy scipy packaging setuptools h5py
+      numpy scipy packaging setuptools h5py vtk
 
 These are the only hard requirements. In the following subsections,
 only optional dependencies will be discussed. Unless you need extra features,
@@ -220,82 +220,11 @@ The CMake option ``CMAKE_CUDA_ARCHITECTURES`` cannot be used to set CUDA
 architectures, because it has a default value that is too old for the
 minimally required CUDA version.
 
-On Ubuntu 24.04, the default GCC compiler may be too recent for nvcc 12.0.
-You can either use GCC 12 or alternatively install Clang 19 as a replacement for nvcc and GCC.
-If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 12.
-
-.. tabs::
-
-   .. group-tab:: GCC on Ubuntu 24.04
-
-      .. code-block:: bash
-
-         CC=gcc-12 CXX=g++-12 CUDACXX=/usr/lib/nvidia-cuda-toolkit/bin/nvcc cmake .. \
-           -D ESPRESSO_BUILD_WITH_CUDA=ON \
-           -D CUDAToolkit_ROOT=/usr/lib/nvidia-cuda-toolkit \
-           -D CMAKE_CUDA_HOST_COMPILER=g++-12
-
-      with compiler dependencies:
-
-      .. code-block:: bash
-
-         sudo apt install gcc-12 g++-12 libstdc++-12-dev
-
-   .. group-tab:: Clang on Ubuntu 24.04
-
-      .. code-block:: bash
-
-         CC=clang-19 CXX=clang++-19 CUDACXX=clang++-19 cmake .. \
-           -D ESPRESSO_BUILD_WITH_CUDA=ON \
-           -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
-           -D CMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/12" \
-           -D CMAKE_CUDA_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/12 --cuda-path=/usr/local/cuda-12.0"
-
-      with compiler dependencies:
-
-      .. code-block:: bash
-
-         sudo apt install \
-            clang-19 clang-tidy-19 clang-format-19 llvm-19 libc++-19-dev \
-            libclang-rt-19-dev libomp-19-dev gcc-12 g++-12 libstdc++-12-dev
-
-   .. group-tab:: NVHPC on Ubuntu 24.04
-
-      .. code-block:: bash
-
-         CC=nvc CXX=nvc++ CUDACXX=nvcc CUDAHOSTCXX=nvc++ cmake .. \
-            -D ESPRESSO_BUILD_WITH_CUDA=ON \
-            -D CMAKE_CUDA_FLAGS="$(mpicc --showme:compile)" \
-            -D CMAKE_CXX_FLAGS="--gcc-toolchain=gcc-12"
-
-      with compiler dependencies:
-
-      .. code-block:: bash
-
-         sudo apt install gcc-12 g++-12 libstdc++-12-dev
-
-      To print which toolchains and libraries are loaded by NVHPC, run:
-
-      .. code-block:: bash
-
-          echo 'int main() {}' > mwe.cpp
-          nvc++ -v -std=c++20 mwe.cpp
-
-Please note that all CMake options and compiler flags that involve
-``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
-But they are only necessary on systems with multiple CUDA releases installed,
-and can be safely removed if you have only one CUDA release installed.
-
-Please also note that with Clang, you still need the GCC 12 toolchain.
-The extra compiler flags in the Clang CMake command above are needed to pin
-the search paths of Clang. By default, it searches trough the most recent
-GCC version, which is GCC 13 on Ubuntu 24.04. It is not possible to install
-the NVIDIA driver without GCC 13 due to a dependency resolution issue
-(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-13``).
-
 On Ubuntu 26.04, only GCC <= 13 can be used with nvcc 12.4.
 Alternatively, the Clang toolchain can be used.
-If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
+If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13,
+but the FFTW library must in that case be compiled with NVHPC too to avoid
+mixing the ``libgomp`` and ``libnvomp`` OpenMP runtime libraries.
 
 .. tabs::
 
@@ -304,7 +233,7 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
       .. code-block:: bash
 
          CC=gcc-15 CXX=g++-15 CUDAHOSTCXX=g++-13 CUDACXX=/usr/lib/nvidia-cuda-toolkit/bin/nvcc \
-           CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/15 cmake .. \
+           CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/13 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/lib/nvidia-cuda-toolkit
 
@@ -320,7 +249,7 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
 
       .. code-block:: bash
 
-         CC=clang-20 CXX=clang++-20 CUDACXX=clang++-20 cmake .. \
+         CC=clang-22 CXX=clang++-22 CUDACXX=clang++-22 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/lib/cuda \
            -D CMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15" \
@@ -331,8 +260,8 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
       .. code-block:: bash
 
          sudo apt install \
-            clang-20 clang-tidy-20 clang-format-20 llvm-20 libc++-20-dev \
-            libclang-rt-20-dev libomp-20-dev gcc-15 g++-15 libstdc++-15-dev
+            clang-22 clang-tidy-22 clang-format-22 llvm-22 libc++-22-dev \
+            libclang-rt-22-dev libomp-22-dev gcc-15 g++-15 libstdc++-15-dev
 
    .. group-tab:: NVHPC on Ubuntu 26.04
 
@@ -355,6 +284,16 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
 
           echo 'int main() {}' > mwe.cpp
           nvc++ -v -std=c++20 mwe.cpp
+
+Please note that all CMake options and compiler flags that involve
+``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
+But they are only necessary on systems with multiple CUDA releases installed,
+and can be safely removed if you have only one CUDA release installed.
+
+Please also note that with Clang, you still need a GCC toolchain.
+The extra compiler flags in the Clang CMake command above are needed to pin
+the search paths of Clang. Clang would otherwise select the default GCC version,
+which is often GCC 15 on Ubuntu 26.04.
 
 .. _Setting up a Jupyter environment:
 

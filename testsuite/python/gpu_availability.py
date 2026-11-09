@@ -59,6 +59,7 @@ class GPUAvailability(ut.TestCase):
                 self.system.cuda_init_handle.device
             with self.assertRaisesRegex(RuntimeError, error_msg):
                 self.system.cuda_init_handle.device = 0
+        self.assertIsNone(self.system.cuda_init_handle.call_method("unknown"))
 
     @utx.skipIfMissingGPU()
     def test_list_devices(self):

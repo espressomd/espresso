@@ -175,6 +175,10 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     SOURCE math_test.cpp APPEND
     PROPERTY COMPILE_OPTIONS
              $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=20208>)
+  # disable GCC static analysis on large TUs to reduce RAM usage
+  set_source_files_properties(
+    p3m_test.cpp TARGET_DIRECTORY p3m_test_matrix
+    PROPERTIES COMPILE_OPTIONS $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
@@ -196,11 +200,11 @@ set_property(
     COMPILE_OPTIONS
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=128>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=loop_not_reachable>
-)
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 set_property(
   SOURCE p3m_test.cpp
   APPEND
   PROPERTY
     COMPILE_OPTIONS
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
-)
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)

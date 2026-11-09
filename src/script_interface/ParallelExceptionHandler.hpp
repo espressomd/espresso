@@ -55,7 +55,7 @@ namespace ScriptInterface {
  * is otherwise silently ignored. On the main rank, the thrown exception is
  * converted to a Python exception.
  */
-class ParallelExceptionHandler {
+class ParallelExceptionHandler { // LCOV_EXCL_LINE
 public:
   ParallelExceptionHandler(boost::mpi::communicator comm)
       : m_comm(std::move(comm)) {}

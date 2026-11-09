@@ -32,13 +32,13 @@ void bond_resolution_error(std::span<const int> partner_ids);
  * Exception indicating that a particle id
  * could not be resolved.
  */
-struct BondResolutionError : std::exception {};
+struct BondResolutionError : std::exception {}; // LCOV_EXCL_LINE
 
 /**
  * Exception indicating that a bond type
  * was unknown.
  */
-struct BondUnknownTypeError : std::exception {};
+struct BondUnknownTypeError : std::exception {}; // LCOV_EXCL_LINE
 
 /**
  * Exception indicating that a bond with an

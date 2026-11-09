@@ -145,15 +145,19 @@ target_link_libraries(
           OpenMP::OpenMP_CXX)
 
 function(espresso_set_walberla_codegen_kernel_source_properties source_file)
-  # disable sanitizers on kernels due to excessive runtime and VRAM usage
-  set(FLAGS "$<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-fno-sanitize=undefined>")
-  # enable debug-preserving optimizations on supported toolchains
-  set(FLAGS
-      "${FLAGS} $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xptxas=-O0 -Xcompiler=>$<IF:$<CXX_COMPILER_ID:NVHPC>,-O0,-Og>>"
-  )
+  list(
+    APPEND
+    SRC_COMPILE_OPTIONS
+    # disable sanitizers on kernels due to excessive runtime and VRAM usage
+    $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-fno-sanitize=undefined>
+    # enable debug-preserving optimizations on supported toolchains
+    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xptxas=-O0>>
+    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=>$<IF:$<CXX_COMPILER_ID:NVHPC>,-O0,-Og>>
+    # disable GCC static analysis on large TUs to reduce RAM usage
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
   set_source_files_properties(
     ${source_file} TARGET_DIRECTORY espresso_walberla_codegen
-    PROPERTIES COMPILE_FLAGS "${FLAGS}")
+    PROPERTIES COMPILE_OPTIONS "${SRC_COMPILE_OPTIONS}")
 endfunction()
 
 if(WALBERLA_BUILD_WITH_CUDA)

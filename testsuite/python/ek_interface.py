@@ -147,6 +147,7 @@ class EKTest:
             species[0, 1].density = 1.
         # check boundary conditions
         node = species[1, 1, 1]
+        self.assertIsNone(node.call_method("unknown"))
         self.assertIsNone(node.density_boundary)
         self.assertIsNone(node.flux_boundary)
         self.assertFalse(node.is_boundary)
@@ -175,6 +176,7 @@ class EKTest:
             node.density_boundary = 4.6
         with self.assertRaisesRegex(TypeError, "must be an instance of FluxBoundary or None"):
             node.flux_boundary = 4.6
+        self.assertIsNone(species[:, 1, 1].call_method("unknown"))
 
     @utx.skipIfMissingFeatures(["WALBERLA_FFT"])
     def test_ek_fft_solver(self):
@@ -237,6 +239,8 @@ class EKTest:
                               espressomd.electrokinetics.EKNone)
         self.assertEqual(self.system.ekcontainer.solver, ek_solver)
         self.assertIsNone(ek_solver.call_method("unknown"))
+        self.assertIsNone(ek_solver[0, 0, 0].call_method("unknown"))
+        self.assertIsNone(ek_solver[:1, 0, 0].call_method("unknown"))
 
         np.testing.assert_allclose(
             np.copy(ek_solver[:, :, :].potential), 0., atol=self.atol)
@@ -336,6 +340,7 @@ class EKTest:
         with self.assertRaisesRegex(RuntimeError, "EK species and EK container must have the same tau"):
             self.system.ekcontainer.add(self.make_default_ek_species(tau=200.))
         self.assertEqual(len(self.system.ekcontainer), 1)
+        self.assertIsNone(self.system.ekcontainer.call_method("unknown"))
 
     def test_ek_solver_exceptions(self):
         ek_solver = self.system.ekcontainer.solver
@@ -378,6 +383,9 @@ class EKTest:
                 ek_solver[0, 0, 0].__reduce__()
             with self.assertRaisesRegex(NotImplementedError, "Cannot serialize EK Poisson solver slice objects"):
                 ek_solver[0:1, 0:1, 0:1].__reduce__()
+            self.assertIsNone(ek_solver.call_method("unknown"))
+            self.assertIsNone(ek_solver[0, 0, 0].call_method("unknown"))
+            self.assertIsNone(ek_solver[:1, 0, 0].call_method("unknown"))
 
             solver_sp = self.ek_solver_class(
                 lattice=self.lattice, permittivity=0.1, tau=self.params["tau"], single_precision=True)
@@ -466,6 +474,7 @@ class EKTest:
         self.assertAlmostEqual(ek_reaction.coefficient, 1.5, delta=self.atol)
         ek_reaction.coefficient = 0.5
         self.assertAlmostEqual(ek_reaction.coefficient, 0.5, delta=self.atol)
+        self.assertIsNone(ek_reaction.call_method("unknown"))
 
         # -- node interface --
         self.assertFalse(ek_reaction[1, 1, 1])
@@ -543,6 +552,7 @@ class EKTest:
             np.copy(ek_slice.call_method("get_slice_ranges")),
             [[0, 8, 1], [2, 11, 2]])
         self.assertEqual(ek_slice.call_method("get_reaction_sip"), ek_reaction)
+        self.assertIsNone(ek_slice.call_method("unknown"))
 
         # wrong shape raises ValueError
         with self.assertRaisesRegex(ValueError,

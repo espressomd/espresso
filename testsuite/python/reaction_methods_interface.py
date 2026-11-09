@@ -634,6 +634,8 @@ class ReactionMethods(ut.TestCase):
             method._helper._serialize()
         with self.assertRaisesRegex(NotImplementedError, "was removed in release 5.1"):
             self.system.setup_type_map()
+        self.assertIsNone(espressomd.reaction_methods.ExclusionRadius(
+            exclusion_range=1.).call_method("unknown"))
 
         # check invalid exclusion ranges and radii
         with self.assertRaisesRegex(ValueError, "Invalid value for exclusion range"):

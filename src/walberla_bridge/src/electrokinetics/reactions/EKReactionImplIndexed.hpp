@@ -60,18 +60,18 @@ public:
 
   using FlagField = field::FlagField<uint8_t>;
 #if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
-  using IndexVectors =
-      std::conditional<Architecture == lbmpy::Arch::CPU,
-                       detail::ReactionKernelIndexedSelector::KernelTrait<>::
-                           ReactionKernelIndexed::IndexVectors,
-                       detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
-                           ReactionKernelIndexedGPU::IndexVectors>::type;
-  using IndexInfo =
-      std::conditional<Architecture == lbmpy::Arch::CPU,
-                       detail::ReactionKernelIndexedSelector::KernelTrait<>::
-                           ReactionKernelIndexed::IndexInfo,
-                       detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
-                           ReactionKernelIndexedGPU::IndexInfo>::type;
+  using IndexVectors = std::conditional_t<
+      Architecture == lbmpy::Arch::CPU,
+      detail::ReactionKernelIndexedSelector::KernelTrait<>::
+          ReactionKernelIndexed::IndexVectors,
+      detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
+          ReactionKernelIndexedGPU::IndexVectors>;
+  using IndexInfo = std::conditional_t<
+      Architecture == lbmpy::Arch::CPU,
+      detail::ReactionKernelIndexedSelector::KernelTrait<>::
+          ReactionKernelIndexed::IndexInfo,
+      detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
+          ReactionKernelIndexedGPU::IndexInfo>;
 #else
   using IndexVectors = detail::ReactionKernelIndexedSelector::KernelTrait<>::
       ReactionKernelIndexed::IndexVectors;
