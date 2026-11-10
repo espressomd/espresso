@@ -42,7 +42,7 @@ endif()
 # codegen-specific Clang-Tidy overrides
 list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
 list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-non-const-parameter")
-list(APPEND SKIP_CLANG_TIDY_CHECKS_CXX "-clang-analyzer-deadcode.DeadStores")
+list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-analyzer-deadcode.DeadStores")
 list(APPEND SKIP_CLANG_TIDY_CHECKS_CUDA
      "-bugprone-multi-level-implicit-pointer-conversion")
 
