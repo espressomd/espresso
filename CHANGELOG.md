@@ -15,6 +15,12 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
 ### Added functionality
 
 * The Lees-Edwards oscillatory shear protocol was extended to support exponential decay (#4966).
+* P3M and DP3M tuning accept a new parameter `tune_with_integration`: when set,
+  the tuning timings are obtained from full integration steps with moving
+  particles instead of force calculations on fixed positions, so they include
+  particle propagation, the thermostat and Verlet list updates. The additional
+  parameter `tune_skin` tunes the Verlet skin for the fastest parameter sets
+  and sets the skin of the cell system to the best value found.
 
 ### Changed requirements
 
@@ -25,6 +31,21 @@ or [Savannah](https://savannah.nongnu.org/projects/espressomd) until release 3.3
 ### Performance enhancements
 
 * The bond force calculation now leverages shared-memory parallelization (#5244).
+* The Verlet list is now kept across calls to `integrator.run()`. Previously,
+  every call triggered a full Verlet list rebuild, which penalized scripts
+  that integrate few steps per call and inflated the P3M tuning timings.
+
+### Bug fixes
+
+* The Verlet skin tuning `system.cell_system.tune_skin()` was fixed. It only
+  compared the timings at the two ends of the search interval and returned
+  an untimed midpoint, so it always picked a skin in the upper half of the
+  interval. It now scans interior skins, refines the search around the
+  fastest one and returns the fastest measured skin. All MPI ranks now use
+  the timings of the head node, so they always end up with the same skin.
+  Tuned skins can therefore differ from previous releases. If the reduced
+  `max_skin` of `adjust_max_skin=True` is smaller than `min_skin`, an error
+  is raised.
 
 ## [5.0.1] - 2026-05-29
 

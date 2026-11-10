@@ -62,8 +62,10 @@ class CellSystem(ScriptInterfaceHelper):
             The number of particles per node.
 
     tune_skin()
-        Tune the skin by measuring the integration time and bisecting over the
-        given range of skins. The best skin is set in the simulation core.
+        Tune the skin by measuring the integration time for skins in the
+        given range (coarse scan, then refinement around the fastest skin).
+        The fastest measured skin is set in the simulation core. If the
+        range is narrower than ``tol``, its midpoint is used.
 
         Parameters
         -----------
@@ -78,7 +80,8 @@ class CellSystem(ScriptInterfaceHelper):
         adjust_max_skin : :obj:`bool`, optional
             If ``True``, the value of ``max_skin`` is reduced
             to the maximum permissible skin (in case the passed
-            value is too large). Defaults to ``False``.
+            value is too large); an error is raised if that is smaller
+            than ``min_skin``. Defaults to ``False``.
 
         Returns
         -------

@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <limits>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -193,7 +194,8 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   if (report_veto(fft_decomposition_veto(mesh))) {
     return -P3M_TUNE_FFT_MESH_SIZE;
   }
-  auto const int_time = benchmark_integration_step(m_system, m_timings);
+  auto const int_time =
+      benchmark_integration_step(m_system, m_timings, m_with_integration);
 
   std::tie(tuned_accuracy, rs_err, ks_err, tuned_alpha_L) =
       calculate_accuracy(mesh, cao, r_cut_iL);
@@ -201,7 +203,80 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   m_logger->log_success(int_time, mesh[0], cao, r_cut_iL, tuned_alpha_L,
                         tuned_accuracy, rs_err, ks_err);
   increment_n_trials();
+  if (m_tune_skin) {
+    m_candidates.push_back(
+        {mesh, cao, tuned_alpha_L, r_cut_iL, tuned_accuracy, int_time});
+  }
   return int_time;
+}
+
+TuningAlgorithm::MeshScanStep
+TuningAlgorithm::update_mesh_scan(double trial_time, double time_best) {
+  if (trial_time < time_best) {
+    reset_n_trials();
+    m_n_slow_meshes = 0;
+    m_n_meshes_without_improvement = 0;
+    return MeshScanStep::new_optimum;
+  }
+  // time_best is a measured time here: the first trial is always a new
+  // optimum, so the sentinel (DBL_MAX) never enters the product below,
+  // which would overflow
+  if (trial_time > time_best * mesh_scan_relative_stop) {
+    ++m_n_slow_meshes;
+  } else {
+    m_n_slow_meshes = 0;
+  }
+  if (++m_n_meshes_without_improvement >= mesh_scan_max_without_improvement or
+      m_n_slow_meshes >= mesh_scan_patience or
+      get_n_trials() > max_n_consecutive_trials) {
+    return MeshScanStep::stop;
+  }
+  return MeshScanStep::keep_scanning;
+}
+
+TuningAlgorithm::Parameters
+TuningAlgorithm::tune_skin_for_fastest_candidates() {
+  auto &cell_structure = *m_system.cell_structure;
+  auto candidates = m_candidates;
+  std::ranges::sort(candidates, {}, &Parameters::time);
+  candidates.resize(std::min(candidates.size(), n_skin_tuning_candidates));
+
+  auto best = Parameters{};
+  auto best_skin = cell_structure.get_verlet_skin();
+  auto const n_steps = skin_tuning_steps_factor * m_timings;
+  m_logger->log_skin_tuning_start();
+  for (auto const &candidate : candidates) {
+    commit(candidate.mesh, candidate.cao, candidate.r_cut_iL,
+           candidate.alpha_L);
+    on_solver_change();
+    auto const max_cut = m_system.maximal_cutoff();
+    // skin search tolerance proportional to the interaction range
+    auto const tol = skin_tuning_relative_tolerance * max_cut;
+    // The skin is never larger than the interaction cutoff, and the
+    // interaction range must stay below the limit of the cell system
+    // (strictly below for directions shared by several MPI ranks).
+    auto const max_skin =
+        std::min(max_cut, skin_tuning_safety_factor *
+                              m_system.get_max_permissible_skin());
+    // the search starts at a tenth of the interaction range: a vanishing
+    // skin (Verlet list rebuild in every step) is rarely competitive
+    auto const min_skin = std::min(std::max(tol, 0.1 * max_cut), max_skin);
+    if (max_skin > tol) {
+      m_system.tune_verlet_skin(min_skin, max_skin, tol, n_steps, true);
+    }
+    auto const skin = cell_structure.get_verlet_skin();
+    auto const time = benchmark_integration_step(m_system, n_steps, true);
+    m_logger->log_skin_tuning(time, candidate.mesh[0], candidate.cao,
+                              candidate.r_cut_iL, skin);
+    if (time < best.time) {
+      best = candidate;
+      best.time = time;
+      best_skin = skin;
+    }
+  }
+  cell_structure.set_verlet_skin(best_skin);
+  m_logger->log_tuned_skin(best_skin);
+  return best;
 }
 
 /**

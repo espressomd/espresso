@@ -1126,10 +1126,9 @@ class DipolarTuningAlgorithm : public TuningAlgorithm {
 
 public:
   DipolarTuningAlgorithm(System::System &system, decltype(dp3m) &input_dp3m,
-                         double prefactor, int timings,
-                         decltype(m_tune_limits) tune_limits)
-      : TuningAlgorithm(system, prefactor, timings), dp3m{input_dp3m},
-        m_tune_limits{std::move(tune_limits)} {}
+                         double prefactor, TuningParameters const &tuning)
+      : TuningAlgorithm(system, prefactor, tuning), dp3m{input_dp3m},
+        m_tune_limits{tuning.limits} {}
 
   P3MParameters &get_params() override { return dp3m.params; }
 
@@ -1226,13 +1225,11 @@ public:
          everything else is slower */
       m_r_cut_iL_max = trial_params.r_cut_iL;
 
-      if (trial_time < time_best) {
-        /* new optimum */
-        reset_n_trials();
+      auto const step = update_mesh_scan(trial_time, time_best);
+      if (step == MeshScanStep::new_optimum) {
         tuned_params = trial_params;
         time_best = tuned_params.time = trial_time;
-      } else if (trial_time > time_best + time_granularity or
-                 get_n_trials() > max_n_consecutive_trials) {
+      } else if (step == MeshScanStep::stop) {
         /* no hope of further optimisation */
         break;
       }
@@ -1259,7 +1256,7 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::tune() {
     }
     try {
       DipolarTuningAlgorithm<FloatType, Architecture, FFTConfig> parameters(
-          system, dp3m, prefactor, tuning.timings, tuning.limits);
+          system, dp3m, prefactor, tuning);
       parameters.setup_logger(tuning.verbose);
       // parameter ranges
       parameters.determine_mesh_limits();

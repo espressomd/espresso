@@ -115,6 +115,23 @@ the corresponding k-space and real-space errors and the timings needed
 for force calculations. In the output, the timings are given in units of
 milliseconds, length scales are in units of inverse box lengths.
 
+By default, the timings are obtained from force calculations on fixed
+particle positions. They therefore exclude the cost of particle propagation,
+the thermostat and Verlet list updates, which depends on the real-space
+cutoff and the Verlet skin. With ``tune_with_integration=True``, every
+timing sample is a full integration step instead, so the measured run times
+are closer to the cost of the production run. The particles move during
+tuning in that case, which changes the trajectory.
+
+The Verlet skin also affects the real-space cost, and the best skin depends
+on the real-space cutoff. With ``tune_skin=True``, which requires
+``tune_with_integration=True``, the tuning algorithm tunes the Verlet skin
+for the six fastest parameter sets, times them again with their tuned skin
+and keeps the fastest combination. The Verlet skin of the cell system is then
+set to the tuned value. Every skin search takes about 15 timings of ten times
+``timings`` integration steps, so this phase integrates about
+6 x 15 x 10 x ``timings`` steps, which dominates the tuning time.
+
 .. _Coulomb P3M on GPU:
 
 Coulomb P3M on GPU

@@ -248,6 +248,9 @@ python_test(FILE cutoffs.py MAX_NUM_PROC 1 SUFFIX 1_core)
 python_test(FILE constraint_shape_based.py MAX_NUM_PROC 2)
 python_test(FILE coulomb_cloud_wall.py MAX_NUM_PROC 4 GPU_SLOTS 3)
 python_test(FILE coulomb_tuning.py MAX_NUM_PROC 4 GPU_SLOTS 3 LABELS long)
+# the P3M skin tuning must take the same decisions on all ranks
+python_test(FILE coulomb_tuning.py MAX_NUM_PROC 2 GPU_SLOTS 3 SUFFIX 2_ranks
+            LABELS long)
 python_test(FILE accumulator_correlator.py MAX_NUM_PROC 4)
 python_test(FILE accumulator_mean_variance.py MAX_NUM_PROC 4)
 python_test(FILE accumulator_time_series.py MAX_NUM_PROC 1)
