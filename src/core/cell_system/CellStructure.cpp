@@ -291,11 +291,14 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
   // Owned bonds only: every bond enters the flat lists exactly once.
+  // The analyzer reports a false positive in the Kokkos bounds-check error
+  // formatting of the View accesses below (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK);
+  // it anchors the report at this call, which therefore carries the NOLINT.
+  // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
   for_each_bond(p.bonds(), [&](BondView const &bond) {
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
-      // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();
