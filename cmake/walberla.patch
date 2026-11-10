@@ -1,0 +1,10 @@
+--- src/core/DataTypes.h
++++ src/core/DataTypes.h
+@@ -26,6 +26,7 @@
+ #include "Stdlib.hpp"
+ #include WALBERLA_STDLIB(limits)
+ 
++#include <cassert>
+ #include <cmath>
+ #include <cstddef>
+ #include <cstdint>

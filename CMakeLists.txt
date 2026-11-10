@@ -1125,6 +1125,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       GIT_TAG        a7ac6d0b13273d9886bd1cde7c6016176b6cab06 # v7.4
       GIT_SHALLOW    FALSE
       GIT_SUBMODULES ""  # don't clone submodules
+      PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
       SYSTEM
     )
     # cmake-format: on
