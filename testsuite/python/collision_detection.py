@@ -102,7 +102,7 @@ class CollisionDetection(ut.TestCase):
         Regression test: bulk-assigning bonds through a particle slice
         (``system.part.by_ids([...]).bonds = ...``) used to leave a stale
         mirror entry behind on a bond partner living on a different rank.
-        That makes ``pair_bond_exists_on()`` report a false positive,
+        That makes ``pair_bond_exists()`` report a false positive,
         silently blocking collision detection from re-forming the bond.
         """
         system = self.system

@@ -29,6 +29,7 @@
 
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
+#include "core/bond_queries.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/bonds.hpp"
 #include "core/cell_system/CellStructure.hpp"
@@ -218,13 +219,11 @@ void ParticleHandle::set_exclusions(Variant const &value) {
 void ParticleHandle::delete_owned_bonds() const {
   std::vector<std::pair<int, std::vector<int>>> owned_bonds;
   set_particle_property([&owned_bonds](Particle &p) {
-    for (auto const bond_view : p.bonds()) {
-      if (bond_view.is_primary()) {
-        std::vector<int> ids = {p.id()};
-        std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
-        owned_bonds.emplace_back(bond_view.bond_id(), std::move(ids));
-      }
-    }
+    for_each_bond(p.bonds(), [&](BondView const &bond_view) {
+      std::vector<int> ids = {p.id()};
+      std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
+      owned_bonds.emplace_back(bond_view.bond_id(), std::move(ids));
+    });
   });
   // set_particle_property() only runs the lambda above on the rank holding
   // the real (non-ghost) copy of this particle, but ::remove_bond() must
@@ -656,18 +655,15 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     }
     auto const bond_list = get_particle_data(m_pid).bonds();
     std::vector<std::vector<Variant>> bonds_flat;
-    for (auto const &&bond_view : bond_list) {
-      // Mirror entries are a core-internal detail, not exposed to Python.
-      if (not bond_view.is_primary()) {
-        continue;
-      }
+    // Only the bonds this particle owns are exposed to Python.
+    for_each_bond(bond_list, [&](BondView const &bond_view) {
       std::vector<Variant> bond_flat;
       bond_flat.emplace_back(bond_view.bond_id());
       for (auto const pid : bond_view.partner_ids()) {
         bond_flat.emplace_back(pid);
       }
       bonds_flat.emplace_back(std::move(bond_flat));
-    }
+    });
     return make_vector_of_variants(bonds_flat);
   }
   if (name == "add_bond") {

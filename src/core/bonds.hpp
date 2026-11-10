@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "bond_queries.hpp"
 #include "system/System.hpp"
 
 #include <boost/mpi/communicator.hpp>

@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <array>
+#include <type_traits>
 #include <vector>
 
 /**
@@ -239,6 +240,68 @@ BOOST_FIXTURE_TEST_CASE(rebuild_bond_mirrors_backfills_missing_mirrors,
   BOOST_CHECK_EQUAL(local_bonds(1).size(), 2u);
   BOOST_CHECK_EQUAL(local_bonds(2).size(), 2u);
   BOOST_CHECK_EQUAL(local_bonds(3).size(), 1u);
+}
+
+BOOST_FIXTURE_TEST_CASE(bond_queries, ParticleFactory) {
+  /* for_each_bond() and pair_bond_exists() (bond_queries.hpp) on a pair
+   * bond 1-2 owned by 1 and an angle bond 1-2-3 owned by 2. */
+  auto const pair_bond_id = 0;
+  auto const angle_bond_id = 1;
+  create_particle({1., 1., 1.}, 1, 0);
+  create_particle({1., 1., 1.}, 2, 0);
+  create_particle({1., 1., 1.}, 3, 0);
+
+  auto &system = System::get_system();
+  auto &cell_structure = *system.cell_structure;
+  ::add_bond(system, pair_bond_id, {1, 2});
+  ::add_bond(system, angle_bond_id, {2, 1, 3});
+  auto &p1 = *cell_structure.get_local_particle(1);
+  auto &p2 = *cell_structure.get_local_particle(2);
+  auto &p3 = *cell_structure.get_local_particle(3);
+
+  auto const visited = [](Particle const &p, auto entries) {
+    std::vector<int> bond_ids;
+    for_each_bond<decltype(entries)::value>(
+        p.bonds(), [&](BondView const &b) { bond_ids.push_back(b.bond_id()); });
+    std::ranges::sort(bond_ids);
+    return bond_ids;
+  };
+  using owned = std::integral_constant<BondEntries, BondEntries::owned>;
+  using all = std::integral_constant<BondEntries, BondEntries::all>;
+
+  /* Owned entries: every bond is visited exactly once over all particles,
+   * on its owner. */
+  BOOST_CHECK((visited(p1, owned{}) == std::vector<int>{pair_bond_id}));
+  BOOST_CHECK((visited(p2, owned{}) == std::vector<int>{angle_bond_id}));
+  BOOST_CHECK(visited(p3, owned{}).empty());
+  /* All entries: every bond the particle participates in. */
+  BOOST_CHECK(
+      (visited(p1, all{}) == std::vector<int>{pair_bond_id, angle_bond_id}));
+  BOOST_CHECK(
+      (visited(p2, all{}) == std::vector<int>{pair_bond_id, angle_bond_id}));
+  BOOST_CHECK((visited(p3, all{}) == std::vector<int>{angle_bond_id}));
+
+  /* Pair bonds are symmetric. */
+  BOOST_CHECK(pair_bond_exists(p1, p2, pair_bond_id));
+  BOOST_CHECK(pair_bond_exists(p2, p1, pair_bond_id));
+  BOOST_CHECK(not pair_bond_exists(p1, p3, pair_bond_id));
+  BOOST_CHECK(not pair_bond_exists(p1, p1, pair_bond_id));
+  /* The angle bond is not a pair bond, even though 2's entry lists 1 as
+   * its first partner. */
+  BOOST_CHECK(not pair_bond_exists(p1, p2, angle_bond_id));
+  BOOST_CHECK(not pair_bond_exists(p2, p3, angle_bond_id));
+  /* Predicate overload. */
+  BOOST_CHECK(pair_bond_exists(p2, p1, [](int id) { return id >= 0; }));
+  BOOST_CHECK(not pair_bond_exists(p1, p2, [](int) { return false; }));
+
+  /* A pair bond stored on only one side (e.g. on a ghost whose mirror has
+   * not been communicated yet) is still found from both sides. */
+  {
+    auto const partner = std::array<int, 1>{{1}};
+    p3.bonds().insert(BondView{pair_bond_id, partner, true});
+  }
+  BOOST_CHECK(pair_bond_exists(p1, p3, pair_bond_id));
+  BOOST_CHECK(pair_bond_exists(p3, p1, pair_bond_id));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

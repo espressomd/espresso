@@ -340,22 +340,6 @@ public:
   }
 };
 
-/**
- * @brief Check if there is a specific bond in a bond list.
- *
- * @param bonds List of bonds to check
- * @param partner_id Id of the bond partner
- * @param bond_id Id of the bond parameters.
- * @return True iff there is a bond to the specified id of the specified type.
- */
-inline bool pair_bond_exists_on(BondList const &bonds, int partner_id,
-                                int bond_id) {
-  return std::any_of(bonds.begin(), bonds.end(), [=](BondView const &bond) {
-    return (bond.bond_id() == bond_id) and
-           (bond.partner_ids()[0] == partner_id);
-  });
-}
-
 BOOST_CLASS_VERSION(BondList, 1)
 
 #endif // ESPRESSO_BONDLIST_HPP

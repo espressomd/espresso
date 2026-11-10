@@ -21,6 +21,7 @@
 #include "BoxGeometry.hpp"
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
+#include "bond_queries.hpp"
 #include "errorhandling.hpp"
 #include "particle_node.hpp"
 
@@ -61,11 +62,12 @@ void ClusterStructure::run_for_bonded_particles() {
   auto const &box_geo = *box_geo_handle;
   PartCfg partCfg{box_geo};
   for (const auto &p : partCfg) {
-    for (auto const bond : p.bonds()) {
+    // owned bonds: every pair bond is added once
+    for_each_bond(p.bonds(), [&](BondView const &bond) {
       if (bond.partner_ids().size() == 1) {
         add_pair(p, get_particle_data(bond.partner_ids()[0]));
       }
-    }
+    });
   }
 
   merge_clusters();

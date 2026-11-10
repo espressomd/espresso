@@ -31,6 +31,7 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "aosoa_pack.hpp"
+#include "bond_queries.hpp"
 #include "bonds.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
@@ -289,12 +290,8 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   auto &angle_ids = m_bond_state->angle_ids;
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
-  for (auto const bond : p.bonds()) {
-    // Mirror entries are a query/removal-only detail and would
-    // double-count every bond.
-    if (not bond.is_primary()) {
-      continue;
-    }
+  // Owned bonds only: every bond enters the flat lists exactly once.
+  for_each_bond(p.bonds(), [&](BondView const &bond) {
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
@@ -321,7 +318,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
     } catch (BondResolutionError const &) {
       bond_resolution_error(partner_ids);
     }
-  }
+  });
 }
 
 void CellStructure::set_index_map() {
@@ -446,11 +443,11 @@ void CellStructure::remove_particle(int id) {
   // ::remove_bond() skips `id` itself, whose bond list is discarded below.
   std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
   if (auto const *p = get_local_particle(id)) {
-    for (auto const bond : p->bonds()) {
+    for_each_bond<BondEntries::all>(p->bonds(), [&](BondView const &bond) {
       std::vector<int> ids = {id};
       std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
       bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));
-    }
+    });
   }
   ::sync_bond_tuples(bonds_to_remove, ::comm_cart);
   auto &system = get_system();
