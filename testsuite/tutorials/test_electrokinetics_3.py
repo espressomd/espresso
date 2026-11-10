@@ -77,7 +77,7 @@ class Tutorial(ut.TestCase):
         # reaction happens in the mixing region, thus the frequency doubles
         self.assertEqual(get_frequency_species(tutorial.product_species[0]), 2)
         # check for turbulence onset
-        ref_params = np.array([1., 0.08, 1. / 20. * np.pi])
+        ref_params = np.array([2., 0.08, 1.25])
         sim_phase = get_phase_karman(tutorial.product_species[0])
         xdata = np.arange(sim_phase.shape[0])
         popt, _ = scipy.optimize.curve_fit(
