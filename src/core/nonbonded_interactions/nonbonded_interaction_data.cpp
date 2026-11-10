@@ -128,6 +128,11 @@ recalc_maximal_cutoff(IA_parameters const &data,
            data.gay_berne.max_cutoff());
 #endif
 
+#ifdef ESPRESSO_GAY_BERNE_WIDTH
+  consider(max_cut_current, mask, PairPotential::GayBerneWidth,
+           data.gay_berne_width.max_cutoff());
+#endif
+
 #ifdef ESPRESSO_TABULATED
   consider(max_cut_current, mask, PairPotential::Tabulated, data.tab.cutoff());
 #endif
