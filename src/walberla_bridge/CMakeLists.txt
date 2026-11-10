@@ -128,6 +128,10 @@ target_compile_options(
   $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-int-float-conversion>
   # unused variables in swapShadowBuffers() of sweepgen sweeps
   $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=177>
+  $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-unused-variable>
+  $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unused-variable>
+  # pystencils device functions are host-only in the Clang host pass
+  $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/PystencilsClangCuda.hpp>
   # silence diagnostics from MPI vendors
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>
