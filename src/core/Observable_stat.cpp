@@ -33,6 +33,7 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <memory>
 #include <span>
 #include <vector>
 
@@ -82,7 +83,8 @@ void Observable_stat::reset(std::size_t n_bonded, int max_type) {
       std::span<double>(external_fields.end(), n_non_bonded * m_chunk_size);
   non_bonded_inter =
       std::span<double>(non_bonded_intra.end(), n_non_bonded * m_chunk_size);
-  assert(&*non_bonded_inter.end() == (m_data.data() + m_data.size()));
+  assert(std::to_address(non_bonded_inter.end()) ==
+         (m_data.data() + m_data.size()));
 }
 
 std::size_t Observable_stat::get_non_bonded_offset(int type1, int type2) const {

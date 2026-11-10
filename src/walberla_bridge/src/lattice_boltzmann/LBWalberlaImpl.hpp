@@ -66,6 +66,7 @@
 #include <array>
 #include <bitset>
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <initializer_list>
 #include <limits>

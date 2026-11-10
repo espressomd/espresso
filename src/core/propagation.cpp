@@ -38,7 +38,7 @@ bool is_valid_propagation_combination(int propagation) {
   using namespace PropagationMode;
   assert(propagation >= 0);
   // check allowlist
-  switch (propagation) {
+  switch (propagation) { // NOLINT(bugprone-unhandled-code-paths)
   // only one mode
   case NONE: // NOLINT(bugprone-branch-clone)
     return force_code_coverage(true);

@@ -244,6 +244,7 @@ BOOST_AUTO_TEST_CASE(ek_interface_none) {
     BOOST_CHECK_THROW(ek.on_node_grid_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_timestep_change(), NoEKActive);
     BOOST_CHECK_THROW(ek.on_temperature_change(), NoEKActive);
+    BOOST_CHECK_THROW(ek.is_gpu(), NoEKActive);
     auto const err_msg = std::string(NoEKActive().what());
     auto const ref_msg = std::string("EK not activated");
     BOOST_CHECK_EQUAL(err_msg, ref_msg);

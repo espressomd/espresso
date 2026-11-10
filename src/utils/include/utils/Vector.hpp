@@ -31,6 +31,7 @@
 
 #include "utils/Array.hpp"
 #include "utils/attributes.hpp"
+#include "utils/device_qualifier.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -43,8 +44,17 @@
 #include <numeric>
 #include <ranges>
 #include <span>
+#include <stdexcept>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
+
+// GCC 16 -fanalyzer reports false positives with range-based algorithms
+#if defined(__GNUC__) and not defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wanalyzer-out-of-bounds"
+#endif
 
 namespace Utils {
 
@@ -72,8 +82,8 @@ public:
   struct is_vector<Vector<U, Np>> : std::true_type {};
 
   Vector() noexcept = default;
-  Vector(Vector const &) = default;
-  Vector &operator=(Vector const &) = default;
+  Vector(Vector const &) noexcept = default;
+  Vector &operator=(Vector const &) noexcept = default;
 
   void swap(Vector &rhs) { std::ranges::swap_ranges(*this, rhs); }
 
@@ -438,6 +448,11 @@ T const &get(Vector<T, N> const &a) noexcept {
 
 } // namespace Utils
 
+// Tuple-like interface for structured bindings.
+// Specializing these for user-defined types is permitted by [namespace.std],
+// but Clang-Tidy 22 reports partial specializations as a false positive.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
+
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Vector<T, N>> {
   static_assert(I < N, "Utils::Vector index must be in range");
@@ -447,6 +462,8 @@ struct std::tuple_element<I, Utils::Vector<T, N>> {
 template <class T, std::size_t N>
 struct std::tuple_size<Utils::Vector<T, N>>
     : std::integral_constant<std::size_t, N> {};
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 namespace boost::qvm {
 
@@ -486,3 +503,7 @@ UTILS_ARRAY_BOOST_MPI_T(Utils::Vector, N)
 UTILS_ARRAY_BOOST_BIT_S(Utils::Vector, N)
 UTILS_ARRAY_BOOST_CLASS(Utils::Vector, N, object_serializable)
 UTILS_ARRAY_BOOST_TRACK(Utils::Vector, N, track_never)
+
+#if defined(__GNUC__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

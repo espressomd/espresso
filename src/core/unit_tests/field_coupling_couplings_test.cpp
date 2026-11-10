@@ -57,6 +57,7 @@ BOOST_AUTO_TEST_CASE(mass) {
     auto is_virtual() const { return true; }
   } p_virtual;
 
+  BOOST_CHECK(p.mass() == p_virtual.mass());
   BOOST_CHECK((p.mass() * 2.0) == Mass()(p, 2.0));
   BOOST_CHECK((0.0 == Mass()(p_virtual, 2.0)));
 }

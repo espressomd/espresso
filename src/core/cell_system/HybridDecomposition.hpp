@@ -77,7 +77,7 @@ class HybridDecomposition : public ParticleDecomposition {
   std::function<bool()> m_get_global_ghost_flags;
 
   bool is_n_square_type(int type_id) const {
-    return (m_n_square_types.find(type_id) != m_n_square_types.end());
+    return m_n_square_types.contains(type_id);
   }
 
 public:

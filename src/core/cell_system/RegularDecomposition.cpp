@@ -602,6 +602,11 @@ void RegularDecomposition::init_cell_interactions() {
               return folded_linear_index(a) < folded_linear_index(b);
             });
 
+        /* Number of images of each neighbor cell in the neighborhood; it can
+         * be larger than one if the global cell grid has less than three
+         * cells in a periodic direction. */
+        std::map<int, int> n_images;
+
         /* Collect neighbors */
         for (int p = lower_index[2]; p <= upper_index[2]; p++)
           for (int q = lower_index[1]; q <= upper_index[1]; q++)
@@ -613,6 +618,7 @@ void RegularDecomposition::init_cell_interactions() {
                   continue;
               }
               neighbors.insert(Utils::Vector3i{r, q, p});
+              ++n_images[folded_linear_index(Utils::Vector3i{r, q, p})];
             }
 
         /* Red-black partition by global index. */
@@ -626,6 +632,7 @@ void RegularDecomposition::init_cell_interactions() {
          * we directly connect to the corresponding
          * physical cell across the periodic boundary */
         for (auto &neighbor : neighbors) {
+          auto const offset = neighbor - Utils::Vector3i{m, n, o};
           if (one_mpi_rank) {
             for (auto coord : {0u, 1u, 2u}) {
               if (neighbor[coord] == -1) {
@@ -643,8 +650,21 @@ void RegularDecomposition::init_cell_interactions() {
           auto cell = &cells.at(
               get_linear_index(local_index(neighbor), ghost_cell_grid));
 
-          // Divide red and black neighbors
-          if (ind2 > ind1) {
+          /* Divide red and black neighbors. If the neighbor is reached by a
+           * unique offset, the pair belongs to the cell from which the offset
+           * is positive in lexicographic order (z most significant), so that
+           * the pairs across periodic boundaries are spread evenly over the
+           * cells. Otherwise (several images, or a fully connected boundary)
+           * use the folded indices; both cells of a pair see the same number
+           * of images, so they always apply the same rule. */
+          auto const offset_is_positive =
+              (offset[2] > 0) or (offset[2] == 0 and offset[1] > 0) or
+              (offset[2] == 0 and offset[1] == 0 and offset[0] > 0);
+          auto const is_red =
+              (not fully_connected_boundary() and n_images.at(ind2) == 1)
+                  ? offset_is_positive
+                  : ind2 > ind1;
+          if (is_red) {
             red_neighbors.push_back(cell);
           } else {
             black_neighbors.push_back(cell);
@@ -791,8 +811,8 @@ GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
     return a.first < b.first;
   };
   for (auto &[peer, bucket] : peers) {
-    std::sort(bucket.recv.begin(), bucket.recv.end(), by_key);
-    std::sort(bucket.send.begin(), bucket.send.end(), by_key);
+    std::ranges::sort(bucket.recv, by_key);
+    std::ranges::sort(bucket.send, by_key);
     NeighborComm nc;
     nc.peer = peer;
     nc.recv.reserve(bucket.recv.size());
@@ -806,8 +826,8 @@ GhostComm::HaloPlan RegularDecomposition::make_halo_plan() {
 
   // Sort the self-copies deterministically too (not required, but keeps the
   // plan reproducible run to run).
-  std::sort(local.begin(), local.end(),
-            [](auto const &a, auto const &b) { return a.first < b.first; });
+  std::ranges::sort(
+      local, [](auto const &a, auto const &b) { return a.first < b.first; });
   plan.local.reserve(local.size());
   for (auto &[key, lc] : local)
     plan.local.push_back(lc);

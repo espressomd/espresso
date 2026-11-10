@@ -123,6 +123,7 @@ BOOST_AUTO_TEST_CASE(cartesian_to_cylinder_with_axis_and_orientation_test) {
   }
   // check transformation of random vectors
   {
+    // NOLINTNEXTLINE(bugprone-random-generator-seed)
     std::subtract_with_carry_engine<unsigned, 24, 10, 24> rng(2);
     auto const r_uniform = [&rng]() {
       return static_cast<double>(rng() - rng.min()) / (rng.max() - rng.min());
@@ -223,6 +224,7 @@ BOOST_AUTO_TEST_CASE(cylinder_to_cartesian_with_axis_with_phi_2_test) {
   }
   // check transformation of random vectors
   {
+    // NOLINTNEXTLINE(bugprone-random-generator-seed)
     std::subtract_with_carry_engine<unsigned, 24, 10, 24> rng(2);
     auto const r_uniform = [&rng]() {
       return static_cast<double>(rng() - rng.min()) / (rng.max() - rng.min());

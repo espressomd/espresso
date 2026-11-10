@@ -146,13 +146,7 @@ prepare_sc_cache(ParticleRange const &particles, BoxGeometry const &box_geo,
 /*****************************************************************/
 
 static void clear_vec(double *pdc, std::size_t size) {
-  for (std::size_t i = 0; i < size; i++)
-    pdc[i] = 0.;
-}
-
-static void copy_vec(double *pdc_d, double const *pdc_s, std::size_t size) {
-  for (std::size_t i = 0; i < size; i++)
-    pdc_d[i] = pdc_s[i];
+  std::ranges::fill_n(pdc, static_cast<std::ptrdiff_t>(size), 0.);
 }
 
 static void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
@@ -179,7 +173,7 @@ static double *block(double *p, std::size_t index, std::size_t size) {
 static void distribute(std::size_t size) {
   assert(size <= 8);
   double send_buf[8];
-  copy_vec(send_buf, gblcblk, size);
+  std::ranges::copy_n(gblcblk, static_cast<std::ptrdiff_t>(size), send_buf);
   boost::mpi::all_reduce(comm_cart, send_buf, static_cast<int>(size), gblcblk,
                          std::plus<>());
 }

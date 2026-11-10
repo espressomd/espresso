@@ -40,6 +40,7 @@
 #include "kokkos_helpers.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "particle_enumeration.hpp"
+#include "particle_node.hpp"
 #include "particle_reduction.hpp"
 #include "system/System.hpp"
 
@@ -297,6 +298,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
+      // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();
@@ -553,6 +555,8 @@ void CellStructure::remove_all_particles() {
 
   m_particle_index.clear();
   clear_bond_properties();
+  clear_particle_node();
+  get_system().on_particle_change();
 }
 
 /* Map the data parts flags from cells to those used internally

@@ -71,12 +71,14 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-shadow=compatible-local>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-conditionally-supported>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-suggest-attribute=format>
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-unused-template>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-deprecated-volatile>
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-signedness>
     $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=set_but_not_used>
     $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=identifier_not_keyword>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>
     -Wno-cast-align
     -Wno-unused-variable)
 
@@ -115,8 +117,9 @@ foreach(cython_file ${cython_SRC})
     set_target_properties(
       ${target} PROPERTIES SUFFIX ".so" LINK_FLAGS "-undefined dynamic_lookup")
   endif()
-  target_compile_definitions(${target}
-                             PRIVATE NPY_NO_DEPRECATED_API=NPY_1_26_API_VERSION)
+  target_compile_definitions(
+    ${target} PRIVATE NPY_NO_DEPRECATED_API=NPY_2_2_API_VERSION
+                      NPY_TARGET_VERSION=NPY_2_2_API_VERSION)
   set_target_properties(${target} PROPERTIES CXX_CLANG_TIDY "")
   if(CMAKE_CXX_COMPILER_ID STREQUAL CrayClang AND target STREQUAL
                                                   espressomd__init

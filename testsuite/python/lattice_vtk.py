@@ -97,6 +97,8 @@ class TestVTK:
         self.actor.add_vtk_writer(vtk=vtk_cleared)
         self.clear_actors()
         vtk_cleared.write()
+        self.assertIsNone(vtk_manual.call_method("unknown"))
+        self.assertIsNone(vtk_auto.call_method("unknown"))
 
         # cannot use VTK when no lattice is attached to it
         label_unattached = f"test_vtk_{self.vtk_id}_unattached"

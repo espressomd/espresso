@@ -79,21 +79,21 @@ public:
   }
 
   void skip(std::size_t bytes) {
-    assert((insert + bytes) <= &*buf.end());
+    assert((insert + bytes) <= std::to_address(buf.end()));
     insert += bytes;
   }
 
 private:
   void read(void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
-    assert((insert + bytes) <= &*buf.end());
+    assert((insert + bytes) <= std::to_address(buf.end()));
     std::memcpy(data, insert, bytes);
     insert += bytes;
   }
 
   void write(const void *data, std::size_t bytes) {
     /* check that there is enough space left in the buffer */
-    assert((insert + bytes) <= &*buf.end());
+    assert((insert + bytes) <= std::to_address(buf.end()));
     std::memcpy(insert, data, bytes);
     insert += bytes;
   }

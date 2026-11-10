@@ -19,14 +19,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.27.6)
-if(ESPRESSO_BUILD_WITH_CUDA)
-  cmake_minimum_required(VERSION 3.31.0)
-endif()
-cmake_policy(VERSION 3.27.6)
+cmake_minimum_required(VERSION 3.31.6)
+cmake_policy(VERSION 3.31.6)
 if(POLICY CMP0167)
   # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
   cmake_policy(SET CMP0167 NEW)
+endif()
+if(POLICY CMP0168)
+  # FetchContent no longer relies on a sub-build
+  cmake_policy(SET CMP0168 NEW)
 endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 # CMake modules/macros are in a subdirectory to keep this file cleaner
@@ -45,7 +46,7 @@ project(
 set(ESPRESSO_MINIMAL_C_STANDARD 11)
 set(ESPRESSO_MINIMAL_CXX_STANDARD 20)
 set(ESPRESSO_MINIMAL_CUDA_STANDARD 20)
-set(ESPRESSO_MINIMAL_CUDA_VERSION 12.0)
+set(ESPRESSO_MINIMAL_CUDA_VERSION 12.4)
 
 include(FeatureSummary)
 include(GNUInstallDirs)
@@ -244,12 +245,12 @@ macro(espresso_minimal_compiler_version)
   endforeach()
 endmacro()
 
-espresso_minimal_compiler_version("GNU" 12.2.0)
-espresso_minimal_compiler_version("Clang" 18.1.0)
-espresso_minimal_compiler_version("AppleClang" 17.0.0)
-espresso_minimal_compiler_version("CrayClang" 17.0.0)
-espresso_minimal_compiler_version("IntelLLVM" 2023.1)
-espresso_minimal_compiler_version("NVHPC" 25.5)
+espresso_minimal_compiler_version("GNU" 13.3.0)
+espresso_minimal_compiler_version("Clang" 20.1.7)
+espresso_minimal_compiler_version("AppleClang" 21.0.0)
+espresso_minimal_compiler_version("CrayClang" 19.0.0)
+espresso_minimal_compiler_version("IntelLLVM" 2025.2)
+espresso_minimal_compiler_version("NVHPC" 26.5)
 
 set(ESPRESSO_UNSUPPORTED_COMPILERS "Intel;MSVC")
 foreach(LANG C CXX)
@@ -281,12 +282,14 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   else()
     find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
   endif()
+  find_package(Thrust CONFIG REQUIRED HINTS "${CUDAToolkit_LIBRARY_DIR}/cmake")
+  if(Thrust_VERSION VERSION_LESS 2.5)
+    message(FATAL_ERROR "Thrust >= 2.5 required, found ${Thrust_VERSION}")
+  endif()
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
       # cmake-format: off
-      # sm_60: P100 series (Pascal)
       # sm_61: GTX-1000 series (Pascal)
-      # sm_70: V100 series (Volta)
       # sm_75: RTX-2000 series (Turing)
       # sm_86: RTX-3000 series (Ampere)
       # sm_89: RTX-4000 series (Ada)
@@ -324,14 +327,14 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         FATAL_ERROR
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
-    find_package(CUDACompilerClang 18.1.0 REQUIRED)
+    find_package(CUDACompilerClang 20.1.7 REQUIRED)
   elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "NVHPC")
     if(ESPRESSO_BUILD_WITH_COVERAGE)
       message(
         FATAL_ERROR
           "Cannot enable code coverage with nvc++ as the CUDA compiler")
     endif()
-    find_package(CUDACompilerNVHPC 25.5 REQUIRED)
+    find_package(CUDACompilerNVHPC 26.5 REQUIRED)
     if(${ESPRESSO_NVHPC_DETECTED_CUDA_VERSION} VERSION_LESS
        ${ESPRESSO_MINIMAL_CUDA_VERSION})
       message(
@@ -350,14 +353,19 @@ if(ESPRESSO_BUILD_WITH_CUDA)
              cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
 endif()
 
-# Python interpreter and Cython interface library
+#
+# Python interpreter, Jupyter and Cython
+#
+
 if(ESPRESSO_BUILD_WITH_PYTHON)
-  find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 3.0.4...<4.0.0 REQUIRED)
-  if(CYTHON_VERSION VERSION_LESS 3.0.8)
-    message(WARNING "We strongly recommend using Cython 3.0.8 or later")
-  endif()
+  find_package(Python 3.12 REQUIRED COMPONENTS Interpreter Development NumPy)
+  find_package(Cython 3.0.11...<4.0.0 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
+  if(${Python_NumPy_VERSION} VERSION_LESS 2.2.4)
+    message(
+      FATAL_ERROR "NumPy >= 2.2.4 required, found ${Python_NumPy_VERSION} "
+                  "(${Python_NumPy_INCLUDE_DIRS})")
+  endif()
   if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
      OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
     # NumPy isn't necessarily installed in Python_SITEARCH. EasyBuild packages
@@ -380,6 +388,13 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
     endblock()
   endif()
 endif()
+
+#
+# Documentation tools
+#
+
+find_package(Sphinx 8.1.3)
+find_package(Doxygen 1.15.0)
 
 #
 # Installation folders
@@ -460,12 +475,15 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-sign-compare>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
     $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CMAKE_CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-pass-failed>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-pass-failed>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
@@ -663,6 +681,40 @@ endif()
 # for the CUDA component
 find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
 
+# We need the parallel hdf5 version! Has to appear before Cabana.
+if(ESPRESSO_BUILD_WITH_HDF5)
+  # The FindHDF5 function will fall back to the serial version if no parallel
+  # version was found, and print to the CMake log that HDF5 was found. There is
+  # no QUIET argument to override that message. This can be confusing to people
+  # who are not familiar with the way hdf5 is distributed in Linux package
+  # repositories (libhdf5-dev is the serial version).
+  set(HDF5_PREFER_PARALLEL 1)
+  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
+  if(HDF5_FOUND)
+    if(HDF5_IS_PARALLEL)
+      add_feature_info(HDF5 ON "parallel")
+    else()
+      set(HDF5_FOUND FALSE)
+      message(FATAL_ERROR "HDF5 parallel version not found.")
+    endif()
+  endif()
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
+    find_package(HighFive 3.3.0 QUIET)
+  endif()
+  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      HighFive
+      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+      GIT_TAG        v3.3.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(HighFive)
+  endif()
+endif()
+
 if(ESPRESSO_BUILD_WITH_FFTW)
   find_package(fftw3 REQUIRED COMPONENTS omp)
 
@@ -675,14 +727,18 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       heffte
       GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
       GIT_TAG        v2.4.1
-      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
       OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
     if(ESPRESSO_BUILD_WITH_CUDA)
       set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
     endif()
+    set(Heffte_ENABLE_DOXYGEN OFF CACHE BOOL "")
     set(BUILD_SHARED_LIBS OFF)
     FetchContent_MakeAvailable(heffte)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
@@ -716,7 +772,9 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
     kokkos
     GIT_REPOSITORY https://github.com/kokkos/kokkos.git
     GIT_TAG        5.0.2
-    PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
+    PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )
@@ -727,8 +785,7 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
   set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
   if(${ESPRESSO_BUILD_WITH_CUDA} AND NOT ${ESPRESSO_BUILD_WITH_WALBERLA}
-     AND (NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA"
-          OR CMAKE_CUDA_COMPILER_VERSION GREATER_EQUAL 12.2))
+     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
     set(Kokkos_ENABLE_CUDA ON CACHE BOOL "")
     set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
     if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
@@ -744,6 +801,8 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   set(Kokkos_ENABLE_DEPRECATED_CODE_4 OFF CACHE BOOL "")
   set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
   set(Kokkos_ENABLE_BENCHMARKS OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_EXAMPLES OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_TESTS OFF CACHE BOOL "")
   FetchContent_MakeAvailable(kokkos)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
@@ -762,6 +821,8 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   target_compile_options(
     kokkoscore
     PRIVATE
+      $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+      $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>
       $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
   )
 endif()
@@ -776,12 +837,16 @@ if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
       kokkos_fft
       GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
       GIT_TAG        v2.0.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
       OVERRIDE_FIND_PACKAGE
       SYSTEM
     )
     # cmake-format: on
     set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
     set(KokkosFFT_ENABLE_CUFFT ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
+    set(KokkosFFT_ENABLE_DOCS OFF CACHE BOOL "")
+    set(KokkosFFT_ENABLE_EXAMPLES OFF CACHE BOOL "")
     FetchContent_MakeAvailable(kokkos_fft)
   endif()
 endif()
@@ -795,46 +860,17 @@ if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
     cabana
     GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
     GIT_TAG        0.8.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
     OVERRIDE_FIND_PACKAGE
     SYSTEM
   )
   # cmake-format: on
   set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
   set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
+  set(Cabana_ENABLE_GRID OFF CACHE BOOL "")
   set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
   FetchContent_MakeAvailable(cabana)
-endif()
-
-# We need the parallel hdf5 version!
-if(ESPRESSO_BUILD_WITH_HDF5)
-  # The FindHDF5 function will fall back to the serial version if no parallel
-  # version was found, and print to the CMake log that HDF5 was found. There is
-  # no QUIET argument to override that message. This can be confusing to people
-  # who are not familiar with the way hdf5 is distributed in Linux package
-  # repositories (libhdf5-dev is the serial version).
-  set(HDF5_PREFER_PARALLEL 1)
-  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
-  if(HDF5_FOUND)
-    if(HDF5_IS_PARALLEL)
-      add_feature_info(HDF5 ON "parallel")
-    else()
-      set(HDF5_FOUND FALSE)
-      message(FATAL_ERROR "HDF5 parallel version not found.")
-    endif()
-  endif()
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
-    find_package(HighFive 3.3.0 QUIET)
-  endif()
-  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      HighFive
-      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-      GIT_TAG        v3.3.0
-    )
-    # cmake-format: on
-    FetchContent_MakeAvailable(HighFive)
-  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
@@ -852,6 +888,9 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
     GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
+    GIT_SHALLOW    FALSE
+    GIT_SUBMODULES ""  # don't clone submodules
+    SYSTEM
   )
   # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
@@ -870,6 +909,9 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
       nlopt
       GIT_REPOSITORY https://github.com/stevengj/nlopt.git
       GIT_TAG        v2.11.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS off)
@@ -1022,11 +1064,12 @@ if(ESPRESSO_BUILD_TESTS)
               espresso_tests_compiler_flags)
   target_compile_options(
     espresso_tests_compiler_flags
-    INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>)
+    INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>
+              $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>)
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
-      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
+      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-inline>
                 $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
   endif()
   if(ESPRESSO_BUILD_WITH_PYTHON)
@@ -1058,6 +1101,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       walberla
       GIT_REPOSITORY https://github.com/lssfau/walberla.git
       GIT_TAG        623a60c1 # v7.2 with patches
+      GIT_SHALLOW    FALSE
+      GIT_SUBMODULES ""  # don't clone submodules
       SYSTEM
     )
     # cmake-format: on
@@ -1102,6 +1147,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
       sqlite3
       PRIVATE
         $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-incompatible-pointer-types-discards-qualifiers>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
         $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
@@ -1138,6 +1184,8 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
     GIT_TAG        v2.15.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
   )
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
@@ -1166,6 +1214,10 @@ endif()
 #
 # Set source file properties
 #
+
+# C++20 modules aren't used by the project; skip the per-TU dependency scan.
+# Must be set after all FetchContent projects so their targets keep the default.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 function(espresso_set_common_target_properties)
   set(TARGET_NAME "${ARGV0}")

@@ -327,6 +327,7 @@ class LBTest:
         self.system.lbcontainer.clear()
         self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
         self.assertIsNone(self.system.lbcontainer.solver)
+        self.assertIsNone(self.system.lbcontainer.call_method("unknown"))
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -391,6 +392,7 @@ class LBTest:
         densities = np.copy(lbf[:, :, :].density)
         np.testing.assert_allclose(densities, ref_density, rtol=1e-5)
         self.assertIsNone(lbf[:1, 0, 0].boundary[0])
+        self.assertIsNone(lbf[:1, 0, 0].call_method("unknown"))
 
         # prepare various slicing operations
         slices = []
@@ -475,6 +477,7 @@ class LBTest:
 
         shape_ref = np.copy(self.system.box_l) / self.params['agrid']
         np.testing.assert_array_equal(lbf.shape, shape_ref.astype(int))
+        self.assertIsNone(lbf[0, 0, 0].call_method("unknown"))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
         lbf[0, 0, 0].velocity = v_fluid
