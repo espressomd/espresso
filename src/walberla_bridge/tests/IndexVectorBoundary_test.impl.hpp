@@ -289,6 +289,7 @@ struct Setup {
   BlockDataID flags_id;
   BlockDataID host_pdfs_id;
   BlockDataID pdfs_id[2];
+  // NOLINTNEXTLINE(bugprone-random-generator-seed)
   std::mt19937 rng{42u};
 
   Setup() {

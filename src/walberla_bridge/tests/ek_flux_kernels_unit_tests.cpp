@@ -348,6 +348,7 @@ BOOST_AUTO_TEST_CASE(diffusive_flux_with_electrostatics) {
 /** Random fluxes of the faces of a periodic block (and of its periodic
  *  images in the ghost layer). */
 template <typename T> void randomize_periodic_flux(Fixture<T> &fixture) {
+  // NOLINTNEXTLINE(bugprone-random-generator-seed)
   std::mt19937_64 generator(42);
   std::uniform_real_distribution<double> distribution(-0.1, 0.1);
   auto &block = fixture.block();
