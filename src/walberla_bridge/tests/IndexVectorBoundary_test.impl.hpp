@@ -131,6 +131,20 @@ __global__ void link_kernel(double *pdfs, IndexInfo const *links,
   }
 }
 
+boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
+  bool has_compatible_device = false;
+  int n_devices = 0;
+  cudaGetDeviceCount(&n_devices);
+  if (n_devices > 0) {
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+    if (prop.major >= 3) {
+      has_compatible_device = true;
+    }
+  }
+  return has_compatible_device;
+}
+
 #else
 
 using PdfField = HostField;
@@ -476,6 +490,12 @@ template <typename T> bool is_zero(std::vector<T> const &forces) {
 } // namespace Testing
 
 using namespace Testing;
+
+#if defined(TEST_ON_DEVICE)
+BOOST_AUTO_TEST_SUITE(suite, *boost::unit_test::precondition(has_gpu))
+#else
+BOOST_AUTO_TEST_SUITE(suite)
+#endif
 
 BOOST_AUTO_TEST_CASE(links_of_one_boundary_cell) {
   Setup setup;
@@ -830,6 +850,8 @@ BOOST_AUTO_TEST_CASE(value_boundary_with_domain_links_with_ghost_layers) {
   check_value_boundary<ValueBoundary<DomainLinksWithGhostLayers, CellStencil>,
                        CellStencil>(domain_links_with_ghost_layers, true);
 }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 int main(int argc, char **argv) {
   MPI_Init(&argc, &argv);
