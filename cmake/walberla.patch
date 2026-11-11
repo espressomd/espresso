@@ -8,3 +8,20 @@
  #include <cmath>
  #include <cstddef>
  #include <cstdint>
+--- src/boundary/CMakeLists.txt
++++ src/boundary/CMakeLists.txt
+@@ -5,11 +5,11 @@
+ ###################################################################################################
+ 
+ 
+-add_library( walberla_boundary )
++add_library( walberla_boundary INTERFACE )
+ add_library( walberla::boundary ALIAS walberla_boundary )
+-target_link_libraries( walberla_boundary PUBLIC walberla::core walberla::communication walberla::domain_decomposition walberla::field walberla::stencil )
++target_link_libraries( walberla_boundary INTERFACE walberla::core walberla::communication walberla::domain_decomposition walberla::field walberla::stencil )
+ target_sources( walberla_boundary
+-        PUBLIC
++        INTERFACE
+         BoundaryHandling.h
+         Boundary.h
+         BoundaryHandlingCollection.h
