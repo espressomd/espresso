@@ -43,6 +43,7 @@
 #include "../BoundaryHandling.hpp"
 #include "../BoundaryPackInfo.hpp"
 #include "../utils/boundary.hpp"
+#include "../utils/field_index_range.hpp"
 #include "../utils/types_conversion.hpp"
 #include "InterpolateAndShiftAtBoundary.hpp"
 #include "ResetForce.hpp"
@@ -95,8 +96,13 @@ protected:
   using Kernels = detail::KernelTrait<FloatType, Architecture>;
   using BoundaryModel = BoundaryHandling<FloatType, Vector3<FloatType>,
                                          typename Kernels::DynamicUBB>;
+  /**
+   * Stream-collide sweeps: the thermalized one with an RNG (kT > 0), the
+   * athermal one without (kT == 0), and the Lees-Edwards one (kT == 0).
+   */
   using CollisionModel =
       std::variant<typename Kernels::StreamCollisionModelThermalized,
+                   typename Kernels::StreamCollisionModelAthermal,
                    typename Kernels::StreamCollisionModelLeesEdwards>;
 
 public:
@@ -245,10 +251,21 @@ public:
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
     if (n_ghost_layers == 0u)
       throw std::runtime_error("At least one ghost layer must be used");
+    // checked before any field is allocated; a rank without local blocks
+    // skips the check, which is harmless: all blocks have the same size, the
+    // ranks with blocks throw, and the script interface handles the error
+    // collectively with parallel_try_catch
+    if (auto it = blocks->begin(); it != blocks->end()) {
+      detail::check_field_index_range(
+          "PDF field", "LB kernels", Stencil::Size,
+          blocks->getNumberOfXCells(*it), blocks->getNumberOfYCells(*it),
+          blocks->getNumberOfZCells(*it), n_ghost_layers);
+    }
 
     // Initialize and register fields (must use the "underlying" types)
     m_pdf_field_id = add_to_storage<_PdfField>("pdfs");
     m_pdf_tmp_field_id = add_to_storage<_PdfField>("pdfs_tmp");
+    check_uniform_pdf_field_size();
     m_last_applied_force_field_id = add_to_storage<_VectorField>("force last");
     m_force_to_be_applied_id = add_to_storage<_VectorField>("force next");
     m_velocity_field_id = add_to_storage<_VectorField>("velocity");
@@ -344,10 +361,11 @@ private:
       auto const block_variant = std::variant<IBlock *>(&block);
       std::visit(m_run_stream_collide_sweep, cm_variant, block_variant);
     }
+    // only the thermalized sweep has an RNG counter
     if (auto *cm =
             std::get_if<typename Kernels::StreamCollisionModelThermalized>(
                 &cm_variant)) {
-      cm->setTime_step(cm->getTime_step() + 1u);
+      cm->time_step() += 1;
     }
   }
 
@@ -372,7 +390,7 @@ private:
 
   /**
    * @brief Visitor for dispatching stream-collide sweeps.
-   * Handles both thermalized and Lees-Edwards collision models
+   * Handles the thermalized, athermal and Lees-Edwards collision models
    * via @c std::visit on the @ref CollisionModel variant.
    */
   class StreamCollideSweepVisitor {
@@ -381,14 +399,22 @@ private:
 
     void operator()(typename Kernels::StreamCollisionModelThermalized &cm,
                     IBlock *b) {
-      cm.configure(m_storage, b);
+      // the RNG of a cell depends on its global coordinates
+      auto const lower_corner = m_storage->getBlockCellBB(*b).min();
+      cm.block_offset() =
+          Vector3<int64_t>(lower_corner[0], lower_corner[1], lower_corner[2]);
+      cm(b);
+    }
+
+    void operator()(typename Kernels::StreamCollisionModelAthermal &cm,
+                    IBlock *b) {
       cm(b);
     }
 
     void operator()(typename Kernels::StreamCollisionModelLeesEdwards &cm,
                     IBlock *b) {
-      cm.setV_s(static_cast<decltype(cm.getV_s())>(
-          m_lees_edwards_callbacks->get_shear_velocity()));
+      cm.v_s() = static_cast<FloatType>(
+          m_lees_edwards_callbacks->get_shear_velocity());
       cm(b);
     }
 
@@ -407,6 +433,39 @@ private:
     std::shared_ptr<LeesEdwardsPack> m_lees_edwards_callbacks{};
   };
   StreamCollideSweepVisitor m_run_stream_collide_sweep{};
+
+  /**
+   * @brief Check that the PDF fields of all local blocks have the same size.
+   *
+   * The swapping stream-collide kernels (sweepgen) share one shadow PDF field
+   * between all the blocks of a sweep object. It is cloned from the PDF field
+   * of the first block that is processed, so every block must have a PDF
+   * field of the same size. @ref LatticeWalberla guarantees this by
+   * construction (it creates a uniform block grid). This guards against a
+   * future change of that: a larger block would write out of the bounds of
+   * the shadow field. It is a runtime check, because it costs one loop over
+   * the local blocks at construction, while the consequence in a release
+   * build is silent memory corruption.
+   */
+  void check_uniform_pdf_field_size() const {
+    auto const size = [this](IBlock const &block) {
+      auto const *field = block.template getData<PdfField>(m_pdf_field_id);
+      return std::array<uint_t, 3u>{field->xSize(), field->ySize(),
+                                    field->zSize()};
+    };
+    auto const &blocks = *m_lattice->get_blocks();
+    auto it = blocks.begin();
+    if (it == blocks.end())
+      return;
+    auto const reference = size(*it);
+    for (++it; it != blocks.end(); ++it) {
+      if (size(*it) != reference) {
+        throw std::runtime_error("All blocks of the LB lattice must have the "
+                                 "same size, because the stream-collide "
+                                 "sweeps share one shadow PDF field");
+      }
+    }
+  }
 
   /** @brief Relaxation rate omega from kinematic viscosity: 2/(6*nu+1). */
   FloatType shear_mode_relaxation_rate() const;
@@ -732,22 +791,22 @@ public:
     auto const cm =
         std::get_if<typename Kernels::StreamCollisionModelThermalized>(
             &*m_collision_model);
-    if (!cm or m_kT == 0.) {
+    if (!cm) {
       return std::nullopt;
     }
-    return {static_cast<uint64_t>(cm->getTime_step())};
+    return {static_cast<uint64_t>(cm->time_step())};
   }
 
   void set_rng_state(uint64_t counter) override {
     auto const cm =
         std::get_if<typename Kernels::StreamCollisionModelThermalized>(
             &*m_collision_model);
-    if (!cm or m_kT == 0.) {
+    if (!cm) {
       throw std::runtime_error("This LB instance is unthermalized");
     }
     assert(counter <=
-           static_cast<uint32_t>(std::numeric_limits<uint_t>::max()));
-    cm->setTime_step(static_cast<uint32_t>(counter));
+           static_cast<uint64_t>(std::numeric_limits<int64_t>::max()));
+    cm->time_step() = static_cast<int64_t>(counter);
   }
 
   [[nodiscard]] LatticeWalberla const &get_lattice() const noexcept override {

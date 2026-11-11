@@ -523,23 +523,30 @@ but with ``dist=1.51`` the thickness will be 2.
 Prototyping new LB methods
 --------------------------
 
-Start by installing the code generator dependencies:
+Start by installing the code generator dependencies, i.e. pystencils, lbmpy
+and pystencils-sfg from :file:`requirements.txt`, and sweepgen from the waLBerla
+sources that the build fetched (:file:`<build-dir>` is the build folder of an
+ESPResSo configured with waLBerla):
 
 .. code-block:: bash
 
-    python3 -m pip install -c requirements.txt numpy sympy lbmpy pystencils islpy
+    python3 -m pip install -c requirements.txt pystencils lbmpy pystencilssfg sympy packaging clang-format==19.1.7
+    python3 -m pip install -e <build-dir>/_deps/walberla-src/sweepgen
 
-Next, edit the code generator script to configure new kernels, then execute it:
+Next, edit the code generator script to configure new kernels, then execute it
+from the destination folder, where the generated files are written:
 
 .. code-block:: bash
 
-    python3 maintainer/walberla_kernels/generate_lb_kernels.py
+    cd src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
+    python3 ../../../../../maintainer/walberla_kernels/generate_lb_kernels.py --kernels init --precision double --target cpu
 
-The script takes optional arguments to control the CPU or GPU architecture,
-as well as the floating-point precision. The generated source code files need
-to be written to :file:`src/walberla_bridge/src/lattice_boltzmann/generated_kernels/`.
-These steps can be automated with the convenience shell functions documented in
-:file:`maintainer/walberla_kernels/Readme.md`.
+The options :code:`--kernels`, :code:`--precision` and :code:`--target`
+select the kernels, the floating-point precision (:code:`single` or
+:code:`double`) and the CPU or GPU architecture (:code:`cpu`, :code:`avx` or
+:code:`cuda`); each of them defaults to :code:`all`. The generated source code
+files need to be formatted afterwards (see the formatting step in
+:file:`maintainer/walberla_kernels/Readme.md`, which also lists all kernels).
 Edit the :file:`CMakeLists.txt` file in the destination folder to include the
 new kernels in the build system.
 Then, adapt :file:`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`

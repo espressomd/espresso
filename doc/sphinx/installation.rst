@@ -898,6 +898,9 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
 * ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
+  The runtime headers of the waLBerla kernels are taken from the pystencils
+  package of the Python environment used by CMake (see :file:`requirements.txt`),
+  or else downloaded from the pystencils sources.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
 

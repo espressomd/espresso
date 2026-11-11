@@ -1,71 +1,617 @@
 # Automated kernel generation with waLBerla
 
 The scripts in this directory generate the kernels for lattice-based algorithms.
+The generated kernels are committed to the repository; CMake never runs the
+code generators.
 
-The following dependencies need to be in the Python path:
+## Kernels
 
-* pystencils (https://i10git.cs.fau.de/pycodegen/pystencils)
-* lbmpy (https://i10git.cs.fau.de/pycodegen/lbmpy/)
-* waLBerla's Python components. Here the same version should be used as
-  the one used to build ESPResSo. One way is to use the copy fetched in
-  ESPResSo's `build/_deps/walberla-src/python/` directory.
+All lattice-Boltzmann (LB) and electrokinetics (EK) kernels are generated with
+pystencils 2.1, lbmpy, [pystencils-sfg](https://pycodegen.pages.i10git.cs.fau.de/pystencils-sfg/)
+and sweepgen, the code generation package of the waLBerla fork that ESPResSo
+is built against.
 
-The Python dependencies can be pip installed locally with the following command:
+| Kernel family | Generator | Toolchain |
+|---|---|---|
+| LB `InitialPDFsSetter` | `generate_lb_kernels.py --kernels init` | sweepgen |
+| LB `StreamCollideSweepThermalized` | `generate_lb_kernels.py --kernels stream_collide_thermalized` | sweepgen |
+| LB `StreamCollideSweepAthermal` | `generate_lb_kernels.py --kernels stream_collide_athermal` | sweepgen |
+| LB `StreamCollideSweepLeesEdwards` | `generate_lb_kernels.py --kernels stream_collide_lees_edwards` | sweepgen |
+| LB `UpdateVelFromPDF` | `generate_lb_kernels.py --kernels vel_update` | sweepgen |
+| LB CPU `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors` | sweepgen |
+| LB CUDA `FieldAccessors` | `generate_lb_kernels.py --kernels field_accessors_cuda` | sweepgen |
+| LB `PackInfoPdf` (streaming-aware) | `generate_lb_kernels.py --kernels pack_info_pdf` | sweepgen |
+| LB `PackInfoVec` | `generate_lb_kernels.py --kernels pack_info_vec` | sweepgen |
+| LB `DynamicUBB` (boundary) | `generate_lb_kernels.py --kernels dynamic_ubb` | sweepgen |
+| EK `PackInfoScalar` (density and potential, 26 directions of D3Q27) | `generate_ek_kernels.py --kernels pack_info_scalar` | sweepgen |
+| EK `Dirichlet` (boundary) | `generate_ek_kernels.py --kernels dirichlet` | sweepgen |
+| EK `ReactionKernelBulk<N>` (bulk reactions of `N` = 1 to 5 reactants) | `generate_ek_kernels.py --kernels reaction_bulk_<N>` | sweepgen |
+| EK `ReactionKernelIndexed<N>` (indexed reactions of `N` = 1 to 5 reactants) | `generate_ek_kernels.py --kernels reaction_indexed_<N>` | sweepgen |
+| EK `DiffusiveFluxKernel`, `DiffusiveFluxKernelThermalized`, `DiffusiveFluxKernelWithElectrostatic`, `DiffusiveFluxKernelWithElectrostaticThermalized` | `generate_ek_kernels.py --kernels diffusive_flux[_electrostatic][_thermalized]` | sweepgen |
+| EK `AdvectiveFluxKernel`, `ContinuityKernel`, `FrictionCouplingKernel` | `generate_ek_kernels.py --kernels advective_flux continuity friction_coupling` | sweepgen |
+| EK `FixedFlux` (boundary) | `generate_ek_kernels.py --kernels fixed_flux` | sweepgen |
+| EK CPU `EKFieldAccessors` | `generate_ek_kernels.py --kernels field_accessors` | sweepgen |
+| EK CUDA `EKFieldAccessors` | `generate_ek_kernels.py --kernels field_accessors_cuda` | sweepgen |
+
+The flux field of the EK has the layout of pystencils 2.1 (see "Flux sweeps of
+the electrokinetics"), which differs from the one of the pystencils 1.4
+kernels that were used in earlier versions. This doesn't matter for the user
+of ESPResSo, because the flux field is never saved or communicated, but the
+flux kernels, the fixed flux boundary and the accessors of the flux field have
+to be generated together.
+
+## Code generation environment
+
+The kernels need pystencils, lbmpy, pystencils-sfg and the sweepgen package of
+the exact waLBerla commit ESPResSo is built against (the `GIT_TAG` in the
+`FetchContent_Declare(walberla ...)` block of the top-level `CMakeLists.txt`).
+The generators check the toolchain at startup
+(`sfg_driver.check_toolchain()`) without pinning exact versions:
+
+* `TOOLCHAIN_REQUIREMENTS` holds lower bounds (pystencils >= 2.1,
+  lbmpy >= 2.1.1, pystencils-sfg >= 0.3); an older version aborts.
+* `TESTED_TOOLCHAIN` holds the versions that the committed kernels were
+  generated and verified with; any other version prints a one-line warning
+  and continues, so a minor update doesn't need code changes if it works.
+* sweepgen must come from the waLBerla commit that ESPResSo builds against,
+  which is read from the `GIT_TAG` in the top-level `CMakeLists.txt`; a
+  mismatch aborts with the instruction to reinstall sweepgen.
+
+`sfg_driver.order_generated_statements()` replaces four internals, which are
+not a stable API: `SfgKernelHandle.fields`, `SfgKernelHandle.scalar_parameters`
+and `PostProcessingContext.live_variables` of pystencils-sfg, and
+`BlockforestParamExtraction.filter_params` of sweepgen (see "Generating
+kernels"). It relies on the way they are iterated; a renamed attribute fails at
+import, a change in the iteration shows up in the determinism tests.
+
+An internal API that an update removed or renamed makes the generators fail
+right away with an `ImportError` or `AttributeError`; changed behaviour shows
+up in the test suite and in the comparison of the regenerated kernels.
+To upgrade the toolchain, install the new versions: the generator warns about
+them. Run the test suite, regenerate the kernels and compare them with the
+committed ones. If all is well, update `TESTED_TOOLCHAIN` (and the generated
+kernels, if they changed).
+`requirements.txt` keeps its `==` pins (the reproducible environment).
+Configure ESPResSo with waLBerla first, so that CMake fetches the waLBerla
+sources into `<build-dir>/_deps/walberla-src`:
 
 ```sh
-python3 -m venv codegen
-source codegen/bin/activate
+python3 -m venv sweepgen
+source sweepgen/bin/activate
 python3 -m pip install -c "$(git rev-parse --show-toplevel)/requirements.txt" \
-    numpy cython sympy islpy jinja2 setuptools packaging
-python3 -m pip install \
-  git+https://gitos.rrze.fau.de/cs10/pycodegen/lbmpy.git@e9efe343e42858f11c8844795326efa4f00681df \
-  git+https://gitos.rrze.fau.de/cs10/contributors/jean-noel-grad/pystencils.git@e851f4e322d0c7771802169e7afac83b7f7da868
+    pystencils lbmpy pystencilssfg sympy packaging clang-format==19.1.7
+python3 -m pip install -e <build-dir>/_deps/walberla-src/sweepgen   # e.g. build_sweepgen
 deactivate
 ```
 
-The kernels can be regenerated with this shell script:
+## Generating kernels
+
+Every kernel is written to its own file pair, named after its C++ class,
+so a single kernel can be regenerated without touching the others. The files
+are written to the current directory (or to the one of `--output-dir`).
+Define the formatting function first, it is used after each generator call
+(clang-format 19.1 must be on `PATH`, which the virtual environment provides):
 
 ```sh
-# adapt these paths to the build environment
-source codegen/bin/activate
-export PYTHONPATH="$(realpath build/_deps/walberla-src/python/)"
-
-# convenience functions
-function generate_lb_kernels {
-  python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py $@
-}
-function generate_ek_kernels {
-  python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py $@
-}
 function format_kernels {
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.h
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cpp -style "{Language: Cpp, ColumnLimit: 0}"
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cu  -style "{Language: Cpp, ColumnLimit: 0}"
   $(git rev-parse --show-toplevel)/maintainer/format/clang-format.sh -i *.cuh -style "{Language: Cpp}"
 }
-
-# LB kernels
-cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
-generate_lb_kernels --kernels all
-generate_lb_kernels --kernels all --single-precision
-generate_lb_kernels --kernels all --gpu
-generate_lb_kernels --kernels all --gpu --single-precision
-format_kernels
-
-# EK kernels
-cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
-generate_ek_kernels --kernels all
-generate_ek_kernels --kernels all --single-precision
-generate_ek_kernels --kernels all --gpu
-generate_ek_kernels --kernels all --gpu --single-precision
-format_kernels
-mv ReactionKernel*.{cpp,h,cu} $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/reactions/generated_kernels/
 ```
 
-The code generation is not deterministic, therefore the list of changes might
-be quite large. If you only adapted a few lines in a specific template file,
-then you only need to commit the corresponding output files.
+Then generate and format a kernel:
 
-WARNING: The code generation sorts the arguments alphabetically by symbol name.
-If you rename something, you may have to adapt the order of arguments in the
-calling code!
+```sh
+source sweepgen/bin/activate
+cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/lattice_boltzmann/generated_kernels/
+python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_lb_kernels.py \
+    --kernels init --precision double --target cuda
+format_kernels
+```
+
+`--kernels`, `--precision` (`single`, `double`) and `--target` (`cpu`, `avx`,
+`cuda`) all accept `all`, which is also the default. Combinations a kernel
+does not support are skipped with a notice. The EK kernels are generated by
+`generate_ek_kernels.py` in the same way, into
+`src/walberla_bridge/src/electrokinetics/generated_kernels/`:
+
+```sh
+cd $(git rev-parse --show-toplevel)/src/walberla_bridge/src/electrokinetics/generated_kernels/
+python3 $(git rev-parse --show-toplevel)/maintainer/walberla_kernels/generate_ek_kernels.py \
+    --kernels dirichlet reaction_bulk_3 reaction_indexed_3
+format_kernels
+```
+
+The reactions are the kernels `reaction_bulk_1` to `reaction_bulk_5` and
+`reaction_indexed_1` to `reaction_indexed_5` (the number of reactants), and
+`--kernels all` generates all EK kernels. The flux sweeps need about 30
+seconds for each combination of kernel, precision and target, because
+pystencils simplifies the conditions of their guarded stores.
+
+The generator doesn't let pystencils-sfg format the files, even if clang-format
+is on `PATH`, so the output doesn't depend on the environment.
+
+The output is byte-identical between runs, for any `PYTHONHASHSEED`. sweepgen
+and pystencils-sfg write the extraction of the fields of a kernel, of its
+scalar properties and of the components of its vector properties in the
+iteration order of sets of fields and variables. The hash of these objects
+contains the hash of their data type, which depends on the address of its
+class, so the order would change between runs.
+`sfg_driver.order_generated_statements()` therefore makes these sets iterate
+by the names of their elements (`NameOrderedSet`) when the module is imported.
+The stencil of the gradient of the diffusive flux
+doesn't depend on the hash seed either (see "Flux sweeps of the
+electrokinetics").
+
+To check a regeneration against the committed files, run the generator and
+`format_kernels` in a scratch directory (`<scratch>`) and compare all the files
+with the ones in the `generated_kernels` folder of the kernels (`<committed>`):
+
+```sh
+diff -r <scratch> <committed>
+```
+
+The only difference is the `CMakeLists.txt` of the folder, which is not generated.
+
+## Architecture
+
+* `generate_lb_kernels.py`, `generate_ek_kernels.py`: the generator scripts,
+  each with a registry of its kernels (the values of `--kernels`).
+  `pystencils_espresso.py` defines the PDF, velocity and force fields and the field
+  setters of the LB kernels, `relaxation_rates.py` the getters of the
+  relaxation rates.
+* `sfg_driver.py`: toolchain version check, precision/target handling,
+  one named file pair per kernel (not formatted, see above), and the command
+  line of the generator scripts (`Kernel`, `generate_main()`), which have a
+  registry of their kernels.
+* `sfg_driver.generate_sweep()`: emits a sweep as a plain sweepgen class in
+  `walberla::pystencils` (see "Generated sweep classes"). The classes of the
+  LB sweeps keep the names of the old `pystencils_walberla` classes, but not
+  their interface. With `sparse=True`, the sweep runs on the cells of a
+  `walberla::v8::sweep::SparseIndexList` that its constructor takes, and it
+  addresses its fields through `sfg_driver.index_list_field()`; pystencils
+  can't prove that the cells of the list are distinct, so the independence
+  check is skipped. The indexed reactions of the EK are sparse sweeps.
+* `sfg_driver.patch_kernel_source()`: regex workarounds for pystencils 2.1.0
+  code generation issues in the generated `.cpp`/`.cu` files (among them
+  the global `sqrt()`, `fmin()`, `fmax()`, `pow()` and `fabs()` of
+  single-precision kernels, which call the double overloads); re-check them
+  whenever the pystencils version changes.
+* `reactions.py`: the reaction kernels of the electrokinetics, the sweeps
+  `ReactionKernelBulk<N>` and `ReactionKernelIndexed<N>` of
+  `walberla::pystencils` for `N` = 1 to 5 reactants (see "Reaction kernels").
+* `flux_layout.py`: the layout of the flux field of the electrokinetics (13
+  components for each cell, in the directions of `Staggering.Corner3D` of
+  pystencils 2.1), the lowering of the symbolic staggered field to a plain
+  field, and the location of the flux through a face. The sweeps, the fixed
+  flux boundary and the accessors use it and have to change together (see
+  "Flux sweeps of the electrokinetics").
+* `ek_sweeps.py`: the flux sweeps of the electrokinetics, `DiffusiveFluxKernel`
+  (without or with electrostatic potential, without or with thermal
+  fluctuations), `AdvectiveFluxKernel`, `ContinuityKernel` and
+  `FrictionCouplingKernel` of `walberla::pystencils` (see "Flux sweeps of the
+  electrokinetics").
+* `lees_edwards.py`: Lees-Edwards boundary layers of the stream-collide kernel.
+* `pack_infos.py`: the pack infos `PackInfoPdf`, `PackInfoVec` and
+  `PackInfoScalar` of `walberla::pystencils` on the CPU and CUDA targets
+  (there is no AVX variant), with the interface of the old
+  `pystencils_walberla` classes. A pack info is described by the field
+  components that it communicates in each direction: the populations that
+  cross the face, edge or corner during pull streaming (PDFs) or all
+  components (vector fields, and scalar fields without index dimension, which
+  the electrokinetics communicates for the density and the potential in the 26
+  directions of D3Q27). Pack, unpack and local copy kernels are generated for
+  each distinct set, and a class dispatches on the direction. The classes
+  communicate one ghost layer by default; the electrokinetics bridge passes
+  the number of ghost layers of the lattice as the second constructor
+  argument, like the generic waLBerla pack infos that they replace. The CPU
+  classes derive from the hand-written CRTP base
+  `src/walberla_bridge/src/utils/UniformCpuFieldPackInfoBase.hpp`, which the
+  generated header includes by its relative path; the CUDA classes derive from
+  `walberla::sweepgen::UniformGpuFieldPackInfoBase` of the waLBerla fork.
+  The code relies on sweepgen internals (`PackingKernelsContext`,
+  `CaptureBufferPointer`, `GhostLayerFieldExtraction`; see the module
+  docstring): re-check them whenever the waLBerla commit changes.
+  pystencils linearizes a buffer with the first axis of the field slowest, so
+  the symbolic fields have the axes `(z, y, x)` and the buffer is x-fastest
+  like in the old pack infos. The kernels of a class live in the namespace
+  `<ClassName>_kernels`, so the CPU and CUDA pack infos never define the same
+  function (`tests/test_pack_info_symbols.py`).
+* `boundaries.py`: the boundary conditions on the links between cells and
+  boundary cells, with the interface of the old `pystencils_walberla`
+  classes: `DynamicUBB` of `walberla::lbm`, `Dirichlet` and `FixedFlux` of
+  `walberla::ek` (the boundaries of the electrokinetics that set the density
+  of their boundary cells and the flux through the faces of their boundary
+  cells), on the CPU and CUDA targets (there is no AVX variant). The
+  generated class derives from the hand-written CRTP base
+  `walberla::IndexVectorBoundary` of
+  `src/walberla_bridge/src/utils/IndexVectorBoundary.hpp`, which the
+  generated header includes by its relative path. The base class collects the
+  links from the flag field into the `ALL`, `INNER` and `OUTER` index vectors
+  of each block, copies them to the device, runs the kernel on a vector, and,
+  for a boundary with force, keeps one force vector for each index vector (see
+  the documentation of the header for the semantics of `run`, `inner`,
+  `outer`, `getForce` and `getForceVector`). Its template argument `Links` is
+  the link policy, which selects the cells that have links: `FluidLinks` (the
+  default, the lattice Boltzmann boundaries), `DomainLinksNoCenter` (all
+  domain cells, no link to the cell itself: the fixed flux boundary of the
+  electrokinetics) and `DomainLinksWithGhostLayers` (the
+  boundary cells themselves in all ghost layers, with the one-direction
+  stencil `walberla::CellStencil`: the Dirichlet boundary). A boundary
+  without force passes `void` as the force struct. The generated class
+  provides the link kernel and the structs of a link
+  (`<ClassName>IndexInfo`: the `int32_t` coordinates `x`, `y`, `z` and the
+  direction `dir`, then the data of the boundary, e.g. `vel_0` to `vel_2` of
+  the UBB, `value` of the Dirichlet boundary or `flux_0` to `flux_2` of the
+  fixed flux boundary) and, with force, of its force
+  (`<ClassName>ForceStruct`, `F_0` to `F_2`). The kernel is a sparse
+  pystencils kernel over a field of these structs
+  (`CreateKernelConfig.index_field`). The generic part
+  (`generate_link_boundary`) takes the assignments of the kernel and doesn't
+  depend on the boundary condition: the force field is optional, the link
+  policy is an argument, and the class of the target field is derived from
+  the field (any number of components). It names the policy in the base class
+  only if it isn't `FluidLinks`, so the LB files don't depend on the policies.
+  `generate_dynamic_ubb` defines the UBB with lbmpy. The assignments are
+  built like `create_lattice_boltzmann_boundary_kernel` of lbmpy 2.1.1 does,
+  and the code relies on lbmpy, pystencils, pystencils-sfg and sweepgen
+  internals (see the module docstring): re-check them whenever the toolchain
+  changes. `generate_dirichlet` stores the value of the callback in the field
+  of each boundary cell, in the interior and in the ghost layers, as the old
+  class did. `generate_fixed_flux` sets the flux through the faces between a
+  domain cell and its neighbors in the boundary to `v . d / 9`, for the value
+  `v` of the callback for the boundary cell and the direction `d` of the link,
+  in the flux field (see "Flux sweeps of the electrokinetics"): the cell, the
+  component and the sign come from `flux_layout.face_location`, in lookup
+  tables that the kernel indexes with the direction of the link. The face
+  between two boundary cells is written by two links, one from each cell, as
+  in the old class: if both cells have the same value (e.g. no flux, or the
+  same flux on all the cells of the boundary) the result doesn't depend on the
+  order of the links, otherwise the value of one of the two cells is stored,
+  and it depends on the order of the links (on the CPU, on the schedule of the
+  OpenMP threads) which one. The coordinates of the links are 32 bits wide,
+  as in the old kernels, and so is all the index arithmetic of the kernel
+  (the old ones used 64 bits for the offsets in the field): the field of a
+  block with its ghost layers must have fewer than 2^31 elements. The
+  generated code doesn't check this: the bridge does for the PDF field and
+  for the flux field (see "Index limit of the fields of a block"); the
+  density field of the Dirichlet boundary has one component, so its limit is
+  beyond the one of the flux field of the same block (13 times as many
+  elements). The kernels of a class live in the namespace
+  `<ClassName>_kernels`, so the CPU and CUDA boundaries never define the same
+  function (`tests/test_boundary_symbols.py`).
+  The C++ tests of the hand-written class are
+  `src/walberla_bridge/tests/IndexVectorBoundary_test{,_cuda}`, those of the
+  generated Dirichlet and FixedFlux classes are in
+  `src/walberla_bridge/tests/ek_kernels_unit_tests.cpp` and
+  `src/walberla_bridge/tests/ek_flux_kernels_unit_tests.cpp`.
+* LB field accessors (`walberla::lbm::accessor`): one function catalogue,
+  two backends.
+  * `accessor_equations.py`: the equations of the accessors, derived from the
+    lbmpy method.
+  * `accessor_catalogue.py`: the format of the catalogue. Each accessor is
+    described once: its namespace, name, kind (cell, interval, whole field,
+    reduction, point, list, gather, scatter), fields, kernel and the targets
+    it exists on. Per-target variants carry the parameter names and the
+    return type, because the API of each target is frozen.
+  * `lb_accessors.py`: the LB catalogue (kernels as pystencils assignments over
+    the fields of the lattice) and the entry point
+    `generate_field_accessors`. The functions that exist on one target only
+    are flagged in the catalogue: `Equilibrium` and `EquilibriumDistribution`
+    on the CPU, `Interpolation`, `Vector::set_from_list` and the `atomicAdd`
+    kernel on CUDA. The catalogue format (`accessor_catalogue.py`) and
+    the backends are generic, because they take sizes, fields and equations
+    from the catalogue: the accessors of the electrokinetics use them too.
+  * `ek_accessors.py`: the EK catalogue, the accessors of the namespace
+    `walberla::ek::accessor` (`Scalar` and `Vector` for the density and the
+    potential and for vector fields, `Flux` for the flux field) and its entry
+    point `generate_field_accessors`, with the same backends, in
+    `EKFieldAccessors<Precision>Precision.h` (CPU) and `.cuh`/`.cu` (CUDA).
+    `Flux::get_vector` reads the flux field of the neighbors: it is half of the
+    sum of the fluxes through the 26 faces of the cell, times the direction of
+    the face. `Flux::get` of a cell interval returns the 13 components of each
+    cell (the old accessors returned only the first three, which was a bug).
+    The API of each target is frozen by
+    `tests/data/ek_field_accessors{,_cuda}_api_*.json`, which were extracted
+    from the headers of the old Jinja template, with two cosmetic
+    differences: the CPU functions that set a scalar take it by value instead
+    of by const reference, and a parameter name of the old CUDA header had a
+    typo.
+  * `accessor_backend_cpu.py`: the CPU wrappers, in a header-only
+    `FieldAccessors<Precision>Precision.h`. The kernels are pystencils
+    `GenericCPU` kernels defined `inline` in the header, so the bridge needs
+    no source file. They live in nested namespaces `cpu_kernels` (the CUDA
+    kernels in `kernels`): both have the same signatures, and a shared name
+    would let the linker bind the CPU kernels to the CUDA host stubs in builds
+    with CUDA (`tests/test_accessor_symbols.py`). Single-cell values are
+    exchanged through the stack, interval values through `std::vector`, and
+    the reductions use `AddReductionAssignment` (a sequential sum in the
+    order of the cells). The header needs the pystencils runtime headers
+    like the other kernels. `sfg_driver.patch_kernel_source()` doesn't process
+    headers; the accessor kernels don't need it (the RNG, `sqrt`, `fmin` and
+    `fmax` are not used), which `tests/test_field_accessors.py` guards.
+  * `accessor_backend_cuda.py`: the CUDA wrappers, declared in a `.cuh` and
+    defined in a `.cu`. The slice operations and the particle interpolation
+    are pystencils CUDA kernels. The reductions fill a device buffer that is
+    summed on the host in cell order, so they are deterministic. Only
+    `Interpolation::add_force` scatters with `atomicAdd`, in a hand-written
+    kernel.
+  * `accessor_sfg.py`: pystencils-sfg helpers and the base class of the
+    backends. Overloaded free functions rely on pystencils-sfg internals
+    (`AllowOverloads`, `LinearBuffer`); re-check them whenever the
+    pystencils-sfg version changes.
+  * `tests/data/field_accessors{,_cuda}_api_*.json` hold the API expected by
+    the waLBerla bridge on each target.
+* `tests/`: unit tests, run with
+  `python3 -m unittest discover -s tests -t .` from this directory.
+
+The kernels include the pystencils runtime headers (`pystencils_runtime/`).
+They are not copied into ESPResSo: at configure time, CMake takes them from
+the pystencils package of the Python interpreter it uses
+(`cmake/FindPystencils.cmake`), if that is pystencils 2.1. Otherwise it fetches
+them from the pystencils sources (tag `release/2.1`, see the top-level
+`CMakeLists.txt`), so building ESPResSo doesn't need pystencils. Bump that tag
+together with the toolchain.
+
+## Hand-written C++ headers of the bridge
+
+Two families of generated classes derive from hand-written headers in
+`src/walberla_bridge/src/utils/`. The generated headers include them by their
+relative path, because the include path of the bridge targets doesn't contain
+`src/`. A change that keeps the interface that the generators rely on doesn't
+need a regeneration.
+
+* `UniformCpuFieldPackInfoBase.hpp`: the CRTP base of the CPU `PackInfoPdf`,
+  `PackInfoVec` and `PackInfoScalar`, the CPU counterpart of `sweepgen`'s
+  `UniformGpuFieldPackInfoBase`. It implements the interface of
+  `walberla::communication::UniformPackInfo` (buffers, sizes, local copy); the
+  generated class provides the pack, unpack and copy kernels per direction.
+* `IndexVectorBoundary.hpp`: the CRTP base of the link boundaries
+  (`DynamicUBB`, `Dirichlet`, `FixedFlux`), with the index vectors, the
+  optional force vectors, the link policies and the host/device handling (see
+  the description of `boundaries.py` above). Its C++ tests are
+  `src/walberla_bridge/tests/IndexVectorBoundary_test{,_cuda}`.
+* `field_index_range.hpp`: not a base class, the check of the size of the
+  fields of a block, for the kernels that index them with 32 bits (see "Index
+  limit of the fields of a block").
+
+## Reaction kernels
+
+The reactions of the electrokinetics change the densities of their reactants
+`rho_i` in a cell by `stoech_i * rate_coefficient * prod_j rho_j ** order_j`,
+all with the densities of before the reaction. `reactions.py` generates this
+for `N` = 1 to 5 reactants, in single and double precision, on the CPU and on
+the CUDA target (there is no AVX variant), as plain sweepgen classes in
+`walberla::pystencils`: `ReactionKernelBulk<N>` runs on all cells of the
+interior of a block, `ReactionKernelIndexed<N>` on the cells of the
+`walberla::v8::sweep::SparseIndexList` that its constructor takes (in unified
+memory on CUDA, so that the bridge fills it on the host, without a copy to the
+device). The index list must not contain a cell twice, and it may contain cells
+of the ghost layers. The constructors take the list (indexed), the
+`BlockDataID`s of the density fields `rho_0Id`, ..., then the scalars, e.g.
+`ReactionKernelBulk3DoublePrecision(rho_0Id, rho_1Id, rho_2Id, order0, order1,
+order2, rate_coefficient, stoech0, stoech1, stoech2)`. The scalars are named
+`order0` and not `order_0`: sweepgen combines the properties `x_0` to `x_2`
+into a `Vector3` and `x_0` and `x_1` into a `Vector2`, which would give the
+classes for 2 and 3 reactants a different constructor than the other ones.
+The classes are not templates, so the bridge selects the class at runtime
+with `src/walberla_bridge/src/electrokinetics/reactions/ReactionKernelSelector.hpp`
+(hand-written; the number of reactants, the precision and the architecture
+select one of the 20 classes of each family), which `EKReactionImplBulk` and
+`EKReactionImplIndexed` use. Its C++ test is in
+`src/walberla_bridge/tests/ek_kernels_unit_tests.cpp`. The kernels of a class
+live in the namespace `<ClassName>_kernels`, so the CPU and CUDA classes never
+define the same function (`tests/test_reactions.py`).
+
+## Index limit of the fields of a block
+
+The kernels that compute their offsets with `int32_t` are the
+single-precision AVX stream-collide kernels of the LB (`index_dtype=int32`) and
+the link kernels of the boundary conditions (`DynamicUBB`, `Dirichlet` and
+`FixedFlux`, all precisions and targets). The PDF field of a block (LB) and the
+flux field of a block (EK), including their ghost layers, must therefore have
+fewer than 2^31 elements:
+`Q * pad16(cells_x + 2 * ghost_layers) * (cells_y + 2 * ghost_layers) *
+(cells_z + 2 * ghost_layers) < 2^31`, with `Q = 19` populations for the LB and
+`Q = 13` components for the flux field of the EK, and `pad16(n)` the
+rounding up to a multiple of 16. (The density field of the EK has one
+component, so it is smaller than the flux field of the same block.) The rounding accounts for the aligned
+allocator of the AVX kernels, which pads the x extent of the allocation (and
+thus the strides of the kernels) to a multiple of the SIMD alignment (at most
+64 bytes, i.e. 16 single-precision elements); it is applied for every build,
+overestimating the size by less than 1%.
+The generated code can't check this. The constructors of `LBWalberlaImpl`
+(`src/walberla_bridge/src/lattice_boltzmann/LBWalberlaImpl.hpp`) and of
+`EKinWalberlaImpl` (`src/walberla_bridge/src/electrokinetics/EKinWalberlaImpl.hpp`)
+do, with `walberla::detail::check_field_index_range` of
+`src/walberla_bridge/src/utils/field_index_range.hpp`, before they allocate any
+field, and throw a `std::runtime_error` (a `RuntimeError` in Python). The
+remedy is more MPI ranks or blocks, or a smaller grid. The tests are
+`src/walberla_bridge/tests/field_index_range_test.cpp` (the function),
+`LBWalberlaImpl_unit_tests.cpp` and `EKinWalberlaImpl_unit_tests.cpp` (the
+constructors).
+
+The stream-collide sweeps share one shadow PDF field between all blocks of a
+sweep object, which is cloned from the first block that is processed. All
+blocks must therefore have the same size, which `LatticeWalberla` guarantees
+by creating a uniform block grid; the constructor of `LBWalberlaImpl` checks
+that the PDF fields of all local blocks have the same size.
+
+## Flux sweeps of the electrokinetics
+
+The sweeps `DiffusiveFluxKernel`, `DiffusiveFluxKernelWithElectrostatic` (each
+without and with the suffix `Thermalized`), `AdvectiveFluxKernel`,
+`ContinuityKernel` and `FrictionCouplingKernel` of `walberla::pystencils`
+(`ek_sweeps.py`) are plain sweepgen classes like the LB sweeps (see "Generated
+sweep classes"), in single and double precision, for the CPU and CUDA targets
+(no AVX). In each time step the bridge runs the diffusive flux (the thermalized
+variant has the noise of the thermal fluctuations), the advective flux, the
+friction coupling and the continuity kernel, which updates the density by the
+divergence of the fluxes.
+
+**Layout of the flux field.** The flux field has 13 components for each cell (a
+`GhostLayerField<T, 13>` in `fzyx` order): the component `k` of a cell `c` is the
+flux through the face between `c` and `c + e_k` along `e_k`, for the 13 directions
+`e_k` of `flux_layout.STORED_DIRECTIONS` (the order of `Staggering.Corner3D`
+of pystencils 2.1: `(0, 1, 0)`, `(1, 0, 0)`, `(0, 0, 1)`, ..., `(1, 1, -1)`). The
+flux through the other faces of a cell is stored in its neighbors, with the
+opposite sign. The flux kernels, the fixed flux boundary and the accessors of
+the flux field (`Flux::get_vector` is the flux vector of a cell) have to use the
+same layout, which `flux_layout.py` defines. The layout differs from the one of
+the staggered fields of pystencils 1.4 (the negative directions, in another
+order).
+
+**Domain of the flux sweeps.** The flux field is never communicated: the
+continuity and the friction coupling kernels read the fluxes through all the 26
+faces of a cell, so the flux kernels compute the faces between interior and
+ghost cells themselves. The flux sweeps (diffusive and advective flux) are run
+on the interior of a block expanded by one cell in each direction, with
+`runOnCellInterval(block, interval)`, where `interval` is `xyzSize()` of the
+density field expanded by one (the block needs at least one ghost layer, which
+`EKinWalberlaImpl` checks): the store of each of the 13 components is guarded by
+a condition on the counters of the cell loop (`ek_sweeps.face_condition`),
+which makes the sweep compute every face that touches an interior cell exactly
+once, by the cell that owns it, and not write anything outside of the extended
+region. `operator()` of a flux sweep would only run on the interior and is not
+what the bridge needs. The density, potential and velocity fields must be up to
+date in the first ghost layer when the flux sweeps run. The continuity and the
+friction coupling kernels run on the interior with `operator()`.
+
+**Properties.** The sweeps have the constructors and reference accessors of
+sweepgen (see "Generated sweep classes"; the names are `densityId`, `fluxId`,
+`potentialId`, `velocityId` and `forceId` for the fields; `diffusion`, `kT`,
+`valency` and `lb_density` for the scalars; `ext_efield` for the external
+electric field as a `walberla::Vector3`; and for the thermalized sweeps `seed`,
+`time_step`, `block_offset` and `grid_size`). The constructors take the field
+IDs, then the scalars, each in alphabetical order, e.g.
+`DiffusiveFluxKernelWithElectrostaticDoublePrecision(densityId, fluxId,
+potentialId, diffusion, ext_efield, kT, valency)`. The IDs of the fields are
+constant.
+
+**Continuity.** `ek_sweeps.continuity` sums the net flux of the 13 pairs of
+opposite faces of a cell (`flux(c)[k] - flux(c - e_k)[k]`) instead of the 26 fluxes
+in the order of `ps.fd.FVM1stOrder.discrete_continuity`: a uniform flux has
+exactly zero divergence in any precision. With the order of pystencils, the
+rounding errors don't cancel, and in single precision the density of a species
+with a uniform flux (e.g. in a uniform external electric field) drifted by the
+machine precision in each time step, which the single-precision tests of
+`testsuite/python/ek_*.py` detect (their tolerances are tuned to the old kernels).
+
+**Gradient.** pystencils 2.1.0 (`ps.fd.FVM1stOrder.discrete_flux`) selects the
+stencil of the gradient along the four body diagonals at random from a family
+of stencils with free weights, so the generated code depended on
+`PYTHONHASHSEED` (one of the body diagonals of the electrostatic flux had 8
+instead of 4 field accesses). `ek_sweeps.discrete_flux` uses the stencils of
+pystencils for the faces along the axes and the face diagonals, and the
+two-point difference `d_i f = e_i (f(c + e) - f(c)) / |e|^2` for the body
+diagonals, which is exact for linear fields like all the others
+(`tests/test_ek_sweeps.py`).
+
+**pystencils 2.1 internals.** The generators of the flux sweeps
+(`ek_sweeps.py`, `flux_layout.py`, `ek_accessors.py`) rely on the following
+names of pystencils 2.1.0, which are not a stable API: re-check them whenever
+pystencils changes.
+
+* `pystencils.fd.finitevolumes.get_access_and_direction`, to split a
+  derivative into the field access and the direction;
+* `pystencils.fd.derivation.FiniteDifferenceStaggeredStencilDerivation`, the
+  stencils of the gradients at the faces;
+* `pystencils.fd.derivative.expand_diff_full`, to expand the derivatives of
+  the flux;
+* `pystencils.flow.Store` and `pystencils.flow.guarded_block`, to build the
+  guarded stores of the components of the flux;
+* `pystencils.sympyextensions.random.Philox`, the RNG of the thermalized
+  flux;
+* `Staggering.staggered_entries` and `Staggering.stencil_entries` (the
+  directions of the components, and the stencil with the centre first), and
+  `StaggeredField.stencil.staggered_index` and `StaggeredField.face`, which
+  give the components of a staggered field;
+* `StaggeredFieldAccess` (`offsets`, `index` and `vector_index`), which
+  `flux_layout.lower` replaces by accesses to a plain field.
+
+**Thermal fluctuations.** The thermalized sweeps use the Philox RNG of the
+pystencils 2.1 runtime. The noise through a face is `sqrt(2 D rho_face / |e| /
+A0) * w`, with `w` a random number of zero mean and unit variance. The random
+numbers of a cell depend on its global coordinates (modulo the size of the
+periodic grid, `grid_size`), not on the block, so the noise doesn't depend on
+the domain decomposition and two blocks compute the same flux through the faces
+that they share. The sweep sees the cell with the counters `ctr` at the global
+coordinates `block_offset + ctr`, so the bridge sets `block_offset` for each block
+before it runs the sweep to the global coordinates of the first cell of its
+interval (the lower corner of the block minus one in each direction). The old
+kernels set the offset only once for each rank (every block used the offset of
+the last one). The counter `time_step` is advanced by the bridge, see below.
+Like the LB, the sweep without fluctuations (`DiffusiveFluxKernel`,
+`DiffusiveFluxKernelWithElectrostatic`) is a class of its own, and the choice
+is made when the EK instance is constructed (there is no switch on `kT`: `kT`
+is only the thermal energy of the electrostatic term).
+
+**Use by the bridge.** `EKinWalberlaImpl` keeps persistent kernel objects, as
+before: the diffusive flux without and with electrostatics are each a
+`std::variant` of the thermalized and the unthermalized class. The setters of
+the diffusion, `kT`, valency and external electric field update the objects
+through the reference accessors. The ID of the potential field is a constant
+property, so the electrostatic kernel is constructed again (with the current
+parameters) when `integrate` gets another potential field than the one of the
+kernel, which happens when the Poisson solver changes. The RNG counter is a
+member of the bridge (`get_rng_state()` and `set_rng_state()` are the values
+that Python sees), written to the `time_step` of the active sweep before it
+runs and advanced after each time step. The advective flux and the friction
+coupling are constructed for each time step, as before. The C++ tests are
+`src/walberla_bridge/tests/ek_flux_kernels_unit_tests.cpp` (the kernels, on one
+and on several blocks) and `EKinWalberlaImpl_unit_tests.cpp` (the bridge).
+
+## Generated sweep classes
+
+The classes of `InitialPDFsSetter`, `UpdateVelFromPDF`,
+`StreamCollideSweepThermalized`, `StreamCollideSweepAthermal` and
+`StreamCollideSweepLeesEdwards` are the classes of sweepgen, in the namespace
+`walberla::pystencils`: there is no wrapper around them, and the waLBerla
+bridge (`src/walberla_bridge/src/lattice_boltzmann/`) calls them directly.
+Their interface:
+
+* A constructor with all properties: first the field IDs, then the scalars,
+  each in alphabetical order, e.g.
+  `StreamCollideSweepThermalizedDoublePrecision(forceId, pdfsId,
+  block_offset, kT, omega_bulk, omega_even, omega_odd, omega_shear, seed,
+  time_step)`.
+* Reference accessors of the scalars (`kT()`, `omega_shear()`, `v_s()`,
+  `time_step()`, ...) that the bridge uses to update a property of an existing
+  object. The field IDs are read-only.
+* `operator()(IBlock *)` and `runOnCellInterval(IBlock *, CellInterval)`. The
+  CUDA classes take an additional `walberla::v8::sweep::exectag::GPU`, which
+  carries the stream and defaults to the default stream. The stream-collide
+  sweeps swap the PDF field with a shadow field (`swapShadowBuffers`) after
+  each run, so only `operator()` is meaningful for them; the shadow field is
+  private to the sweep object.
+* The integer properties are `int64_t`, e.g. the seed and the time step of the
+  RNG. The three block offsets of the RNG are one property
+  `block_offset` of type `walberla::Vector3<int64_t>`.
+
+The classes don't know which block they run on, so the bridge sets
+`block_offset` to the lower corner of the global cell bounding box of the
+block before it runs the thermalized sweep on that block (the RNG of a cell
+depends on its global coordinates, so the noise doesn't depend on the domain
+decomposition); see `StreamCollideSweepVisitor` in `LBWalberlaImpl.hpp`.
+
+## Thermalized LB kernels
+
+The thermal fluctuations of the stream-collide kernel use the Philox RNG of
+the pystencils 2.1 runtime. Its counter layout differs from the pystencils 1.4
+kernels, so a given seed produces a different (statistically equivalent)
+noise realisation than in earlier ESPResSo versions.
+
+The thermalized and athermal stream-collide steps are two classes of their
+own, `StreamCollideSweepThermalized` (with the RNG) and
+`StreamCollideSweepAthermal` (without; its results agree with the thermalized
+kernel at `kT = 0` up to floating-point rounding). Evaluating the RNG costs
+2 to 3.3 times as much per cell, and the vectorizer can't generate a branch
+on `kT`, so the choice isn't made in the kernel. The bridge chooses once in
+`LBWalberlaImpl::set_collision_model(kT, seed)` (the only place where `kT` is
+set): the thermalized sweep if `kT > 0`, otherwise the athermal sweep. Both
+are alternatives of the `CollisionModel` variant of `LBWalberlaImpl`, next to
+the Lees-Edwards sweep. Only the thermalized sweep has an RNG state (the time
+step counter, `get_rng_state()` and `set_rng_state()`): for `kT = 0` the
+state is `None` and setting it raises an error.

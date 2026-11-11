@@ -100,7 +100,8 @@ public:
 #ifndef NDEBUG
     uint_t xSize, ySize, zSize, bSize;
     buffer >> xSize >> ySize >> zSize >> bSize;
-    uint_t buf_size{0u};
+    // only read by WALBERLA_ASSERT_EQUAL, which is a no-op in device code
+    [[maybe_unused]] uint_t buf_size{0u};
     for (auto it = begin(flag_field); it != flag_field->end(); ++it) {
       if (isFlagSet(it, boundary_flag)) {
         ++buf_size;

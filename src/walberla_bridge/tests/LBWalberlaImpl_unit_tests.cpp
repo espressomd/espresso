@@ -43,6 +43,7 @@
 #include <initializer_list>
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -112,6 +113,51 @@ BOOST_DATA_TEST_CASE(kT_thermalized, bdata::make(thermalized_lbs()),
                      lb_generator) {
   auto lb = lb_generator(params);
   BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
+}
+
+BOOST_DATA_TEST_CASE(rng_state_unthermalized, bdata::make(unthermalized_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(params);
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+  BOOST_CHECK_THROW(lb->set_rng_state(5u), std::runtime_error);
+  lb->integrate();
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+}
+
+BOOST_DATA_TEST_CASE(rng_state_thermalized, bdata::make(thermalized_lbs()),
+                     lb_generator) {
+  auto lb = lb_generator(params);
+  BOOST_CHECK_EQUAL(lb->get_seed(), params.seed);
+  BOOST_REQUIRE(lb->get_rng_state().has_value());
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 0u);
+  lb->integrate();
+  lb->integrate();
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 2u);
+  lb->set_rng_state(56u);
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 56u);
+  lb->integrate();
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 57u);
+}
+
+BOOST_DATA_TEST_CASE(rng_state_follows_kT, bdata::make(all_lbs()),
+                     lb_generator) {
+  // the collision model is chosen when kT and the seed are set
+  auto lb = lb_generator(params);
+  lb->set_collision_model(0., 42u);
+  BOOST_CHECK_EQUAL(lb->get_kT(), 0.);
+  BOOST_CHECK_EQUAL(lb->get_seed(), 42u);
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+  lb->integrate();
+  BOOST_CHECK(not lb->get_rng_state().has_value());
+  lb->set_collision_model(params.kT, 43u);
+  BOOST_CHECK_EQUAL(lb->get_kT(), params.kT);
+  BOOST_CHECK_EQUAL(lb->get_seed(), 43u);
+  BOOST_REQUIRE(lb->get_rng_state().has_value());
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 0u);
+  lb->integrate();
+  BOOST_CHECK_EQUAL(*lb->get_rng_state(), 1u);
+  lb->set_collision_model(0., 43u);
+  BOOST_CHECK(not lb->get_rng_state().has_value());
 }
 
 BOOST_DATA_TEST_CASE(per_node_boundary, bdata::make(all_lbs()), lb_generator) {
@@ -614,6 +660,21 @@ BOOST_AUTO_TEST_CASE(lb_exceptions) {
   auto lb_lattice_without_ghosts = std::make_shared<LatticeWalberla>(
       params.grid_dimensions, mpi_shape, mpi_shape, 0u);
   BOOST_CHECK_THROW(LB(lb_lattice_without_ghosts, 1., 1.), std::runtime_error);
+}
+
+BOOST_AUTO_TEST_CASE(lb_block_too_large_for_32bit_indices) {
+  using LB = walberla::LBWalberlaImpl<double, lbmpy::Arch::CPU>;
+  // blocks of 500^3 cells: the PDF field would have 19 * 502^3 > 2^31 elements
+  // (creating the lattice doesn't allocate any field, and the LB constructor
+  // must throw before it does)
+  auto const grid_dimensions =
+      hadamard_product(Vector3i::broadcast(500), mpi_shape);
+  auto const lattice = std::make_shared<LatticeWalberla>(
+      grid_dimensions, mpi_shape, mpi_shape, 1u);
+  auto const check_message = [](std::runtime_error const &error) {
+    return std::string(error.what()).find("2^31") != std::string::npos;
+  };
+  BOOST_CHECK_EXCEPTION(LB(lattice, 1., 1.), std::runtime_error, check_message);
 }
 
 BOOST_AUTO_TEST_CASE(le_sweep) {
