@@ -20,6 +20,7 @@
 #pragma once
 
 #include "for_each_3d.hpp"
+#include "kokkos_helpers.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
@@ -61,16 +62,24 @@ void extract_block_into(OutValue *out, Container const &in_array,
     auto const n_y = stop[1] - start[1];
     // Explicit destination offset per (x, y) lane lets the outer loop run in
     // parallel: each x writes a disjoint set of contiguous lanes, so the copy
-    // is thread-safe and bitwise-identical to the serial version.
-    _Pragma("omp parallel for") for (int x = start[0]; x < stop[0]; ++x) {
-      for (int y = start[1]; y < stop[1]; ++y) {
-        auto const offset_src = x * plane_src + y * lane_src + start[2];
-        auto const offset_dst =
-            (static_cast<std::size_t>(x - start[0]) * n_y + (y - start[1])) *
-            lane_dst;
-        std::copy_n(src + offset_src, lane_dst, dst + offset_dst);
-      }
-    }
+    // is thread-safe and bitwise-identical to the serial version. The loop
+    // runs over all x-planes of the input, so that each thread reads the
+    // planes it wrote in the other loops over the halo mesh.
+    kokkos_parallel_range_for<Kokkos::DefaultHostExecutionSpace>(
+        "extract_block_into", 0, dimensions[0], [=](int const x) {
+          if (x < start[0] or x >= stop[0]) {
+            return;
+          }
+          for (int y = start[1]; y < stop[1]; ++y) {
+            auto const offset_src = x * plane_src + y * lane_src + start[2];
+            auto const offset_dst =
+                (static_cast<std::size_t>(x - start[0]) * n_y +
+                 (y - start[1])) *
+                lane_dst;
+            std::copy_n(src + offset_src, lane_dst, dst + offset_dst);
+          }
+        });
+    Kokkos::fence();
   } else {
     for_each_3d_lin<output_memory_order>(
         start, stop, [&](Utils::Vector3i const &indices, int out_index) {
@@ -113,33 +122,36 @@ void pad_with_zeros_discard_imag_into(OutValue *out, std::span<T> cropped_array,
     // One parallel sweep over the padded x-planes: each x writes a disjoint
     // plane (fully zeroed in the x-halo, per-lane zero/copy/zero otherwise),
     // so the sweep is thread-safe and bitwise-identical to the serial version.
-    _Pragma("omp parallel for") for (int x = 0; x < padded_dim[0]; ++x) {
-      auto *const plane = dst + static_cast<std::size_t>(x) * plane_dst;
-      if (x < pad_left[0] or x >= pad_left[0] + cropped_dim[0]) {
-        std::fill_n(plane, plane_dst, OutValue{});
-        continue;
-      }
-      auto const src_x = x - pad_left[0];
-      for (int y = 0; y < padded_dim[1]; ++y) {
-        auto *const lane = plane + static_cast<std::size_t>(y) * lane_dst;
-        if (y < pad_left[1] or y >= pad_left[1] + cropped_dim[1]) {
-          std::fill_n(lane, lane_dst, OutValue{});
-          continue;
-        }
-        auto const src_y = y - pad_left[1];
-        auto const offset_src =
-            (static_cast<std::size_t>(src_x) * cropped_dim[1] + src_y) *
-            lane_src;
-        std::fill_n(lane, pad_left[2], OutValue{});
-        if constexpr (std::is_floating_point_v<T>) {
-          std::copy_n(src + offset_src, lane_src, lane + pad_left[2]);
-        } else {
-          std::transform(src + offset_src, src + offset_src + lane_src,
-                         lane + pad_left[2], get_real);
-        }
-        std::fill_n(lane + pad_left[2] + lane_src, pad_right[2], OutValue{});
-      }
-    }
+    kokkos_parallel_range_for<Kokkos::DefaultHostExecutionSpace>(
+        "pad_with_zeros_discard_imag_into", 0, padded_dim[0], [=](int const x) {
+          auto *const plane = dst + static_cast<std::size_t>(x) * plane_dst;
+          if (x < pad_left[0] or x >= pad_left[0] + cropped_dim[0]) {
+            std::fill_n(plane, plane_dst, OutValue{});
+            return;
+          }
+          auto const src_x = x - pad_left[0];
+          for (int y = 0; y < padded_dim[1]; ++y) {
+            auto *const lane = plane + static_cast<std::size_t>(y) * lane_dst;
+            if (y < pad_left[1] or y >= pad_left[1] + cropped_dim[1]) {
+              std::fill_n(lane, lane_dst, OutValue{});
+              continue;
+            }
+            auto const src_y = y - pad_left[1];
+            auto const offset_src =
+                (static_cast<std::size_t>(src_x) * cropped_dim[1] + src_y) *
+                lane_src;
+            std::fill_n(lane, pad_left[2], OutValue{});
+            if constexpr (std::is_floating_point_v<T>) {
+              std::copy_n(src + offset_src, lane_src, lane + pad_left[2]);
+            } else {
+              std::transform(src + offset_src, src + offset_src + lane_src,
+                             lane + pad_left[2], get_real);
+            }
+            std::fill_n(lane + pad_left[2] + lane_src, pad_right[2],
+                        OutValue{});
+          }
+        });
+    Kokkos::fence();
   } else {
     std::fill_n(out, Utils::product(padded_dim), OutValue{});
     for_each_3d_lin<memory_order>(

@@ -199,6 +199,18 @@ public:
     ca_frac_spillover.clear();
     ca_fmp_spillover.clear();
   }
+
+  /**
+   * @brief Reset the cache before a parallel fill with @ref zfill.
+   * Unlike @ref reset, keeps the allocation for reuse by @ref zfill.
+   *
+   * @param cao Interpolation order.
+   */
+  void reset_for_zfill(int cao) {
+    m_cao = cao;
+    ca_frac_spillover.clear();
+    ca_fmp_spillover.clear();
+  }
 };
 
 /**

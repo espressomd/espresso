@@ -64,8 +64,15 @@ template <typename FloatType> class p3m_send_mesh {
   std::vector<FloatType> send_grid;
   /** vector to store grid points to recv */
   std::vector<FloatType> recv_grid;
+  /** all neighbors are this rank and the send and receive blocks of each
+   *  direction are disjoint: exchange in place, without buffers */
+  bool self_exchange = false;
 
 public:
+  /** @brief Whether the halo exchange is done in place on this rank,
+   *  i.e. the halo layers are periodic images of the local mesh.
+   */
+  bool is_self_exchange() const { return self_exchange; }
   void resize(boost::mpi::communicator const &comm,
               P3MLocalMesh const &local_mesh);
   void gather_grid(boost::mpi::communicator const &comm,
