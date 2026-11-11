@@ -46,7 +46,7 @@ class RigidBondVirialTest(ut.TestCase):
         self.system.bonded_inter.add(bond)
         p1 = self.system.part.add(pos=[x1, 5.0, 5.0], v=v1, mass=m1)
         p2 = self.system.part.add(pos=[x2, 5.0, 5.0], v=v2, mass=m2)
-        p2.add_bond((bond, p1))
+        self.system.bonds[bond].add((p2, p1))
         return p1, p2
 
     # Rotation test: after one step, constraint virial = F_centripetal * d,
@@ -131,8 +131,8 @@ class RigidBondVirialTest(ut.TestCase):
         bond12 = espressomd.interactions.RigidBond(r=l2, ptol=1e-9, vtol=1e-9)
         self.system.bonded_inter.add(bond01)
         self.system.bonded_inter.add(bond12)
-        parts[1].add_bond((bond01, parts[0]))
-        parts[2].add_bond((bond12, parts[1]))
+        self.system.bonds[bond01].add((parts[1], parts[0]))
+        self.system.bonds[bond12].add((parts[2], parts[1]))
         return parts, x
 
     def _virial_chain(self, set_integrator, masses, bond_lengths, omega=1.0):

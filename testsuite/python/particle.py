@@ -25,6 +25,7 @@ import espressomd.propagation
 import numpy as np
 import collections
 import itertools
+import warnings
 
 
 class ParticleProperties(ut.TestCase):
@@ -480,7 +481,16 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(len(p2.bonds), 0)
 
     def test_bonds(self):
-        """Tests bond addition, removal and update."""
+        """
+        Tests bond addition, removal and update via the deprecated
+        ``add_bond()``/``delete_bond()`` particle methods and
+        the ``bonds`` particle property.
+        """
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", FutureWarning)
+            self.check_bonds_legacy_interface()
+
+    def check_bonds_legacy_interface(self):
 
         p1 = self.system.part.by_id(self.pid)
         p2 = self.system.part.add(pos=p1.pos)
@@ -552,6 +562,41 @@ class ParticleProperties(ut.TestCase):
             p2.delete_bond([self.f1, p1])
         p2.delete_bond((self.f4, p1, p3, p4))
 
+    def test_bonds_deprecation_warnings(self):
+        """
+        Tests that the legacy bond methods emit a deprecation warning,
+        and that the ``bonds`` particle property doesn't.
+        """
+        p1 = self.system.part.by_id(self.pid)
+        p2 = self.system.part.add(pos=p1.pos)
+        p3 = self.system.part.add(pos=p1.pos)
+        p2p3 = self.system.part.by_ids([p2.id, p3.id])
+
+        with self.assertWarnsRegex(FutureWarning, r"ParticleHandle\.add_bond\(\) is deprecated"):
+            p2.add_bond((self.f1, p1))
+        self.assertEqual(p2.bonds, ((self.f1, p1.id),))
+        with self.assertWarnsRegex(FutureWarning, r"ParticleHandle\.delete_bond\(\) is deprecated"):
+            p2.delete_bond((self.f1, p1))
+        self.assertEqual(p2.bonds, ())
+        with self.assertWarnsRegex(FutureWarning, r"ParticleSlice\.add_bond\(\) is deprecated"):
+            p2p3.add_bond((self.f1, p1))
+        self.assertEqual(p2.bonds, ((self.f1, p1.id),))
+        self.assertEqual(p3.bonds, ((self.f1, p1.id),))
+        with self.assertWarnsRegex(FutureWarning, r"ParticleSlice\.delete_bond\(\) is deprecated"):
+            p2p3.delete_bond((self.f1, p1))
+        self.assertEqual(p2.bonds, ())
+        self.assertEqual(p3.bonds, ())
+
+        # the bonds property and the new interface are not deprecated
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            p2.bonds = [(self.f1, p1)]
+            p2p3.bonds = [(self.f1, p1)]
+            p2p3.bonds = []
+            self.system.part.add(pos=p1.pos, bonds=[(self.f1, p1)])
+            self.system.bonds[self.f1].add((p2, p1))
+            self.system.bonds[self.f1].remove((p2, p1))
+
     def test_system_bonds_interface(self):
         """Tests the ``system.bonds[bond].add(particles)`` interface."""
 
@@ -584,6 +629,26 @@ class ParticleProperties(ut.TestCase):
 
         with self.assertRaisesRegex(TypeError, "'bond' has to be a BondedInteraction"):
             self.system.bonds["not_a_bond"]
+
+        # bonds can also be looked up by their numerical id
+        self.system.bonds[bond_id].add((p2, p1))
+        self.assertEqual(p2.bonds, ((harmonic, p1.id),))
+        self.system.bonds[np.int64(bond_id)].remove((p2, p1))
+        self.assertEqual(p2.bonds, ())
+        with self.assertRaisesRegex(ValueError, "is not yet defined"):
+            self.system.bonds[bond_id + 1000]
+
+        # sanity checks
+        self.system.bonds[harmonic].add((p2, p1))
+        with self.assertRaisesRegex(RuntimeError, "already exists on particle"):
+            self.system.bonds[harmonic].add((p2, p1))
+        self.system.bonds[harmonic].remove((p2, p1))
+        with self.assertRaisesRegex(ValueError, r"Bond HarmonicBond\(.+?\) needs 1 partner"):
+            self.system.bonds[harmonic].add((p2, p1, p3))
+        with self.assertRaisesRegex(Exception, "include the particle 17 itself"):
+            self.system.bonds[harmonic].add((p1, p1))
+        with self.assertRaisesRegex(Exception, r"Cannot add duplicate bond partners \[17, 17\]"):
+            self.system.bonds[self.f3].add((p2, p1, p1))
 
     def test_zz_remove_all(self):
         for p in self.system.part.all():

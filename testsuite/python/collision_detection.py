@@ -123,7 +123,7 @@ class CollisionDetection(ut.TestCase):
 
             # Create the bond deterministically, not via collision
             # detection, which may trigger on more than one rank.
-            p0.add_bond((self.bond_center, p1))
+            self.system.bonds[self.bond_center].add((p0, p1))
             self.assertEqual(len(p0.bonds) + len(p1.bonds), 1)
 
             # Clear it the way that used to leak a mirror entry on a
@@ -338,7 +338,7 @@ class CollisionDetection(ut.TestCase):
         for pos in positions:
             p1 = system.part.add(pos=pos + (0., 0., 0.))
             p2 = system.part.add(pos=pos + (0.1, 0., 0.))
-            p1.add_bond((self.bond_pair, p2))
+            self.system.bonds[self.bond_pair].add((p1, p2))
             assert system.distance(p1, p) >= 0.12 and system.distance(
                 p2, p) >= 0.12, "Test particles too close to particle, which should not take part in collision"
 

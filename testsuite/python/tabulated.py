@@ -108,7 +108,7 @@ class TabulatedTest(ut.TestCase):
         self.assertAlmostEqual(tb.params['max'], self.max_)
 
         p0, p1 = self.system.part.all()
-        p0.add_bond((tb, p1))
+        self.system.bonds[tb].add((p0, p1))
         self.check()
 
         # make bond too short: potential becomes constant

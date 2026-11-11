@@ -42,7 +42,7 @@ class RigidBondVirialStatsTest(ut.TestCase):
         self.system.bonded_inter.add(bond)
         p1 = self.system.part.add(pos=[4.5, 5.0, 5.0], v=[0., 0., 0.], mass=1.)
         p2 = self.system.part.add(pos=[5.5, 5.0, 5.0], v=[0., 0., 0.], mass=1.)
-        p2.add_bond((bond, p1))
+        self.system.bonds[bond].add((p2, p1))
         return p1, p2
 
     # Langevin consistency: mean of (P_bond + P_kin) = kT/V,

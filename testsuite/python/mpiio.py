@@ -86,7 +86,7 @@ class MPIIOTest(ut.TestCase):
     particles.
     """
     system = espressomd.system.System(box_l=[1, 1, 1])
-    # Just a bunch of random interactions such that add_bond does not throw
+    # Just a bunch of random interactions such that adding bonds does not throw
     for i in range(nbonds):
         system.bonded_inter[i] = espressomd.interactions.AngleHarmonic(
             bend=i, phi0=i)
@@ -106,7 +106,7 @@ class MPIIOTest(ut.TestCase):
         for p in self.test_mock_particles:
             self.system.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
             for b in p.bonds:
-                self.system.part.by_id(p.id).add_bond(b)
+                self.system.bonds[b[0]].add((p.id, *b[1:]))
 
     def tearDown(self):
         self.system.part.clear()

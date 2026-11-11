@@ -68,7 +68,7 @@ class H5mdTests(ut.TestCase):
     system.bonded_inter.add(vb)
 
     for i in range(N_PART - 1):
-        system.part.by_id(i).add_bond((vb, i + 1))
+        system.bonds[vb].add((i, i + 1))
 
     system.integrator.run(steps=0)
     system.time = 12.3

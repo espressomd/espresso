@@ -243,19 +243,19 @@ class ParticleSliceTest(ut.TestCase):
 
         # Add/Del bonds
         self.all_partcls.bonds = []
-        self.p2.add_bond((fene, 0))
+        self.system.bonds[fene].add((self.p2, 0))
         self.assertEqual(self.all_partcls.bonds, [(), (), ((fene, 0),), ()])
-        self.p2.add_bond((fene, 1))
+        self.system.bonds[fene].add((self.p2, 1))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0), (fene, 1)), ()])
-        self.p2.delete_bond((fene, 1))
+        self.system.bonds[fene].remove((self.p2, 1))
         self.assertEqual(self.all_partcls.bonds, [(), (), ((fene, 0),), ()])
-        self.p2.delete_bond((fene, 0))
+        self.system.bonds[fene].remove((self.p2, 0))
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
         self.all_partcls.bonds = []
-        self.p2.add_bond((fene, 0))
-        self.p2.add_bond((fene, 1))
+        self.system.bonds[fene].add((self.p2, 0))
+        self.system.bonds[fene].add((self.p2, 1))
         self.p2.delete_all_bonds()
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
@@ -317,18 +317,22 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
-        # Add/Del bonds
+        # Add/Del bonds (deprecated slice methods)
         self.all_partcls.bonds = []
-        self.p2p3.add_bond((fene, 0))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.add_bond((fene, 0))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
-        self.p2p3.add_bond((fene, 1))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.add_bond((fene, 1))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
-        self.p2p3.delete_bond((fene, 1))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.delete_bond((fene, 1))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
-        self.p2p3.delete_bond((fene, 0))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.delete_bond((fene, 0))
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
         b = [[[fene, 0], [fene, 1]], [[fene, 0], [fene, 1]]]
@@ -348,7 +352,7 @@ class ParticleSliceTest(ut.TestCase):
         self.system.bonded_inter.add(fene)
 
         self.all_partcls.bonds = []
-        self.p0.add_bond((fene, self.p2.id))
+        self.system.bonds[fene].add((self.p0, self.p2.id))
         self.assertEqual(self.p0.bonds, ((fene, self.p2.id),))
 
         # p0 (the bond owner) is not part of this slice; only p2 (which

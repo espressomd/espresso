@@ -19,6 +19,7 @@
 
 import abc
 import enum
+import numpy as np
 from . import code_features
 from .script_interface import ScriptObjectMap, ScriptInterfaceHelper, script_interface_register
 
@@ -1563,13 +1564,17 @@ class BondCollection:
     """
     Bond-type-centric view of the particles bonded via a specific
     :class:`~espressomd.interactions.BondedInteraction`. Returned by
-    indexing :attr:`espressomd.system.System.bonds` with a bond object,
+    indexing :attr:`espressomd.system.System.bonds` with a bond object
+    or with the numerical id of a bond registered in ``system.bonded_inter``,
     e.g. ``system.bonds[harmonic].add((p1, p2))``. Registers the bond
     in ``system.bonded_inter`` the first time it is used, if it isn't
     registered already.
     """
 
     def __init__(self, system, bond):
+        if isinstance(bond, (int, np.integer)) and \
+                not isinstance(bond, bool):
+            bond = system.bonded_inter[int(bond)]
         if not isinstance(bond, BondedInteraction):
             raise TypeError(
                 "'bond' has to be a BondedInteraction, e.g. HarmonicBond, "

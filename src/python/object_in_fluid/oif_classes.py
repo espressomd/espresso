@@ -964,6 +964,7 @@ class OifCell:
         self.particle_type = particle_type
         self.origin = origin
         self.rotate = rotate
+        system = self.cell_type.system
         for inter in self.cell_type.local_force_interactions:
             esp_inter = inter[0]
             points = inter[1]
@@ -972,24 +973,25 @@ class OifCell:
                 p0 = self.mesh.points[
                     points[0].id]  # Getting PartPoints from id's of FixedPoints
                 p1 = self.mesh.points[points[1].id]
-                p0.part.add_bond((esp_inter, p1.part_id))
+                system.bonds[esp_inter].add((p0.part, p1.part_id))
             if n_points == 3:
                 p0 = self.mesh.points[points[0].id]
                 p1 = self.mesh.points[points[1].id]
                 p2 = self.mesh.points[points[2].id]
-                p0.part.add_bond((esp_inter, p1.part_id, p2.part_id))
+                system.bonds[esp_inter].add(
+                    (p0.part, p1.part_id, p2.part_id))
             if n_points == 4:
                 p0 = self.mesh.points[points[0].id]
                 p1 = self.mesh.points[points[1].id]
                 p2 = self.mesh.points[points[2].id]
                 p3 = self.mesh.points[points[3].id]
-                p1.part.add_bond(
-                    (esp_inter, p0.part_id, p2.part_id, p3.part_id))
+                system.bonds[esp_inter].add(
+                    (p1.part, p0.part_id, p2.part_id, p3.part_id))
 
         if (self.cell_type.kag != 0.0) or (self.cell_type.kv != 0.0):
             for triangle in self.mesh.triangles:
-                triangle.A.part.add_bond(
-                    (self.cell_type.global_force_interaction, triangle.B.part_id,
+                system.bonds[self.cell_type.global_force_interaction].add(
+                    (triangle.A.part, triangle.B.part_id,
                      triangle.C.part_id))
 
     def get_origin(self):

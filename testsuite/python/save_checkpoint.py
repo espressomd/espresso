@@ -290,9 +290,9 @@ dihe_bond = espressomd.interactions.Dihedral(mult=3, bend=7e-6, phase=4.)
 system.bonded_inter.add(dihe_bond)
 p7 = system.part.add(id=2, pos=[2.0, 2.0, 2.1])
 p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
-p2.add_bond((harmonic_bond, p1))
-p2.add_bond((angle_bond, p1, p7))
-p2.add_bond((dihe_bond, p1, p7, p8))
+system.bonds[harmonic_bond].add((p2, p1))
+system.bonds[angle_bond].add((p2, p1, p7))
+system.bonds[dihe_bond].add((p2, p1, p7, p8))
 if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
     # create Drude particles
     system.thermostat.set_thermalized_bond(seed=3)
@@ -303,7 +303,7 @@ if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
     therm_bond1 = espressomd.interactions.ThermalizedBond(**therm_params)
     therm_bond2 = espressomd.interactions.ThermalizedBond(**therm_params)
     system.bonded_inter.add(therm_bond1)
-    p2.add_bond((therm_bond1, p1))
+    system.bonds[therm_bond1].add((p2, p1))
     checkpoint.register("therm_bond2")
     checkpoint.register("therm_params")
     if espressomd.has_features(['ELECTROSTATICS', 'MASS', 'ROTATION']):
@@ -313,7 +313,7 @@ if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
             thermalized_bond=therm_bond1, p_core=p2, type_drude=10,
             alpha=1., mass_drude=0.6, coulomb_prefactor=0.8, thole_damping=2.)
         checkpoint.register("dh")
-p4.add_bond((strong_harmonic_bond, p3))
+system.bonds[strong_harmonic_bond].add((p4, p3))
 ibm_volcons_bond = espressomd.interactions.IBM_VolCons(softID=15, kappaV=0.01)
 ibm_tribend_bond = espressomd.interactions.IBM_Tribend(
     ind1=p1.id, ind2=p2.id, ind3=p3.id, ind4=p4.id, kb=2., refShape="Initial")

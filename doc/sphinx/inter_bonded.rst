@@ -9,7 +9,7 @@ a member of :class:`espressomd.system.System`. Generally, one may use
 the following syntax to activate and assign a bonded interaction::
 
     system.bonded_inter.add(bond)
-    p1.add_bond((bond, p2, ...))
+    system.bonds[bond].add((p1, p2, ...))
 
 In general, one instantiates an interaction object ``bond`` and subsequently passes it
 to :meth:`espressomd.interactions.BondedInteractions.add`. This will enable the
@@ -25,7 +25,7 @@ is provided in subsection :ref:`FENE bond`) between them using::
 
     fene = FeneBond(k=1, d_r_max=1)
     system.bonded_inter.add(fene)
-    p1.add_bond((fene, p2))
+    system.bonds[fene].add((p1, p2))
 
 Note that the ``fene`` object specifies the type of bond and its parameters,
 while the information of the bond between ``p1`` and its bonded partners
@@ -35,13 +35,13 @@ information regarding particle properties in :ref:`Setting up particles`.
 
 To delete the FENE bond between particles ``p1`` and ``p2``::
 
-    p1.delete_bond((fene, p2))
+    system.bonds[fene].remove((p1, p2))
 
 Note that alternatively to particle handles, the particle's ids can be
 used to setup bonded interactions. For example, to create a bond between the
 particles with the ids 12 and 43::
 
-    system.part.by_id(12).add_bond((fene, 43))
+    system.bonds[fene].add((12, 43))
 
 .. _Distance-dependent bonds:
 
@@ -131,7 +131,7 @@ A pairwise Coulomb interaction can be instantiated via
     import espressomd.interactions
     bonded_coulomb = espressomd.interactions.BondedCoulomb(prefactor=1.0)
     system.bonded_inter.add(bonded_coulomb)
-    p1.add_bond((bonded_coulomb, p2))
+    system.bonds[bonded_coulomb].add((p1, p2))
 
 This creates a bond with a Coulomb pair potential between particles ``p1`` and ``p2``.
 It is given by
@@ -220,7 +220,7 @@ A tabulated bond length can be instantiated via
     tab_dist = espressomd.interactions.TabulatedDistance(
         min=<min>, max=<max>, energy=<energy>, force=<force>)
     system.bonded_inter.add(tab_dist)
-    p1.add_bond((tab_dist, p2))
+    system.bonds[tab_dist].add((p1, p2))
 
 This creates a bond type identifier with a tabulated potential. The force acts
 in the direction of the connecting vector between the particles. The bond breaks
@@ -268,7 +268,7 @@ between the vectors from the central particle to the two other particles.
 Similar to other bonded interactions, these are defined for every particle triplet and must be added to a particle (see property :attr:`~espressomd.particle_data.ParticleHandle.bonds`), in this case the central one.
 For example, for the schematic with particles ``p0``, ``p1`` (central particle) and ``p2`` the bond was defined using ::
 
-    p1.add_bond((bond_angle, p0, p2))
+    system.bonds[bond_angle].add((p1, p0, p2))
 
 The parameter ``bond_angle`` is an instance of one of four possible bond-angle
 classes, described below.
@@ -291,7 +291,7 @@ Example::
     import espressomd.interactions
     angle_harmonic = espressomd.interactions.AngleHarmonic(bend=1.0, phi0=2 * np.pi / 3)
     system.bonded_inter.add(angle_harmonic)
-    p1.add_bond((angle_harmonic, p0, p2))
+    system.bonds[angle_harmonic].add((p1, p0, p2))
 
 
 Cosine angle potential
@@ -315,7 +315,7 @@ Example::
     import espressomd.interactions
     angle_cosine = espressomd.interactions.AngleCosine(bend=1.0, phi0=2 * np.pi / 3)
     system.bonded_inter.add(angle_cosine)
-    p1.add_bond((angle_cosine, p0, p2))
+    system.bonds[angle_cosine].add((p1, p0, p2))
 
 
 Harmonic cosine potential
@@ -339,7 +339,7 @@ Example::
     import espressomd.interactions
     angle_cossquare = espressomd.interactions.AngleCossquare(bend=1.0, phi0=2 * np.pi / 3)
     system.bonded_inter.add(angle_cossquare)
-    p1.add_bond((angle_cossquare, p0, p2))
+    system.bonds[angle_cossquare].add((p1, p0, p2))
 
 
 Tabulated angle potential
@@ -354,7 +354,7 @@ A tabulated bond angle can be instantiated via
         energy=10 * (theta - 2 * np.pi / 3)**2,
         force=10 * (theta - 2 * np.pi / 3) / 2)
     system.bonded_inter.add(angle_tab)
-    p1.add_bond((angle_tab, p0, p2))
+    system.bonds[angle_tab].add((p1, p0, p2))
 
 The energy and force tables must be sampled from :math:`0` to :math:`\pi`,
 where :math:`\pi` corresponds to a flat angle. The forces are scaled with the
@@ -378,7 +378,7 @@ Dihedral interactions are available through the :class:`espressomd.interactions.
     import espressomd.interactions
     dihedral = espressomd.interactions.Dihedral(bend=<K>, mult=<n>, phase=<phi_0>)
     system.bonded_inter.add(dihedral)
-    p2.add_bond((dihedral, p1, p3, p4))
+    system.bonds[dihedral].add((p2, p1, p3, p4))
 
 This creates a bond type identifier with a dihedral potential, a
 four-body-potential. In the following, let the particle for which the
@@ -419,7 +419,7 @@ A tabulated dihedral interaction can be instantiated via
     import espressomd.interactions
     dihedral_tab = espressomd.interactions.TabulatedDihedral(energy=<energy>, force=<force>)
     system.bonded_inter.add(dihedral_tab)
-    p2.add_bond((dihedral_tab, p1, p3, p4))
+    system.bonds[dihedral_tab].add((p2, p1, p3, p4))
 
 The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 For details of the interpolation, see :ref:`Tabulated interaction`.
@@ -504,7 +504,7 @@ where ``softID`` identifies the soft particle and ``kappaV`` is a volumetric
 spring constant. Note that this ``volCons`` bond does not have a bond partner.
 It is added to a particle as follows::
 
-    system.part.by_id(0).add_bond((volCons,))
+    system.bonds[volCons].add((0,))
 
 The comma is needed to create a tuple containing a single item.
 
@@ -559,7 +559,7 @@ in the correct order. Command
 
 ::
 
-    p1.add_bond((local_inter, p0, p2, p3))
+    system.bonds[local_inter].add((p1, p0, p2, p3))
 
 creates a bond related to the triangles 012 and 123. The particle 0
 corresponds to point A1, particle 1 to C, particle 2 to B and particle 3
@@ -688,7 +688,7 @@ defined
 
 ::
 
-    p0.add_bond((global_force_interaction, p1, p2))
+    system.bonds[global_force_interaction].add((p0, p1, p2))
 
 Triangle 012 must have correct orientation, that is the normal vector
 defined by a vector product :math:`01\times02` must point to the inside of
