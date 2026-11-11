@@ -455,6 +455,22 @@ class LangevinThermostat(ut.TestCase):
                 np.testing.assert_allclose(vel, ref_vel, rtol=1e-7)
                 np.testing.assert_allclose(rot, ref_rot, rtol=1e-7)
 
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_body_lab_conversion(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = 1e-6
+        system.thermostat.set_langevin(
+            kT=0., gamma=5., gamma_rotation=5., seed=42)
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                            ext_torque=[1., -0.5, 2.])
+        for i in range(4):
+            system.integrator.run(1, recalc_forces=(i == 2))
+            omega = np.copy(p.omega_lab)
+            ref = np.copy(p.ext_torque) / 5. * (1. - np.exp(-5. * system.time))
+            np.testing.assert_allclose(omega, ref, rtol=10. * system.time_step)
+
 
 if __name__ == "__main__":
     ut.main()

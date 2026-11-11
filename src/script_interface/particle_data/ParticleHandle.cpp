@@ -383,23 +383,23 @@ ParticleHandle::ParticleHandle() {
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
            auto const omega = get_value<Utils::Vector3d>(value);
-           p.omega() = convert_vector_space_to_body(p, omega);
+           p.omega() = convert_vector_space_to_body(p.quat(), omega);
          });
        },
        [this]() {
          auto &p = get_particle_data(m_pid);
-         return convert_vector_body_to_space(p, p.omega());
+         return convert_vector_body_to_space(p.quat(), p.omega());
        }},
       {"torque_lab",
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
            auto const torque = get_value<Utils::Vector3d>(value);
-           p.torque() = convert_vector_space_to_body(p, torque);
+           p.torque() = convert_vector_space_to_body(p.quat(), torque);
          });
        },
        [this]() {
          auto &p = get_particle_data(m_pid);
-         return convert_vector_body_to_space(p, p.torque());
+         return convert_vector_body_to_space(p.quat(), p.torque());
        }},
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_ROTATIONAL_INERTIA
@@ -785,14 +785,14 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     return get_particle_property<std::vector<double>>(
         [&params](Particle const &p) {
           auto const vec = get_value<Utils::Vector3d>(params, "vec");
-          return convert_vector_body_to_space(p, vec).as_vector();
+          return convert_vector_body_to_space(p.quat(), vec).as_vector();
         });
   }
   if (name == "convert_vector_space_to_body") {
     return get_particle_property<std::vector<double>>(
         [&params](Particle const &p) {
           auto const vec = get_value<Utils::Vector3d>(params, "vec");
-          return convert_vector_space_to_body(p, vec).as_vector();
+          return convert_vector_space_to_body(p.quat(), vec).as_vector();
         });
 #endif // ESPRESSO_ROTATION
   }

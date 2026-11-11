@@ -57,10 +57,8 @@ setup_trivial_quat(unsigned int i, Utils::Vector3d const &v_in) {
 BOOST_AUTO_TEST_CASE(convert_vector_space_to_body_test) {
   auto const t_in = Utils::Vector3d{{1., 2., 3.}};
   for (unsigned int i : {0u, 1u, 2u, 3u}) {
-    auto p = Particle();
-    Utils::Vector3d t_ref;
-    std::tie(p.quat(), t_ref) = Testing::setup_trivial_quat(i, t_in);
-    auto const t_out = convert_vector_space_to_body(p, t_in);
+    auto const [quat, t_ref] = Testing::setup_trivial_quat(i, t_in);
+    auto const t_out = convert_vector_space_to_body(quat, t_in);
     for (unsigned int j : {0u, 1u, 2u}) {
       BOOST_CHECK_CLOSE(t_out[j], t_ref[j], tol);
     }

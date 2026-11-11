@@ -238,6 +238,21 @@ class StokesianThermostat(ut.TestCase):
                 np.testing.assert_allclose(vel, ref_vel, rtol=0., atol=atol)
                 np.testing.assert_allclose(rot, ref_rot, rtol=0., atol=atol)
 
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_body_lab_conversion(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = 1e-6
+        system.thermostat.set_stokesian(kT=0., seed=42)
+        system.integrator.set_stokesian_dynamics(viscosity=2., radii={0: 0.8})
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                            ext_torque=[0.5, -0.5, 2.])
+        ref = np.array([7.1318334, 1.39379095, 3.89043016]) / 100.
+        for i in range(3):
+            system.integrator.run(1, recalc_forces=(i == 1))
+            np.testing.assert_allclose(np.copy(p.omega_lab), ref, rtol=5e-6)
+
 
 if __name__ == "__main__":
     ut.main()

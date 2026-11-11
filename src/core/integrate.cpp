@@ -671,11 +671,28 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       cell_structure->ghosts_reduce_forces_finish();
     }
 
-    if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
 #ifdef ESPRESSO_ROTATION
-      convert_initial_torques(cell_structure->local_particles());
-#endif
+    // convert torques to the body-fixed frame before the integration loop
+    if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
+      if (propagation.used_propagations & PropagationMode::ROT_LANGEVIN) {
+        for (auto &p : cell_structure->local_particles()) {
+          if (p.can_rotate() and propagation.should_propagate_with(
+                                     p, PropagationMode::ROT_LANGEVIN)) {
+            convert_torque_to_body_frame_apply_fix(p);
+          }
+        }
+      }
+      if (propagation.used_propagations & PropagationMode::ROT_EULER and
+          n_steps == 0) {
+        for (auto &p : cell_structure->local_particles()) {
+          if (p.can_rotate() and propagation.should_propagate_with(
+                                     p, PropagationMode::ROT_EULER)) {
+            convert_torque_to_body_frame_apply_fix(p);
+          }
+        }
+      }
     }
+#endif // ESPRESSO_ROTATION
 
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_END("Initial Force Calculation");

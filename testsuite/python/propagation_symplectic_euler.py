@@ -20,6 +20,7 @@ import espressomd
 import espressomd.propagation
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 
 class SymplecticEuler(ut.TestCase):
@@ -89,6 +90,21 @@ class SymplecticEuler(ut.TestCase):
             for i in range(3):
                 self.assertAlmostEqual(
                     max_local_error[i + 1] / max_local_error[i], 4.0, delta=0.4)
+
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_body_lab_conversion(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = 1e-6
+        system.integrator.set_symplectic_euler()
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                            ext_torque=[1., -0.5, 2.])
+        for i in range(4):
+            system.integrator.run(1, recalc_forces=(i == 2))
+            omega = np.copy(p.omega_lab)
+            ref = np.copy(p.ext_torque) * system.time
+            np.testing.assert_allclose(omega, ref, rtol=1e-10)
 
 
 if __name__ == "__main__":
