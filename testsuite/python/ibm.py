@@ -70,19 +70,19 @@ class IBM(ut.TestCase):
         tri1 = espressomd.interactions.IBM_Triel(
             ind1=p0.id, ind2=p1.id, ind3=p2.id, elasticLaw="Skalak", k1=0.1, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri1)
-        p0.add_bond((tri1, p1, p2))
+        self.system.bonds[tri1].add((p0, p1, p2))
 
         # Add second triel, strong modulus
         tri2 = espressomd.interactions.IBM_Triel(
             ind1=p0.id, ind2=p2.id, ind3=p3.id, elasticLaw="Skalak", k1=10, k2=0, maxDist=2.4)
         system.bonded_inter.add(tri2)
-        p0.add_bond((tri2, p2, p3))
+        self.system.bonds[tri2].add((p0, p2, p3))
 
         # Add bending
         tribend = espressomd.interactions.IBM_Tribend(
             ind1=p0.id, ind2=p1.id, ind3=p2.id, ind4=p3.id, kb=1, refShape="Initial")
         system.bonded_inter.add(tribend)
-        p0.add_bond((tribend, p1, p2, p3))
+        self.system.bonds[tribend].add((p0, p1, p2, p3))
 
         # twist
         system.part.all().pos = system.part.all().pos + np.random.random((4, 3))
@@ -116,7 +116,7 @@ class IBM(ut.TestCase):
             ind1=p3.id, ind2=p4.id, ind3=p5.id, elasticLaw="Skalak", k1=15,
             k2=0, maxDist=2.4)
         system.bonded_inter.add(tri)
-        p3.add_bond((tri, p4, p5))
+        self.system.bonds[tri].add((p3, p4, p5))
 
         all_partcls.pos = all_partcls.pos + np.array((
             (0, 0, 0), (1, -.2, .3), (1, 1, 1),
@@ -147,7 +147,7 @@ class IBM(ut.TestCase):
             ind1=p1.id, ind2=p2.id, ind3=p3.id, elasticLaw="Skalak", k1=15.,
             k2=0., maxDist=1.)
         system.bonded_inter.add(tri)
-        p1.add_bond((tri, p2, p3))
+        self.system.bonds[tri].add((p1, p2, p3))
         with self.assertRaisesRegex(Exception, "bond broken between particles 0, 1, 2"):
             # stretch bonds too far
             all_partcls.pos = all_partcls.pos + np.array((
@@ -184,7 +184,7 @@ class IBM(ut.TestCase):
             bond = espressomd.interactions.IBM_Triel(
                 ind1=id3, ind2=id2, ind3=id1, elasticLaw="Skalak", k1=0., k2=0., maxDist=3)
             system.bonded_inter.add(bond)
-            system.part.by_id(id1).add_bond((bond, id2, id3))
+            self.system.bonds[bond].add((id1, id2, id3))
 
         # Add volume conservation force.
         KAPPA_V = 0.01
@@ -193,7 +193,7 @@ class IBM(ut.TestCase):
         self.assertEqual(volCons.current_volume(), 0.)
         system.bonded_inter.add(volCons)
         for p in system.part:
-            p.add_bond((volCons,))
+            self.system.bonds[volCons].add((p,))
 
         # The default volume is zero
         self.assertEqual(volCons.current_volume(), 0.)

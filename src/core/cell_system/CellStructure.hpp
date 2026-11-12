@@ -30,6 +30,7 @@
 #include "ParticleRange.hpp"
 #include "algorithm/link_cell.hpp"
 #include "bond_error.hpp"
+#include "bond_queries.hpp"
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "config/config.hpp"
@@ -772,7 +773,10 @@ private:
    *                should indicate if the bond was broken.
    */
   void execute_bond_handler(Particle &p, auto const &handler) {
-    for (const BondView bond : p.bonds()) {
+    // Owned bonds only: they carry the partner order the bond was created
+    // with (e.g. the vertex-first order angle bonds rely on), and every
+    // bond is processed exactly once.
+    for_each_bond(p.bonds(), [&](BondView const &bond) {
       auto const partner_ids = bond.partner_ids();
       try {
         auto partners = resolve_bond_partners(partner_ids);
@@ -784,7 +788,7 @@ private:
       } catch (BondResolutionError const &) {
         bond_resolution_error(partner_ids);
       }
-    }
+    });
   }
 
   /**

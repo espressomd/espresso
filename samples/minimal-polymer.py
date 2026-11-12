@@ -51,7 +51,7 @@ previous_part = None
 for pos in positions[0]:
     part = system.part.add(pos=pos)
     if previous_part:
-        part.add_bond((fene, previous_part))
+        system.bonds[fene].add((part, previous_part))
     previous_part = part
 
 espressomd.io.writer.vtf.writevsf(system, outfile)

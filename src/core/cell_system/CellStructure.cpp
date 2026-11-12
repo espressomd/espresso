@@ -31,6 +31,8 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "aosoa_pack.hpp"
+#include "bond_queries.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
@@ -44,7 +46,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/contains.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -289,11 +290,15 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   auto &angle_ids = m_bond_state->angle_ids;
   auto &dihedral_list = m_bond_state->dihedral_list;
   auto &dihedral_ids = m_bond_state->dihedral_ids;
-  for (auto const bond : p.bonds()) {
+  // Owned bonds only: every bond enters the flat lists exactly once.
+  // The analyzer reports a false positive in the Kokkos bounds-check error
+  // formatting of the View accesses below (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK);
+  // it anchors the report at this call, which therefore carries the NOLINT.
+  // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
+  for_each_bond(p.bonds(), [&](BondView const &bond) {
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
-      // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();
@@ -316,7 +321,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
     } catch (BondResolutionError const &) {
       bond_resolution_error(partner_ids);
     }
-  }
+  });
 }
 
 void CellStructure::set_index_map() {
@@ -347,18 +352,13 @@ void CellStructure::set_index_map() {
     unique_particles[index] = &p;
     auto &counts = thread_counts[omp_get_thread_num()];
     counts.max_id = std::max(p.id(), counts.max_id);
-    for (auto const bond : p.bonds()) {
-      if (not bond.partner_ids().empty()) {
-        auto const partner_ids = bond.partner_ids();
-        if (partner_ids.size() == 1u) {
-          counts.pair += 1;
-        } else if (partner_ids.size() == 2u) {
-          counts.angle += 1;
-        } else if (partner_ids.size() == 3u) {
-          counts.dihedral += 1;
-        }
-      }
-    }
+    // Read the incrementally-maintained primary-entry counts instead of
+    // walking the whole list on every rebuild. They must agree with what
+    // update_bond_storage() fills in, or the Kokkos views overflow.
+    auto const &bond_counts = p.bonds().primary_counts();
+    counts.pair += bond_counts.pair;
+    counts.angle += bond_counts.angle;
+    counts.dihedral += bond_counts.dihedral;
   });
   Kokkos::fence();
   int pair_count = 0;
@@ -438,28 +438,60 @@ void CellStructure::check_particle_sorting() const {
 }
 
 void CellStructure::remove_particle(int id) {
-  auto remove_all_bonds_to = [id](BondList &bl) {
-    for (auto it = bl.begin(); it != bl.end();) {
-      if (Utils::contains(it->partner_ids(), id)) {
-        it = bl.erase(it);
-      } else {
-        std::advance(it, 1);
-      }
-    }
-  };
+  // The particle's own bond list names every bond it participates in (see
+  // BondList.hpp), so the other participants can be found directly instead
+  // of sweeping all local particles. Only ranks knowing `id` (real or
+  // ghost) can discover them, hence the gather/broadcast: a participant on
+  // a rank that never saw `id` would otherwise keep a dangling entry.
+  // ::remove_bond() skips `id` itself, whose bond list is discarded below.
+  std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
+  if (auto const *p = get_local_particle(id)) {
+    for_each_bond<BondEntries::all>(p->bonds(), [&](BondView const &bond) {
+      std::vector<int> ids = {id};
+      std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
+      bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));
+    });
+  }
+  ::sync_bond_tuples(bonds_to_remove, ::comm_cart);
+  auto &system = get_system();
+  for (auto const &[bond_id, ids] : bonds_to_remove) {
+    ::remove_bond(system, bond_id, ids, id);
+  }
 
-  for (auto cell : decomposition().local_cells()) {
-    auto &parts = cell->particles();
-    for (auto it = parts.begin(); it != parts.end();) {
-      if (it->id() == id) {
-        it = parts.erase(it);
-        update_particle_index(id, nullptr);
-        update_particle_index(parts);
-      } else {
-        remove_all_bonds_to(it->bonds());
-        it++;
-      }
+  // Locate the particle via the index instead of scanning all local
+  // particles. Real particles take precedence over ghosts in the index
+  // (ghosts only fill otherwise empty entries), so a ghost entry means the
+  // particle is not stored on this rank.
+  auto *const p = get_local_particle(id);
+  if (p == nullptr or p->is_ghost()) {
+    return;
+  }
+
+  auto const holds = [p](Cell *cell) {
+    if (cell == nullptr) {
+      return false;
     }
+    auto &parts = cell->particles();
+    return parts.begin() <= p and p < parts.end();
+  };
+  // The cell computed from the position is right unless the particle moved
+  // across a cell boundary since the last resort; then fall back to checking
+  // each local cell's storage range, which is O(cells), not O(particles).
+  auto *cell = particle_to_cell(*p);
+  if (not holds(cell)) {
+    auto const cells = decomposition().local_cells();
+    auto const found = std::ranges::find_if(cells, holds);
+    assert(found != cells.end());
+    cell = *found;
+  }
+
+  // ParticleList::erase() moves the last element into the freed slot, so
+  // only that element's index entry needs updating.
+  auto &parts = cell->particles();
+  auto const it = parts.erase(p);
+  update_particle_index(id, nullptr);
+  if (it != parts.end()) {
+    update_particle_index(*it);
   }
 }
 

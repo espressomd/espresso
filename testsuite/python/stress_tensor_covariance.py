@@ -179,7 +179,7 @@ class StressTensorCovarianceAngleBond(ut.TestCase):
         system.part.add(pos=center + d02)
 
         # The central particle holds the angle bond
-        p0.add_bond((angle_bond, 1, 2))
+        system.bonds[angle_bond].add((p0, 1, 2))
 
         system.integrator.run(0)
         check_non_central_forces(self, particle_index=1, ref_direction=d01)

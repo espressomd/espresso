@@ -223,8 +223,8 @@ Example::
 
     p1 = system.part.add(id=1, pos=[0.00, 0.0, 0.0], v=[0.0, 0.0, 0.0])
     p2 = system.part.add(id=2, pos=[0.46, 0.0, 0.0], v=[0.1, 0.0, 0.0])
-    p1.add_bond((h1, p2))
-    p1.add_bond((h2, p2))
+    system.bonds[h1].add((p1, p2))
+    system.bonds[h2].add((p1, p2))
     for i in range(3):
         system.integrator.run(2)
         bond_length = np.linalg.norm(system.distance_vec(p1, p2))

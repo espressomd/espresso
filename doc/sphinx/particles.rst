@@ -478,7 +478,7 @@ Please note:
        hb = espressomd.interactions.HarmonicBond(k=5., r_0=0., r_cut=10.)
        system.bonded_inter.add(hb)
        # Add harmonic interaction between the virtual site and fixed pulling particle
-       pulling_part.add_bond((hb, vs))
+       system.bonds[hb].add((pulling_part, vs))
 
   Last example sets a harmonic potential that pulls the com virtual site to the center
   of the simulation box.
@@ -662,7 +662,7 @@ positions of monomers (x, y, z). A quick example of how to set up polymers::
         previous_part = None
         for part in monomers:
             if not previous_part is None:
-                part.add_bond((fene, previous_part))
+                system.bonds[fene].add((part, previous_part))
             previous_part = part
 
 If there are constraints present in your system which you want to be taken

@@ -245,11 +245,12 @@ by adding the instance to :attr:`~espressomd.system.System.bonded_inter`: ::
 
     system.bonded_inter.add(harmonic)
 
-Finally, the bond can be added to particles using the :meth:`~espressomd.particle_data.ParticleHandle.add_bond()`
-method of :class:`~espressomd.particle_data.ParticleHandle` with the instance of the bond class and the
-instance of the partner particle: ::
+Finally, the bond can be added to particles by indexing
+:attr:`system.bonds <espressomd.system.System.bonds>` with the instance of the bond class
+and calling :meth:`~espressomd.interactions.BondCollection.add()` with the
+bonded particles: ::
 
-    part1.add_bond((harmonic, part2))
+    system.bonds[harmonic].add((part1, part2))
 
 .. rubric:: Charges
 

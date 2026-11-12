@@ -79,7 +79,7 @@ polymer = system.part.add(pos=positions[0])
 previous_part = None
 for part in polymer:
     if previous_part:
-        part.add_bond((fene, previous_part))
+        system.bonds[fene].add((part, previous_part))
     previous_part = part
 
 # Warmup

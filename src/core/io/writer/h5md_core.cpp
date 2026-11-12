@@ -27,6 +27,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "bond_queries.hpp"
 #include "lees_edwards/LeesEdwardsBC.hpp"
 
 #include <config/version.hpp>
@@ -661,7 +662,8 @@ void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
-    for (auto const b : p.bonds()) {
+    // Owned bonds only, so that every pair-bond edge is written once.
+    for_each_bond(p.bonds(), [&](BondView const &b) {
       auto const &partner_ids = b.partner_ids();
       if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
@@ -669,7 +671,7 @@ void File::write_connectivity(const ParticleRange &particles) {
         bond[0][nbonds_local][1] = partner_ids[0];
         nbonds_local++;
       }
-    }
+    });
   }
 
   auto const n_bonds_local = static_cast<int>(bond.shape()[1]);

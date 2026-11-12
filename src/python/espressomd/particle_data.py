@@ -21,6 +21,7 @@ import numpy as np
 import collections
 import itertools
 import functools
+import warnings
 from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
@@ -363,7 +364,6 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         ----------
-        delete_bond : Delete an unverified bond held by the particle.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
     is_virtual()
@@ -493,8 +493,9 @@ class ParticleHandle(ScriptInterfaceHelper):
     @property
     def bonds(self):
         """
-        The bonds stored by this particle. Note that bonds are only stored by
-        one partner. You need to define a bonded interaction.
+        The bonds owned by this particle. Note that a bond is only listed
+        for the particle it was created on (its first argument), not for
+        its partner particles. You need to define a bonded interaction.
 
         A bond tuple is specified as a bond identifier associated with
         a particle ``(bond_ID, (*part_ID,))``. A single particle may contain
@@ -507,8 +508,8 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         --------
-        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a ``Particle``
-        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a ``Particle``
+        espressomd.interactions.BondCollection.add : Method to add bonds to a ``Particle``
+        espressomd.interactions.BondCollection.remove : Method to remove bonds from a ``Particle``
 
         """
         bonds = []
@@ -528,10 +529,10 @@ class ParticleHandle(ScriptInterfaceHelper):
         if bonds:
             nlvl = nesting_level(bonds)
             if nlvl == 1:
-                self.add_bond(bonds)
+                self._add_bond(bonds)
             elif nlvl == 2:
                 for bond in bonds:
-                    self.add_bond(bond)
+                    self._add_bond(bond)
             else:
                 raise ValueError(
                     "Bonds have to specified as lists of tuples/lists or a single list.")
@@ -639,7 +640,6 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         --------
-        add_bond : Add an unverified bond to the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
@@ -661,7 +661,6 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         --------
-        delete_bond : Delete an unverified bond held by the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
@@ -722,9 +721,28 @@ class ParticleHandle(ScriptInterfaceHelper):
                     "Bond partners have to be of type integer or ParticleHandle.")
         return tuple(bond)
 
+    def _add_bond(self, bond):
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} already exists on particle {self.id}")
+        self.add_verified_bond(_bond)
+
+    def _delete_bond(self, bond):
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond not in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} doesn't exist on particle {self.id}")
+        self.delete_verified_bond(_bond)
+
     def add_bond(self, bond):
         """
         Add a single bond to the particle.
+
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].add((p1, p2, ...))`` instead, see
+           :meth:`espressomd.interactions.BondCollection.add`.
+           This method will be removed in ESPResSo 5.1.
 
         Parameters
         ----------
@@ -757,15 +775,20 @@ class ParticleHandle(ScriptInterfaceHelper):
         >>> p1.add_bond((0, p2))
 
         """
-        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
-        if _bond in self.bonds:
-            raise RuntimeError(
-                f"Bond {_bond} already exists on particle {self.id}")
-        self.add_verified_bond(_bond)
+        warnings.warn(
+            "ParticleHandle.add_bond() is deprecated and will be removed in "
+            "ESPResSo 5.1; use system.bonds[bond].add((p1, p2, ...)) instead",
+            FutureWarning, stacklevel=2)
+        self._add_bond(bond)
 
     def delete_bond(self, bond):
         """
         Delete a single bond from the particle.
+
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].remove((p1, p2, ...))`` instead, see
+           :meth:`espressomd.interactions.BondCollection.remove`.
+           This method will be removed in ESPResSo 5.1.
 
         Parameters
         ----------
@@ -806,12 +829,11 @@ class ParticleHandle(ScriptInterfaceHelper):
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
 
         """
-
-        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
-        if _bond not in self.bonds:
-            raise RuntimeError(
-                f"Bond {_bond} doesn't exist on particle {self.id}")
-        self.delete_verified_bond(_bond)
+        warnings.warn(
+            "ParticleHandle.delete_bond() is deprecated and will be removed "
+            "in ESPResSo 5.1; use system.bonds[bond].remove((p1, p2, ...)) "
+            "instead", FutureWarning, stacklevel=2)
+        self._delete_bond(bond)
 
     def update(self, new_properties):
         """
@@ -968,17 +990,35 @@ class ParticleSlice(ScriptInterfaceHelper):
         """
         Add a single bond to the particles.
 
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].add((p1, p2, ...))`` for each particle
+           instead, see :meth:`espressomd.interactions.BondCollection.add`.
+           This method will be removed in ESPResSo 5.1.
+
         """
+        warnings.warn(
+            "ParticleSlice.add_bond() is deprecated and will be removed in "
+            "ESPResSo 5.1; use system.bonds[bond].add((p1, p2, ...)) for "
+            "each particle instead", FutureWarning, stacklevel=2)
         for p_id in self.id_selection:
-            self._get_particle(p_id).add_bond(_bond)
+            self._get_particle(p_id)._add_bond(_bond)
 
     def delete_bond(self, _bond):
         """
         Delete a single bond from the particles.
 
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].remove((p1, p2, ...))`` for each particle
+           instead, see :meth:`espressomd.interactions.BondCollection.remove`.
+           This method will be removed in ESPResSo 5.1.
+
         """
+        warnings.warn(
+            "ParticleSlice.delete_bond() is deprecated and will be removed "
+            "in ESPResSo 5.1; use system.bonds[bond].remove((p1, p2, ...)) "
+            "for each particle instead", FutureWarning, stacklevel=2)
         for p_id in self.id_selection:
-            self._get_particle(p_id).delete_bond(_bond)
+            self._get_particle(p_id)._delete_bond(_bond)
 
     def delete_all_bonds(self):
         for p_id in self.id_selection:

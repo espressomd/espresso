@@ -54,7 +54,7 @@ class AnalyzeChain(ut.TestCase):
             for ndx, m in enumerate(p):
                 partcl = self.system.part.add(pos=m)
                 if ndx > 0:
-                    partcl.add_bond((self.fene, partcl.id - 1))
+                    self.system.bonds[self.fene].add((partcl, partcl.id - 1))
         # bring two polymers to opposite corners:
         # far in cell centre, but mirror images are close
         pol_0_parts = self.system.part.by_ids(range(0, num_mono))

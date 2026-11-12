@@ -25,6 +25,7 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/system/Leaf.hpp"
 
+#include "core/bond_queries.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
 #include "core/particle_node.hpp"
@@ -64,10 +65,10 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   auto &system = ::System::get_system();
   auto &cell_structure = *system.cell_structure;
 
-  // determine initial connectivity
+  // determine initial connectivity (owned bonds: every pair bond once)
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
-    for (auto const bond : p.bonds()) {
+    for_each_bond(p.bonds(), [&](BondView const &bond) {
       if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {
@@ -75,7 +76,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
           bonded_pairs.emplace_back(pid2);
         }
       }
-    }
+    });
   }
 
   Utils::Mpi::gather_buffer(bonded_pairs, comm);

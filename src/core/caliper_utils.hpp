@@ -188,7 +188,7 @@ struct EspressoCaliLoop {
    * of the loop body; store it in a named local variable.
    */
   EspressoCaliIteration iteration(int iter) const {
-    return EspressoCaliIteration(iter_attr_, iter, loop_ != nullptr);
+    return {iter_attr_, iter, loop_ != nullptr};
   }
 };
 

@@ -44,8 +44,8 @@
 #include "rigid_bond.hpp"
 #include "thermalized_bond.hpp"
 
-#include "BondList.hpp"
 #include "Particle.hpp"
+#include "bond_queries.hpp"
 #include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
@@ -188,41 +188,19 @@ public:
   double maximal_cutoff() const;
 
   /**
-   * @brief Checks both particles for a specific bond, even on ghost particles.
+   * @brief Check whether a pair bond of a given type connects two particles,
+   * even on ghost particles.
    *
-   * @param p           particle to check for the bond
-   * @param p_partner   possible bond partner
-   * @tparam BondType   Bond type to check for. Must be of one of the types in
-   *                    @ref Bonded_IA_Parameters.
-   */
-  template <typename BondType>
-  bool pair_bond_exists_on(Particle const &p, Particle const &p_partner) const {
-    auto const &bonds = p.bonds();
-    return std::any_of(
-        bonds.begin(), bonds.end(),
-        [this, partner_id = p_partner.id()](BondView const &bond) {
-          auto const &bond_ptr = at(bond.bond_id());
-          return std::holds_alternative<BondType>(*bond_ptr.get()) and
-                 (bond.partner_ids()[0] == partner_id);
-        });
-  }
-
-  /**
-   * @brief Checks both particles for a specific bond, even on ghost particles.
-   *
-   * @param p1     particle on which the bond may be stored
-   * @param p2     particle on which the bond may be stored
-   * @tparam BondType Bond type to check for.
+   * @param p1     first particle
+   * @param p2     second particle
+   * @tparam BondType Bond type to check for. Must be of one of the types in
+   *                  @ref Bonded_IA_Parameters.
    */
   template <typename BondType>
   bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
-    if (&p1 == &p2)
-      return false;
-
-    // Check if particles have bonds and search for the bond of interest.
-    // Could be saved on either particle, so we need to check both.
-    return pair_bond_exists_on<BondType>(p1, p2) or
-           pair_bond_exists_on<BondType>(p2, p1);
+    return ::pair_bond_exists(p1, p2, [this](int bond_id) {
+      return std::holds_alternative<BondType>(*at(bond_id));
+    });
   }
 
   void on_ia_change();

@@ -86,13 +86,12 @@ void BindAtPointOfCollision::handle_collisions(
   auto const min_global_cut = system.get_min_global_cut();
   auto const &box_geo = *system.box_geo;
 
-  add_bind_centers(local_collision_queue, system, bond_centers);
-
-  // Gather the global collision queue, because only one node has a collision
-  // across node boundaries in its queue.
-  // The other node might still have to change particle properties on its
-  // non-ghost particle
-  auto global_collision_queue = gather_collision_queue(local_collision_queue);
+  // Bind the particle centers. This also gathers the global collision
+  // queue, because only one node has a collision across node boundaries in
+  // its queue. The other node might still have to change particle properties
+  // on its non-ghost particle
+  auto const global_collision_queue =
+      add_bind_centers(local_collision_queue, system, bond_centers);
 
   // Synchronize max_seen_part
   auto const global_max_seen_particle = boost::mpi::all_reduce(
@@ -161,20 +160,16 @@ void BindAtPointOfCollision::handle_collisions(
     // Create bonds
     auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_vs));
     if (n_partners == 1) {
-      // Create bond between the virtual particles
-      const int bondG[] = {current_vs_pid - 2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
+      // Create bond between the virtual particles; add_bond() writes the
+      // entries on whichever participants are locally known.
+      ::add_bond(system, bond_vs, {current_vs_pid - 1, current_vs_pid - 2});
     }
     if (n_partners == 2) {
-      // Create 1st bond between the virtual particles
-      const int bondG[] = {pid1, pid2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 2))
-        p->bonds().insert({bond_vs, bondG});
+      // Create an angle bond on each virtual site, connecting it to both
+      // base particles; add_bond() writes the entries on whichever
+      // participants are locally known, and is a no-op otherwise.
+      ::add_bond(system, bond_vs, {current_vs_pid - 1, pid1, pid2});
+      ::add_bond(system, bond_vs, {current_vs_pid - 2, pid1, pid2});
     }
   } // Loop over all collisions in the queue
 

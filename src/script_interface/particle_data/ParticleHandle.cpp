@@ -29,6 +29,7 @@
 
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
+#include "core/bond_queries.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/bonds.hpp"
 #include "core/cell_system/CellStructure.hpp"
@@ -207,6 +208,32 @@ void ParticleHandle::set_exclusions(Variant const &value) {
   });
 }
 #endif // ESPRESSO_EXCLUSIONS
+
+/**
+ * @brief Delete the bonds owned by this particle.
+ *
+ * Only primary entries are considered; mirror entries belong to bonds
+ * owned by other particles. @ref ::remove_bond() erases the corresponding
+ * mirror entries on the other participants.
+ */
+void ParticleHandle::delete_owned_bonds() const {
+  std::vector<std::pair<int, std::vector<int>>> owned_bonds;
+  set_particle_property([&owned_bonds](Particle &p) {
+    for_each_bond(p.bonds(), [&](BondView const &bond_view) {
+      std::vector<int> ids = {p.id()};
+      std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
+      owned_bonds.emplace_back(bond_view.bond_id(), std::move(ids));
+    });
+  });
+  // set_particle_property() only runs the lambda above on the rank holding
+  // the real (non-ghost) copy of this particle, but ::remove_bond() must
+  // run everywhere to reach mirror entries living on other ranks; hence
+  // the gather and broadcast.
+  ::sync_bond_tuples(owned_bonds, context()->get_comm());
+  for (auto const &[bond_id, ids] : owned_bonds) {
+    ::remove_bond(*get_system(), bond_id, ids);
+  }
+}
 
 ParticleHandle::ParticleHandle() {
   /* Warning: the order of particle property setters matters! Some properties
@@ -594,8 +621,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 
     // Set bonds
     if (params.contains("bonds_ids")) {
-      // Remove old bonds
-      set_particle_property([&](Particle &p) { p.bonds().clear(); });
+      // Remove old bonds owned by this particle
+      delete_owned_bonds();
       // Add new bonds
       auto const bonds_ids = get_value<std::vector<int>>(params, "bonds_ids");
       auto const bonds_partner_ids =
@@ -628,14 +655,15 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     }
     auto const bond_list = get_particle_data(m_pid).bonds();
     std::vector<std::vector<Variant>> bonds_flat;
-    for (auto const &&bond_view : bond_list) {
+    // Only the bonds this particle owns are exposed to Python.
+    for_each_bond(bond_list, [&](BondView const &bond_view) {
       std::vector<Variant> bond_flat;
       bond_flat.emplace_back(bond_view.bond_id());
       for (auto const pid : bond_view.partner_ids()) {
         bond_flat.emplace_back(pid);
       }
       bonds_flat.emplace_back(std::move(bond_flat));
-    }
+    });
     return make_vector_of_variants(bonds_flat);
   }
   if (name == "add_bond") {
@@ -646,19 +674,14 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     ::add_bond(*get_system(), bond_id, particle_ids);
     get_system()->on_particle_change();
   } else if (name == "del_bond") {
-    set_particle_property([&params](Particle &p) {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      auto const part_id = get_value<std::vector<int>>(params, "part_id");
-      auto const bond_view =
-          BondView(bond_id, {part_id.data(), part_id.size()});
-      auto &bond_list = p.bonds();
-      auto it = std::find(bond_list.begin(), bond_list.end(), bond_view);
-      if (it != bond_list.end()) {
-        bond_list.erase(it);
-      }
-    });
+    auto const bond_id = get_value<int>(params, "bond_id");
+    auto const partner_ids = get_value<std::vector<int>>(params, "part_id");
+    std::vector<int> particle_ids = {m_pid};
+    std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
+    ::remove_bond(*get_system(), bond_id, particle_ids);
+    get_system()->on_particle_change();
   } else if (name == "delete_all_bonds") {
-    set_particle_property([&](Particle &p) { p.bonds().clear(); });
+    delete_owned_bonds();
   } else if (name == "is_valid_bond_id") {
     auto const bond_id = get_value<int>(params, "bond_id");
     return get_system()->bonded_ias->get_zero_based_type(bond_id) != 0;
