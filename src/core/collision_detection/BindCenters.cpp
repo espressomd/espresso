@@ -34,6 +34,7 @@
 
 #include <cassert>
 #include <stdexcept>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -58,7 +59,7 @@ void BindCenters::initialize(System::System &system) {
 
 void BindCenters::handle_collisions(
     System::System &system, std::vector<CollisionPair> &local_collision_queue) {
-  add_bind_centers(local_collision_queue, system, bond_centers);
+  std::ignore = add_bind_centers(local_collision_queue, system, bond_centers);
 }
 
 } // namespace CollisionDetection
