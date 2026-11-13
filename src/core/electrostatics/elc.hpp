@@ -36,16 +36,19 @@
 
 #include "actor/traits.hpp"
 
+#include "electrostatics/elc_parallel.hpp"
 #include "electrostatics/p3m.hpp"
 
 #include "BoxGeometry.hpp"
-#include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "aosoa_pack.hpp"
+#include "kokkos_helpers.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <Kokkos_Core.hpp>
+
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -54,6 +57,7 @@
 #include <utility>
 #include <variant>
 
+class CellStructure;
 struct ElectrostaticLayerCorrection;
 
 namespace traits {
@@ -162,29 +166,43 @@ struct elc_data {
   /// self energies of top and bottom layers with their virtual images
   double dielectric_layers_self_energy(CoulombP3M const &p3m,
                                        BoxGeometry const &box_geo,
-                                       ParticleRange const &particles) const {
-    auto energy = 0.;
-    for (auto const &p : particles) {
-      dielectric_layers_contribution(
-          box_geo, p.pos(), p.pos(), Utils::sqr(p.q()),
-          [&](double q1q2, Utils::Vector3d const &d) {
-            energy += p3m.pair_energy(q1q2, d.norm());
-          });
-    }
-    return energy;
+                                       auto const &cs) const {
+    auto const &aosoa = cs.get_aosoa();
+    auto const n_part = cs.count_local_particles();
+    return ELC::parallel_array_sum<1>(
+        "ELC::layers_self_energy", n_part,
+        [&](std::size_t i, std::array<double, 1> &acc) {
+          auto const pos = aosoa.get_vector_at(aosoa.position, i);
+          dielectric_layers_contribution(
+              box_geo, pos, pos, Utils::sqr(aosoa.charge(i)),
+              [&](double q1q2, Utils::Vector3d const &d) {
+                acc[0] += p3m.pair_energy(q1q2, d.norm());
+              });
+        })[0];
   }
 
   /// forces of particles in border layers with themselves
   void dielectric_layers_self_forces(CoulombP3M const &p3m,
                                      BoxGeometry const &box_geo,
-                                     ParticleRange const &particles) const {
-    for (auto &p : particles) {
-      dielectric_layers_contribution(
-          box_geo, p.pos(), p.pos(), Utils::sqr(p.q()),
-          [&](double q1q2, Utils::Vector3d const &d) {
-            p.force() += p3m.pair_force(q1q2, d, d.norm());
-          });
-    }
+                                     auto &cs) const {
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
+    auto const &aosoa = cs.get_aosoa();
+    auto const n_part = cs.count_local_particles();
+    auto scatter_force = cs.get_scatter_force();
+    kokkos_parallel_range_for<execution_space>(
+        "ELC::layers_self_forces", std::size_t{0u}, n_part, [&](std::size_t i) {
+          auto const pos = aosoa.get_vector_at(aosoa.position, i);
+          Utils::Vector3d force{};
+          dielectric_layers_contribution(
+              box_geo, pos, pos, Utils::sqr(aosoa.charge(i)),
+              [&](double q1q2, Utils::Vector3d const &d) {
+                force += p3m.pair_force(q1q2, d, d.norm());
+              });
+          auto access = scatter_force.access();
+          access(i, 0) += force[0];
+          access(i, 1) += force[1];
+          access(i, 2) += force[2];
+        });
   }
 };
 
@@ -364,8 +382,8 @@ struct ElectrostaticLayerCorrection
   void add_long_range_forces() const;
 
 private:
-  /** Check if a charged particle is in the gap region. */
-  void check_gap(Particle const &p) const;
+  /** Report every charged particle that entered the gap region. */
+  void check_gap(CellStructure const &cs) const;
   double tune_far_cut() const;
   void adapt_solver();
   /** pairwise contributions from the lowest and top layers to the energy */

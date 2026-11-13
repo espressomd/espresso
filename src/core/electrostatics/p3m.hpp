@@ -51,6 +51,14 @@
 #include <cstddef>
 #include <numbers>
 
+/** @brief Image-charge layers of ELC with dielectric contrast. */
+struct ElcImageLayers {
+  double space_layer;
+  double box_h;
+  double delta_mid_bot;
+  double delta_mid_top;
+};
+
 /** @brief P3M solver. */
 struct CoulombP3M : public Coulomb::Actor<CoulombP3M> {
   P3MParameters const &p3m_params;
@@ -130,14 +138,11 @@ public:
   virtual void charge_assign() = 0;
 
   /**
-   * @brief Assign a single charge into the current charge grid.
-   *
-   * @param[in] q          Particle charge
-   * @param[in] real_pos   Particle position in real space
-   * @param[in] skip_cache Skip interpolation weights caching.
+   * @brief Assign real and/or ELC image charges into a fresh charge grid.
+   * Interpolation weights of the real charges are cached by AoSoA index.
    */
-  virtual void assign_charge(double q, Utils::Vector3d const &real_pos,
-                             bool skip_cache) = 0;
+  virtual void charge_assign_elc(ElcImageLayers const &layers, bool assign_real,
+                                 bool assign_images) = 0;
 
   virtual void prepare_fft_mesh(bool reset_weights) = 0;
 

@@ -26,164 +26,362 @@
 #include "electrostatics/elc.hpp"
 
 #include "electrostatics/coulomb.hpp"
+#include "electrostatics/elc_parallel.hpp"
 #include "electrostatics/p3m.hpp"
 
 #include "BoxGeometry.hpp"
-#include "Particle.hpp"
-#include "ParticlePropertyIterator.hpp"
-#include "ParticleRange.hpp"
 #include "aosoa_pack.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "kokkos_helpers.hpp"
 #include "system/System.hpp"
 
+#include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
 #include <Kokkos_Core.hpp>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 
+#include <omp.h>
+
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <functional>
 #include <numbers>
 #include <stdexcept>
+#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
 
-/** \name Product decomposition data organization
- *  For the cell blocks it is assumed that the lower blocks part is in the
- *  lower half. This has to have positive sign, so that has to be first.
- */
-/**@{*/
-#define POQESP 0
-#define POQECP 1
-#define POQESM 2
-#define POQECM 3
-
-#define PQESSP 0
-#define PQESCP 1
-#define PQECSP 2
-#define PQECCP 3
-#define PQESSM 4
-#define PQESCM 5
-#define PQECSM 6
-#define PQECCM 7
-/**@}*/
-
-/** ELC axes (x and y directions)*/
-enum class PoQ : int { P, Q };
 /** ELC charge sum/assign protocol: real charges, image charges, or both. */
 enum class ChargeProtocol : int { REAL, IMAGE, BOTH };
 
-/** temporary buffers for product decomposition */
-static std::vector<double> partblk;
-/** collected data from the other cells */
-static double gblcblk[8];
+namespace {
 
-/** structure for caching sin and cos values */
-struct SCCache {
-  double s, c;
+enum class FreqKind : int { P, Q, PQ };
+
+/** @brief One term of the far-field sum. */
+struct FrequencyEntry {
+  FreqKind kind;
+  std::size_t p; ///< x frequency index (>= 1 for P and PQ)
+  std::size_t q; ///< y frequency index (>= 1 for Q and PQ)
+  double omega;
+  double pref;    ///< scales the real and layer-image block
+  double pref_di; ///< scales the image-sum block (dielectric contrast only)
+  double fac_delta_mid_bot;
+  double fac_delta_mid_top;
+  double fac_delta;
+  std::size_t k;            ///< 4 for P and Q, 8 for PQ
+  std::size_t sums_offset;  ///< into the pass-1 buffer (k or 2k slots)
+  std::size_t coeff_offset; ///< into the coefficient buffer (k slots)
 };
 
-/** Cached sin/cos values along the x-axis and y-axis */
-/**@{*/
-static std::vector<SCCache> scxcache;
-static std::vector<SCCache> scycache;
-/**@}*/
+struct FarFieldTable {
+  std::vector<FrequencyEntry> entries; ///< all P, then all Q, then all PQ
+  std::array<std::size_t, 3> n_kind{}; ///< number of P, Q and PQ entries
+  std::size_t n_sums = 0;              ///< total pass-1 slots
+  std::size_t n_coeffs = 0;            ///< total coefficient slots
+};
+
+template <FreqKind kind>
+using FreqKindTag = std::integral_constant<FreqKind, kind>;
 
 /**
- * @brief Calculate cached sin/cos values for one direction.
- *
- * @tparam dir Index of the dimension to consider (e.g. 0 for x ...).
- *
- * @param particles Particle to calculate values for
- * @param n_freq Number of frequencies to calculate per particle
- * @param u Inverse box length
- * @return Calculated values.
+ * @brief Call @p kernel on every entry in table order, with the frequency
+ * kind as a compile-time tag, so that the kernel body has fixed sizes.
  */
-template <std::size_t dir>
-static std::vector<SCCache> calc_sc_cache(ParticleRange const &particles,
-                                          std::size_t n_freq, double u) {
-  auto constexpr c_2pi = 2. * std::numbers::pi;
-  auto const n_part = particles.size();
-  std::vector<SCCache> ret(n_freq * n_part);
-
-  for (std::size_t freq = 1; freq <= n_freq; freq++) {
-    auto const pref = c_2pi * u * static_cast<double>(freq);
-
-    std::size_t o = (freq - 1) * n_part;
-    for (auto const &p : particles) {
-      auto const arg = pref * p.pos()[dir];
-      ret[o++] = {sin(arg), cos(arg)};
-    }
+template <class Kernel>
+inline void for_each_entry(FarFieldTable const &table, Kernel &&kernel) {
+  auto const *entry = table.entries.data();
+  for (std::size_t n = 0; n < table.n_kind[0]; ++n) {
+    kernel(*entry++, FreqKindTag<FreqKind::P>{});
   }
-
-  return ret;
+  for (std::size_t n = 0; n < table.n_kind[1]; ++n) {
+    kernel(*entry++, FreqKindTag<FreqKind::Q>{});
+  }
+  for (std::size_t n = 0; n < table.n_kind[2]; ++n) {
+    kernel(*entry++, FreqKindTag<FreqKind::PQ>{});
+  }
 }
 
-static std::pair<std::size_t, std::size_t>
-prepare_sc_cache(ParticleRange const &particles, BoxGeometry const &box_geo,
-                 double far_cut) {
+std::pair<std::size_t, std::size_t> n_frequencies(BoxGeometry const &box_geo,
+                                                  double far_cut) {
   assert(far_cut >= 0.);
   auto const n_freq_x =
       static_cast<std::size_t>(std::ceil(far_cut * box_geo.length()[0]) + 1.);
   auto const n_freq_y =
       static_cast<std::size_t>(std::ceil(far_cut * box_geo.length()[1]) + 1.);
-  auto const u_x = box_geo.length_inv()[0];
-  auto const u_y = box_geo.length_inv()[1];
-  scxcache = calc_sc_cache<0>(particles, n_freq_x, u_x);
-  scycache = calc_sc_cache<1>(particles, n_freq_y, u_y);
   return {n_freq_x, n_freq_y};
 }
 
-/*****************************************************************/
-/* data distribution */
-/*****************************************************************/
-
-static void clear_vec(double *pdc, std::size_t size) {
-  std::ranges::fill_n(pdc, static_cast<std::ptrdiff_t>(size), 0.);
+FrequencyEntry make_entry(elc_data const &elc, double prefactor,
+                          BoxGeometry const &box_geo, FreqKind kind,
+                          std::size_t p, std::size_t q, double omega) {
+  auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
+  auto const k = (kind == FreqKind::PQ) ? std::size_t{8u} : std::size_t{4u};
+  auto const pref_di = prefactor * ((kind == FreqKind::PQ) ? 8. : 4.) *
+                       std::numbers::pi * xy_area_inv;
+  auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
+  FrequencyEntry entry{kind, p, q, omega, pref, pref_di, 1., 1., 1., k, 0, 0};
+  if (elc.dielectric_contrast_on) {
+    auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
+    auto const fac_elc = 1. / (1. - delta * exp(-omega * 2. * elc.box_h));
+    entry.fac_delta_mid_bot = elc.delta_mid_bot * fac_elc;
+    entry.fac_delta_mid_top = elc.delta_mid_top * fac_elc;
+    entry.fac_delta = entry.fac_delta_mid_bot * elc.delta_mid_top;
+  }
+  return entry;
 }
 
-static void add_vec(double *pdc_d, double const *pdc_s1, double const *pdc_s2,
-                    std::size_t size) {
-  for (std::size_t i = 0; i < size; i++)
-    pdc_d[i] = pdc_s1[i] + pdc_s2[i];
+/** @brief List the far-field terms in the order of the original loops. */
+FarFieldTable make_frequency_table(elc_data const &elc, double prefactor,
+                                   BoxGeometry const &box_geo) {
+  auto constexpr c_2pi = 2. * std::numbers::pi;
+  auto const [n_freq_x, n_freq_y] = n_frequencies(box_geo, elc.far_cut);
+  auto const ux = box_geo.length_inv()[0];
+  auto const uy = box_geo.length_inv()[1];
+  FarFieldTable table;
+  /* the second condition is just for the case of numerical accident */
+  for (std::size_t p = 1;
+       ux * static_cast<double>(p - 1) < elc.far_cut && p <= n_freq_x; p++) {
+    auto const omega = c_2pi * ux * static_cast<double>(p);
+    table.entries.push_back(
+        make_entry(elc, prefactor, box_geo, FreqKind::P, p, 0, omega));
+  }
+  for (std::size_t q = 1;
+       uy * static_cast<double>(q - 1) < elc.far_cut && q <= n_freq_y; q++) {
+    auto const omega = c_2pi * uy * static_cast<double>(q);
+    table.entries.push_back(
+        make_entry(elc, prefactor, box_geo, FreqKind::Q, 0, q, omega));
+  }
+  for (std::size_t p = 1;
+       ux * static_cast<double>(p - 1) < elc.far_cut && p <= n_freq_x; p++) {
+    for (std::size_t q = 1;
+         Utils::sqr(ux * static_cast<double>(p - 1)) +
+                 Utils::sqr(uy * static_cast<double>(q - 1)) <
+             elc.far_cut2 &&
+         q <= n_freq_y;
+         q++) {
+      auto const omega = c_2pi * sqrt(Utils::sqr(ux * static_cast<double>(p)) +
+                                      Utils::sqr(uy * static_cast<double>(q)));
+      table.entries.push_back(
+          make_entry(elc, prefactor, box_geo, FreqKind::PQ, p, q, omega));
+    }
+  }
+  auto const blocks = elc.dielectric_contrast_on ? 2u : 1u;
+  for (auto &entry : table.entries) {
+    ++table.n_kind[static_cast<std::size_t>(entry.kind)];
+    entry.sums_offset = table.n_sums;
+    entry.coeff_offset = table.n_coeffs;
+    table.n_sums += blocks * entry.k;
+    table.n_coeffs += entry.k;
+  }
+  return table;
 }
 
-static void addscale_vec(double *pdc_d, double scale, double const *pdc_s1,
-                         double const *pdc_s2, std::size_t size) {
-  for (std::size_t i = 0; i < size; i++)
-    pdc_d[i] = scale * pdc_s1[i] + pdc_s2[i];
+using HostMatrix =
+    Kokkos::View<double **, Kokkos::LayoutRight, Kokkos::HostSpace>;
+
+/** @brief Sin/cos of @f$ 2\pi f u x_{dir} @f$, one row per particle. */
+struct SinCosCache {
+  HostMatrix sin;
+  HostMatrix cos;
+};
+
+SinCosCache make_sc_cache(auto const &aosoa, std::size_t n_part,
+                          std::size_t dir, std::size_t n_freq, double u) {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  auto constexpr c_2pi = 2. * std::numbers::pi;
+  SinCosCache cache{
+      HostMatrix(Kokkos::view_alloc("ELC::sin", Kokkos::WithoutInitializing),
+                 n_part, n_freq),
+      HostMatrix(Kokkos::view_alloc("ELC::cos", Kokkos::WithoutInitializing),
+                 n_part, n_freq)};
+  kokkos_parallel_range_for<execution_space>(
+      "ELC::sc_cache", std::size_t{0u}, n_part,
+      [sin_view = cache.sin, cos_view = cache.cos, &aosoa, dir, n_freq,
+       u](std::size_t i) {
+        auto const x = aosoa.position(i, dir);
+        for (std::size_t freq = 1; freq <= n_freq; freq++) {
+          auto const arg = c_2pi * u * static_cast<double>(freq) * x;
+          sin_view(i, freq - 1) = sin(arg);
+          cos_view(i, freq - 1) = cos(arg);
+        }
+      });
+  return cache;
 }
 
-static void scale_vec(double scale, double *pdc, std::size_t size) {
-  for (std::size_t i = 0; i < size; i++)
-    pdc[i] *= scale;
+/** @brief Number of trigonometric products per particle and frequency. */
+template <FreqKind kind>
+inline constexpr std::size_t n_trig = (kind == FreqKind::PQ) ? 4u : 2u;
+
+template <FreqKind kind> using TrigTerms = std::array<double, n_trig<kind>>;
+template <FreqKind kind>
+using RealBlock = std::array<double, 2u * n_trig<kind>>;
+
+/** @brief s, c (P, Q) or ss, sc, cs, cc (PQ) of one particle. */
+template <FreqKind kind>
+inline TrigTerms<kind> particle_terms(FrequencyEntry const &entry,
+                                      SinCosCache const &scx,
+                                      SinCosCache const &scy, std::size_t i) {
+  if constexpr (kind == FreqKind::P) {
+    return {scx.sin(i, entry.p - 1), scx.cos(i, entry.p - 1)};
+  } else if constexpr (kind == FreqKind::Q) {
+    return {scy.sin(i, entry.q - 1), scy.cos(i, entry.q - 1)};
+  } else {
+    auto const sx = scx.sin(i, entry.p - 1);
+    auto const cx = scx.cos(i, entry.p - 1);
+    auto const sy = scy.sin(i, entry.q - 1);
+    auto const cy = scy.cos(i, entry.q - 1);
+    return {sx * sy, sx * cy, cx * sy, cx * cy};
+  }
 }
 
-static double *block(double *p, std::size_t index, std::size_t size) {
-  return &p[index * size];
+/** @brief Real-charge block of one particle (P half, then M half). */
+template <FreqKind kind>
+inline RealBlock<kind> real_block(TrigTerms<kind> const &t, double q,
+                                  double e) {
+  auto constexpr h = n_trig<kind>;
+  RealBlock<kind> out;
+  for (std::size_t m = 0; m < h; ++m) {
+    if constexpr (kind == FreqKind::PQ) {
+      out[m] = t[m] * q * e;
+      out[h + m] = t[m] * q / e;
+    } else {
+      out[m] = q * t[m] * e;
+      out[h + m] = q * t[m] / e;
+    }
+  }
+  return out;
 }
 
-static void distribute(std::size_t size) {
-  assert(size <= 8);
-  double send_buf[8];
-  std::ranges::copy_n(gblcblk, static_cast<std::ptrdiff_t>(size), send_buf);
-  boost::mpi::all_reduce(comm_cart, send_buf, static_cast<int>(size), gblcblk,
+/**
+ * @brief Pass 1: accumulate the sums of every frequency, reduce them over
+ * threads and MPI ranks, and apply the prefactors.
+ * @return @c table.n_coeffs coefficients, @c entry.k per entry
+ */
+std::vector<double>
+far_field_coefficients(elc_data const &elc, FarFieldTable const &table,
+                       SinCosCache const &scx, SinCosCache const &scy,
+                       auto const &aosoa, std::size_t n_part) {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  ELC::PerThreadRows rows(table.n_sums);
+  auto const contrast = elc.dielectric_contrast_on;
+  auto const h = elc.box_h;
+  kokkos_parallel_range_for<execution_space>(
+      "ELC::far_field_sums", std::size_t{0u}, n_part, [&](std::size_t i) {
+        auto *row = rows.row(omp_get_thread_num());
+        auto const z = aosoa.position(i, 2);
+        auto const q = aosoa.charge(i);
+        for_each_entry(table, [&](FrequencyEntry const &entry, auto tag) {
+          auto constexpr kind = decltype(tag)::value;
+          auto constexpr half = n_trig<kind>;
+          auto const omega = entry.omega;
+          auto const t = particle_terms<kind>(entry, scx, scy, i);
+          auto *real = row + entry.sums_offset;
+          auto const blk = real_block<kind>(t, q, exp(omega * z));
+          for (std::size_t m = 0; m < 2u * half; ++m) {
+            real[m] += blk[m];
+          }
+          if (not contrast) {
+            return;
+          }
+          auto *image = real + 2u * half;
+          double e_p, e_m;
+          if (z < elc.space_layer) { // handle the lower case first
+            // negative sign is okay here as the image is located at -z
+            auto const e = exp(-omega * z);
+            auto const scale = q * elc.delta_mid_bot;
+            for (std::size_t m = 0; m < half; ++m) {
+              real[m] += scale * (t[m] * e);
+              real[half + m] += scale * (t[m] / e);
+            }
+            e_p = (exp(omega * (-z - 2. * h)) * elc.delta_mid_bot +
+                   exp(omega * (+z - 2. * h))) *
+                  entry.fac_delta;
+          } else {
+            e_p = (exp(-omega * z) +
+                   exp(omega * (z - 2. * h)) * elc.delta_mid_top) *
+                  entry.fac_delta_mid_bot;
+          }
+          if (z > (h - elc.space_layer)) { // handle the upper case now
+            auto const e = exp(omega * (2. * h - z));
+            auto const scale = q * elc.delta_mid_top;
+            for (std::size_t m = 0; m < half; ++m) {
+              real[m] += scale * (t[m] * e);
+              real[half + m] += scale * (t[m] / e);
+            }
+            e_m = (exp(omega * (+z - 4. * h)) * elc.delta_mid_top +
+                   exp(omega * (-z - 2. * h))) *
+                  entry.fac_delta;
+          } else {
+            e_m = (exp(omega * (+z - 2. * h)) +
+                   exp(omega * (-z - 2. * h)) * elc.delta_mid_bot) *
+                  entry.fac_delta_mid_top;
+          }
+          for (std::size_t m = 0; m < half; ++m) {
+            if constexpr (kind == FreqKind::PQ) {
+              image[m] += t[m] * (e_p * q);
+              image[half + m] += t[m] * (e_m * q);
+            } else {
+              image[m] += q * t[m] * e_p;
+              image[half + m] += q * t[m] * e_m;
+            }
+          }
+        });
+      });
+  Kokkos::fence();
+
+  auto const local = rows.fold();
+  std::vector<double> global(table.n_sums);
+  boost::mpi::all_reduce(comm_cart, local.data(),
+                         static_cast<int>(table.n_sums), global.data(),
                          std::plus<>());
-}
 
-void ElectrostaticLayerCorrection::check_gap(Particle const &p) const {
-  if (p.q() != 0.) {
-    auto const z = p.pos()[2];
-    if (z < 0. or z > elc.box_h) {
-      runtimeErrorMsg() << "Particle " << p.id() << " entered ELC gap "
-                        << "region by " << ((z < 0.) ? z : z - elc.box_h);
+  std::vector<double> coeffs(table.n_coeffs);
+  for (auto const &entry : table.entries) {
+    for (std::size_t m = 0; m < entry.k; ++m) {
+      auto value = entry.pref * global[entry.sums_offset + m];
+      if (contrast) {
+        value += entry.pref_di * global[entry.sums_offset + entry.k + m];
+      }
+      coeffs[entry.coeff_offset + m] = value;
+    }
+  }
+  return coeffs;
+}
+} // namespace
+
+void ElectrostaticLayerCorrection::check_gap(CellStructure const &cs) const {
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
+  auto const box_h = elc.box_h;
+  auto const in_gap = [&aosoa, box_h](std::size_t i) {
+    auto const z = aosoa.position(i, 2);
+    return aosoa.charge(i) != 0. and (z < 0. or z > box_h);
+  };
+  auto const n_in_gap = ELC::parallel_array_sum<1>(
+      "ELC::check_gap", n_part,
+      [&in_gap](std::size_t i, std::array<double, 1> &acc) {
+        if (in_gap(i)) {
+          acc[0] += 1.;
+        }
+      })[0];
+  if (n_in_gap == 0.) {
+    return;
+  }
+  // runtimeErrorMsg() is not thread-safe: report serially
+  for (std::size_t i = 0; i < n_part; ++i) {
+    if (in_gap(i)) {
+      auto const z = aosoa.position(i, 2);
+      runtimeErrorMsg() << "Particle " << aosoa.id(i) << " entered ELC gap "
+                        << "region by " << ((z < 0.) ? z : z - box_h);
     }
   }
 }
@@ -196,147 +394,155 @@ void ElectrostaticLayerCorrection::check_gap(Particle const &p) const {
  *  See @cite yeh99a.
  */
 void ElectrostaticLayerCorrection::add_dipole_force() const {
-  constexpr std::size_t size = 3;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto const particles = system.cell_structure->local_particles();
+  auto &cs = *system.cell_structure;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
   auto const pref = prefactor * 4. * std::numbers::pi / box_geo.volume();
 
   /* for non-neutral systems, this shift gives the background contribution
    * (rsp. for this shift, the DM of the background is zero) */
   auto const shift = box_geo.length_half()[2];
-
-  // collect moments
-
-  gblcblk[0] = 0.; // sum q_i (z_i - L/2)
-  gblcblk[1] = 0.; // sum q_i (z_i - box_h/2)
-  gblcblk[2] = 0.; // sum q_i
-
   auto const mid = 0.5 * elc.box_h;
 
-  for (auto const &p : particles) {
-    check_gap(p);
-    auto const q = p.q();
-    auto const z = p.pos()[2];
+  check_gap(cs);
 
-    gblcblk[0] += q * (z - shift);
-    gblcblk[1] += q * (z - mid);
-    gblcblk[2] += q;
+  // collect moments:
+  // [0] sum q_i (z_i - L/2), [1] sum q_i (z_i - box_h/2), [2] sum q_i
+  auto local = ELC::parallel_array_sum<3>(
+      "ELC::dipole_force_moments", n_part,
+      [this, &aosoa, shift, mid](std::size_t i, std::array<double, 3> &acc) {
+        auto const q = aosoa.charge(i);
+        auto const z = aosoa.position(i, 2);
+        acc[0] += q * (z - shift);
+        acc[1] += q * (z - mid);
+        acc[2] += q;
+        if (elc.dielectric_contrast_on) {
+          if (z < elc.space_layer) {
+            acc[0] += elc.delta_mid_bot * q * (-z - shift);
+            acc[2] += elc.delta_mid_bot * q;
+          }
+          if (z > (elc.box_h - elc.space_layer)) {
+            acc[0] += elc.delta_mid_top * q * (2. * elc.box_h - z - shift);
+            acc[2] += elc.delta_mid_top * q;
+          }
+        }
+      });
 
-    if (elc.dielectric_contrast_on) {
-      if (z < elc.space_layer) {
-        gblcblk[0] += elc.delta_mid_bot * q * (-z - shift);
-        gblcblk[2] += elc.delta_mid_bot * q;
-      }
-      if (z > (elc.box_h - elc.space_layer)) {
-        gblcblk[0] += elc.delta_mid_top * q * (2. * elc.box_h - z - shift);
-        gblcblk[2] += elc.delta_mid_top * q;
-      }
-    }
-  }
+  local[0] *= pref;
+  local[1] *= pref / elc.box_h * box_geo.length()[2];
+  local[2] *= pref;
 
-  gblcblk[0] *= pref;
-  gblcblk[1] *= pref / elc.box_h * box_geo.length()[2];
-  gblcblk[2] *= pref;
-
-  distribute(size);
+  std::array<double, 3> global{};
+  boost::mpi::all_reduce(comm_cart, local.data(), 3, global.data(),
+                         std::plus<>());
 
   // Yeh + Berkowitz dipole term @cite yeh99a
-  auto field_tot = gblcblk[0];
+  auto field_tot = global[0];
 
   // Constant potential contribution
   if (elc.const_pot) {
-    auto const field_induced = gblcblk[1];
+    auto const field_induced = global[1];
     auto const field_applied = elc.pot_diff / elc.box_h;
     field_tot -= field_applied + field_induced;
   }
 
-  for (auto &p : particles) {
-    p.force()[2] -= field_tot * p.q();
-
-    if (!elc.neutralize) {
-      // SUBTRACT the forces of the P3M homogeneous neutralizing background
-      p.force()[2] += gblcblk[2] * p.q() * (p.pos()[2] - shift);
-    }
-  }
+  auto const neutralize = elc.neutralize;
+  auto const background = global[2];
+  auto scatter_force = cs.get_scatter_force();
+  kokkos_parallel_range_for<execution_space>(
+      "ELC::dipole_force", std::size_t{0u}, n_part,
+      [&aosoa, &scatter_force, field_tot, neutralize, background,
+       shift](std::size_t i) {
+        auto const q = aosoa.charge(i);
+        auto fz = -field_tot * q;
+        if (!neutralize) {
+          // SUBTRACT the forces of the P3M homogeneous neutralizing background
+          fz += background * q * (aosoa.position(i, 2) - shift);
+        }
+        auto access = scatter_force.access();
+        access(i, 2) += fz;
+      });
 }
 
 /** Calculate the dipole energy.
  *  See @cite yeh99a.
  */
 double ElectrostaticLayerCorrection::dipole_energy() const {
-  constexpr std::size_t size = 7;
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto const particles = system.cell_structure->local_particles();
   auto const pref = prefactor * 2. * std::numbers::pi / box_geo.volume();
   auto const lz = box_geo.length()[2];
   /* for nonneutral systems, this shift gives the background contribution
      (rsp. for this shift, the DM of the background is zero) */
   auto const shift = box_geo.length_half()[2];
 
-  // collect moments
+  auto const &cs = *system.cell_structure;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
 
-  gblcblk[0] = 0.; // sum q_i               primary box
-  gblcblk[1] = 0.; // sum q_i               boundary layers
-  gblcblk[2] = 0.; // sum q_i (z_i - L/2)   primary box
-  gblcblk[3] = 0.; // sum q_i (z_i - L/2)   boundary layers
-  gblcblk[4] = 0.; // sum q_i (z_i - L/2)^2 primary box
-  gblcblk[5] = 0.; // sum q_i (z_i - L/2)^2 boundary layers
-  gblcblk[6] = 0.; // sum q_i z_i           primary box
+  check_gap(cs);
 
-  for (auto const &p : particles) {
-    check_gap(p);
-    auto const q = p.q();
-    auto const z = p.pos()[2];
-
-    gblcblk[0] += q;
-    gblcblk[2] += q * (z - shift);
-    gblcblk[4] += q * (Utils::sqr(z - shift));
-    gblcblk[6] += q * z;
-
-    if (elc.dielectric_contrast_on) {
-      if (z < elc.space_layer) {
-        gblcblk[1] += elc.delta_mid_bot * q;
-        gblcblk[3] += elc.delta_mid_bot * q * (-z - shift);
-        gblcblk[5] += elc.delta_mid_bot * q * (Utils::sqr(-z - shift));
-      }
-      if (z > (elc.box_h - elc.space_layer)) {
-        gblcblk[1] += elc.delta_mid_top * q;
-        gblcblk[3] += elc.delta_mid_top * q * (2. * elc.box_h - z - shift);
-        gblcblk[5] +=
-            elc.delta_mid_top * q * (Utils::sqr(2. * elc.box_h - z - shift));
-      }
-    }
-  }
-
-  distribute(size);
+  // [0] sum q_i               primary box
+  // [1] sum q_i               boundary layers
+  // [2] sum q_i (z_i - L/2)   primary box
+  // [3] sum q_i (z_i - L/2)   boundary layers
+  // [4] sum q_i (z_i - L/2)^2 primary box
+  // [5] sum q_i (z_i - L/2)^2 boundary layers
+  // [6] sum q_i z_i           primary box
+  auto const local = ELC::parallel_array_sum<7>(
+      "ELC::dipole_energy_moments", n_part,
+      [this, &aosoa, shift](std::size_t i, std::array<double, 7> &acc) {
+        auto const q = aosoa.charge(i);
+        auto const z = aosoa.position(i, 2);
+        acc[0] += q;
+        acc[2] += q * (z - shift);
+        acc[4] += q * (Utils::sqr(z - shift));
+        acc[6] += q * z;
+        if (elc.dielectric_contrast_on) {
+          if (z < elc.space_layer) {
+            acc[1] += elc.delta_mid_bot * q;
+            acc[3] += elc.delta_mid_bot * q * (-z - shift);
+            acc[5] += elc.delta_mid_bot * q * (Utils::sqr(-z - shift));
+          }
+          if (z > (elc.box_h - elc.space_layer)) {
+            acc[1] += elc.delta_mid_top * q;
+            acc[3] += elc.delta_mid_top * q * (2. * elc.box_h - z - shift);
+            acc[5] += elc.delta_mid_top * q *
+                      (Utils::sqr(2. * elc.box_h - z - shift));
+          }
+        }
+      });
+  std::array<double, 7> global{};
+  boost::mpi::all_reduce(comm_cart, local.data(), 7, global.data(),
+                         std::plus<>());
 
   // Yeh + Berkowitz term @cite yeh99a
-  auto energy = 2. * pref * (Utils::sqr(gblcblk[2]) + gblcblk[2] * gblcblk[3]);
+  auto energy = 2. * pref * (Utils::sqr(global[2]) + global[2] * global[3]);
 
   if (!elc.neutralize) {
     // SUBTRACT the energy of the P3M homogeneous neutralizing background
-    energy += 2. * pref *
-              (-gblcblk[0] * gblcblk[4] -
-               (.25 - .5 / 3.) * Utils::sqr(gblcblk[0] * lz));
+    energy +=
+        2. * pref *
+        (-global[0] * global[4] - (.25 - .5 / 3.) * Utils::sqr(global[0] * lz));
   }
 
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
       // zero potential difference contribution
-      energy -= 2. * pref / elc.box_h * lz * gblcblk[6] *
-                (gblcblk[6] - elc.box_h * gblcblk[0]);
+      energy -= 2. * pref / elc.box_h * lz * global[6] *
+                (global[6] - elc.box_h * global[0]);
       // external potential shift contribution
-      energy -= 2. * elc.pot_diff / elc.box_h * gblcblk[6];
+      energy -= 2. * elc.pot_diff / elc.box_h * global[6];
     }
 
     /* counter the P3M homogeneous background contribution to the
        boundaries. We never need that, since a homogeneous background
        spanning the artificial boundary layers is aphysical. */
-    energy +=
-        pref * (-(gblcblk[1] * gblcblk[4] + gblcblk[0] * gblcblk[5]) -
-                (.5 - 1. / 3.) * gblcblk[0] * gblcblk[1] * Utils::sqr(lz));
+    energy += pref * (-(global[1] * global[4] + global[0] * global[5]) -
+                      (.5 - 1. / 3.) * global[0] * global[1] * Utils::sqr(lz));
   }
 
   return this_node == 0 ? energy : 0.;
@@ -365,10 +571,11 @@ struct ImageSum {
 };
 
 double ElectrostaticLayerCorrection::z_energy() const {
-  constexpr std::size_t size = 4;
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto const particles = system.cell_structure->local_particles();
+  auto const &cs = *system.cell_structure;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref = prefactor * 2. * std::numbers::pi * xy_area_inv;
 
@@ -376,573 +583,241 @@ double ElectrostaticLayerCorrection::z_energy() const {
    * (rsp. for this shift, the DM of the background is zero) */
   auto const shift = box_geo.length_half()[2];
 
+  std::array<double, 4> local{};
   if (elc.dielectric_contrast_on) {
     if (elc.const_pot) {
       // metallic boundaries
-      clear_vec(gblcblk, size);
-      for (auto const &p : particles) {
-        auto const z = p.pos()[2];
-        auto const q = p.q();
-        gblcblk[0] += q;
-        gblcblk[1] += q * (z - shift);
-        if (z < elc.space_layer) {
-          gblcblk[2] -= elc.delta_mid_bot * q;
-          gblcblk[3] -= elc.delta_mid_bot * q * (-z - shift);
-        }
-        if (z > (elc.box_h - elc.space_layer)) {
-          gblcblk[2] += elc.delta_mid_top * q;
-          gblcblk[3] += elc.delta_mid_top * q * (2. * elc.box_h - z - shift);
-        }
-      }
+      local = ELC::parallel_array_sum<4>(
+          "ELC::z_energy_metallic", n_part,
+          [this, &aosoa, shift](std::size_t i, std::array<double, 4> &acc) {
+            auto const z = aosoa.position(i, 2);
+            auto const q = aosoa.charge(i);
+            acc[0] += q;
+            acc[1] += q * (z - shift);
+            if (z < elc.space_layer) {
+              acc[2] -= elc.delta_mid_bot * q;
+              acc[3] -= elc.delta_mid_bot * q * (-z - shift);
+            }
+            if (z > (elc.box_h - elc.space_layer)) {
+              acc[2] += elc.delta_mid_top * q;
+              acc[3] += elc.delta_mid_top * q * (2. * elc.box_h - z - shift);
+            }
+          });
     } else {
       // dielectric boundaries
       auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
       auto const fac_delta_mid_bot = elc.delta_mid_bot / (1. - delta);
       auto const fac_delta_mid_top = elc.delta_mid_top / (1. - delta);
       auto const fac_delta = delta / (1. - delta);
-      clear_vec(gblcblk, size);
       auto const h = elc.box_h;
       ImageSum const image_sum{delta, shift, h};
-      for (auto const &p : particles) {
-        auto const z = p.pos()[2];
-        auto const q = p.q();
-        gblcblk[0] += q;
-        gblcblk[1] += q * (z - shift);
-        if (elc.dielectric_contrast_on) {
-          if (z < elc.space_layer) {
-            gblcblk[2] += fac_delta * (elc.delta_mid_bot + 1.) * q;
-            gblcblk[3] +=
-                q * (image_sum.b(elc.delta_mid_bot * delta, -(2. * h + z)) +
-                     image_sum.b(delta, -(2. * h - z)));
-          } else {
-            gblcblk[2] += fac_delta_mid_bot * (1. + elc.delta_mid_top) * q;
-            gblcblk[3] += q * (image_sum.b(elc.delta_mid_bot, -z) +
-                               image_sum.b(delta, -(2. * h - z)));
-          }
-          if (z > (h - elc.space_layer)) {
-            // note the minus sign here which is required due to |z_i-z_j|
-            gblcblk[2] -= fac_delta * (elc.delta_mid_top + 1.) * q;
-            gblcblk[3] -=
-                q * (image_sum.t(elc.delta_mid_top * delta, 4. * h - z) +
-                     image_sum.t(delta, 2. * h + z));
-          } else {
-            // note the minus sign here which is required due to |z_i-z_j|
-            gblcblk[2] -= fac_delta_mid_top * (1. + elc.delta_mid_bot) * q;
-            gblcblk[3] -= q * (image_sum.t(elc.delta_mid_top, 2. * h - z) +
-                               image_sum.t(delta, 2. * h + z));
-          }
-        }
-      }
+      local = ELC::parallel_array_sum<4>(
+          "ELC::z_energy_dielectric", n_part,
+          [&](std::size_t i, std::array<double, 4> &acc) {
+            auto const z = aosoa.position(i, 2);
+            auto const q = aosoa.charge(i);
+            acc[0] += q;
+            acc[1] += q * (z - shift);
+            if (z < elc.space_layer) {
+              acc[2] += fac_delta * (elc.delta_mid_bot + 1.) * q;
+              acc[3] +=
+                  q * (image_sum.b(elc.delta_mid_bot * delta, -(2. * h + z)) +
+                       image_sum.b(delta, -(2. * h - z)));
+            } else {
+              acc[2] += fac_delta_mid_bot * (1. + elc.delta_mid_top) * q;
+              acc[3] += q * (image_sum.b(elc.delta_mid_bot, -z) +
+                             image_sum.b(delta, -(2. * h - z)));
+            }
+            if (z > (h - elc.space_layer)) {
+              // note the minus sign here which is required due to |z_i-z_j|
+              acc[2] -= fac_delta * (elc.delta_mid_top + 1.) * q;
+              acc[3] -=
+                  q * (image_sum.t(elc.delta_mid_top * delta, 4. * h - z) +
+                       image_sum.t(delta, 2. * h + z));
+            } else {
+              // note the minus sign here which is required due to |z_i-z_j|
+              acc[2] -= fac_delta_mid_top * (1. + elc.delta_mid_bot) * q;
+              acc[3] -= q * (image_sum.t(elc.delta_mid_top, 2. * h - z) +
+                             image_sum.t(delta, 2. * h + z));
+            }
+          });
     }
   }
-  distribute(size);
+  std::array<double, 4> global{};
+  boost::mpi::all_reduce(comm_cart, local.data(), 4, global.data(),
+                         std::plus<>());
 
-  auto const energy = gblcblk[1] * gblcblk[2] - gblcblk[0] * gblcblk[3];
+  auto const energy = global[1] * global[2] - global[0] * global[3];
   return (this_node == 0) ? -pref * energy : 0.;
 }
 
 void ElectrostaticLayerCorrection::add_z_force() const {
-  constexpr std::size_t size = 1;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  if (not elc.dielectric_contrast_on) {
+    return;
+  }
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto const particles = system.cell_structure->local_particles();
+  auto &cs = *system.cell_structure;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
   auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
   auto const pref = prefactor * 2. * std::numbers::pi * xy_area_inv;
 
-  if (elc.dielectric_contrast_on) {
-    if (elc.const_pot) {
-      // metallic boundaries
-      clear_vec(gblcblk, size);
-      /* just counter the 2 pi |z| contribution stemming from P3M */
-      for (auto const &p : particles) {
-        auto const z = p.pos()[2];
-        auto const q = p.q();
-        if (z < elc.space_layer)
-          gblcblk[0] -= elc.delta_mid_bot * q;
-        if (z > (elc.box_h - elc.space_layer))
-          gblcblk[0] += elc.delta_mid_top * q;
-      }
-    } else {
-      // dielectric boundaries
-      auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
-      auto const fac_delta_mid_bot = elc.delta_mid_bot / (1. - delta);
-      auto const fac_delta_mid_top = elc.delta_mid_top / (1. - delta);
-      auto const fac_delta = delta / (1. - delta);
-      clear_vec(gblcblk, size);
-      for (auto const &p : particles) {
-        auto const z = p.pos()[2];
-        auto const q = p.q();
-        if (z < elc.space_layer) {
-          gblcblk[0] += fac_delta * (elc.delta_mid_bot + 1.) * q;
-        } else {
-          gblcblk[0] += fac_delta_mid_bot * (elc.delta_mid_top + 1.) * q;
-        }
-        if (z > (elc.box_h - elc.space_layer)) {
-          // note the minus sign here which is required due to |z_i-z_j|
-          gblcblk[0] -= fac_delta * (elc.delta_mid_top + 1.) * q;
-        } else {
-          // note the minus sign here which is required due to |z_i-z_j|
-          gblcblk[0] -= fac_delta_mid_top * (elc.delta_mid_bot + 1.) * q;
-        }
-      }
-    }
-
-    gblcblk[0] *= pref;
-
-    distribute(size);
-
-    for (auto &p : particles) {
-      p.force()[2] += gblcblk[0] * p.q();
-    }
-  }
-}
-
-/*****************************************************************/
-/* PoQ exp sum */
-/*****************************************************************/
-
-/** \name q=0 or p=0 per frequency code */
-/**@{*/
-template <PoQ axis>
-void setup_PoQ(elc_data const &elc, double prefactor, std::size_t index,
-               double omega, ParticleRange const &particles,
-               BoxGeometry const &box_geo) {
-  assert(index >= 1);
-  constexpr std::size_t size = 4;
-  auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
-  auto const pref_di = prefactor * 4. * std::numbers::pi * xy_area_inv;
-  auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
-  double lclimgebot[4], lclimgetop[4], lclimge[4];
-  double fac_delta_mid_bot = 1., fac_delta_mid_top = 1., fac_delta = 1.;
-
-  if (elc.dielectric_contrast_on) {
+  std::array<double, 1> local{};
+  if (elc.const_pot) {
+    // metallic boundaries: just counter the 2 pi |z| contribution from P3M
+    local = ELC::parallel_array_sum<1>(
+        "ELC::z_force_metallic", n_part,
+        [this, &aosoa](std::size_t i, std::array<double, 1> &acc) {
+          auto const z = aosoa.position(i, 2);
+          auto const q = aosoa.charge(i);
+          if (z < elc.space_layer)
+            acc[0] -= elc.delta_mid_bot * q;
+          if (z > (elc.box_h - elc.space_layer))
+            acc[0] += elc.delta_mid_top * q;
+        });
+  } else {
+    // dielectric boundaries
     auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
-    auto const fac_elc = 1. / (1. - delta * exp(-omega * 2. * elc.box_h));
-    fac_delta_mid_bot = elc.delta_mid_bot * fac_elc;
-    fac_delta_mid_top = elc.delta_mid_top * fac_elc;
-    fac_delta = fac_delta_mid_bot * elc.delta_mid_top;
+    auto const fac_delta_mid_bot = elc.delta_mid_bot / (1. - delta);
+    auto const fac_delta_mid_top = elc.delta_mid_top / (1. - delta);
+    auto const fac_delta = delta / (1. - delta);
+    local = ELC::parallel_array_sum<1>(
+        "ELC::z_force_dielectric", n_part,
+        [&](std::size_t i, std::array<double, 1> &acc) {
+          auto const z = aosoa.position(i, 2);
+          auto const q = aosoa.charge(i);
+          if (z < elc.space_layer) {
+            acc[0] += fac_delta * (elc.delta_mid_bot + 1.) * q;
+          } else {
+            acc[0] += fac_delta_mid_bot * (elc.delta_mid_top + 1.) * q;
+          }
+          if (z > (elc.box_h - elc.space_layer)) {
+            // note the minus sign here which is required due to |z_i-z_j|
+            acc[0] -= fac_delta * (elc.delta_mid_top + 1.) * q;
+          } else {
+            // note the minus sign here which is required due to |z_i-z_j|
+            acc[0] -= fac_delta_mid_top * (elc.delta_mid_bot + 1.) * q;
+          }
+        });
   }
+  local[0] *= pref;
+  double field = 0.;
+  boost::mpi::all_reduce(comm_cart, local[0], field, std::plus<>());
 
-  clear_vec(lclimge, size);
-  clear_vec(gblcblk, size);
-  auto const &sc_cache = (axis == PoQ::P) ? scxcache : scycache;
-
-  std::size_t ic = 0;
-  auto const o = (index - 1) * particles.size();
-  for (auto const &p : particles) {
-    auto const z = p.pos()[2];
-    auto const q = p.q();
-    auto e = exp(omega * z);
-
-    partblk[size * ic + POQESM] = q * sc_cache[o + ic].s / e;
-    partblk[size * ic + POQESP] = q * sc_cache[o + ic].s * e;
-    partblk[size * ic + POQECM] = q * sc_cache[o + ic].c / e;
-    partblk[size * ic + POQECP] = q * sc_cache[o + ic].c * e;
-
-    add_vec(gblcblk, gblcblk, block(partblk.data(), ic, size), size);
-
-    if (elc.dielectric_contrast_on) {
-      if (z < elc.space_layer) { // handle the lower case first
-        // negative sign is okay here as the image is located at -z
-
-        e = exp(-omega * z);
-
-        auto const scale = q * elc.delta_mid_bot;
-
-        lclimgebot[POQESM] = sc_cache[o + ic].s / e;
-        lclimgebot[POQESP] = sc_cache[o + ic].s * e;
-        lclimgebot[POQECM] = sc_cache[o + ic].c / e;
-        lclimgebot[POQECP] = sc_cache[o + ic].c * e;
-
-        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
-
-        e = (exp(omega * (-z - 2. * elc.box_h)) * elc.delta_mid_bot +
-             exp(omega * (+z - 2. * elc.box_h))) *
-            fac_delta;
-      } else {
-        e = (exp(-omega * z) +
-             exp(omega * (z - 2. * elc.box_h)) * elc.delta_mid_top) *
-            fac_delta_mid_bot;
-      }
-
-      lclimge[POQESP] += q * sc_cache[o + ic].s * e;
-      lclimge[POQECP] += q * sc_cache[o + ic].c * e;
-
-      if (z > (elc.box_h - elc.space_layer)) { // handle the upper case now
-        e = exp(omega * (2. * elc.box_h - z));
-
-        auto const scale = q * elc.delta_mid_top;
-
-        lclimgetop[POQESM] = sc_cache[o + ic].s / e;
-        lclimgetop[POQESP] = sc_cache[o + ic].s * e;
-        lclimgetop[POQECM] = sc_cache[o + ic].c / e;
-        lclimgetop[POQECP] = sc_cache[o + ic].c * e;
-
-        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
-
-        e = (exp(omega * (+z - 4. * elc.box_h)) * elc.delta_mid_top +
-             exp(omega * (-z - 2. * elc.box_h))) *
-            fac_delta;
-      } else {
-        e = (exp(omega * (+z - 2. * elc.box_h)) +
-             exp(omega * (-z - 2. * elc.box_h)) * elc.delta_mid_bot) *
-            fac_delta_mid_top;
-      }
-
-      lclimge[POQESM] += q * sc_cache[o + ic].s * e;
-      lclimge[POQECM] += q * sc_cache[o + ic].c * e;
-    }
-
-    ++ic;
-  }
-
-  scale_vec(pref, gblcblk, size);
-
-  if (elc.dielectric_contrast_on) {
-    scale_vec(pref_di, lclimge, size);
-    add_vec(gblcblk, gblcblk, lclimge, size);
-  }
+  auto scatter_force = cs.get_scatter_force();
+  kokkos_parallel_range_for<execution_space>(
+      "ELC::z_force", std::size_t{0u}, n_part,
+      [&aosoa, &scatter_force, field](std::size_t i) {
+        auto access = scatter_force.access();
+        access(i, 2) += field * aosoa.charge(i);
+      });
 }
-
-template <PoQ axis> void add_PoQ_force(ParticleRange const &particles) {
-  constexpr auto i = static_cast<int>(axis);
-  constexpr std::size_t size = 4;
-
-  std::size_t ic = 0;
-  for (auto &p : particles) {
-    auto &force = p.force();
-    force[i] += partblk[size * ic + POQESM] * gblcblk[POQECP] -
-                partblk[size * ic + POQECM] * gblcblk[POQESP] +
-                partblk[size * ic + POQESP] * gblcblk[POQECM] -
-                partblk[size * ic + POQECP] * gblcblk[POQESM];
-    force[2] += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-                partblk[size * ic + POQESM] * gblcblk[POQESP] -
-                partblk[size * ic + POQECP] * gblcblk[POQECM] -
-                partblk[size * ic + POQESP] * gblcblk[POQESM];
-    ++ic;
-  }
-}
-
-static double PoQ_energy(double omega, std::size_t n_part) {
-  constexpr std::size_t size = 4;
-
-  auto energy = 0.;
-  for (std::size_t ic = 0; ic < n_part; ic++) {
-    energy += partblk[size * ic + POQECM] * gblcblk[POQECP] +
-              partblk[size * ic + POQESM] * gblcblk[POQESP] +
-              partblk[size * ic + POQECP] * gblcblk[POQECM] +
-              partblk[size * ic + POQESP] * gblcblk[POQESM];
-  }
-
-  return energy / omega;
-}
-/**@}*/
 
 /*****************************************************************/
-/* PQ particle blocks */
+/* far-field sums */
 /*****************************************************************/
-
-/** \name p,q <> 0 per frequency code */
-/**@{*/
-static void setup_PQ(elc_data const &elc, double prefactor, std::size_t index_p,
-                     std::size_t index_q, double omega,
-                     ParticleRange const &particles,
-                     BoxGeometry const &box_geo) {
-  assert(index_p >= 1);
-  assert(index_q >= 1);
-  constexpr std::size_t size = 8;
-  auto const xy_area_inv = box_geo.length_inv()[0] * box_geo.length_inv()[1];
-  auto const pref_di = prefactor * 8. * std::numbers::pi * xy_area_inv;
-  auto const pref = -pref_di / expm1(omega * box_geo.length()[2]);
-  double lclimgebot[8], lclimgetop[8], lclimge[8];
-  double fac_delta_mid_bot = 1., fac_delta_mid_top = 1., fac_delta = 1.;
-  if (elc.dielectric_contrast_on) {
-    auto const delta = elc.delta_mid_top * elc.delta_mid_bot;
-    auto const fac_elc = 1. / (1. - delta * exp(-omega * 2. * elc.box_h));
-    fac_delta_mid_bot = elc.delta_mid_bot * fac_elc;
-    fac_delta_mid_top = elc.delta_mid_top * fac_elc;
-    fac_delta = fac_delta_mid_bot * elc.delta_mid_top;
-  }
-
-  clear_vec(lclimge, size);
-  clear_vec(gblcblk, size);
-
-  std::size_t ic = 0;
-  auto const ox = (index_p - 1) * particles.size();
-  auto const oy = (index_q - 1) * particles.size();
-  for (auto const &p : particles) {
-    auto const z = p.pos()[2];
-    auto const q = p.q();
-    auto e = exp(omega * z);
-
-    partblk[size * ic + PQESSM] =
-        scxcache[ox + ic].s * scycache[oy + ic].s * q / e;
-    partblk[size * ic + PQESCM] =
-        scxcache[ox + ic].s * scycache[oy + ic].c * q / e;
-    partblk[size * ic + PQECSM] =
-        scxcache[ox + ic].c * scycache[oy + ic].s * q / e;
-    partblk[size * ic + PQECCM] =
-        scxcache[ox + ic].c * scycache[oy + ic].c * q / e;
-
-    partblk[size * ic + PQESSP] =
-        scxcache[ox + ic].s * scycache[oy + ic].s * q * e;
-    partblk[size * ic + PQESCP] =
-        scxcache[ox + ic].s * scycache[oy + ic].c * q * e;
-    partblk[size * ic + PQECSP] =
-        scxcache[ox + ic].c * scycache[oy + ic].s * q * e;
-    partblk[size * ic + PQECCP] =
-        scxcache[ox + ic].c * scycache[oy + ic].c * q * e;
-
-    add_vec(gblcblk, gblcblk, block(partblk.data(), ic, size), size);
-
-    if (elc.dielectric_contrast_on) {
-      if (z < elc.space_layer) { // handle the lower case first
-        // change e to take into account the z position of the images
-
-        e = exp(-omega * z);
-        auto const scale = q * elc.delta_mid_bot;
-
-        lclimgebot[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
-        lclimgebot[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
-        lclimgebot[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
-        lclimgebot[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
-
-        lclimgebot[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
-        lclimgebot[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
-        lclimgebot[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
-        lclimgebot[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
-
-        addscale_vec(gblcblk, scale, lclimgebot, gblcblk, size);
-
-        e = (exp(omega * (-z - 2. * elc.box_h)) * elc.delta_mid_bot +
-             exp(omega * (+z - 2. * elc.box_h))) *
-            fac_delta * q;
-
-      } else {
-
-        e = (exp(-omega * z) +
-             exp(omega * (z - 2. * elc.box_h)) * elc.delta_mid_top) *
-            fac_delta_mid_bot * q;
-      }
-
-      lclimge[PQESSP] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
-      lclimge[PQESCP] += scxcache[ox + ic].s * scycache[oy + ic].c * e;
-      lclimge[PQECSP] += scxcache[ox + ic].c * scycache[oy + ic].s * e;
-      lclimge[PQECCP] += scxcache[ox + ic].c * scycache[oy + ic].c * e;
-
-      if (z > (elc.box_h - elc.space_layer)) { // handle the upper case now
-
-        e = exp(omega * (2. * elc.box_h - z));
-        auto const scale = q * elc.delta_mid_top;
-
-        lclimgetop[PQESSM] = scxcache[ox + ic].s * scycache[oy + ic].s / e;
-        lclimgetop[PQESCM] = scxcache[ox + ic].s * scycache[oy + ic].c / e;
-        lclimgetop[PQECSM] = scxcache[ox + ic].c * scycache[oy + ic].s / e;
-        lclimgetop[PQECCM] = scxcache[ox + ic].c * scycache[oy + ic].c / e;
-
-        lclimgetop[PQESSP] = scxcache[ox + ic].s * scycache[oy + ic].s * e;
-        lclimgetop[PQESCP] = scxcache[ox + ic].s * scycache[oy + ic].c * e;
-        lclimgetop[PQECSP] = scxcache[ox + ic].c * scycache[oy + ic].s * e;
-        lclimgetop[PQECCP] = scxcache[ox + ic].c * scycache[oy + ic].c * e;
-
-        addscale_vec(gblcblk, scale, lclimgetop, gblcblk, size);
-
-        e = (exp(omega * (+z - 4. * elc.box_h)) * elc.delta_mid_top +
-             exp(omega * (-z - 2. * elc.box_h))) *
-            fac_delta * q;
-
-      } else {
-
-        e = (exp(omega * (+z - 2. * elc.box_h)) +
-             exp(omega * (-z - 2. * elc.box_h)) * elc.delta_mid_bot) *
-            fac_delta_mid_top * q;
-      }
-
-      lclimge[PQESSM] += scxcache[ox + ic].s * scycache[oy + ic].s * e;
-      lclimge[PQESCM] += scxcache[ox + ic].s * scycache[oy + ic].c * e;
-      lclimge[PQECSM] += scxcache[ox + ic].c * scycache[oy + ic].s * e;
-      lclimge[PQECCM] += scxcache[ox + ic].c * scycache[oy + ic].c * e;
-    }
-
-    ic++;
-  }
-
-  scale_vec(pref, gblcblk, size);
-  if (elc.dielectric_contrast_on) {
-    scale_vec(pref_di, lclimge, size);
-    add_vec(gblcblk, gblcblk, lclimge, size);
-  }
-}
-
-static void add_PQ_force(std::size_t index_p, std::size_t index_q, double omega,
-                         ParticleRange const &particles,
-                         BoxGeometry const &box_geo) {
-  auto constexpr c_2pi = 2. * std::numbers::pi;
-  auto const pref_x =
-      c_2pi * box_geo.length_inv()[0] * static_cast<double>(index_p) / omega;
-  auto const pref_y =
-      c_2pi * box_geo.length_inv()[1] * static_cast<double>(index_q) / omega;
-  constexpr std::size_t size = 8;
-
-  std::size_t ic = 0;
-  for (auto &p : particles) {
-    auto &force = p.force();
-    force[0] += pref_x * (partblk[size * ic + PQESCM] * gblcblk[PQECCP] +
-                          partblk[size * ic + PQESSM] * gblcblk[PQECSP] -
-                          partblk[size * ic + PQECCM] * gblcblk[PQESCP] -
-                          partblk[size * ic + PQECSM] * gblcblk[PQESSP] +
-                          partblk[size * ic + PQESCP] * gblcblk[PQECCM] +
-                          partblk[size * ic + PQESSP] * gblcblk[PQECSM] -
-                          partblk[size * ic + PQECCP] * gblcblk[PQESCM] -
-                          partblk[size * ic + PQECSP] * gblcblk[PQESSM]);
-    force[1] += pref_y * (partblk[size * ic + PQECSM] * gblcblk[PQECCP] +
-                          partblk[size * ic + PQESSM] * gblcblk[PQESCP] -
-                          partblk[size * ic + PQECCM] * gblcblk[PQECSP] -
-                          partblk[size * ic + PQESCM] * gblcblk[PQESSP] +
-                          partblk[size * ic + PQECSP] * gblcblk[PQECCM] +
-                          partblk[size * ic + PQESSP] * gblcblk[PQESCM] -
-                          partblk[size * ic + PQECCP] * gblcblk[PQECSM] -
-                          partblk[size * ic + PQESCP] * gblcblk[PQESSM]);
-    force[2] += (partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-                 partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-                 partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-                 partblk[size * ic + PQESSM] * gblcblk[PQESSP] -
-                 partblk[size * ic + PQECCP] * gblcblk[PQECCM] -
-                 partblk[size * ic + PQECSP] * gblcblk[PQECSM] -
-                 partblk[size * ic + PQESCP] * gblcblk[PQESCM] -
-                 partblk[size * ic + PQESSP] * gblcblk[PQESSM]);
-    ic++;
-  }
-}
-
-static double PQ_energy(double omega, std::size_t n_part) {
-  constexpr std::size_t size = 8;
-
-  auto energy = 0.;
-  for (std::size_t ic = 0; ic < n_part; ic++) {
-    energy += partblk[size * ic + PQECCM] * gblcblk[PQECCP] +
-              partblk[size * ic + PQECSM] * gblcblk[PQECSP] +
-              partblk[size * ic + PQESCM] * gblcblk[PQESCP] +
-              partblk[size * ic + PQESSM] * gblcblk[PQESSP] +
-              partblk[size * ic + PQECCP] * gblcblk[PQECCM] +
-              partblk[size * ic + PQECSP] * gblcblk[PQECSM] +
-              partblk[size * ic + PQESCP] * gblcblk[PQESCM] +
-              partblk[size * ic + PQESSP] * gblcblk[PQESSM];
-  }
-  return energy / omega;
-}
-/**@}*/
 
 void ElectrostaticLayerCorrection::add_force() const {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto const particles = system.cell_structure->local_particles();
-  auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
-  auto const n_scxcache = std::get<0>(n_freqs);
-  auto const n_scycache = std::get<1>(n_freqs);
-  partblk.resize(particles.size() * 8);
+  auto &cs = *system.cell_structure;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
 
   add_dipole_force();
   add_z_force();
 
-  /* the second condition is just for the case of numerical accident */
-  for (std::size_t p = 1;
-       box_geo.length_inv()[0] * static_cast<double>(p - 1) < elc.far_cut &&
-       p <= n_scxcache;
-       p++) {
-    auto const omega = c_2pi * box_geo.length_inv()[0] * static_cast<double>(p);
-    setup_PoQ<PoQ::P>(elc, prefactor, p, omega, particles, box_geo);
-    distribute(4);
-    add_PoQ_force<PoQ::P>(particles);
-  }
+  auto const table = make_frequency_table(elc, prefactor, box_geo);
+  auto const [n_freq_x, n_freq_y] = n_frequencies(box_geo, elc.far_cut);
+  auto const scx =
+      make_sc_cache(aosoa, n_part, 0, n_freq_x, box_geo.length_inv()[0]);
+  auto const scy =
+      make_sc_cache(aosoa, n_part, 1, n_freq_y, box_geo.length_inv()[1]);
+  auto const coeffs =
+      far_field_coefficients(elc, table, scx, scy, aosoa, n_part);
+  auto const ux = box_geo.length_inv()[0];
+  auto const uy = box_geo.length_inv()[1];
 
-  for (std::size_t q = 1;
-       box_geo.length_inv()[1] * static_cast<double>(q - 1) < elc.far_cut &&
-       q <= n_scycache;
-       q++) {
-    auto const omega = c_2pi * box_geo.length_inv()[1] * static_cast<double>(q);
-    setup_PoQ<PoQ::Q>(elc, prefactor, q, omega, particles, box_geo);
-    distribute(4);
-    add_PoQ_force<PoQ::Q>(particles);
-  }
-
-  for (std::size_t p = 1;
-       box_geo.length_inv()[0] * static_cast<double>(p - 1) < elc.far_cut &&
-       p <= n_scxcache;
-       p++) {
-    for (std::size_t q = 1;
-         Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p - 1)) +
-                 Utils::sqr(box_geo.length_inv()[1] *
-                            static_cast<double>(q - 1)) <
-             elc.far_cut2 &&
-         q <= n_scycache;
-         q++) {
-      auto const omega =
-          c_2pi *
-          sqrt(Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p)) +
-               Utils::sqr(box_geo.length_inv()[1] * static_cast<double>(q)));
-      setup_PQ(elc, prefactor, p, q, omega, particles, box_geo);
-      distribute(8);
-      add_PQ_force(p, q, omega, particles, box_geo);
-    }
-  }
+  auto scatter_force = cs.get_scatter_force();
+  kokkos_parallel_range_for<execution_space>(
+      "ELC::far_field_forces", std::size_t{0u}, n_part, [&](std::size_t i) {
+        auto const z = aosoa.position(i, 2);
+        auto const q = aosoa.charge(i);
+        Utils::Vector3d force{};
+        for_each_entry(table, [&](FrequencyEntry const &entry, auto tag) {
+          auto constexpr kind = decltype(tag)::value;
+          auto const t = particle_terms<kind>(entry, scx, scy, i);
+          auto const b = real_block<kind>(t, q, exp(entry.omega * z));
+          auto const *g = coeffs.data() + entry.coeff_offset;
+          if constexpr (kind == FreqKind::PQ) {
+            // slots: 0 SSP, 1 SCP, 2 CSP, 3 CCP, 4 SSM, 5 SCM, 6 CSM, 7 CCM
+            auto const pref_x =
+                c_2pi * ux * static_cast<double>(entry.p) / entry.omega;
+            auto const pref_y =
+                c_2pi * uy * static_cast<double>(entry.q) / entry.omega;
+            force[0] += pref_x *
+                        (b[5] * g[3] + b[4] * g[2] - b[7] * g[1] - b[6] * g[0] +
+                         b[1] * g[7] + b[0] * g[6] - b[3] * g[5] - b[2] * g[4]);
+            force[1] += pref_y *
+                        (b[6] * g[3] + b[4] * g[1] - b[7] * g[2] - b[5] * g[0] +
+                         b[2] * g[7] + b[0] * g[5] - b[3] * g[6] - b[1] * g[4]);
+            force[2] += (b[7] * g[3] + b[6] * g[2] + b[5] * g[1] + b[4] * g[0] -
+                         b[3] * g[7] - b[2] * g[6] - b[1] * g[5] - b[0] * g[4]);
+          } else {
+            // slots: 0 SP, 1 CP, 2 SM, 3 CM
+            auto constexpr axis = (kind == FreqKind::P) ? 0 : 1;
+            force[axis] +=
+                b[2] * g[1] - b[3] * g[0] + b[0] * g[3] - b[1] * g[2];
+            force[2] += b[3] * g[1] + b[2] * g[0] - b[1] * g[3] - b[0] * g[2];
+          }
+        });
+        auto access = scatter_force.access();
+        access(i, 0) += force[0];
+        access(i, 1) += force[1];
+        access(i, 2) += force[2];
+      });
 }
 
 double ElectrostaticLayerCorrection::calc_energy() const {
-  auto constexpr c_2pi = 2. * std::numbers::pi;
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
-  auto const particles = system.cell_structure->local_particles();
+  auto const &cs = *system.cell_structure;
+  auto const &aosoa = cs.get_aosoa();
+  auto const n_part = cs.count_local_particles();
   auto energy = dipole_energy() + z_energy();
-  auto const n_freqs = prepare_sc_cache(particles, box_geo, elc.far_cut);
-  auto const n_scxcache = std::get<0>(n_freqs);
-  auto const n_scycache = std::get<1>(n_freqs);
 
-  auto const n_localpart = particles.size();
-  partblk.resize(n_localpart * 8);
+  auto const table = make_frequency_table(elc, prefactor, box_geo);
+  auto const [n_freq_x, n_freq_y] = n_frequencies(box_geo, elc.far_cut);
+  auto const scx =
+      make_sc_cache(aosoa, n_part, 0, n_freq_x, box_geo.length_inv()[0]);
+  auto const scy =
+      make_sc_cache(aosoa, n_part, 1, n_freq_y, box_geo.length_inv()[1]);
+  auto const coeffs =
+      far_field_coefficients(elc, table, scx, scy, aosoa, n_part);
 
-  /* the second condition is just for the case of numerical accident */
-  for (std::size_t p = 1;
-       box_geo.length_inv()[0] * static_cast<double>(p - 1) < elc.far_cut &&
-       p <= n_scxcache;
-       p++) {
-    auto const omega = c_2pi * box_geo.length_inv()[0] * static_cast<double>(p);
-    setup_PoQ<PoQ::P>(elc, prefactor, p, omega, particles, box_geo);
-    distribute(4);
-    energy += PoQ_energy(omega, n_localpart);
-  }
-
-  for (std::size_t q = 1;
-       box_geo.length_inv()[1] * static_cast<double>(q - 1) < elc.far_cut &&
-       q <= n_scycache;
-       q++) {
-    auto const omega = c_2pi * box_geo.length_inv()[1] * static_cast<double>(q);
-    setup_PoQ<PoQ::Q>(elc, prefactor, q, omega, particles, box_geo);
-    distribute(4);
-    energy += PoQ_energy(omega, n_localpart);
-  }
-
-  for (std::size_t p = 1;
-       box_geo.length_inv()[0] * static_cast<double>(p - 1) < elc.far_cut &&
-       p <= n_scxcache;
-       p++) {
-    for (std::size_t q = 1;
-         Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p - 1)) +
-                 Utils::sqr(box_geo.length_inv()[1] *
-                            static_cast<double>(q - 1)) <
-             elc.far_cut2 &&
-         q <= n_scycache;
-         q++) {
-      auto const omega =
-          c_2pi *
-          sqrt(Utils::sqr(box_geo.length_inv()[0] * static_cast<double>(p)) +
-               Utils::sqr(box_geo.length_inv()[1] * static_cast<double>(q)));
-      setup_PQ(elc, prefactor, p, q, omega, particles, box_geo);
-      distribute(8);
-      energy += PQ_energy(omega, n_localpart);
-    }
-  }
+  energy += ELC::parallel_array_sum<1>(
+      "ELC::far_field_energy", n_part,
+      [&](std::size_t i, std::array<double, 1> &acc) {
+        auto const z = aosoa.position(i, 2);
+        auto const q = aosoa.charge(i);
+        for_each_entry(table, [&](FrequencyEntry const &entry, auto tag) {
+          auto constexpr kind = decltype(tag)::value;
+          auto constexpr half = n_trig<kind>;
+          auto const t = particle_terms<kind>(entry, scx, scy, i);
+          auto const b = real_block<kind>(t, q, exp(entry.omega * z));
+          auto const *g = coeffs.data() + entry.coeff_offset;
+          // pair every P slot with its M slot and vice versa
+          auto sum = 0.;
+          for (std::size_t m = 0; m < half; ++m) {
+            sum += b[half + m] * g[m] + b[m] * g[half + m];
+          }
+          acc[0] += sum / entry.omega;
+        });
+      })[0];
   /* we count both i<->j and j<->i, so return just half of it */
   return 0.5 * energy;
 }
@@ -1105,86 +980,59 @@ ElectrostaticLayerCorrection::ElectrostaticLayerCorrection(
 }
 
 template <ChargeProtocol protocol>
-void charge_assign(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
-
-  solver.prepare_fft_mesh(protocol == ChargeProtocol::BOTH or
-                          protocol == ChargeProtocol::IMAGE);
-
-  // multi-threading -> cache sizes must be equal to the number of particles
-  auto constexpr include_neutral_particles = true;
-  auto const &aosoa = cs.get_aosoa();
-  auto const n_part = cs.count_local_particles();
-
-  for (std::size_t p_index = 0; p_index < n_part; ++p_index) {
-    auto const p_q = aosoa.charge(p_index);
-    auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
-    if (include_neutral_particles or p_q != 0.) {
-      // assign real charges
-      if (protocol == ChargeProtocol::BOTH or
-          protocol == ChargeProtocol::REAL) {
-        solver.assign_charge(p_q, {p_pos[0], p_pos[1], p_pos[2]}, false);
-      }
-      // assign image charges
-      if (protocol == ChargeProtocol::BOTH or
-          protocol == ChargeProtocol::IMAGE) {
-        if (p_pos[2] < elc.space_layer) {
-          auto const q_eff = elc.delta_mid_bot * p_q;
-          solver.assign_charge(q_eff, {p_pos[0], p_pos[1], -p_pos[2]}, true);
-        }
-        if (p_pos[2] > (elc.box_h - elc.space_layer)) {
-          auto const q_eff = elc.delta_mid_top * p_q;
-          solver.assign_charge(
-              q_eff, {p_pos[0], p_pos[1], 2. * elc.box_h - p_pos[2]}, true);
-        }
-      }
-    }
-  }
+void charge_assign(elc_data const &elc, CoulombP3M &solver) {
+  auto constexpr assign_real =
+      protocol == ChargeProtocol::BOTH or protocol == ChargeProtocol::REAL;
+  auto constexpr assign_images =
+      protocol == ChargeProtocol::BOTH or protocol == ChargeProtocol::IMAGE;
+  solver.charge_assign_elc(
+      {elc.space_layer, elc.box_h, elc.delta_mid_bot, elc.delta_mid_top},
+      assign_real, assign_images);
 }
 
 template <ChargeProtocol protocol>
 void modify_p3m_sums(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
-
   auto const &aosoa = cs.get_aosoa();
   auto const n_part = cs.count_local_particles();
-  auto local_n = std::size_t{0u};
-  auto local_q2 = 0.0;
-  auto local_q = 0.0;
-  for (std::size_t p_index = 0; p_index < n_part; ++p_index) {
-    auto const p_q = aosoa.charge(p_index);
-    if (p_q != 0.) {
-      auto const p_z = aosoa.position(p_index, 2ul);
-
-      if (protocol == ChargeProtocol::BOTH or
-          protocol == ChargeProtocol::REAL) {
-        local_n++;
-        local_q2 += Utils::sqr(p_q);
-        local_q += p_q;
+  // [0] number of charges, [1] sum q^2, [2] sum q
+  auto const accumulate = [&elc, &aosoa](std::size_t i,
+                                         std::array<double, 3> &acc) {
+    auto const p_q = aosoa.charge(i);
+    if (p_q == 0.) {
+      return;
+    }
+    auto const p_z = aosoa.position(i, 2);
+    if (protocol == ChargeProtocol::BOTH or protocol == ChargeProtocol::REAL) {
+      acc[0] += 1.;
+      acc[1] += Utils::sqr(p_q);
+      acc[2] += p_q;
+    }
+    if (protocol == ChargeProtocol::BOTH or protocol == ChargeProtocol::IMAGE) {
+      if (p_z < elc.space_layer) {
+        acc[0] += 1.;
+        acc[1] += Utils::sqr(elc.delta_mid_bot * p_q);
+        acc[2] += elc.delta_mid_bot * p_q;
       }
-
-      if (protocol == ChargeProtocol::BOTH or
-          protocol == ChargeProtocol::IMAGE) {
-        if (p_z < elc.space_layer) {
-          local_n++;
-          local_q2 += Utils::sqr(elc.delta_mid_bot * p_q);
-          local_q += elc.delta_mid_bot * p_q;
-        }
-
-        if (p_z > (elc.box_h - elc.space_layer)) {
-          local_n++;
-          local_q2 += Utils::sqr(elc.delta_mid_top * p_q);
-          local_q += elc.delta_mid_top * p_q;
-        }
+      if (p_z > (elc.box_h - elc.space_layer)) {
+        acc[0] += 1.;
+        acc[1] += Utils::sqr(elc.delta_mid_top * p_q);
+        acc[2] += elc.delta_mid_top * p_q;
       }
     }
+  };
+  // These sums feed P3M energies whose BOTH-minus-IMAGE difference cancels
+  // strongly, so thread-order rounding would be amplified. The loop is O(N)
+  // and cheap, therefore it stays serial.
+  std::array<double, 3> local{};
+  for (std::size_t i = 0; i < n_part; ++i) {
+    accumulate(i, local);
   }
-
-  auto global_n = std::size_t{0u};
-  auto global_q2 = 0.;
-  auto global_q = 0.;
-  boost::mpi::all_reduce(comm_cart, local_n, global_n, std::plus<>());
-  boost::mpi::all_reduce(comm_cart, local_q2, global_q2, std::plus<>());
-  boost::mpi::all_reduce(comm_cart, local_q, global_q, std::plus<>());
-  solver.count_charged_particles_elc(global_n, global_q2, Utils::sqr(global_q));
+  std::array<double, 3> global{};
+  boost::mpi::all_reduce(comm_cart, local.data(), 3, global.data(),
+                         std::plus<>());
+  auto const global_n = static_cast<std::size_t>(std::llround(global[0]));
+  solver.count_charged_particles_elc(global_n, global[1],
+                                     Utils::sqr(global[2]));
 }
 
 double ElectrostaticLayerCorrection::long_range_energy() const {
@@ -1194,7 +1042,6 @@ double ElectrostaticLayerCorrection::long_range_energy() const {
         auto &solver = *solver_ptr;
         auto const &cs = *system.cell_structure;
         auto const &box_geo = *system.box_geo;
-        auto const particles = cs.local_particles();
 
         // assign the original charges (they may not have been assigned yet)
         solver.charge_assign();
@@ -1205,16 +1052,15 @@ double ElectrostaticLayerCorrection::long_range_energy() const {
 
         auto energy = 0.;
         energy += 0.5 * solver.long_range_energy();
-        energy +=
-            0.5 * elc.dielectric_layers_self_energy(solver, box_geo, particles);
+        energy += 0.5 * elc.dielectric_layers_self_energy(solver, box_geo, cs);
 
         // assign both original and image charges
-        charge_assign<ChargeProtocol::BOTH>(elc, solver, cs);
+        charge_assign<ChargeProtocol::BOTH>(elc, solver);
         modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, cs);
         energy += 0.5 * solver.long_range_energy();
 
         // assign only the image charges now
-        charge_assign<ChargeProtocol::IMAGE>(elc, solver, cs);
+        charge_assign<ChargeProtocol::IMAGE>(elc, solver);
         modify_p3m_sums<ChargeProtocol::IMAGE>(elc, solver, cs);
         energy -= 0.5 * solver.long_range_energy();
 
@@ -1231,14 +1077,13 @@ void ElectrostaticLayerCorrection::add_long_range_forces() const {
   auto const &system = get_system();
   std::visit(
       [this, &system](auto const &solver_ptr) {
-        auto const &cs = *system.cell_structure;
+        auto &cs = *system.cell_structure;
         auto &solver = *solver_ptr;
         if (elc.dielectric_contrast_on) {
           auto const &box_geo = *system.box_geo;
-          auto const particles = cs.local_particles();
           modify_p3m_sums<ChargeProtocol::BOTH>(elc, solver, cs);
-          charge_assign<ChargeProtocol::BOTH>(elc, solver, cs);
-          elc.dielectric_layers_self_forces(solver, box_geo, particles);
+          charge_assign<ChargeProtocol::BOTH>(elc, solver);
+          elc.dielectric_layers_self_forces(solver, box_geo, cs);
         } else {
           solver.charge_assign();
         }
