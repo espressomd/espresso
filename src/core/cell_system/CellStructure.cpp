@@ -281,9 +281,13 @@ void CellStructure::reset_local_properties() {
   kokkos_deep_copy(execution_space{}, get_aosoa().flags, uint8_t{0});
 }
 
-void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
-                                        int &dihedral_count,
-                                        Particle const &p) {
+BondStorage const &CellStructure::get_bond_storage() const {
+  return *get_system().bond_storage;
+}
+
+void CellStructure::update_bond_storage(
+    int &pair_count, int &angle_count, int &dihedral_count, Particle const &p,
+    BondStorage::OwnedBonds const &owned_bonds) {
   auto &pair_list = m_bond_state->pair_list;
   auto &pair_ids = m_bond_state->pair_ids;
   auto &angle_list = m_bond_state->angle_list;
@@ -295,28 +299,27 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   // formatting of the View accesses below (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK);
   // it anchors the report at this call, which therefore carries the NOLINT.
   // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
-  for_each_bond(p, [&](BondView const &bond) {
-    auto const partner_ids = bond.partner_ids();
+  owned_bonds.for_each_bond_of(p.id(), [&](int bond_id, auto partner_ids) {
     try {
       auto const partners = resolve_bond_partners(partner_ids);
       if (partners.size() == 1u) { // pair bonds
         auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
         pair_list(p_index, 0) = p.id();
         pair_list(p_index, 1) = partners[0]->id();
-        pair_ids(p_index) = bond.bond_id();
+        pair_ids(p_index) = bond_id;
       } else if (partners.size() == 2u) { // angle bond
         auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
         angle_list(a_index, 0) = p.id();
         angle_list(a_index, 1) = partners[0]->id();
         angle_list(a_index, 2) = partners[1]->id();
-        angle_ids(a_index) = bond.bond_id();
+        angle_ids(a_index) = bond_id;
       } else if (partners.size() == 3u) { // dihedral bond
         auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
         dihedral_list(d_index, 0) = p.id();
         dihedral_list(d_index, 1) = partners[0]->id();
         dihedral_list(d_index, 2) = partners[1]->id();
         dihedral_list(d_index, 3) = partners[2]->id();
-        dihedral_ids(d_index) = bond.bond_id();
+        dihedral_ids(d_index) = bond_id;
       }
     } catch (BondResolutionError const &) {
       bond_resolution_error(partner_ids);
@@ -347,19 +350,22 @@ void CellStructure::set_index_map() {
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
 
-  enumerate_local_particles(*this, [&unique_particles, &thread_counts](
-                                       std::size_t index, Particle &p) {
-    unique_particles[index] = &p;
-    auto &counts = thread_counts[omp_get_thread_num()];
-    counts.max_id = std::max(p.id(), counts.max_id);
-    // Read the incrementally-maintained primary-entry counts instead of
-    // walking the whole list on every rebuild. They must agree with what
-    // update_bond_storage() fills in, or the Kokkos views overflow.
-    auto const &bond_counts = p.bonds().primary_counts();
-    counts.pair += bond_counts.pair;
-    counts.angle += bond_counts.angle;
-    counts.dihedral += bond_counts.dihedral;
-  });
+  // not thread-safe: fetched before the parallel sweep
+  auto const &owned_bonds = get_bond_storage().owned_bonds();
+  enumerate_local_particles(
+      *this, [&unique_particles, &thread_counts,
+              &owned_bonds](std::size_t index, Particle &p) {
+        unique_particles[index] = &p;
+        auto &counts = thread_counts[omp_get_thread_num()];
+        counts.max_id = std::max(p.id(), counts.max_id);
+        // The counts of owned bonds are read in constant time. They must
+        // agree with what update_bond_storage() fills in, or the Kokkos views
+        // overflow.
+        auto const bond_counts = owned_bonds.counts(p.id());
+        counts.pair += bond_counts.pair;
+        counts.angle += bond_counts.angle;
+        counts.dihedral += bond_counts.dihedral;
+      });
   Kokkos::fence();
   int pair_count = 0;
   int angle_count = 0;

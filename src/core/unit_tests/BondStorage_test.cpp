@@ -24,6 +24,8 @@
 #include "BondStorage.hpp"
 
 #include <algorithm>
+#include <cstddef>
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -176,4 +178,68 @@ BOOST_AUTO_TEST_CASE(repeated_participant) {
   BOOST_CHECK(remove(storage, 0, {1, 1}));
   BOOST_CHECK(storage.empty());
   BOOST_CHECK(bonds_of(storage, 1).empty());
+}
+
+BOOST_AUTO_TEST_CASE(owned_bonds) {
+  /* bonds owned by a particle, in the order they are visited */
+  auto const owned_by = [](BondStorage const &storage, int pid) {
+    std::vector<Tuple> bonds;
+    storage.owned_bonds().for_each_bond_of(
+        pid, [&](int bond_id, std::span<const int> partner_ids) {
+          bonds.push_back({bond_id, {partner_ids.begin(), partner_ids.end()}});
+        });
+    return bonds;
+  };
+  auto const counts = [](BondStorage const &storage, int pid) {
+    auto const c = storage.owned_bonds().counts(pid);
+    return std::vector<int>{c.pair, c.angle, c.dihedral};
+  };
+
+  BondStorage storage;
+  /* empty storage, unknown and invalid particle ids */
+  BOOST_CHECK(owned_by(storage, 0).empty());
+  BOOST_CHECK(owned_by(storage, -1).empty());
+  BOOST_CHECK((counts(storage, 0) == std::vector<int>{0, 0, 0}));
+
+  add(storage, 0, {2, 1});
+  add(storage, 1, {2, 1, 3});
+  add(storage, 2, {4, 3, 2, 1});
+  add(storage, 3, {5}); // bonds without partners are not included
+  add(storage, 0, {2, 7});
+  add(storage, 4, {2, 6, 5});
+  add(storage, 0, {1, 2});
+
+  /* only the bonds a particle owns, grouped by number of partners, with
+   * the partners in creation order */
+  BOOST_CHECK(
+      (owned_by(storage, 2) ==
+       std::vector<Tuple>{{0, {1}}, {0, {7}}, {1, {1, 3}}, {4, {6, 5}}}));
+  BOOST_CHECK((owned_by(storage, 1) == std::vector<Tuple>{{0, {2}}}));
+  BOOST_CHECK((owned_by(storage, 4) == std::vector<Tuple>{{2, {3, 2, 1}}}));
+  BOOST_CHECK(owned_by(storage, 3).empty());
+  BOOST_CHECK(owned_by(storage, 5).empty());
+  BOOST_CHECK(owned_by(storage, 7).empty());
+  BOOST_CHECK(owned_by(storage, 100).empty());
+  BOOST_CHECK((counts(storage, 2) == std::vector<int>{2, 2, 0}));
+  BOOST_CHECK((counts(storage, 4) == std::vector<int>{0, 0, 1}));
+  BOOST_CHECK((counts(storage, 5) == std::vector<int>{0, 0, 0}));
+  BOOST_CHECK((counts(storage, 100) == std::vector<int>{0, 0, 0}));
+
+  /* over all particles, every bond with partners is visited once */
+  std::size_t n_bonds = 0u;
+  for (int pid = 0; pid < 10; ++pid) {
+    n_bonds += owned_by(storage, pid).size();
+  }
+  BOOST_CHECK_EQUAL(n_bonds, storage.size() - 1u);
+
+  /* the view follows modifications of the storage */
+  BOOST_CHECK(remove(storage, 0, {2, 1}));
+  BOOST_CHECK((owned_by(storage, 2) ==
+               std::vector<Tuple>{{0, {7}}, {1, {1, 3}}, {4, {6, 5}}}));
+  BOOST_CHECK((owned_by(storage, 1) == std::vector<Tuple>{{0, {2}}}));
+  add(storage, 5, {9, 2});
+  BOOST_CHECK((owned_by(storage, 9) == std::vector<Tuple>{{5, {2}}}));
+  storage.clear();
+  BOOST_CHECK(owned_by(storage, 2).empty());
+  BOOST_CHECK((counts(storage, 2) == std::vector<int>{0, 0, 0}));
 }

@@ -23,6 +23,7 @@
 
 #include "cell_system/ParticleDecomposition.hpp"
 
+#include "BondStorage.hpp"
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
@@ -773,20 +774,17 @@ private:
    *                partners as arguments. Its return value
    *                should indicate if the bond was broken.
    */
-  void execute_bond_handler(Particle &p, auto const &handler) {
+  void execute_bond_handler(Particle &p,
+                            BondStorage::OwnedBonds const &owned_bonds,
+                            auto const &handler) {
     // Owned bonds only: they carry the partner order the bond was created
     // with (e.g. the vertex-first order angle bonds rely on), and every
     // bond is processed exactly once.
-    for_each_bond(p, [&](BondView const &bond) {
-      auto const partner_ids = bond.partner_ids();
-      // only the arities held by the flat bond lists, see bond_loop()
-      if (partner_ids.empty() or partner_ids.size() > 3u) {
-        return;
-      }
+    owned_bonds.for_each_bond_of(p.id(), [&](int bond_id, auto partner_ids) {
       try {
         auto partners = resolve_bond_partners(partner_ids);
         auto const partners_span = std::span(partners.data(), partners.size());
-        auto const bond_broken = handler(p, bond.bond_id(), partners_span);
+        auto const bond_broken = handler(p, bond_id, partners_span);
         if (bond_broken) {
           bond_broken_error(p.id(), partner_ids);
         }
@@ -802,7 +800,7 @@ private:
    *                   one row of indices into the unique particles per bond.
    * @param bond_ids   Bond ids matching the rows of @p bond_list.
    * @param n_bonds    Number of bonds in the list.
-   * @param handler    See @ref execute_bond_handler(Particle &, auto const &).
+   * @param handler    See the overload taking a particle.
    */
   template <typename BondListT>
   void execute_bond_handler(BondListT const &bond_list, auto const &bond_ids,
@@ -958,15 +956,21 @@ public:
     return m_rebuild_verlet_list_cabana;
   }
 
+  /** @brief The global bond topology of the system. */
+  BondStorage const &get_bond_storage() const;
+
   /**
-   * @brief Update bond storage(m_*_bond_list_kokkos and m_*_bond_id_kokkos).
+   * @brief Append the bonds owned by a particle to the flat bond lists
+   * (@ref LocalBondState), as particle ids.
    * @param pair_count      Index for pair bond storage.
    * @param angle_count     Index for angle bond storage.
    * @param dihedral_count  Index for dihedral bond storage.
-   * @param p               Particle pointer.
+   * @param p               Particle residing on this rank.
+   * @param owned_bonds     Global bond topology, sorted by owner.
    */
   void update_bond_storage(int &pair_count, int &angle_count,
-                           int &dihedral_count, Particle const &p);
+                           int &dihedral_count, Particle const &p,
+                           BondStorage::OwnedBonds const &owned_bonds);
 
   /**
    * @brief Reset local properties of the Verlet list.
@@ -1088,8 +1092,9 @@ public:
       execute_bond_handler(bs.dihedral_list, bs.dihedral_ids, bs.dihedral_count,
                            bond_kernel);
     } else {
+      auto const &owned_bonds = get_bond_storage().owned_bonds();
       for (auto &p : local_particles()) {
-        execute_bond_handler(p, bond_kernel);
+        execute_bond_handler(p, owned_bonds, bond_kernel);
       }
     }
   }
