@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include "BondStorage.hpp"
 #include "bond_queries.hpp"
 #include "system/System.hpp"
 
@@ -27,10 +28,17 @@
 #include <utility>
 #include <vector>
 
+/** @brief A bond id and the ids of the bonded particles, owner first. */
+using BondTuple = std::pair<int, std::vector<int>>;
+
 /**
  * @brief Add a bond between particles.
  *
- * Writes the primary entry (used for force/energy calculation) on
+ * Must be called on all MPI ranks, with the same arguments and in the same
+ * order relative to other bond mutations, since it registers the bond in
+ * the global bond topology (@ref System::System::bond_storage).
+ *
+ * Also writes the primary entry (used for force/energy calculation) on
  * @p particle_ids[0] and a mirror entry on every other participant that is
  * locally known, so the bond can be found and removed from any participant.
  *
@@ -45,7 +53,11 @@ bool add_bond(System::System &system, int bond_id,
 /**
  * @brief Remove a bond between particles.
  *
- * Removes, from every one of @p particle_ids that is locally known, the
+ * Must be called on all MPI ranks, with the same arguments and in the same
+ * order relative to other bond mutations, since it removes the bond from
+ * the global bond topology (@ref System::System::bond_storage).
+ *
+ * Also removes, from every one of @p particle_ids that is locally known, the
  * bond entry (primary or mirror) matching @p bond_id whose partner ids are
  * exactly the remaining ids of @p particle_ids (order does not matter).
  *
@@ -62,14 +74,14 @@ bool remove_bond(System::System &system, int bond_id,
                  std::vector<int> const &particle_ids, int skip_id = -1);
 
 /**
- * @brief Recreate missing mirror entries from primary entries.
+ * @brief Recreate the global bond topology and missing mirror entries from
+ * the primary entries.
  *
- * Collective over all MPI ranks. For every primary entry found on any rank,
- * ensures a matching mirror entry exists on every other participant.
- * Existing mirrors are left untouched, so this is safe to call
- * unconditionally, e.g. after loading bonds that bypassed @ref add_bond()
- * (an mpiio checkpoint written before bonds were stored on all
- * participants).
+ * Collective over all MPI ranks. The global bond topology is replaced by
+ * the primary entries found on all ranks. For every one of them, ensures a
+ * matching mirror entry exists on every other participant; existing mirrors
+ * are left untouched. To be called after loading bonds that bypassed
+ * @ref add_bond(), e.g. from an mpiio checkpoint.
  */
 void rebuild_bond_mirrors(System::System &system);
 
@@ -84,5 +96,41 @@ void rebuild_bond_mirrors(System::System &system);
  * on any one rank need to be gathered and broadcast to all ranks first.
  * A no-op when @p comm has a single rank.
  */
-void sync_bond_tuples(std::vector<std::pair<int, std::vector<int>>> &tuples,
+void sync_bond_tuples(std::vector<BondTuple> &tuples,
                       boost::mpi::communicator const &comm);
+
+/**
+ * @brief Bonds of the global bond topology a particle participates in.
+ *
+ * Identical on all MPI ranks, unlike the bond entries of the particle,
+ * which are only available where the particle is locally known.
+ *
+ * @param system  The system.
+ * @param pid     Particle id.
+ * @param pred    Callable <tt>bool(BondStorage::Bond const &)</tt> selecting
+ *                the bonds of interest.
+ * @return Tuples suitable for @ref remove_bond().
+ */
+template <typename Pred>
+std::vector<BondTuple> get_bonds_of_particle(System::System const &system,
+                                             int pid, Pred &&pred) {
+  std::vector<BondTuple> bonds;
+  system.bond_storage->for_each_bond_of(
+      pid, [&](BondStorage::Bond const &bond) {
+        if (pred(bond)) {
+          bonds.emplace_back(bond.bond_id,
+                             std::vector<int>(bond.particle_ids.begin(),
+                                              bond.particle_ids.end()));
+        }
+      });
+  return bonds;
+}
+
+/**
+ * @brief Check that the global bond topology is identical on all MPI ranks
+ * and matches the bonds stored on the particles.
+ *
+ * Collective over all MPI ranks, with a cost proportional to the total
+ * number of bonds; meant for tests and additional checks.
+ */
+bool is_bond_storage_consistent(System::System const &system);

@@ -154,48 +154,83 @@ public:
                   {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1]});
   }
   void operator()(DeleteAllBonds const &d) const {
-    // Delete every pair bond (of any type) between the two particles.
-    // Either one may be the particle locally known on this rank, so look
-    // from both sides. Bond ids are deliberately not deduplicated: the
-    // same bond can co-exist more than once between the same particles,
-    // and each occurrence needs its own ::remove_bond() call; surplus
-    // calls are harmless no-ops.
-    auto &cell_structure = *system.cell_structure;
-    std::vector<int> bond_ids;
-    auto collect = [&](int owner_id, int other_id) {
-      if (auto *p = cell_structure.get_local_particle(owner_id)) {
-        for_each_bond<BondEntries::all>(*p, [&](BondView const &b) {
-          if (b.partner_ids().size() == 1u and b.partner_ids()[0] == other_id) {
-            bond_ids.push_back(b.bond_id());
-          }
+    // Delete every pair bond (of any type) between the two particles,
+    // whichever of them owns it. The bonds are read from the global bond
+    // topology, so that all ranks remove the same bonds. The same bond
+    // can co-exist more than once between the same particles, and each
+    // occurrence is removed.
+    auto const bonds = ::get_bonds_of_particle(
+        system, d.particle_id_1, [&d](BondStorage::Bond const &bond) {
+          return bond.particle_ids.size() == 2u and
+                 bond.has_participant(d.particle_id_2) and
+                 d.particle_id_1 != d.particle_id_2;
         });
-      }
-    };
-    collect(d.particle_id_1, d.particle_id_2);
-    collect(d.particle_id_2, d.particle_id_1);
-    for (auto const bond_id : bond_ids) {
-      ::remove_bond(system, bond_id, {d.particle_id_1, d.particle_id_2});
+    for (auto const &[bond_id, ids] : bonds) {
+      ::remove_bond(system, bond_id, ids);
     }
   }
 };
+
+/** @brief Encode an action for communication, see @ref decode_action. */
+struct encode_action {
+  BondTuple operator()(DeleteBond const &d) const {
+    return {0, {d.particle_id, d.bond_partner_id, d.bond_type}};
+  }
+  BondTuple operator()(DeleteAngleBond const &d) const {
+    return {1,
+            {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1],
+             d.bond_type}};
+  }
+  BondTuple operator()(DeleteAllBonds const &d) const {
+    return {2, {d.particle_id_1, d.particle_id_2}};
+  }
+};
+
+static Action decode_action(BondTuple const &encoded) {
+  auto const &[kind, v] = encoded;
+  if (kind == 0) {
+    return DeleteBond{v[0], v[1], v[2]};
+  }
+  if (kind == 1) {
+    return DeleteAngleBond{v[0], {{v[1], v[2]}}, v[3]};
+  }
+  assert(kind == 2);
+  return DeleteAllBonds{v[0], v[1]};
+}
 
 void BondBreakage::process_queue_impl(System::System &system) {
   auto global_queue = gather_global_queue(m_queue);
   auto &cell_structure = *system.cell_structure;
 
+  if (global_queue.empty()) {
+    return;
+  }
+
   // Construct delete actions from breakage queue
-  ActionSet actions = {};
+  ActionSet local_actions = {};
   for (auto const &e : global_queue) {
     // Retrieve relevant breakage spec
     assert(breakage_specs.contains(e.bond_type));
     auto const &spec = breakage_specs.at(e.bond_type);
-    actions.merge(actions_for_breakage(cell_structure, e, *spec));
+    local_actions.merge(actions_for_breakage(cell_structure, e, *spec));
   }
 
-  // Execute actions
-  for (auto const &a : actions) {
-    std::visit(execute(system), a);
-    system.on_particle_change();
+  // Some actions can only be constructed on the ranks where the involved
+  // particles are known, but bonds must be removed identically on all
+  // ranks: execute the actions found on any rank, on every rank and in the
+  // same order.
+  std::vector<BondTuple> encoded_actions;
+  for (auto const &a : local_actions) {
+    encoded_actions.emplace_back(std::visit(encode_action{}, a));
+  }
+  ::sync_bond_tuples(encoded_actions, ::comm_cart);
+  ActionSet executed = {};
+  for (auto const &encoded : encoded_actions) {
+    auto const action = decode_action(encoded);
+    if (executed.insert(action).second) {
+      std::visit(execute(system), action);
+      system.on_particle_change();
+    }
   }
 }
 

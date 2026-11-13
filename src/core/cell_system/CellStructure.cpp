@@ -438,22 +438,13 @@ void CellStructure::check_particle_sorting() const {
 }
 
 void CellStructure::remove_particle(int id) {
-  // The particle's own bond list names every bond it participates in (see
-  // BondList.hpp), so the other participants can be found directly instead
-  // of sweeping all local particles. Only ranks knowing `id` (real or
-  // ghost) can discover them, hence the gather/broadcast: a participant on
-  // a rank that never saw `id` would otherwise keep a dangling entry.
+  // The global bond topology names every bond the particle participates
+  // in, identically on all ranks, so the entries of the other participants
+  // can be removed wherever they live.
   // ::remove_bond() skips `id` itself, whose bond list is discarded below.
-  std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
-  if (auto const *p = get_local_particle(id)) {
-    for_each_bond<BondEntries::all>(*p, [&](BondView const &bond) {
-      std::vector<int> ids = {id};
-      std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
-      bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));
-    });
-  }
-  ::sync_bond_tuples(bonds_to_remove, ::comm_cart);
   auto &system = get_system();
+  auto const bonds_to_remove = ::get_bonds_of_particle(
+      system, id, [](BondStorage::Bond const &) { return true; });
   for (auto const &[bond_id, ids] : bonds_to_remove) {
     ::remove_bond(system, bond_id, ids, id);
   }
@@ -556,6 +547,7 @@ void CellStructure::remove_all_particles() {
   m_particle_index.clear();
   clear_bond_properties();
   clear_particle_node();
+  get_system().bond_storage->clear();
   get_system().on_particle_change();
 }
 

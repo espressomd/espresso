@@ -58,33 +58,21 @@ static void set_particles_bonds(
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];
     auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // Remove old bonds. A primary entry is always safe to remove, since
-    // pid owns it. A mirror entry is only safe to remove if all of its
+    // Remove old bonds. A bond owned by pid is always safe to remove. A
+    // bond owned by another particle is only safe to remove if all of its
     // participants are part of this bulk reassignment too, otherwise it
-    // belongs to a bond some untouched particle still owns. Removing it
-    // here matters when the primary owner is not visible on this rank
-    // (e.g. right after ::add_bond(), before the next resort), which
-    // would otherwise leak the mirror. This runs identically on every
-    // rank, and repeated ::remove_bond() calls are harmless no-ops.
-    auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr) {
-      std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
-      for_each_bond<BondEntries::all>(*p, [&](BondView const &bond_view) {
-        auto const safe_to_remove =
-            bond_view.is_primary() or
-            std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
-              return pid_set.contains(other);
-            });
-        if (not safe_to_remove) {
-          return;
-        }
-        std::vector<int> ids = {pid};
-        std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
-        bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));
-      });
-      for (auto const &[bond_id, ids] : bonds_to_remove) {
-        ::remove_bond(system, bond_id, ids);
-      }
+    // belongs to a bond some untouched particle still owns. The bonds are
+    // read from the global bond topology, so that ::remove_bond() is
+    // called identically on every rank.
+    auto const bonds_to_remove = ::get_bonds_of_particle(
+        system, pid, [&](BondStorage::Bond const &bond) {
+          return bond.owner_id() == pid or
+                 std::ranges::all_of(bond.particle_ids, [&](int other) {
+                   return pid_set.contains(other);
+                 });
+        });
+    for (auto const &[bond_id, ids] : bonds_to_remove) {
+      ::remove_bond(system, bond_id, ids);
     }
     // Add new bonds
     for (std::size_t j = 0; j < bonds_ids.size(); ++j) {

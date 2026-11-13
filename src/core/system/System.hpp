@@ -43,6 +43,7 @@ class CellStructure;
 class Propagation;
 class InteractionsNonBonded;
 class BondedInteractionsMap;
+class BondStorage;
 namespace Thermostat {
 class Thermostat;
 }
@@ -327,6 +328,8 @@ public:
   std::shared_ptr<CellStructure> cell_structure;
   std::shared_ptr<Propagation> propagation;
   std::shared_ptr<BondedInteractionsMap> bonded_ias;
+  /** @brief Global bond topology, identical on all MPI ranks. */
+  std::shared_ptr<BondStorage> bond_storage;
   std::shared_ptr<InteractionsNonBonded> nonbonded_ias;
   std::shared_ptr<Thermostat::Thermostat> thermostat;
   std::shared_ptr<ComFixed> comfixed;

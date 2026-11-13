@@ -41,6 +41,7 @@
 #include "bond_breakage/bond_breakage.hpp"
 #include "bond_queries.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/for_each_particle.hpp"
 #include "cells.hpp"
@@ -629,6 +630,13 @@ int System::System::integrate(int n_steps, int reuse_forces) {
   auto const n_rigid_bonds = bonded_ias->get_n_rigid_bonds();
 #endif
 
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  if (not ::is_bond_storage_consistent(*this)) {
+    throw std::runtime_error(
+        "bond storage is inconsistent (integration start)");
+  }
+#endif
+
   // Prepare particle structure and run sanity checks of all active algorithms
   propagation.update_default_propagation(thermostat->thermo_switch);
   update_used_propagations();
@@ -959,6 +967,11 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  if (not ::is_bond_storage_consistent(*this)) {
+    throw std::runtime_error("bond storage is inconsistent (integration end)");
+  }
+#endif
   if (lb_active) {
     lb.ghost_communication();
   }

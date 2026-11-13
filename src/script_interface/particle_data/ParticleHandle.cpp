@@ -212,27 +212,20 @@ void ParticleHandle::set_exclusions(Variant const &value) {
 /**
  * @brief Delete the bonds owned by this particle.
  *
- * Only primary entries are considered; mirror entries belong to bonds
- * owned by other particles. @ref ::remove_bond() erases the corresponding
- * mirror entries on the other participants.
+ * Bonds this particle participates in but that are owned by other
+ * particles are left untouched. The owned bonds are read from the global
+ * bond topology, so that @ref ::remove_bond() is called identically on
+ * all ranks.
  */
 void ParticleHandle::delete_owned_bonds() const {
-  std::vector<std::pair<int, std::vector<int>>> owned_bonds;
-  set_particle_property([&owned_bonds](Particle &p) {
-    for_each_bond(p, [&](BondView const &bond_view) {
-      std::vector<int> ids = {p.id()};
-      std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
-      owned_bonds.emplace_back(bond_view.bond_id(), std::move(ids));
-    });
-  });
-  // set_particle_property() only runs the lambda above on the rank holding
-  // the real (non-ghost) copy of this particle, but ::remove_bond() must
-  // run everywhere to reach mirror entries living on other ranks; hence
-  // the gather and broadcast.
-  ::sync_bond_tuples(owned_bonds, context()->get_comm());
+  auto const owned_bonds = ::get_bonds_of_particle(
+      *get_system(), m_pid, [pid = m_pid](BondStorage::Bond const &bond) {
+        return bond.owner_id() == pid;
+      });
   for (auto const &[bond_id, ids] : owned_bonds) {
     ::remove_bond(*get_system(), bond_id, ids);
   }
+  get_system()->on_particle_change();
 }
 
 ParticleHandle::ParticleHandle() {

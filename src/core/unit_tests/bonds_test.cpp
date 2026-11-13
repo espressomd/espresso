@@ -304,4 +304,63 @@ BOOST_FIXTURE_TEST_CASE(bond_queries, ParticleFactory) {
   BOOST_CHECK(pair_bond_exists(p3, p1, pair_bond_id));
 }
 
+BOOST_AUTO_TEST_CASE(global_bond_storage) {
+  /* add_bond()/remove_bond() keep the global bond topology in sync with
+   * the bond entries of the particles, also when particles are removed. */
+  auto const pair_bond_id = 0;
+  auto const angle_bond_id = 1;
+  for (int pid = 1; pid <= 4; ++pid) {
+    ::make_new_particle(pid, {1., 1., 1.});
+  }
+
+  auto &system = System::get_system();
+  auto const &bond_storage = *system.bond_storage;
+  BOOST_CHECK(bond_storage.empty());
+  BOOST_CHECK(::is_bond_storage_consistent(system));
+
+  ::add_bond(system, pair_bond_id, {1, 2});
+  ::add_bond(system, pair_bond_id, {2, 1});
+  ::add_bond(system, angle_bond_id, {2, 1, 3});
+  ::add_bond(system, pair_bond_id, {3, 4});
+  BOOST_CHECK_EQUAL(bond_storage.size(), 4u);
+  BOOST_CHECK(::is_bond_storage_consistent(system));
+
+  /* bonds of a particle, whether it owns them or not */
+  auto const any_bond = [](BondStorage::Bond const &) { return true; };
+  BOOST_CHECK((::get_bonds_of_particle(system, 3, any_bond) ==
+               std::vector<BondTuple>{{angle_bond_id, {2, 1, 3}},
+                                      {pair_bond_id, {3, 4}}}));
+  BOOST_CHECK(
+      (::get_bonds_of_particle(system, 3, [](BondStorage::Bond const &bond) {
+         return bond.owner_id() == 3;
+       }) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
+
+  /* removal from a non-owner, and of a bond that does not exist */
+  BOOST_CHECK(::remove_bond(system, angle_bond_id, {3, 1, 2}));
+  BOOST_CHECK(not ::remove_bond(system, angle_bond_id, {3, 1, 2}));
+  BOOST_CHECK_EQUAL(bond_storage.size(), 3u);
+  BOOST_CHECK(::is_bond_storage_consistent(system));
+
+  /* a bond entry written behind the back of add_bond() is detected */
+  auto &p4 = *system.cell_structure->get_local_particle(4);
+  auto const partner = std::array<int, 1>{{1}};
+  p4.bonds().insert(BondView{pair_bond_id, partner});
+  BOOST_CHECK(not ::is_bond_storage_consistent(system));
+  p4.bonds().clear();
+  p4.bonds().insert(BondView{pair_bond_id, std::array<int, 1>{{3}}, false});
+  BOOST_CHECK(::is_bond_storage_consistent(system));
+
+  /* removing a particle removes all the bonds it participates in */
+  ::remove_particle(1);
+  BOOST_CHECK(::is_bond_storage_consistent(system));
+  BOOST_CHECK((::get_bonds_of_particle(system, 2, any_bond).empty()));
+  BOOST_CHECK_EQUAL(bond_storage.size(), 1u);
+  BOOST_CHECK(local_bonds(2).empty());
+
+  /* removing all particles removes all bonds */
+  system.cell_structure->remove_all_particles();
+  BOOST_CHECK(bond_storage.empty());
+  BOOST_CHECK(::is_bond_storage_consistent(system));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

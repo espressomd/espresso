@@ -22,6 +22,7 @@
 #include "System.hpp"
 #include "System.impl.hpp"
 
+#include "BondStorage.hpp"
 #include "BoxGeometry.hpp"
 #include "GpuParticleData.hpp"
 #include "LocalBox.hpp"
@@ -82,6 +83,7 @@ System::System(Private) {
 #endif
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
+  bond_storage = std::make_shared<BondStorage>();
   thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();

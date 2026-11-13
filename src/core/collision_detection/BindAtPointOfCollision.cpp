@@ -100,6 +100,10 @@ void BindAtPointOfCollision::handle_collisions(
 
   int current_vs_pid = global_max_seen_particle + 1;
 
+  // Bonds to create. Every bond is recorded on exactly one rank, the one
+  // where the first particle of the colliding pair resides.
+  std::vector<BondTuple> new_bonds;
+
   // Iterate over global collision queue
   for (auto const &[pid1, pid2] : global_collision_queue) {
 
@@ -157,21 +161,32 @@ void BindAtPointOfCollision::handle_collisions(
     // Increment counter
     current_vs_pid++;
 
-    // Create bonds
+    // Record the bonds to create
+    if (p1->is_ghost()) {
+      continue;
+    }
     auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_vs));
     if (n_partners == 1) {
-      // Create bond between the virtual particles; add_bond() writes the
-      // entries on whichever participants are locally known.
-      ::add_bond(system, bond_vs, {current_vs_pid - 1, current_vs_pid - 2});
+      // Bond between the virtual particles
+      new_bonds.push_back({bond_vs, {current_vs_pid - 1, current_vs_pid - 2}});
     }
     if (n_partners == 2) {
-      // Create an angle bond on each virtual site, connecting it to both
-      // base particles; add_bond() writes the entries on whichever
-      // participants are locally known, and is a no-op otherwise.
-      ::add_bond(system, bond_vs, {current_vs_pid - 1, pid1, pid2});
-      ::add_bond(system, bond_vs, {current_vs_pid - 2, pid1, pid2});
+      // An angle bond on each virtual site, connecting it to both base
+      // particles
+      new_bonds.push_back({bond_vs, {current_vs_pid - 1, pid1, pid2}});
+      new_bonds.push_back({bond_vs, {current_vs_pid - 2, pid1, pid2}});
     }
   } // Loop over all collisions in the queue
+
+  // Create the bonds on all ranks: add_bond() registers them in the global
+  // bond topology and writes the entries on whichever participants are
+  // locally known.
+  if (not global_collision_queue.empty()) {
+    ::sync_bond_tuples(new_bonds, ::comm_cart);
+    for (auto const &[bond_id, particle_ids] : new_bonds) {
+      ::add_bond(system, bond_id, particle_ids);
+    }
+  }
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   assert(Utils::Mpi::all_compare(::comm_cart, current_vs_pid) &&

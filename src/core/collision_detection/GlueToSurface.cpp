@@ -117,6 +117,10 @@ void GlueToSurface::handle_collisions(
 
   int current_vs_pid = global_max_seen_particle + 1;
 
+  // Bonds to create. Every bond is recorded on exactly one rank, the one
+  // where the first particle of the colliding pair resides.
+  std::vector<BondTuple> new_bonds;
+
   // Iterate over global collision queue
   for (auto const &[pid1, pid2] : global_collision_queue) {
 
@@ -172,10 +176,10 @@ void GlueToSurface::handle_collisions(
     auto const &attach_vs_to =
         (p1->type() == part_type_to_attach_vs_to) ? *p1 : *p2;
 
-    // Add a bond between the centers of the colliding particles.
-    // The primary entry is placed on the node that has p1.
-    if (!p1->is_ghost()) {
-      ::add_bond(system, bond_centers, {pid1, pid2});
+    // Record a bond between the centers of the colliding particles.
+    auto const record_bonds = not p1->is_ghost();
+    if (record_bonds) {
+      new_bonds.push_back({bond_centers, {pid1, pid2}});
     }
 
     // Change type of particle being attached, to make it inert
@@ -198,10 +202,22 @@ void GlueToSurface::handle_collisions(
       p2 = cell_structure.get_local_particle(pid2);
       current_vs_pid++;
     }
-    // Create bond between the glued particle and its virtual site.
-    auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
-    ::add_bond(system, bond_vs, {p->id(), current_vs_pid - 1});
+    // Record a bond between the glued particle and its virtual site.
+    if (record_bonds) {
+      auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
+      new_bonds.push_back({bond_vs, {p->id(), current_vs_pid - 1}});
+    }
   } // Loop over all collisions in the queue
+
+  // Create the bonds on all ranks: add_bond() registers them in the global
+  // bond topology and writes the entries on whichever participants are
+  // locally known.
+  if (not global_collision_queue.empty()) {
+    ::sync_bond_tuples(new_bonds, ::comm_cart);
+    for (auto const &[bond_id, particle_ids] : new_bonds) {
+      ::add_bond(system, bond_id, particle_ids);
+    }
+  }
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   assert(Utils::Mpi::all_compare(::comm_cart, current_vs_pid) &&

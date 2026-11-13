@@ -17,18 +17,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "bonds.hpp"
+
+#include "BondStorage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "system/System.hpp"
 
 #include <utils/mpi/gather_buffer.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
 #include <cstddef>
+#include <functional>
+#include <iterator>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -81,6 +87,8 @@ bool add_bond(System::System &system, int bond_id,
   auto &cell_structure = *system.cell_structure;
   bool added = false;
 
+  system.bond_storage->add(bond_id, particle_ids);
+
   if (Particle *p = cell_structure.get_local_particle(particle_ids[0])) {
     // Primary entry: used for force/energy calculation, holds the other
     // participants' ids in creation order.
@@ -108,6 +116,8 @@ bool add_bond(System::System &system, int bond_id,
 bool remove_bond(System::System &system, int bond_id,
                  std::vector<int> const &particle_ids, int skip_id) {
   auto &cell_structure = *system.cell_structure;
+
+  system.bond_storage->remove(bond_id, particle_ids);
 
   auto try_remove = [&](int pid, std::vector<int> const &sorted_others,
                         std::optional<bool> want_primary) {
@@ -161,7 +171,7 @@ bool remove_bond(System::System &system, int bond_id,
   return false;
 }
 
-void sync_bond_tuples(std::vector<std::pair<int, std::vector<int>>> &tuples,
+void sync_bond_tuples(std::vector<BondTuple> &tuples,
                       boost::mpi::communicator const &comm) {
   if (comm.size() > 1) {
     Utils::Mpi::gather_buffer(tuples, comm);
@@ -169,24 +179,33 @@ void sync_bond_tuples(std::vector<std::pair<int, std::vector<int>>> &tuples,
   }
 }
 
+/** @brief Primary entries of the particles residing on this rank. */
+static std::vector<BondTuple>
+get_local_primary_bonds(CellStructure const &cell_structure) {
+  std::vector<BondTuple> primaries;
+  for (auto const &p : cell_structure.local_particles()) {
+    for_each_bond(p.bonds(), [&](BondView const &bond) {
+      std::vector<int> ids = {p.id()};
+      std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
+      primaries.emplace_back(bond.bond_id(), std::move(ids));
+    });
+  }
+  return primaries;
+}
+
 void rebuild_bond_mirrors(System::System &system) {
   auto &cell_structure = *system.cell_structure;
 
   // Gather the primary entries of all ranks, so mirrors can be added for
   // participants living on a different rank than the primary.
-  std::vector<std::pair<int, std::vector<int>>> primaries;
-  for (auto const &p : cell_structure.local_particles()) {
-    for (auto const bond : p.bonds()) {
-      if (bond.is_primary()) {
-        std::vector<int> ids = {p.id()};
-        std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
-        primaries.emplace_back(bond.bond_id(), std::move(ids));
-      }
-    }
-  }
+  auto primaries = get_local_primary_bonds(cell_structure);
   ::sync_bond_tuples(primaries, ::comm_cart);
 
+  auto &bond_storage = *system.bond_storage;
+  bond_storage.clear();
+
   for (auto const &[bond_id, ids] : primaries) {
+    bond_storage.add(bond_id, ids);
     // Index 0 is the owner, whose primary entry already exists; only the
     // other participants may need a mirror.
     for (std::size_t i = 1; i < ids.size(); ++i) {
@@ -205,4 +224,23 @@ void rebuild_bond_mirrors(System::System &system) {
       }
     }
   }
+}
+
+bool is_bond_storage_consistent(System::System const &system) {
+  std::vector<BondTuple> stored;
+  system.bond_storage->for_each_bond([&](BondStorage::Bond const &bond) {
+    stored.emplace_back(
+        bond.bond_id,
+        std::vector<int>(bond.particle_ids.begin(), bond.particle_ids.end()));
+  });
+  std::ranges::sort(stored);
+
+  auto primaries = get_local_primary_bonds(*system.cell_structure);
+  ::sync_bond_tuples(primaries, ::comm_cart);
+  std::ranges::sort(primaries);
+
+  // every rank compares the same gathered primaries against its own copy
+  // of the storage, which also establishes that the copies are identical
+  return boost::mpi::all_reduce(::comm_cart, stored == primaries,
+                                std::logical_and<bool>());
 }
