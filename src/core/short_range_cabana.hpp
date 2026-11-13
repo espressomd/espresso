@@ -213,6 +213,10 @@ update_cabana_state(CellStructure &cell_structure,
           }
         });
     Kokkos::fence();
+    // Bonds whose partners could not be resolved were reported and not
+    // stored: only the filled rows may be visited.
+    cell_structure.set_local_bond_numbers(pair_count, angle_count,
+                                          dihedral_count);
     using host_space = Kokkos::DefaultHostExecutionSpace;
     auto &bs = cell_structure.bond_state();
     if (pair_count) {
