@@ -57,9 +57,9 @@ inline Utils::Vector3d bd_drag(Thermostat::GammaType const &brownian_gamma,
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d delta_pos_lab;
   if (aniso_flag) {
-    auto const force_body = convert_vector_space_to_body(p, p.force());
+    auto const force_body = convert_vector_space_to_body(p.quat(), p.force());
     auto const delta_pos_body = hadamard_division(force_body * dt, gamma);
-    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
+    delta_pos_lab = convert_vector_body_to_space(p.quat(), delta_pos_body);
   }
 #endif
 
@@ -110,9 +110,9 @@ inline Utils::Vector3d bd_drag_vel(Thermostat::GammaType const &brownian_gamma,
   auto const aniso_flag = (gamma[0] != gamma[1]) || (gamma[1] != gamma[2]);
   Utils::Vector3d vel_lab;
   if (aniso_flag) {
-    auto const force_body = convert_vector_space_to_body(p, p.force());
+    auto const force_body = convert_vector_space_to_body(p.quat(), p.force());
     auto const vel_body = hadamard_division(force_body, gamma);
-    vel_lab = convert_vector_body_to_space(p, vel_body);
+    vel_lab = convert_vector_body_to_space(p.quat(), vel_body);
   }
 #endif
 
@@ -191,7 +191,7 @@ inline Utils::Vector3d bd_random_walk(BrownianThermostat const &brownian,
       (sigma_pos[0] != sigma_pos[1]) || (sigma_pos[1] != sigma_pos[2]);
   Utils::Vector3d delta_pos_lab;
   if (aniso_flag) {
-    delta_pos_lab = convert_vector_body_to_space(p, delta_pos_body);
+    delta_pos_lab = convert_vector_body_to_space(p.quat(), delta_pos_body);
   }
 #endif
 

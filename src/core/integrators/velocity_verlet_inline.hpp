@@ -56,12 +56,23 @@ inline void velocity_verlet_propagator_2(Particle &p, double time_step) {
 
 #ifdef ESPRESSO_ROTATION
 inline void velocity_verlet_rotator_1(Particle &p, double time_step) {
-  if (p.can_rotate())
+  if (p.can_rotate()) {
+    // p.torque() holds the lab-frame torque at time t: express it in the
+    // body frame of q(t) for the half kick and the quaternion update
+    auto const torque_lab = p.torque();
+    convert_torque_to_body_frame_apply_fix(p);
     propagate_omega_quat_particle(p, time_step);
+    p.torque() = torque_lab;
+  }
 }
 
 inline void velocity_verlet_rotator_2(Particle &p, double time_step) {
-  if (p.can_rotate())
+  if (p.can_rotate()) {
+    // half kick with the torque at t+dt in the body frame of q(t+dt);
+    // keep the lab-frame torque for the next call to rotator_1
+    auto const torque_lab = p.torque();
     convert_torque_propagate_omega(p, time_step);
+    p.torque() = torque_lab;
+  }
 }
 #endif // ESPRESSO_ROTATION
