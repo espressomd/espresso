@@ -310,8 +310,8 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
     auto force_on_fluid = -force_on_particle * m_md_to_lb_time_step_ratio;
 #ifdef ESPRESSO_ENGINE
     if (coupling_mode == swimmer_force_on_fluid) {
-      force_on_fluid = p.calc_director() * p.swimming().f_swim *
-                       m_md_to_lb_time_step_ratio;
+      force_on_fluid =
+          p.calc_director() * p.swimming().f_swim * m_md_to_lb_time_step_ratio;
     }
 #endif
 

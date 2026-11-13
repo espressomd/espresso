@@ -276,7 +276,7 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
       LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
-                                params.time_step};
+                                    params.time_step};
       coupling.kernel({&p});
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
