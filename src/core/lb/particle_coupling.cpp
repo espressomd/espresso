@@ -305,10 +305,13 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
       ++it_positions_velocity_coupling;
     }
 
-    auto force_on_fluid = -force_on_particle;
+    // the coupling runs at every MD step, but the accumulated force on the
+    // fluid is only applied once per LB step: weight it by dt / tau
+    auto force_on_fluid = -force_on_particle * m_md_to_lb_time_step_ratio;
 #ifdef ESPRESSO_ENGINE
     if (coupling_mode == swimmer_force_on_fluid) {
-      force_on_fluid = p.calc_director() * p.swimming().f_swim;
+      force_on_fluid =
+          p.calc_director() * p.swimming().f_swim * m_md_to_lb_time_step_ratio;
     }
 #endif
 
@@ -357,7 +360,8 @@ void System::System::lb_couple_particles() {
     }
     auto const real_particles = cell_structure->local_particles();
     auto const ghost_particles = cell_structure->ghost_particles();
-    LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo};
+    LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo,
+                                  get_time_step()};
     LB::CouplingBookkeeping bookkeeping{*cell_structure};
     lb.ghost_communication_vel();
     std::vector<Particle *> particles{};
