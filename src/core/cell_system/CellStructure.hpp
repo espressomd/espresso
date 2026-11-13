@@ -33,6 +33,7 @@
 #include "bond_queries.hpp"
 #include "cell_system/Cell.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "cell_system/LocalBondState.hpp"
 #include "config/config.hpp"
 #include "custom_verlet_list.hpp"
 #include "ghosts.hpp"
@@ -51,6 +52,7 @@
 #include <Kokkos_ScatterView.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <concepts>
 #include <cstddef>
@@ -70,7 +72,6 @@
 
 // forward declarations
 struct KokkosHandle;
-struct LocalBondState;
 
 template <typename Callable>
 concept ParticleCallback = requires(Callable c, Particle &p) {
@@ -776,8 +777,12 @@ private:
     // Owned bonds only: they carry the partner order the bond was created
     // with (e.g. the vertex-first order angle bonds rely on), and every
     // bond is processed exactly once.
-    for_each_bond(p.bonds(), [&](BondView const &bond) {
+    for_each_bond(p, [&](BondView const &bond) {
       auto const partner_ids = bond.partner_ids();
+      // only the arities held by the flat bond lists, see bond_loop()
+      if (partner_ids.empty() or partner_ids.size() > 3u) {
+        return;
+      }
       try {
         auto partners = resolve_bond_partners(partner_ids);
         auto const partners_span = std::span(partners.data(), partners.size());
@@ -789,6 +794,35 @@ private:
         bond_resolution_error(partner_ids);
       }
     });
+  }
+
+  /**
+   * @brief Execute kernel for every bond of a flat bond list.
+   * @param bond_list  One of the bond lists of @ref LocalBondState, holding
+   *                   one row of indices into the unique particles per bond.
+   * @param bond_ids   Bond ids matching the rows of @p bond_list.
+   * @param n_bonds    Number of bonds in the list.
+   * @param handler    See @ref execute_bond_handler(Particle &, auto const &).
+   */
+  template <typename BondListT>
+  void execute_bond_handler(BondListT const &bond_list, auto const &bond_ids,
+                            int n_bonds, auto const &handler) {
+    constexpr auto n_partners = BondListT::static_extent(1) - 1u;
+    for (int i = 0; i < n_bonds; ++i) {
+      std::array<Particle *, n_partners> partners;
+      for (std::size_t j = 0u; j < n_partners; ++j) {
+        partners[j] = m_unique_particles[bond_list(i, j + 1u)];
+      }
+      auto &p = *m_unique_particles[bond_list(i, 0)];
+      auto const bond_broken =
+          handler(p, bond_ids(i), std::span<Particle *>(partners));
+      if (bond_broken) {
+        std::array<int, n_partners> partner_ids;
+        std::ranges::transform(partners, partner_ids.begin(),
+                               [](Particle const *q) { return q->id(); });
+        bond_broken_error(p.id(), partner_ids);
+      }
+    }
   }
 
   /**
@@ -1020,12 +1054,43 @@ private:
   }
 
 public:
-  /** Bonded pair loop.
-   * @param bond_kernel Kernel to apply
+  /**
+   * @brief Whether the flat bond lists of @ref LocalBondState can be used.
+   *
+   * They are built together with the Verlet list during the short-range
+   * calculation, and become stale as soon as particles are resorted or
+   * @ref System::System::on_particle_change() is triggered, e.g. by a
+   * change of the bond topology.
+   */
+  [[nodiscard]] bool are_local_bond_lists_valid() const {
+    return m_bond_state and not m_rebuild_verlet_list_cabana;
+  }
+
+  /** Bonded loop.
+   *
+   * Visits every bond with one to three partners exactly once, on the MPI
+   * rank that owns its first particle. The bonds are read from the flat
+   * bond lists when these are valid, and from the bond storage otherwise;
+   * the order in which bonds are visited is unspecified.
+   *
+   * @param bond_kernel Kernel to apply, invoked with
+   *                    (Particle &, int, std::span<Particle *>), i.e. the
+   *                    first particle, the bond id and the bond partners.
+   *                    Its return value indicates if the bond was broken.
    */
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
-    for (auto &p : local_particles()) {
-      execute_bond_handler(p, bond_kernel);
+    if (are_local_bond_lists_valid()) {
+      auto const &bs = *m_bond_state;
+      execute_bond_handler(bs.pair_list, bs.pair_ids, bs.pair_count,
+                           bond_kernel);
+      execute_bond_handler(bs.angle_list, bs.angle_ids, bs.angle_count,
+                           bond_kernel);
+      execute_bond_handler(bs.dihedral_list, bs.dihedral_ids, bs.dihedral_count,
+                           bond_kernel);
+    } else {
+      for (auto &p : local_particles()) {
+        execute_bond_handler(p, bond_kernel);
+      }
     }
   }
 

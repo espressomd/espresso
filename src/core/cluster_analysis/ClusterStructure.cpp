@@ -63,7 +63,7 @@ void ClusterStructure::run_for_bonded_particles() {
   PartCfg partCfg{box_geo};
   for (const auto &p : partCfg) {
     // owned bonds: every pair bond is added once
-    for_each_bond(p.bonds(), [&](BondView const &bond) {
+    for_each_bond(p, [&](BondView const &bond) {
       if (bond.partner_ids().size() == 1) {
         add_pair(p, get_particle_data(bond.partner_ids()[0]));
       }

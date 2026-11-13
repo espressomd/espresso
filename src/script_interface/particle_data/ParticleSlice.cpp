@@ -69,20 +69,19 @@ static void set_particles_bonds(
     auto p = cell_structure.get_local_particle(pid);
     if (p != nullptr) {
       std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
-      for_each_bond<BondEntries::all>(
-          p->bonds(), [&](BondView const &bond_view) {
-            auto const safe_to_remove =
-                bond_view.is_primary() or
-                std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
-                  return pid_set.contains(other);
-                });
-            if (not safe_to_remove) {
-              return;
-            }
-            std::vector<int> ids = {pid};
-            std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
-            bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));
-          });
+      for_each_bond<BondEntries::all>(*p, [&](BondView const &bond_view) {
+        auto const safe_to_remove =
+            bond_view.is_primary() or
+            std::ranges::all_of(bond_view.partner_ids(), [&](int other) {
+              return pid_set.contains(other);
+            });
+        if (not safe_to_remove) {
+          return;
+        }
+        std::vector<int> ids = {pid};
+        std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
+        bonds_to_remove.emplace_back(bond_view.bond_id(), std::move(ids));
+      });
       for (auto const &[bond_id, ids] : bonds_to_remove) {
         ::remove_bond(system, bond_id, ids);
       }

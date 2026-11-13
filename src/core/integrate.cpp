@@ -39,6 +39,7 @@
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
+#include "bond_queries.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/for_each_particle.hpp"
@@ -308,12 +309,11 @@ void System::System::integrator_sanity_checks() const {
     using namespace PropagationMode;
     for (auto const &p : cell_structure->local_particles()) {
       if (p.propagation() & TRANS_VS_CENTER_OF_MASS) {
-        for (auto const bond : p.bonds()) {
-          if (std::holds_alternative<RigidBond>(
-                  *bonded_ias->at(bond.bond_id()))) {
-            runtimeErrorMsg() << "VS COM particles cannot use rigid bonds";
-            break;
-          }
+        auto const is_rigid_bond = [this](int bond_id) {
+          return std::holds_alternative<RigidBond>(*bonded_ias->at(bond_id));
+        };
+        if (find_bond_id<BondEntries::all>(p, is_rigid_bond)) {
+          runtimeErrorMsg() << "VS COM particles cannot use rigid bonds";
         }
       }
     }

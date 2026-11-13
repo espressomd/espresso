@@ -164,7 +164,7 @@ public:
     std::vector<int> bond_ids;
     auto collect = [&](int owner_id, int other_id) {
       if (auto *p = cell_structure.get_local_particle(owner_id)) {
-        for_each_bond<BondEntries::all>(p->bonds(), [&](BondView const &b) {
+        for_each_bond<BondEntries::all>(*p, [&](BondView const &b) {
           if (b.partner_ids().size() == 1u and b.partner_ids()[0] == other_id) {
             bond_ids.push_back(b.bond_id());
           }

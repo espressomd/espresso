@@ -295,7 +295,7 @@ void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
   // formatting of the View accesses below (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK);
   // it anchors the report at this call, which therefore carries the NOLINT.
   // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
-  for_each_bond(p.bonds(), [&](BondView const &bond) {
+  for_each_bond(p, [&](BondView const &bond) {
     auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
@@ -446,7 +446,7 @@ void CellStructure::remove_particle(int id) {
   // ::remove_bond() skips `id` itself, whose bond list is discarded below.
   std::vector<std::pair<int, std::vector<int>>> bonds_to_remove;
   if (auto const *p = get_local_particle(id)) {
-    for_each_bond<BondEntries::all>(p->bonds(), [&](BondView const &bond) {
+    for_each_bond<BondEntries::all>(*p, [&](BondView const &bond) {
       std::vector<int> ids = {id};
       std::ranges::copy(bond.partner_ids(), std::back_inserter(ids));
       bonds_to_remove.emplace_back(bond.bond_id(), std::move(ids));

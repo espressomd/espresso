@@ -219,7 +219,7 @@ void ParticleHandle::set_exclusions(Variant const &value) {
 void ParticleHandle::delete_owned_bonds() const {
   std::vector<std::pair<int, std::vector<int>>> owned_bonds;
   set_particle_property([&owned_bonds](Particle &p) {
-    for_each_bond(p.bonds(), [&](BondView const &bond_view) {
+    for_each_bond(p, [&](BondView const &bond_view) {
       std::vector<int> ids = {p.id()};
       std::ranges::copy(bond_view.partner_ids(), std::back_inserter(ids));
       owned_bonds.emplace_back(bond_view.bond_id(), std::move(ids));
@@ -653,10 +653,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     if (not context()->is_head_node()) {
       return {};
     }
-    auto const bond_list = get_particle_data(m_pid).bonds();
+    auto const &p = get_particle_data(m_pid);
     std::vector<std::vector<Variant>> bonds_flat;
     // Only the bonds this particle owns are exposed to Python.
-    for_each_bond(bond_list, [&](BondView const &bond_view) {
+    for_each_bond(p, [&](BondView const &bond_view) {
       std::vector<Variant> bond_flat;
       bond_flat.emplace_back(bond_view.bond_id());
       for (auto const pid : bond_view.partner_ids()) {

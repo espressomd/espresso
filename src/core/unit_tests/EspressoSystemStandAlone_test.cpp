@@ -478,6 +478,44 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     // recalculate forces without propagating the system
     system.integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
+    // the bond loop visits the same bonds, whether it reads them from the
+    // flat bond lists or from the bond storage
+    {
+      auto &cell_structure = *system.cell_structure;
+      auto const visit_bonds = [&cell_structure]() {
+        std::vector<std::vector<int>> bonds;
+        cell_structure.bond_loop(
+            [&bonds](Particle &p, int bond_id, std::span<Particle *> partners) {
+              std::vector<int> bond{bond_id, p.id()};
+              for (auto const *partner : partners) {
+                bond.emplace_back(partner->id());
+              }
+              bonds.emplace_back(std::move(bond));
+              return false;
+            });
+        std::ranges::sort(bonds);
+        return bonds;
+      };
+      // flat bond lists are valid after a force calculation
+      BOOST_REQUIRE(cell_structure.are_local_bond_lists_valid());
+      auto const bonds_flat = visit_bonds();
+      // and stale after a particle change
+      system.on_particle_change();
+      BOOST_REQUIRE(not cell_structure.are_local_bond_lists_valid());
+      auto const bonds_storage = visit_bonds();
+      BOOST_CHECK(bonds_flat == bonds_storage);
+      auto const n_bonds = boost::mpi::all_reduce(
+          comm, static_cast<int>(bonds_flat.size()), std::plus<int>());
+      BOOST_CHECK_EQUAL(n_bonds, 2);
+      if (n_nodes == 1) {
+        // harmonic bond (id 0) and FENE bond (id 2), both owned by pid2
+        auto const ref_bonds =
+            std::vector<std::vector<int>>{{0, pid2, pid1}, {2, pid2, pid3}};
+        BOOST_CHECK(bonds_flat == ref_bonds);
+      }
+      system.integrate(0, INTEG_REUSE_FORCES_CONDITIONALLY);
+    }
+
     // particles are arranged in a right triangle
     auto const p1_opt = copy_particle_to_head_node(comm, system, pid1);
     auto const p2_opt = copy_particle_to_head_node(comm, system, pid2);

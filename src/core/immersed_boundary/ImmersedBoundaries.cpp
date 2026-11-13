@@ -21,6 +21,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "bond_queries.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "ibm_volcons.hpp"
@@ -29,7 +30,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 
 #include <boost/mpi/collectives/all_reduce.hpp>
-#include <boost/range/algorithm/find_if.hpp>
 
 #include <algorithm>
 #include <functional>
@@ -84,13 +84,12 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
 static IBMVolCons const *
 vol_cons_parameters(BondedInteractionsMap const &bonded_ias,
                     Particle const &p1) {
-  auto const it = boost::find_if(p1.bonds(), [&](auto const &bond) -> bool {
-    return std::holds_alternative<IBMVolCons>(*bonded_ias.at(bond.bond_id()));
+  auto const bond_id = find_bond_id(p1, [&](int id) {
+    return std::holds_alternative<IBMVolCons>(*bonded_ias.at(id));
   });
 
-  return (it != p1.bonds().end())
-             ? std::get_if<IBMVolCons>(bonded_ias.at(it->bond_id()).get())
-             : nullptr;
+  return bond_id ? std::get_if<IBMVolCons>(bonded_ias.at(*bond_id).get())
+                 : nullptr;
 }
 
 /** Calculate partial volumes on all compute nodes and call MPI to sum up.

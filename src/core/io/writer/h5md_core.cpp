@@ -663,7 +663,7 @@ void File::write_connectivity(const ParticleRange &particles) {
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     // Owned bonds only, so that every pair-bond edge is written once.
-    for_each_bond(p.bonds(), [&](BondView const &b) {
+    for_each_bond(p, [&](BondView const &b) {
       auto const &partner_ids = b.partner_ids();
       if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);

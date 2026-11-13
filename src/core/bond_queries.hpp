@@ -23,10 +23,12 @@
  * @file
  * Storage-agnostic, read-only bond queries (see #5046).
  *
- * Code outside of @ref bonds.cpp should inspect bonds through these helpers
- * rather than iterating @ref BondList entries and filtering on their storage
- * role itself, so that the storage format can change without touching the
- * callers. Mutations go through @ref add_bond() and @ref remove_bond().
+ * Code outside of the bond storage implementation (@ref bonds.cpp, particle
+ * serialization and ghost communication) should inspect bonds through the
+ * helpers taking a @ref Particle, rather than accessing
+ * @ref Particle::bonds() and filtering on the storage role of the entries
+ * itself, so that the storage can move out of the particle without touching
+ * the callers. Mutations go through @ref add_bond() and @ref remove_bond().
  *
  * Everything here is header-only and inlined, since some of it is called
  * from force kernels.
@@ -36,6 +38,8 @@
 #include "Particle.hpp"
 
 #include <algorithm>
+#include <optional>
+#include <utility>
 
 /** @brief Which bond entries of a particle to visit. */
 enum class BondEntries {
@@ -55,7 +59,9 @@ enum class BondEntries {
 };
 
 /**
- * @brief Execute a kernel for the bonds of a particle.
+ * @brief Execute a kernel for the entries of a bond list.
+ *
+ * Storage-level overload; prefer the overload taking a @ref Particle.
  *
  * @tparam entries Which entries to visit, see @ref BondEntries.
  * @param bonds    Bond list of the particle.
@@ -73,6 +79,44 @@ inline void for_each_bond(BondList const &bonds, Kernel &&kernel) {
     }
     kernel(bond);
   }
+}
+
+/**
+ * @brief Execute a kernel for the bonds of a particle.
+ *
+ * @tparam entries Which entries to visit, see @ref BondEntries.
+ * @param p        Particle whose bonds are visited.
+ * @param kernel   Callable invoked as <tt>kernel(BondView const &)</tt>.
+ *                 With @ref BondEntries::all, @ref BondView::is_primary()
+ *                 tells whether the particle owns the bond.
+ */
+template <BondEntries entries = BondEntries::owned, typename Kernel>
+inline void for_each_bond(Particle const &p, Kernel &&kernel) {
+  for_each_bond<entries>(p.bonds(), std::forward<Kernel>(kernel));
+}
+
+/**
+ * @brief Find the first bond of a particle whose bond id is accepted by
+ * @p pred.
+ *
+ * @tparam entries Which entries to search, see @ref BondEntries.
+ * @param p     Particle whose bonds are searched.
+ * @param pred  Callable <tt>bool(int bond_id)</tt>.
+ * @return The bond id, if any.
+ */
+template <BondEntries entries = BondEntries::owned, typename Pred>
+inline std::optional<int> find_bond_id(Particle const &p, Pred &&pred) {
+  for (auto const bond : p.bonds()) {
+    if constexpr (entries == BondEntries::owned) {
+      if (not bond.is_primary()) {
+        continue;
+      }
+    }
+    if (pred(bond.bond_id())) {
+      return bond.bond_id();
+    }
+  }
+  return std::nullopt;
 }
 
 /**
