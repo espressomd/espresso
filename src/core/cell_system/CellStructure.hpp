@@ -205,6 +205,15 @@ private:
   std::unique_ptr<Kokkos::View<int *, memory_space>> m_id_to_index;
   std::unique_ptr<ForceType> m_local_force;
   std::optional<ScatterForce> m_scatter_force;
+  /**
+   * @brief True if the replicas of @c m_scatter_force are known to be
+   * all-zero. Set by @ref contribute_and_reset_force_replicas, cleared by
+   * @ref reset_local_force_buffers (kernels may scatter after a reset), by
+   * @ref get_scatter_force (the only way for kernels to scatter into the
+   * replicas) and whenever the scatter view is rebuilt. When true, the next
+   * reset skips the O(n_threads * N) zeroing of the replicas.
+   */
+  bool m_force_replicas_clean = false;
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
   std::optional<ScatterForce> m_scatter_torque;
@@ -880,10 +889,27 @@ public:
   void reset_local_properties();
   /** @brief Zero the local force view and its scatter replicas. */
   void reset_local_force_buffers();
+  /**
+   * @brief Add the scatter replicas to the local force view and zero them.
+   * Same result as @c Kokkos::Experimental::contribute, but the replicas
+   * are left zeroed, so the next @ref reset_local_force_buffers does not
+   * have to zero them again.
+   */
+  void contribute_and_reset_force_replicas();
 
   auto &get_id_to_index() { return *m_id_to_index; }
   auto &get_local_force() { return *m_local_force; }
-  auto get_scatter_force() { return *m_scatter_force; }
+  /**
+   * @brief Scatter view of the local force view. Every kernel that scatters
+   * forces fetches it here, so fetching it marks the replicas as no longer
+   * known to be zero. Do not keep the returned view beyond the current
+   * force calculation: scattering into a stored copy after the replicas
+   * were reduced would bypass this flag.
+   */
+  auto get_scatter_force() {
+    m_force_replicas_clean = false;
+    return *m_scatter_force;
+  }
 #ifdef ESPRESSO_ROTATION
   auto &get_local_torque() { return *m_local_torque; }
   auto get_scatter_torque() { return *m_scatter_torque; }

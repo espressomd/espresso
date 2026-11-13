@@ -92,6 +92,9 @@ struct CoulombP3MState : public P3MStateCommon<FloatType, Architecture> {
   // FFT reciprocal-space transform, hidden behind the backend interface so the
   // solver is agnostic to heFFTe vs kokkos-fft (see init_cpu_kernels).
   std::shared_ptr<P3MFFTBackend<FloatType, FFTConfig>> fft;
+  /** per-thread replicas of @ref rs_charge_density for the parallel charge
+   *  assignment; all-zero outside of it (the reduction over the replicas
+   *  zeroes every entry it reads) */
   Kokkos::View<FloatType **, r_space_layout, Kokkos::HostSpace>
       rs_charge_density_kokkos;
 
@@ -218,10 +221,16 @@ public:
     p3m.rs_charge_density.resize(p3m.local_mesh.size);
     using execution_space = Kokkos::DefaultHostExecutionSpace;
     auto const num_threads = execution_space().concurrency();
-    Kokkos::realloc(Kokkos::WithoutInitializing, p3m.rs_charge_density_kokkos,
-                    num_threads, p3m.local_mesh.size);
-    kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
-                     FloatType{0});
+    // the charge assignment zeroes every replica entry after reading it,
+    // so the replicas only need to be zero-filled when (re)allocated
+    if (p3m.rs_charge_density_kokkos.extent(0) !=
+            static_cast<std::size_t>(num_threads) or
+        p3m.rs_charge_density_kokkos.extent(1) != p3m.local_mesh.size) {
+      Kokkos::realloc(Kokkos::WithoutInitializing, p3m.rs_charge_density_kokkos,
+                      num_threads, p3m.local_mesh.size);
+      kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
+                       FloatType{0});
+    }
     std::ranges::fill(p3m.rs_charge_density, FloatType{0});
   }
 
