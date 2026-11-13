@@ -192,7 +192,7 @@ class StokesianThermostat(ut.TestCase):
             return np.copy(ref_pos), np.copy(ref_vel), np.copy(ref_rot), atol
 
         system = self.system
-        system.time_step = 0.0001
+        system.time_step = 1e-4
         system.thermostat.set_stokesian(kT=1., seed=42)
         system.integrator.set_stokesian_dynamics(viscosity=2.4, radii={0: 1.5})
         modes_trans = [

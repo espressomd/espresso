@@ -375,9 +375,9 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() {
          auto const rotation_bits = get_particle_data(m_pid).rotation();
-         return Utils::Vector3b{{::detail::get_nth_bit(rotation_bits, 0),
-                                 ::detail::get_nth_bit(rotation_bits, 1),
-                                 ::detail::get_nth_bit(rotation_bits, 2)}};
+         return Utils::Vector3b{{::detail::get_nth_bit(rotation_bits, 0u),
+                                 ::detail::get_nth_bit(rotation_bits, 1u),
+                                 ::detail::get_nth_bit(rotation_bits, 2u)}};
        }},
       {"omega_lab",
        [this](Variant const &value) {
@@ -392,15 +392,9 @@ ParticleHandle::ParticleHandle() {
        }},
       {"torque_lab",
        [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           auto const torque = get_value<Utils::Vector3d>(value);
-           p.torque() = convert_vector_space_to_body(p.quat(), torque);
-         });
+         set_particle_property(&Particle::torque, value);
        },
-       [this]() {
-         auto &p = get_particle_data(m_pid);
-         return convert_vector_body_to_space(p.quat(), p.torque());
-       }},
+       [this]() { return get_particle_data(m_pid).torque(); }},
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_ROTATIONAL_INERTIA
       {"rinertia",
@@ -427,9 +421,9 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() {
          auto const fixed = get_particle_data(m_pid).fixed();
-         return Utils::Vector3b{{::detail::get_nth_bit(fixed, 0),
-                                 ::detail::get_nth_bit(fixed, 1),
-                                 ::detail::get_nth_bit(fixed, 2)}};
+         return Utils::Vector3b{{::detail::get_nth_bit(fixed, 0u),
+                                 ::detail::get_nth_bit(fixed, 1u),
+                                 ::detail::get_nth_bit(fixed, 2u)}};
        }},
       {"ext_force",
        [this](Variant const &value) {

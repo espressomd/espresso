@@ -275,13 +275,15 @@ class BrownianThermostat(ut.TestCase):
         system.thermostat.set_brownian(
             kT=0., gamma=5., gamma_rotation=5., seed=42)
         system.integrator.set_brownian_dynamics()
+        ext_torque = np.array([1., -0.5, 2.])
         p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
                             director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
-                            ext_torque=[1., -0.5, 2.])
+                            ext_torque=ext_torque)
         for i in range(4):
             system.integrator.run(1, recalc_forces=(i == 2))
-            ref = np.copy(p.ext_torque) / 5.
-            np.testing.assert_allclose(np.copy(p.omega_lab), ref, rtol=1e-10)
+            omega_lab = np.copy(p.omega_lab)
+            ref = ext_torque / 5.
+            np.testing.assert_allclose(omega_lab, ref, rtol=1e-10)
 
 
 if __name__ == "__main__":
