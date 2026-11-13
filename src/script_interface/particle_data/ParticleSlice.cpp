@@ -54,6 +54,16 @@ static void set_particles_bonds(
     std::vector<std::vector<std::vector<int>>> const &all_bonds_partner_ids,
     ::CellStructure &cell_structure, ::System::System &system) {
   std::unordered_set<int> const pid_set(pids.begin(), pids.end());
+  // Validate the new bonds before touching the old ones
+  {
+    std::vector<int> all_ids(pids.begin(), pids.end());
+    for (auto const &bonds_partner_ids : all_bonds_partner_ids) {
+      for (auto const &partner_ids : bonds_partner_ids) {
+        std::ranges::copy(partner_ids, std::back_inserter(all_ids));
+      }
+    }
+    ::check_particles_exist(system, all_ids);
+  }
   for (std::size_t i = 0; i < pids.size(); ++i) {
     auto const pid = pids[i];
     auto const bonds_ids = all_bonds_ids[i];

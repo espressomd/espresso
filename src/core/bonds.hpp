@@ -25,6 +25,7 @@
 
 #include <boost/mpi/communicator.hpp>
 
+#include <span>
 #include <utility>
 #include <vector>
 
@@ -40,13 +41,30 @@ using BondTuple = std::pair<int, std::vector<int>>;
  *
  * The first particle owns the bond: the bond is evaluated on the MPI rank
  * where that particle resides. The particles need not be known on the
- * calling rank.
+ * calling rank, but bonds given by the user should be validated with
+ * @ref check_particles_exist() first.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
  */
 void add_bond(System::System &system, int bond_id,
               std::vector<int> const &particle_ids);
+
+/**
+ * @brief Check that particles exist, e.g. before bonding them.
+ *
+ * Collective over all MPI ranks, since a rank only knows the particles in
+ * its own domain. @ref add_bond() does not carry out this check itself: it
+ * is also called from the integration loop, with particles that are known
+ * to exist.
+ *
+ * @param system        The system.
+ * @param particle_ids  Ids of the particles to look for.
+ * @throw std::runtime_error on all ranks, if one of the particles does not
+ *        exist on any rank.
+ */
+void check_particles_exist(System::System const &system,
+                           std::span<const int> particle_ids);
 
 /**
  * @brief Remove a bond between particles.

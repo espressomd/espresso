@@ -524,18 +524,26 @@ class ParticleHandle(ScriptInterfaceHelper):
     def bonds(self, bonds):
         # Assigning to the bond property means replacing the existing value
         # i.e., we delete all existing bonds
-        self.delete_all_bonds()
+        if not bonds:
+            self.delete_all_bonds()
+            return
 
-        if bonds:
-            nlvl = nesting_level(bonds)
-            if nlvl == 1:
-                self._add_bond(bonds)
-            elif nlvl == 2:
-                for bond in bonds:
-                    self._add_bond(bond)
-            else:
-                raise ValueError(
-                    "Bonds have to specified as lists of tuples/lists or a single list.")
+        nlvl = nesting_level(bonds)
+        if nlvl == 1:
+            bonds = [bonds]
+        elif nlvl != 2:
+            raise ValueError(
+                "Bonds have to specified as lists of tuples/lists or a single list.")
+        # validate the new bonds before the existing ones are deleted
+        new_bonds = []
+        for bond in bonds:
+            _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+            if _bond in new_bonds:
+                raise RuntimeError(
+                    f"Bond {_bond} already exists on particle {self.id}")
+            new_bonds.append(_bond)
+        # the existing bonds are only replaced if all particles exist
+        self.update({"bonds": new_bonds})
 
     @property
     def exclusions(self):

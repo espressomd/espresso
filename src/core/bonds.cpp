@@ -20,23 +20,57 @@
 #include "bonds.hpp"
 
 #include "BondStorage.hpp"
+#include "Particle.hpp"
+#include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "system/System.hpp"
 
 #include <utils/mpi/all_compare.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
+#include <boost/mpi/operations.hpp>
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <span>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
 void add_bond(System::System &system, int bond_id,
               std::vector<int> const &particle_ids) {
   system.bond_storage->add(bond_id, particle_ids);
+}
+
+void check_particles_exist(System::System const &system,
+                           std::span<const int> particle_ids) {
+  auto const &cell_structure = *system.cell_structure;
+  // a particle exists if it resides on one of the ranks
+  std::vector<int> found_local;
+  found_local.reserve(particle_ids.size());
+  for (auto const pid : particle_ids) {
+    auto const *p =
+        (pid >= 0) ? cell_structure.get_local_particle(pid) : nullptr;
+    found_local.push_back((p != nullptr and not p->is_ghost()) ? 1 : 0);
+  }
+  auto found = found_local;
+  if (not particle_ids.empty()) {
+    boost::mpi::all_reduce(::comm_cart, found_local.data(),
+                           static_cast<int>(found_local.size()), found.data(),
+                           boost::mpi::maximum<int>());
+  }
+  for (std::size_t i = 0u; i < particle_ids.size(); ++i) {
+    if (found[i] == 0) {
+      throw std::runtime_error("Particle with id " +
+                               std::to_string(particle_ids[i]) +
+                               " does not exist");
+    }
+  }
 }
 
 bool remove_bond(System::System &system, int bond_id,

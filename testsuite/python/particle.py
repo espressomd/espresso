@@ -124,8 +124,50 @@ class ParticleProperties(ut.TestCase):
         self.assertIsInstance(self.partcl.propagation, Propagation)
         self.assertIsInstance(getattr(self.partcl, "propagation"), Propagation)
 
-    test_bonds_property = generateTestForScalarProperty(
-        "bonds", ((f1, 1), (f2, 2)))
+    def test_bonds_property(self):
+        self.system.part.add(id=[1, 2], pos=[(0, 0, 0), (0, 0, 0)])
+        bonds = ((self.f1, 1), (self.f2, 2))
+        self.partcl.bonds = bonds
+        self.assertEqual(self.partcl.bonds, bonds,
+                         "bonds: value set and value gotten back differ.")
+
+    def test_bonds_particles_must_exist(self):
+        """Bonds can only be created between existing particles."""
+        system = self.system
+        partner = system.part.add(id=1, pos=(0, 0, 0))
+        missing = 99
+        bonds = ((self.f1, partner.id),)
+        self.partcl.bonds = bonds
+        err_msg = f"Particle with id {missing} does not exist"
+        # bond-centric interface, missing partner or missing owner
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            system.bonds[self.f1].add((self.partcl, missing))
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            system.bonds[self.f3].add((self.partcl, partner, missing))
+        with self.assertRaises(Exception):
+            system.bonds[self.f1].add((missing, self.partcl))
+        # particle property
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            self.partcl.bonds = ((self.f2, partner.id), (self.f1, missing))
+        # particle slice property
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            system.part.by_ids([self.pid, partner.id]).bonds = [
+                [(self.f2, partner.id)], [(self.f1, missing)]]
+        # deprecated particle method
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            with self.assertRaisesRegex(RuntimeError, err_msg):
+                self.partcl.add_bond((self.f1, missing))
+        # adding a particle together with a bond
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            system.part.add(id=2, pos=(0, 0, 0), bonds=[(self.f1, missing)])
+        # the existing bonds are left untouched
+        self.assertEqual(self.partcl.bonds, bonds)
+        self.assertEqual(partner.bonds, ())
+        # the bonds are usable once the particle exists
+        system.part.add(id=missing, pos=(0, 0, 0))
+        system.bonds[self.f1].add((self.partcl, missing))
+        self.assertEqual(self.partcl.bonds, (*bonds, (self.f1, missing)))
 
     if espressomd.has_features(["MASS"]):
         test_mass = generateTestForScalarProperty("mass", 1.3)

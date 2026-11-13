@@ -105,6 +105,8 @@ class MPIIOTest(ut.TestCase):
         for the tests."""
         for p in self.test_mock_particles:
             self.system.part.add(id=p.id, type=p.type, pos=p.pos, v=p.v)
+        # bonds can only be created between existing particles
+        for p in self.test_mock_particles:
             for b in p.bonds:
                 self.system.bonds[b[0]].add((p.id, *b[1:]))
 

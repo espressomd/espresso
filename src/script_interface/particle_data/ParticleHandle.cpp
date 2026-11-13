@@ -614,12 +614,20 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 
     // Set bonds
     if (params.contains("bonds_ids")) {
-      // Remove old bonds owned by this particle
-      delete_owned_bonds();
-      // Add new bonds
       auto const bonds_ids = get_value<std::vector<int>>(params, "bonds_ids");
       auto const bonds_partner_ids =
           get_value<std::vector<std::vector<int>>>(params, "bonds_parts");
+      // Validate the new bonds before touching the old ones
+      context()->parallel_try_catch([&]() {
+        std::vector<int> all_ids = {m_pid};
+        for (auto const &partner_ids : bonds_partner_ids) {
+          std::ranges::copy(partner_ids, std::back_inserter(all_ids));
+        }
+        ::check_particles_exist(*get_system(), all_ids);
+      });
+      // Remove old bonds owned by this particle
+      delete_owned_bonds();
+      // Add new bonds
       for (std::size_t i = 0; i < bonds_ids.size(); i += 1) {
         std::vector<int> particle_ids = {m_pid};
         std::ranges::copy(bonds_partner_ids[i],
@@ -664,6 +672,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const partner_ids = get_value<std::vector<int>>(params, "part_id");
     std::vector<int> particle_ids = {m_pid};
     std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
+    context()->parallel_try_catch(
+        [&]() { ::check_particles_exist(*get_system(), particle_ids); });
     ::add_bond(*get_system(), bond_id, particle_ids);
     get_system()->on_particle_change();
   } else if (name == "del_bond") {
