@@ -84,6 +84,7 @@ System::System(Private) {
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
   bond_storage = std::make_shared<BondStorage>();
+  bonded_ias->set_bond_storage(bond_storage);
   thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
@@ -636,13 +637,6 @@ static bool orientation_ghosts_needed(System const &sys) {
 unsigned System::get_global_ghost_flags() const {
   /* Position and Properties are always requested. */
   unsigned data_parts = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
-
-  // Bonds are stored on all participants (see BondList.hpp), and the
-  // functions in bonds.cpp resolve participants via get_local_particle(),
-  // which also returns ghosts. Their bond lists must therefore stay up to
-  // date, or a lookup on a ghost-only participant sees stale data and a
-  // removal silently fails to reach it.
-  data_parts |= Cells::DATA_PART_BONDS;
 
   if (lb.is_solver_set())
     data_parts |= Cells::DATA_PART_MOMENTUM;

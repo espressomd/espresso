@@ -21,137 +21,117 @@
 
 /**
  * @file
- * Storage-agnostic, read-only bond queries (see #5046).
+ * Read-only queries on the bonds of a particle.
  *
- * Code outside of the bond storage implementation (@ref bonds.cpp, particle
- * serialization and ghost communication) should inspect bonds through the
- * helpers taking a @ref Particle, rather than accessing
- * @ref Particle::bonds() and filtering on the storage role of the entries
- * itself, so that the storage can move out of the particle without touching
- * the callers. Mutations go through @ref add_bond() and @ref remove_bond().
+ * The bonds are read from the global bond topology (@ref BondStorage),
+ * which is identical on all MPI ranks: the queries give the same answer
+ * everywhere, whether or not the particles are known on the calling rank.
+ * Mutations go through @ref add_bond() and @ref remove_bond().
  *
  * Everything here is header-only and inlined, since some of it is called
- * from force kernels.
+ * from force kernels. The queries are safe to call concurrently.
  */
 
-#include "BondList.hpp"
-#include "Particle.hpp"
+#include "BondStorage.hpp"
 
-#include <algorithm>
 #include <optional>
 #include <utility>
 
-/** @brief Which bond entries of a particle to visit. */
+/** @brief Which bonds of a particle to visit. */
 enum class BondEntries {
   /**
-   * Only the bonds this particle owns. Over all particles, every bond is
-   * visited exactly once, with its partner ids in creation order (which
-   * angle and dihedral bonds rely on). Use for anything that evaluates,
-   * counts or exports bonds.
+   * Only the bonds this particle owns, i.e. where it is the first
+   * particle. Over all particles, every bond is visited exactly once. Use
+   * for anything that evaluates, counts or exports bonds.
    */
   owned,
   /**
    * Every bond this particle participates in, whether it owns it or not.
    * A bond is visited once per participant. Use for questions about a
-   * particle's connectivity, e.g. which bonds to remove with it.
+   * particle's connectivity.
    */
   all,
 };
 
 /**
- * @brief Execute a kernel for the entries of a bond list.
+ * @brief Execute a kernel for the bonds of a particle.
  *
- * Storage-level overload; prefer the overload taking a @ref Particle.
- *
- * @tparam entries Which entries to visit, see @ref BondEntries.
- * @param bonds    Bond list of the particle.
- * @param kernel   Callable invoked as <tt>kernel(BondView const &)</tt>.
- *                 With @ref BondEntries::all, @ref BondView::is_primary()
- *                 tells whether the particle owns the bond.
+ * @tparam entries      Which bonds to visit, see @ref BondEntries.
+ * @param bond_storage  Global bond topology.
+ * @param pid           Particle id.
+ * @param kernel        Callable invoked as
+ *                      <tt>kernel(BondStorage::Bond const &)</tt>.
  */
 template <BondEntries entries = BondEntries::owned, typename Kernel>
-inline void for_each_bond(BondList const &bonds, Kernel &&kernel) {
-  for (auto const bond : bonds) {
+inline void for_each_bond(BondStorage const &bond_storage, int pid,
+                          Kernel &&kernel) {
+  bond_storage.for_each_bond_of(pid, [&](BondStorage::Bond const &bond) {
     if constexpr (entries == BondEntries::owned) {
-      if (not bond.is_primary()) {
-        continue;
+      if (bond.owner_id() != pid) {
+        return;
       }
     }
     kernel(bond);
-  }
-}
-
-/**
- * @brief Execute a kernel for the bonds of a particle.
- *
- * @tparam entries Which entries to visit, see @ref BondEntries.
- * @param p        Particle whose bonds are visited.
- * @param kernel   Callable invoked as <tt>kernel(BondView const &)</tt>.
- *                 With @ref BondEntries::all, @ref BondView::is_primary()
- *                 tells whether the particle owns the bond.
- */
-template <BondEntries entries = BondEntries::owned, typename Kernel>
-inline void for_each_bond(Particle const &p, Kernel &&kernel) {
-  for_each_bond<entries>(p.bonds(), std::forward<Kernel>(kernel));
+  });
 }
 
 /**
  * @brief Find the first bond of a particle whose bond id is accepted by
  * @p pred.
  *
- * @tparam entries Which entries to search, see @ref BondEntries.
- * @param p     Particle whose bonds are searched.
- * @param pred  Callable <tt>bool(int bond_id)</tt>.
+ * @tparam entries      Which bonds to search, see @ref BondEntries.
+ * @param bond_storage  Global bond topology.
+ * @param pid           Particle id.
+ * @param pred          Callable <tt>bool(int bond_id)</tt>.
  * @return The bond id, if any.
  */
 template <BondEntries entries = BondEntries::owned, typename Pred>
-inline std::optional<int> find_bond_id(Particle const &p, Pred &&pred) {
-  for (auto const bond : p.bonds()) {
+inline std::optional<int> find_bond_id(BondStorage const &bond_storage, int pid,
+                                       Pred &&pred) {
+  std::optional<int> result;
+  bond_storage.any_bond_of(pid, [&](BondStorage::Bond const &bond) {
     if constexpr (entries == BondEntries::owned) {
-      if (not bond.is_primary()) {
-        continue;
+      if (bond.owner_id() != pid) {
+        return false;
       }
     }
-    if (pred(bond.bond_id())) {
-      return bond.bond_id();
+    if (pred(bond.bond_id)) {
+      result = bond.bond_id;
+      return true;
     }
-  }
-  return std::nullopt;
+    return false;
+  });
+  return result;
 }
 
 /**
  * @brief Check whether a pair bond accepted by @p pred connects two
- * particles.
+ * particles, whichever of them owns it.
  *
- * Both particles are searched, since one of them may be a ghost whose copy
- * of a recently added bond has not been communicated yet.
- *
- * @param p1    First particle.
- * @param p2    Second particle.
- * @param pred  Callable <tt>bool(int bond_id)</tt> selecting the bonds of
- *              interest.
+ * @param bond_storage  Global bond topology.
+ * @param pid1          Id of the first particle.
+ * @param pid2          Id of the second particle.
+ * @param pred          Callable <tt>bool(int bond_id)</tt> selecting the
+ *                      bonds of interest.
  */
 template <typename Pred>
-inline bool pair_bond_exists(Particle const &p1, Particle const &p2,
-                             Pred &&pred) {
-  if (&p1 == &p2) {
+inline bool pair_bond_exists(BondStorage const &bond_storage, int pid1,
+                             int pid2, Pred &&pred) {
+  if (pid1 == pid2) {
     return false;
   }
-  auto const exists_on = [&pred](Particle const &p, int partner_id) {
-    auto const &bonds = p.bonds();
-    return std::any_of(bonds.begin(), bonds.end(), [&](BondView const &bond) {
-      return bond.partner_ids().size() == 1u and
-             bond.partner_ids()[0] == partner_id and pred(bond.bond_id());
-    });
-  };
-  return exists_on(p1, p2.id()) or exists_on(p2, p1.id());
+  return bond_storage.any_bond_of(pid1, [&](BondStorage::Bond const &bond) {
+    return bond.particle_ids.size() == 2u and bond.has_participant(pid2) and
+           pred(bond.bond_id);
+  });
 }
 
 /**
  * @brief Check whether a pair bond with id @p bond_id connects two
  * particles.
  */
-inline bool pair_bond_exists(Particle const &p1, Particle const &p2,
-                             int bond_id) {
-  return pair_bond_exists(p1, p2, [bond_id](int id) { return id == bond_id; });
+inline bool pair_bond_exists(BondStorage const &bond_storage, int pid1,
+                             int pid2, int bond_id) {
+  return pair_bond_exists(bond_storage, pid1, pid2,
+                          [bond_id](int id) { return id == bond_id; });
 }

@@ -17,6 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ClusterStructure.hpp"
+#include "BondStorage.hpp"
+#include "system/System.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Cluster.hpp"
@@ -61,9 +63,10 @@ void ClusterStructure::run_for_bonded_particles() {
   auto const box_geo_handle = get_box_geo();
   auto const &box_geo = *box_geo_handle;
   PartCfg partCfg{box_geo};
+  auto const &bond_storage = *System::get_system().bond_storage;
   for (const auto &p : partCfg) {
     // owned bonds: every pair bond is added once
-    for_each_bond(p, [&](BondView const &bond) {
+    for_each_bond(bond_storage, p.id(), [&](BondStorage::Bond const &bond) {
       if (bond.partner_ids().size() == 1) {
         add_pair(p, get_particle_data(bond.partner_ids()[0]));
       }

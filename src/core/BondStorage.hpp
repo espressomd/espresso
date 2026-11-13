@@ -286,6 +286,23 @@ public:
   }
 
   /**
+   * @brief Check whether a particle participates in a bond accepted by
+   * @p pred. Safe to call concurrently.
+   *
+   * @param pid   Particle id.
+   * @param pred  Callable <tt>bool(Bond const &)</tt>.
+   */
+  template <typename Pred> bool any_bond_of(int pid, Pred &&pred) const {
+    auto const it = m_particles.find(pid);
+    if (it == m_particles.end()) {
+      return false;
+    }
+    return std::ranges::any_of(it->second.slots, [&](int slot) {
+      return pred(std::as_const(m_bonds[static_cast<std::size_t>(slot)]));
+    });
+  }
+
+  /**
    * @brief The bonds sorted by owner, for fast traversal.
    *
    * Rebuilt here if the storage was modified since the last call, with a

@@ -29,13 +29,14 @@
 namespace CollisionDetection {
 
 inline auto detect_collision_common(Particle const &p1, Particle const &p2,
-                                    int const bond_centers) {
+                                    int const bond_centers,
+                                    BondStorage const &bond_storage) {
   // Ignore virtual particles
   if (p1.is_virtual() or p2.is_virtual())
     return false;
 
   // Check, if there's already a bond between the particles.
-  if (pair_bond_exists(p1, p2, bond_centers))
+  if (pair_bond_exists(bond_storage, p1.id(), p2.id(), bond_centers))
     return false;
 
   /* If we're still here, there is no previous bond between the particles,

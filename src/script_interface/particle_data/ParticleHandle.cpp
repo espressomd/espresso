@@ -646,12 +646,12 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     if (not context()->is_head_node()) {
       return {};
     }
-    auto const &p = get_particle_data(m_pid);
+    auto const &bond_storage = *get_system()->bond_storage;
     std::vector<std::vector<Variant>> bonds_flat;
     // Only the bonds this particle owns are exposed to Python.
-    for_each_bond(p, [&](BondView const &bond_view) {
+    for_each_bond(bond_storage, m_pid, [&](BondStorage::Bond const &bond_view) {
       std::vector<Variant> bond_flat;
-      bond_flat.emplace_back(bond_view.bond_id());
+      bond_flat.emplace_back(bond_view.bond_id);
       for (auto const pid : bond_view.partner_ids()) {
         bond_flat.emplace_back(pid);
       }

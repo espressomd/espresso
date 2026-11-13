@@ -50,11 +50,16 @@
 
 #include "mpiio.hpp"
 
+#include "BondList.hpp"
+#include "BondStorage.hpp"
 #include "Particle.hpp"
+#include "bond_queries.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "communication.hpp"
 #include "errorhandling.hpp"
+#include "system/System.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -70,6 +75,7 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
+#include <iterator>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -289,8 +295,14 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
           io::back_inserter(bonds)};
       boost::archive::binary_oarchive bond_archiver{os};
 
+      // one bond list per particle, holding the bonds the particle owns
+      auto const &bond_storage = *System::get_system().bond_storage;
       for (auto const &p : particles) {
-        bond_archiver << p.bonds();
+        BondList bond_list;
+        for_each_bond(bond_storage, p.id(), [&](BondStorage::Bond const &b) {
+          bond_list.insert(BondView{b.bond_id, b.partner_ids()});
+        });
+        bond_archiver << bond_list;
       }
     }
 
@@ -495,6 +507,7 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
     }
   }
 
+  std::vector<BondTuple> bonds;
   if (fields & MPIIO_OUT_BND) {
     // 1.boff
     // 1 long int per process
@@ -514,8 +527,14 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
     boost::iostreams::stream<boost::iostreams::array_source> ss(src);
     boost::archive::binary_iarchive ia(ss);
 
-    for (auto &p : particles) {
-      ia >> p.bonds();
+    for (auto const &p : particles) {
+      BondList bond_list;
+      ia >> bond_list;
+      for (auto const bond : bond_list) {
+        std::vector<int> particle_ids = {p.id()};
+        std::ranges::copy(bond.partner_ids(), std::back_inserter(particle_ids));
+        bonds.emplace_back(bond.bond_id(), std::move(particle_ids));
+      }
     }
   }
 
@@ -524,10 +543,13 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
   }
 
   if (fields & MPIIO_OUT_BND) {
-    // Checkpoints written before bonds were stored on all participants
-    // only contain primary entries; recreate the missing mirrors so the
-    // restored state matches what add_bond() would have produced.
-    ::rebuild_bond_mirrors(System::get_system());
+    // every rank only read the bonds owned by its particles, but bonds
+    // must be registered identically on all ranks
+    auto &system = System::get_system();
+    ::sync_bond_tuples(bonds, ::comm_cart);
+    for (auto const &[bond_id, particle_ids] : bonds) {
+      ::add_bond(system, bond_id, particle_ids);
+    }
   }
 }
 } // namespace Mpiio

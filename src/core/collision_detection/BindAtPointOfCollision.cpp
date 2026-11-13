@@ -197,7 +197,7 @@ void BindAtPointOfCollision::handle_collisions(
   if (not global_collision_queue.empty()) {
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
     cell_structure.update_ghosts_and_resort_particle(
-        Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
+        Cells::DATA_PART_PROPERTIES);
     system.update_used_propagations();
   }
 }

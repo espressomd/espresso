@@ -90,6 +90,9 @@ class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
   using container_type =
       std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
 
+  /** @brief Bond topology of the system this container is attached to. */
+  std::shared_ptr<BondStorage const> m_bond_storage;
+
 public:
   using key_type = container_type::key_type;
   using mapped_type = container_type::mapped_type;
@@ -198,9 +201,19 @@ public:
    */
   template <typename BondType>
   bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
-    return ::pair_bond_exists(p1, p2, [this](int bond_id) {
-      return std::holds_alternative<BondType>(*at(bond_id));
-    });
+    assert(m_bond_storage);
+    return ::pair_bond_exists(
+        *m_bond_storage, p1.id(), p2.id(), [this](int bond_id) {
+          return std::holds_alternative<BondType>(*at(bond_id));
+        });
+  }
+
+  /**
+   * @brief Set the bond topology queried by @ref pair_bond_exists_between.
+   * Must be called when attaching the container to a system.
+   */
+  void set_bond_storage(std::shared_ptr<BondStorage const> bond_storage) {
+    m_bond_storage = std::move(bond_storage);
   }
 
   void on_ia_change();

@@ -106,16 +106,10 @@ public:
    */
   void resize(std::size_t new_size) { buf.resize(new_size); }
 
-  /** Returns a reference to the bond storage. */
-  auto &bonds() { return bondbuf; }
-  const auto &bonds() const { return bondbuf; }
-
   auto make_span() { return std::span(buf.data(), buf.size()); }
 
 private:
-  ByteVec buf; ///< Buffer for everything but bonds (default-init grow)
-  std::vector<char>
-      bondbuf; ///< Buffer for bond lists (boost.mpi-serialized, cold path)
+  ByteVec buf; ///< Buffer (default-init grow)
 };
 
 /**
@@ -135,8 +129,7 @@ std::size_t calc_transmit_size(std::span<ParticleList *const> cells,
 /**
  * @brief Pack particle data from cells into a communication buffer.
  *
- * Handles GHOSTTRANS_PARTNUM (writes cell sizes) and GHOSTTRANS_BONDS
- * (separate bond buffer) special cases.
+ * Handles the GHOSTTRANS_PARTNUM (writes cell sizes) special case.
  *
  * @param buf        Buffer to pack into (resized as needed).
  * @param cells      Source particle lists.
@@ -151,8 +144,7 @@ void pack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
 /**
  * @brief Unpack particle data from a communication buffer into cells.
  *
- * Handles GHOSTTRANS_PARTNUM (resizes ghost cells) and GHOSTTRANS_BONDS
- * (separate bond buffer) special cases.
+ * Handles the GHOSTTRANS_PARTNUM (resizes ghost cells) special case.
  *
  * @param buf        Buffer to unpack from.
  * @param cells      Destination particle lists.

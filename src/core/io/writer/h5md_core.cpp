@@ -19,7 +19,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "BondStorage.hpp"
 #include "hdf5_patches.hpp" // must appear first
+#include "system/System.hpp"
 
 #include "h5md_core.hpp"
 #include "h5md_dataset.hpp"
@@ -660,11 +662,12 @@ void File::write(const ParticleRange &particles, double time, int step,
 
 void File::write_connectivity(const ParticleRange &particles) {
   MultiArray3i bond(boost::extents[0][0][0]);
+  auto const &bond_storage = *System::get_system().bond_storage;
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     // Owned bonds only, so that every pair-bond edge is written once.
-    for_each_bond(p, [&](BondView const &b) {
-      auto const &partner_ids = b.partner_ids();
+    for_each_bond(bond_storage, p.id(), [&](BondStorage::Bond const &b) {
+      auto const partner_ids = b.partner_ids();
       if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);
         bond[0][nbonds_local][0] = p.id();

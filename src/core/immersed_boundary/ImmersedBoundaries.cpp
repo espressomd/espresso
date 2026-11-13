@@ -83,8 +83,8 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
 
 static IBMVolCons const *
 vol_cons_parameters(BondedInteractionsMap const &bonded_ias,
-                    Particle const &p1) {
-  auto const bond_id = find_bond_id(p1, [&](int id) {
+                    BondStorage const &bond_storage, Particle const &p1) {
+  auto const bond_id = find_bond_id(bond_storage, p1.id(), [&](int id) {
     return std::holds_alternative<IBMVolCons>(*bonded_ias.at(id));
   });
 
@@ -107,9 +107,11 @@ void ImmersedBoundaries::calc_volumes(CellStructure &cs) {
   std::vector<double> tempVol(VolumesCurrent.size());
 
   // Loop over all particles on local node
-  cs.bond_loop([&tempVol, &box_geo, &bonded_ias](
+  auto const &bond_storage = *get_system().bond_storage;
+  cs.bond_loop([&tempVol, &box_geo, &bonded_ias, &bond_storage](
                    Particle &p1, int bond_id, std::span<Particle *> partners) {
-    auto const vol_cons_params = vol_cons_parameters(bonded_ias, p1);
+    auto const vol_cons_params =
+        vol_cons_parameters(bonded_ias, bond_storage, p1);
 
     if (vol_cons_params &&
         std::holds_alternative<IBMTriel>(*bonded_ias.at(bond_id).get())) {
@@ -162,14 +164,16 @@ void ImmersedBoundaries::calc_volume_force(CellStructure &cs) {
   auto const &box_geo = *get_system().box_geo;
   auto const &bonded_ias = *get_system().bonded_ias;
 
-  cs.bond_loop([this, &box_geo, &bonded_ias](Particle &p1, int bond_id,
-                                             std::span<Particle *> partners) {
+  auto const &bond_storage = *get_system().bond_storage;
+  cs.bond_loop([this, &box_geo, &bonded_ias, &bond_storage](
+                   Particle &p1, int bond_id, std::span<Particle *> partners) {
     if (std::holds_alternative<IBMTriel>(*bonded_ias.at(bond_id).get())) {
       // Check if particle has an IBM Triel bonded interaction and an
       // IBM VolCons bonded interaction. Basically this loops over all
       // triangles, not all particles. First round to check for volume
       // conservation.
-      auto const vol_cons_params = vol_cons_parameters(bonded_ias, p1);
+      auto const vol_cons_params =
+          vol_cons_parameters(bonded_ias, bond_storage, p1);
       if (not vol_cons_params)
         return false;
 

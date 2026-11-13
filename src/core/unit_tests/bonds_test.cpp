@@ -24,30 +24,26 @@
 #include "EspressoCoreGlobalConfig.hpp"
 #include "ParticleFactory.hpp"
 
-#include "BondList.hpp"
+#include "BondStorage.hpp"
+#include "bond_queries.hpp"
 #include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "particle_node.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
 #include <algorithm>
-#include <array>
-#include <type_traits>
 #include <vector>
 
 /**
- * @brief Unit tests for add_bond()/remove_bond() (bonds.cpp).
+ * @brief Unit tests for add_bond()/remove_bond() (bonds.cpp) and the bond
+ * queries (bond_queries.hpp).
  *
- * These exercise the primary/mirror entry bookkeeping and in particular
- * remove_bond()'s two-phase matching (try particle_ids[0] as the primary
- * owner first, else match any role per participant): a bond can be removed
- * starting from any participant, even when the same bond exists twice with
- * swapped ownership. All particles here are co-located, so every
- * participant is a real local particle; the interaction with ghost
- * communication is covered by the collision-detection and
- * particle-slice-assignment regression tests.
+ * The bookkeeping of the bond topology itself is covered by the
+ * @ref BondStorage unit tests; the interaction with MPI by the
+ * collision-detection, bond-breakage and particle-slice regression tests.
  */
 
 struct GlobalConfig : public EspressoCoreGlobalConfig {
@@ -64,303 +60,156 @@ BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
 
 namespace {
-auto sorted_partner_ids(BondView const &bond) {
-  auto ids =
-      std::vector<int>(bond.partner_ids().begin(), bond.partner_ids().end());
-  std::ranges::sort(ids);
-  return ids;
+auto const any_bond = [](BondStorage::Bond const &) { return true; };
+
+/** @brief All bonds the particle @p pid participates in. */
+auto bonds_of(int pid) {
+  return ::get_bonds_of_particle(System::get_system(), pid, any_bond);
 }
 
-/** @brief All bond entries currently on the local particle @p pid,
- *  or an empty vector if it does not exist locally. */
-auto local_bonds(int pid) {
-  auto &system = System::get_system();
-  auto bonds = std::vector<BondView>{};
-  if (auto const *p = system.cell_structure->get_local_particle(pid)) {
-    for (auto const bond : p->bonds()) {
-      bonds.push_back(bond);
-    }
-  }
-  return bonds;
+/** @brief Sorted ids of the bonds visited by for_each_bond(). */
+template <BondEntries entries> auto visited_bond_ids(int pid) {
+  std::vector<int> bond_ids;
+  for_each_bond<entries>(
+      *System::get_system().bond_storage, pid,
+      [&](BondStorage::Bond const &bond) { bond_ids.push_back(bond.bond_id); });
+  std::ranges::sort(bond_ids);
+  return bond_ids;
 }
+
+struct RemoveAllParticles {
+  ~RemoveAllParticles() {
+    System::get_system().cell_structure->remove_all_particles();
+  }
+};
 } // namespace
 
-BOOST_FIXTURE_TEST_CASE(remove_from_owner_side, ParticleFactory) {
-  auto const bond_id = 0;
-  create_particle({1., 1., 1.}, 1, 0);
-  create_particle({1., 1., 1.}, 2, 0);
-
-  auto &system = System::get_system();
-  ::add_bond(system, bond_id, {1, 2});
-
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 1u);
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 1u);
-  BOOST_CHECK(local_bonds(1).front().is_primary());
-  BOOST_CHECK(not local_bonds(2).front().is_primary());
-
-  /* remove_bond() called with the owner (1) first removes both the
-   * primary entry on 1 and the mirror on 2. */
-  BOOST_CHECK(::remove_bond(system, bond_id, {1, 2}));
-  BOOST_CHECK(local_bonds(1).empty());
-  BOOST_CHECK(local_bonds(2).empty());
-}
-
-BOOST_FIXTURE_TEST_CASE(remove_from_mirror_side, ParticleFactory) {
-  auto const bond_id = 0;
-  create_particle({1., 1., 1.}, 1, 0);
-  create_particle({1., 1., 1.}, 2, 0);
-
-  auto &system = System::get_system();
-  ::add_bond(system, bond_id, {1, 2});
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 1u);
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 1u);
-
-  /* remove_bond() called with the mirror holder (2) first must still
-   * remove both entries: the primary-first fast path fails, so the
-   * role-independent fallback has to kick in. */
-  BOOST_CHECK(::remove_bond(system, bond_id, {2, 1}));
-  BOOST_CHECK(local_bonds(1).empty());
-  BOOST_CHECK(local_bonds(2).empty());
-}
-
-BOOST_FIXTURE_TEST_CASE(remove_via_mirror_only_participant_of_angle_bond,
-                        ParticleFactory) {
-  /* A 3-participant (angle) bond owned by 1, with 2 and 3 only ever
-   * holding mirrors. */
-  auto const bond_id = 0;
-  create_particle({1., 1., 1.}, 1, 0);
-  create_particle({1., 1., 1.}, 2, 0);
-  create_particle({1., 1., 1.}, 3, 0);
-
-  auto &system = System::get_system();
-  ::add_bond(system, bond_id, {1, 2, 3});
-
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 1u);
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 1u);
-  BOOST_REQUIRE_EQUAL(local_bonds(3).size(), 1u);
-  BOOST_CHECK(local_bonds(1).front().is_primary());
-  BOOST_CHECK(not local_bonds(2).front().is_primary());
-  BOOST_CHECK(not local_bonds(3).front().is_primary());
-  BOOST_CHECK(
-      (sorted_partner_ids(local_bonds(2).front()) == std::vector<int>{1, 3}));
-  BOOST_CHECK(
-      (sorted_partner_ids(local_bonds(3).front()) == std::vector<int>{1, 2}));
-
-  /* Initiate removal from 3, which only holds a mirror. */
-  BOOST_CHECK(::remove_bond(system, bond_id, {3, 1, 2}));
-  BOOST_CHECK(local_bonds(1).empty());
-  BOOST_CHECK(local_bonds(2).empty());
-  BOOST_CHECK(local_bonds(3).empty());
-}
-
-BOOST_FIXTURE_TEST_CASE(duplicate_bond_added_from_both_sides, ParticleFactory) {
-  /* The same bond added once from each side creates two co-existing
-   * entries per particle (a primary and a mirror). A single remove_bond()
-   * call naming an owner must remove exactly the matching pair, not an
-   * arbitrary one. */
-  auto const bond_id = 0;
-  create_particle({1., 1., 1.}, 1, 0);
-  create_particle({1., 1., 1.}, 2, 0);
-
-  auto &system = System::get_system();
-  ::add_bond(system, bond_id, {1, 2}); // "bond A": primary on 1, mirror on 2
-  ::add_bond(system, bond_id, {2, 1}); // "bond B": primary on 2, mirror on 1
-
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 2u);
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 2u);
-
-  /* Remove bond A by naming its owner (1) first: must remove 1's primary
-   * and 2's matching mirror, leaving bond B untouched. */
-  BOOST_CHECK(::remove_bond(system, bond_id, {1, 2}));
-
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 1u);
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 1u);
-  BOOST_CHECK(not local_bonds(1).front().is_primary());
-  BOOST_CHECK(local_bonds(2).front().is_primary());
-
-  /* Remove the remaining bond B by naming its owner (2) first. */
-  BOOST_CHECK(::remove_bond(system, bond_id, {2, 1}));
-  BOOST_CHECK(local_bonds(1).empty());
-  BOOST_CHECK(local_bonds(2).empty());
-}
-
-BOOST_FIXTURE_TEST_CASE(rebuild_bond_mirrors_backfills_missing_mirrors,
-                        ParticleFactory) {
-  /* rebuild_bond_mirrors() backfills mirrors for checkpoints written
-   * before bonds were stored on all participants, which only contain
-   * primary entries. Simulate that state by inserting primary-only
-   * entries via BondList::insert(), bypassing add_bond(). */
+BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
   auto const pair_bond_id = 0;
   auto const angle_bond_id = 1;
-  create_particle({1., 1., 1.}, 1, 0);
-  create_particle({1., 1., 1.}, 2, 0);
-  create_particle({1., 1., 1.}, 3, 0);
-
-  auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
-
-  {
-    auto const partner = std::array<int, 1>{{2}};
-    cell_structure.get_local_particle(1)->bonds().insert(
-        BondView{pair_bond_id, partner, true});
+  for (int pid = 1; pid <= 3; ++pid) {
+    ::make_new_particle(pid, {1., 1., 1.});
   }
-  {
-    auto const partners = std::array<int, 2>{{1, 3}};
-    cell_structure.get_local_particle(2)->bonds().insert(
-        BondView{angle_bond_id, partners, true});
-  }
-
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 1u); // pair primary
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 1u); // angle primary
-  BOOST_CHECK(local_bonds(3).empty());            // no mirror yet
-
-  ::rebuild_bond_mirrors(system);
-
-  /* The mirrors now match what add_bond() would have produced. */
-  BOOST_REQUIRE_EQUAL(local_bonds(1).size(), 2u); // pair primary + angle mirror
-  BOOST_REQUIRE_EQUAL(local_bonds(2).size(), 2u); // angle primary + pair mirror
-  BOOST_REQUIRE_EQUAL(local_bonds(3).size(), 1u); // angle mirror
-
-  auto const has_bond = [](std::vector<BondView> const &bonds, int bond_id,
-                           bool is_primary, std::vector<int> const &partners) {
-    return std::ranges::any_of(bonds, [&](BondView const &b) {
-      return b.bond_id() == bond_id and b.is_primary() == is_primary and
-             sorted_partner_ids(b) == partners;
-    });
-  };
-  BOOST_CHECK(has_bond(local_bonds(1), pair_bond_id, true, {2}));
-  BOOST_CHECK(has_bond(local_bonds(1), angle_bond_id, false, {2, 3}));
-  BOOST_CHECK(has_bond(local_bonds(2), angle_bond_id, true, {1, 3}));
-  BOOST_CHECK(has_bond(local_bonds(2), pair_bond_id, false, {1}));
-  BOOST_CHECK(has_bond(local_bonds(3), angle_bond_id, false, {1, 2}));
-
-  /* Existing mirrors are left untouched: calling it again must not
-   * duplicate anything. */
-  ::rebuild_bond_mirrors(system);
-  BOOST_CHECK_EQUAL(local_bonds(1).size(), 2u);
-  BOOST_CHECK_EQUAL(local_bonds(2).size(), 2u);
-  BOOST_CHECK_EQUAL(local_bonds(3).size(), 1u);
-}
-
-BOOST_FIXTURE_TEST_CASE(bond_queries, ParticleFactory) {
-  /* for_each_bond() and pair_bond_exists() (bond_queries.hpp) on a pair
-   * bond 1-2 owned by 1 and an angle bond 1-2-3 owned by 2. */
-  auto const pair_bond_id = 0;
-  auto const angle_bond_id = 1;
-  create_particle({1., 1., 1.}, 1, 0);
-  create_particle({1., 1., 1.}, 2, 0);
-  create_particle({1., 1., 1.}, 3, 0);
-
   auto &system = System::get_system();
-  auto &cell_structure = *system.cell_structure;
+  auto const &bond_storage = *system.bond_storage;
+  BOOST_CHECK(bond_storage.empty());
+
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, angle_bond_id, {2, 1, 3});
-  auto &p1 = *cell_structure.get_local_particle(1);
-  auto &p2 = *cell_structure.get_local_particle(2);
-  auto &p3 = *cell_structure.get_local_particle(3);
+  BOOST_CHECK_EQUAL(bond_storage.size(), 2u);
+  BOOST_CHECK(::is_bond_storage_consistent(system));
 
-  auto const visited = [](Particle const &p, auto entries) {
-    std::vector<int> bond_ids;
-    for_each_bond<decltype(entries)::value>(
-        p.bonds(), [&](BondView const &b) { bond_ids.push_back(b.bond_id()); });
-    std::ranges::sort(bond_ids);
-    return bond_ids;
-  };
-  using owned = std::integral_constant<BondEntries, BondEntries::owned>;
-  using all = std::integral_constant<BondEntries, BondEntries::all>;
-
-  /* Owned entries: every bond is visited exactly once over all particles,
-   * on its owner. */
-  BOOST_CHECK((visited(p1, owned{}) == std::vector<int>{pair_bond_id}));
-  BOOST_CHECK((visited(p2, owned{}) == std::vector<int>{angle_bond_id}));
-  BOOST_CHECK(visited(p3, owned{}).empty());
-  /* All entries: every bond the particle participates in. */
+  /* a bond is found from every participant, with the owner first */
   BOOST_CHECK(
-      (visited(p1, all{}) == std::vector<int>{pair_bond_id, angle_bond_id}));
+      (bonds_of(1) == std::vector<BondTuple>{{pair_bond_id, {1, 2}},
+                                             {angle_bond_id, {2, 1, 3}}}));
   BOOST_CHECK(
-      (visited(p2, all{}) == std::vector<int>{pair_bond_id, angle_bond_id}));
-  BOOST_CHECK((visited(p3, all{}) == std::vector<int>{angle_bond_id}));
+      (bonds_of(3) == std::vector<BondTuple>{{angle_bond_id, {2, 1, 3}}}));
 
-  /* Pair bonds are symmetric. */
-  BOOST_CHECK(pair_bond_exists(p1, p2, pair_bond_id));
-  BOOST_CHECK(pair_bond_exists(p2, p1, pair_bond_id));
-  BOOST_CHECK(not pair_bond_exists(p1, p3, pair_bond_id));
-  BOOST_CHECK(not pair_bond_exists(p1, p1, pair_bond_id));
-  /* The angle bond is not a pair bond, even though 2's entry lists 1 as
-   * its first partner. */
-  BOOST_CHECK(not pair_bond_exists(p1, p2, angle_bond_id));
-  BOOST_CHECK(not pair_bond_exists(p2, p3, angle_bond_id));
-  /* Predicate overload. */
-  BOOST_CHECK(pair_bond_exists(p2, p1, [](int id) { return id >= 0; }));
-  BOOST_CHECK(not pair_bond_exists(p1, p2, [](int) { return false; }));
+  /* a bond can be removed from any participant, in any order */
+  BOOST_CHECK(::remove_bond(system, angle_bond_id, {3, 2, 1}));
+  BOOST_CHECK(bonds_of(3).empty());
+  BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
+  BOOST_CHECK(bond_storage.empty());
 
-  /* A pair bond stored on only one side (e.g. on a ghost whose mirror has
-   * not been communicated yet) is still found from both sides. */
-  {
-    auto const partner = std::array<int, 1>{{1}};
-    p3.bonds().insert(BondView{pair_bond_id, partner, true});
-  }
-  BOOST_CHECK(pair_bond_exists(p1, p3, pair_bond_id));
-  BOOST_CHECK(pair_bond_exists(p3, p1, pair_bond_id));
+  /* removing a bond that does not exist is reported */
+  BOOST_CHECK(not ::remove_bond(system, pair_bond_id, {1, 2}));
+
+  /* the same bond added from both sides: each removal removes one of
+   * them, preferring the one owned by the first particle */
+  ::add_bond(system, pair_bond_id, {1, 2});
+  ::add_bond(system, pair_bond_id, {2, 1});
+  BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
+  BOOST_CHECK((bonds_of(2) == std::vector<BondTuple>{{pair_bond_id, {1, 2}}}));
+  BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
+  BOOST_CHECK(bond_storage.empty());
 }
 
-BOOST_AUTO_TEST_CASE(global_bond_storage) {
-  /* add_bond()/remove_bond() keep the global bond topology in sync with
-   * the bond entries of the particles, also when particles are removed. */
+BOOST_FIXTURE_TEST_CASE(bond_queries, RemoveAllParticles) {
+  auto const pair_bond_id = 0;
+  auto const angle_bond_id = 1;
+  for (int pid = 1; pid <= 3; ++pid) {
+    ::make_new_particle(pid, {1., 1., 1.});
+  }
+  auto &system = System::get_system();
+  auto const &bond_storage = *system.bond_storage;
+  ::add_bond(system, pair_bond_id, {1, 2});
+  ::add_bond(system, angle_bond_id, {2, 1, 3});
+
+  using enum BondEntries;
+  /* owned bonds: every bond is visited exactly once over all particles,
+   * on its owner */
+  BOOST_CHECK((visited_bond_ids<owned>(1) == std::vector<int>{pair_bond_id}));
+  BOOST_CHECK((visited_bond_ids<owned>(2) == std::vector<int>{angle_bond_id}));
+  BOOST_CHECK(visited_bond_ids<owned>(3).empty());
+  /* all bonds: a bond is visited once per participant */
+  BOOST_CHECK((visited_bond_ids<all>(1) ==
+               std::vector<int>{pair_bond_id, angle_bond_id}));
+  BOOST_CHECK((visited_bond_ids<all>(2) ==
+               std::vector<int>{pair_bond_id, angle_bond_id}));
+  BOOST_CHECK((visited_bond_ids<all>(3) == std::vector<int>{angle_bond_id}));
+  BOOST_CHECK(visited_bond_ids<all>(4).empty());
+
+  /* the partners of an owned bond are in creation order */
+  for_each_bond(bond_storage, 2, [&](BondStorage::Bond const &bond) {
+    BOOST_REQUIRE_EQUAL(bond.partner_ids().size(), 2u);
+    BOOST_CHECK_EQUAL(bond.partner_ids()[0], 1);
+    BOOST_CHECK_EQUAL(bond.partner_ids()[1], 3);
+  });
+
+  /* find_bond_id() */
+  auto const is_angle = [=](int id) { return id == angle_bond_id; };
+  BOOST_CHECK(not find_bond_id(bond_storage, 1, is_angle));
+  BOOST_CHECK(find_bond_id<all>(bond_storage, 1, is_angle) == angle_bond_id);
+  BOOST_CHECK(find_bond_id(bond_storage, 2, is_angle) == angle_bond_id);
+  BOOST_CHECK(not find_bond_id<all>(bond_storage, 4, is_angle));
+
+  /* pair_bond_exists() finds a pair bond whichever particle owns it */
+  BOOST_CHECK(pair_bond_exists(bond_storage, 1, 2, pair_bond_id));
+  BOOST_CHECK(pair_bond_exists(bond_storage, 2, 1, pair_bond_id));
+  BOOST_CHECK(not pair_bond_exists(bond_storage, 1, 3, pair_bond_id));
+  BOOST_CHECK(not pair_bond_exists(bond_storage, 1, 1, pair_bond_id));
+  /* angle bonds are not pair bonds */
+  BOOST_CHECK(not pair_bond_exists(bond_storage, 1, 2, angle_bond_id));
+  BOOST_CHECK(not pair_bond_exists(bond_storage, 2, 3, angle_bond_id));
+  /* predicate overload */
+  BOOST_CHECK(
+      pair_bond_exists(bond_storage, 2, 1, [](int id) { return id >= 0; }));
+  BOOST_CHECK(
+      not pair_bond_exists(bond_storage, 1, 2, [](int) { return false; }));
+}
+
+BOOST_FIXTURE_TEST_CASE(particle_removal, RemoveAllParticles) {
   auto const pair_bond_id = 0;
   auto const angle_bond_id = 1;
   for (int pid = 1; pid <= 4; ++pid) {
     ::make_new_particle(pid, {1., 1., 1.});
   }
-
   auto &system = System::get_system();
   auto const &bond_storage = *system.bond_storage;
-  BOOST_CHECK(bond_storage.empty());
-  BOOST_CHECK(::is_bond_storage_consistent(system));
-
   ::add_bond(system, pair_bond_id, {1, 2});
-  ::add_bond(system, pair_bond_id, {2, 1});
   ::add_bond(system, angle_bond_id, {2, 1, 3});
   ::add_bond(system, pair_bond_id, {3, 4});
-  BOOST_CHECK_EQUAL(bond_storage.size(), 4u);
-  BOOST_CHECK(::is_bond_storage_consistent(system));
+  BOOST_CHECK_EQUAL(bond_storage.size(), 3u);
 
-  /* bonds of a particle, whether it owns them or not */
-  auto const any_bond = [](BondStorage::Bond const &) { return true; };
-  BOOST_CHECK((::get_bonds_of_particle(system, 3, any_bond) ==
-               std::vector<BondTuple>{{angle_bond_id, {2, 1, 3}},
-                                      {pair_bond_id, {3, 4}}}));
+  /* bonds of a particle, restricted to the ones it owns */
   BOOST_CHECK(
       (::get_bonds_of_particle(system, 3, [](BondStorage::Bond const &bond) {
          return bond.owner_id() == 3;
        }) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
 
-  /* removal from a non-owner, and of a bond that does not exist */
-  BOOST_CHECK(::remove_bond(system, angle_bond_id, {3, 1, 2}));
-  BOOST_CHECK(not ::remove_bond(system, angle_bond_id, {3, 1, 2}));
-  BOOST_CHECK_EQUAL(bond_storage.size(), 3u);
-  BOOST_CHECK(::is_bond_storage_consistent(system));
-
-  /* a bond entry written behind the back of add_bond() is detected */
-  auto &p4 = *system.cell_structure->get_local_particle(4);
-  auto const partner = std::array<int, 1>{{1}};
-  p4.bonds().insert(BondView{pair_bond_id, partner});
-  BOOST_CHECK(not ::is_bond_storage_consistent(system));
-  p4.bonds().clear();
-  p4.bonds().insert(BondView{pair_bond_id, std::array<int, 1>{{3}}, false});
-  BOOST_CHECK(::is_bond_storage_consistent(system));
-
-  /* removing a particle removes all the bonds it participates in */
+  /* removing a particle removes all the bonds it participates in,
+   * whether it owns them or not */
   ::remove_particle(1);
-  BOOST_CHECK(::is_bond_storage_consistent(system));
-  BOOST_CHECK((::get_bonds_of_particle(system, 2, any_bond).empty()));
+  BOOST_CHECK(bonds_of(1).empty());
+  BOOST_CHECK(bonds_of(2).empty());
+  BOOST_CHECK((bonds_of(3) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
   BOOST_CHECK_EQUAL(bond_storage.size(), 1u);
-  BOOST_CHECK(local_bonds(2).empty());
+  BOOST_CHECK(::is_bond_storage_consistent(system));
 
   /* removing all particles removes all bonds */
   system.cell_structure->remove_all_particles();
   BOOST_CHECK(bond_storage.empty());
-  BOOST_CHECK(::is_bond_storage_consistent(system));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

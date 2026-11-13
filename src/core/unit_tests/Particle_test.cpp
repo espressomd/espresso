@@ -71,11 +71,7 @@ BOOST_AUTO_TEST_CASE(comparison) {
 BOOST_AUTO_TEST_CASE(serialization) {
   auto p = Particle();
 
-  auto const bond_id = 5;
-  auto const bond_partners = std::array<const int, 3>{{12, 13, 14}};
-
   p.id() = 15;
-  p.bonds().insert({bond_id, bond_partners});
   p.force() = {1., -2., 3.};
 #ifdef ESPRESSO_ROTATION
   p.torque() = {-4., 5., -6.};
@@ -95,7 +91,6 @@ BOOST_AUTO_TEST_CASE(serialization) {
 
   auto const &pf = std::as_const(p).force_and_torque();
   BOOST_CHECK(q.id() == p.id());
-  BOOST_CHECK((*q.bonds().begin() == BondView{bond_id, bond_partners}));
   BOOST_TEST(q.force() == pf.f, boost::test_tools::per_element());
 #ifdef ESPRESSO_ROTATION
   BOOST_TEST(q.torque() == pf.torque, boost::test_tools::per_element());

@@ -446,13 +446,12 @@ void CellStructure::check_particle_sorting() const {
 void CellStructure::remove_particle(int id) {
   // The global bond topology names every bond the particle participates
   // in, identically on all ranks, so the entries of the other participants
-  // can be removed wherever they live.
-  // ::remove_bond() skips `id` itself, whose bond list is discarded below.
+  // can be removed on all ranks.
   auto &system = get_system();
   auto const bonds_to_remove = ::get_bonds_of_particle(
       system, id, [](BondStorage::Bond const &) { return true; });
   for (auto const &[bond_id, ids] : bonds_to_remove) {
-    ::remove_bond(system, bond_id, ids, id);
+    ::remove_bond(system, bond_id, ids);
   }
 
   // Locate the particle via the index instead of scanning all local
@@ -578,7 +577,7 @@ unsigned map_data_parts(unsigned data_parts) {
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
          | ((data_parts & DATA_PART_DIPFLD) ? GHOSTTRANS_DIPFLD : 0u)
 #endif
-         | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
+      ;
   /* clang-format on */
 }
 
@@ -790,8 +789,7 @@ void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
   ESPRESSO_CALI_MARK_FUNCTION;
 #endif
   /* data parts that are only updated on resort */
-  auto constexpr resort_only_parts =
-      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
+  auto constexpr resort_only_parts = Cells::DATA_PART_PROPERTIES;
 
   auto const global_resort = boost::mpi::all_reduce(
       ::comm_cart, m_resort_particles, std::bit_or<unsigned>());

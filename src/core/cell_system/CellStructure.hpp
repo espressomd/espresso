@@ -98,7 +98,6 @@ enum DataPart : unsigned {
 #ifdef ESPRESSO_BOND_CONSTRAINT
   DATA_PART_RATTLE = 32u, /**< Particle::rattle */
 #endif
-  DATA_PART_BONDS = 64u, /**< Particle::bonds */
 #ifdef ESPRESSO_ROTATION
   DATA_PART_QUAT = 128u,   /**< orientation quaternion (pushed with position) */
   DATA_PART_TORQUE = 256u, /**< torque (reduced with force) */

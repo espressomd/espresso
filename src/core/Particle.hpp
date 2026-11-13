@@ -21,7 +21,6 @@
 
 #include <config/config.hpp>
 
-#include "BondList.hpp"
 #include "PropagationMode.hpp"
 
 #include <utils/Vector.hpp>
@@ -443,7 +442,6 @@ private:
 #ifdef ESPRESSO_BOND_CONSTRAINT
   ParticleRattle rattle;
 #endif
-  BondList bl;
 #ifdef ESPRESSO_EXCLUSIONS
   /** list of particles, with which this particle has no non-bonded
    *  interactions
@@ -469,9 +467,6 @@ public:
   constexpr bool operator!=(Particle const &rhs) const {
     return id() != rhs.id();
   }
-
-  constexpr auto const &bonds() const { return bl; }
-  constexpr auto &bonds() { return bl; }
 
   constexpr auto const &pos() const { return r.p; }
   constexpr auto &pos() { return r.p; }
@@ -679,7 +674,6 @@ private:
     ar & m;
     ar & f;
     ar & l;
-    ar & bl;
 #ifdef ESPRESSO_EXCLUSIONS
     ar & el;
 #endif

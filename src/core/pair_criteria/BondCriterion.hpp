@@ -22,13 +22,15 @@
 #include "pair_criteria/PairCriterion.hpp"
 
 #include "bond_queries.hpp"
+#include "system/System.hpp"
 
 namespace PairCriteria {
 /** @brief True if a bond of given type exists between two particles. */
 class BondCriterion : public PairCriterion {
 public:
   bool decide(Particle const &p1, Particle const &p2) const override {
-    return pair_bond_exists(p1, p2, m_bond_type);
+    auto const &bond_storage = *System::get_system().bond_storage;
+    return pair_bond_exists(bond_storage, p1.id(), p2.id(), m_bond_type);
   }
   int get_bond_type() { return m_bond_type; }
   void set_bond_type(int t) { m_bond_type = t; }

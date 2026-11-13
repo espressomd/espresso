@@ -759,7 +759,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
       cell_structure.bond_loop(report_broken_bond_pid1_pid2);
       insert_particle_bond(pid3, 0, {99, 101});
       cell_structure.bond_loop(report_no_broken_bonds);
-      cell_structure.get_local_particle(pid3)->bonds().clear();
+      ::remove_bond(system, 0, {pid3, 99, 101});
       system.on_particle_change();
       auto const messages =
           ErrorHandling::mpi_gather_runtime_errors_all(is_head_node);

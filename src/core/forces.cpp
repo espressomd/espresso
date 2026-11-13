@@ -562,10 +562,11 @@ void System::System::calculate_forces() {
   reduce_cabana_forces_and_torques(*this, virial);
 
 #ifdef ESPRESSO_COLLISION_DETECTION
-  auto collision_kernel = [&collision_detection = *collision_detection](
+  auto collision_kernel = [&collision_detection = *collision_detection,
+                           &bond_storage = std::as_const(*bond_storage)](
                               Particle const &p1, Particle const &p2,
                               Distance const &d) {
-    collision_detection.detect_collision(p1, p2, d.dist2);
+    collision_detection.detect_collision(p1, p2, d.dist2, bond_storage);
   };
   if (not collision_detection->is_off()) {
     auto const verlet_criterion = make_verlet_criterion();
