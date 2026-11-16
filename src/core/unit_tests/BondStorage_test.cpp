@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(add_and_query) {
                std::vector<Tuple>{
                    {0, {1, 2}}, {1, {2, 1, 3}}, {2, {4, 3, 2, 1}}, {3, {5}}}));
 
-  /* bonds are found from any participant, in insertion order */
+  /* bonds are found from any participant */
   BOOST_CHECK(
       (bonds_of(storage, 1) ==
        std::vector<Tuple>{{0, {1, 2}}, {1, {2, 1, 3}}, {2, {4, 3, 2, 1}}}));
@@ -149,7 +149,33 @@ BOOST_AUTO_TEST_CASE(remove_duplicates) {
   BOOST_CHECK(storage.empty());
 }
 
-BOOST_AUTO_TEST_CASE(slot_reuse) {
+BOOST_AUTO_TEST_CASE(visiting_order) {
+  BondStorage storage;
+  add(storage, 0, {2, 1});
+  add(storage, 1, {1, 2});
+  add(storage, 2, {3, 1, 2});
+  add(storage, 3, {2, 1});
+  add(storage, 4, {1, 3});
+  /* the bonds a particle owns come first; both groups are in insertion
+   * order, the bonds of other owners being grouped by owner */
+  BOOST_CHECK((
+      bonds_of(storage, 1) ==
+      std::vector<Tuple>{
+          {1, {1, 2}}, {4, {1, 3}}, {0, {2, 1}}, {3, {2, 1}}, {2, {3, 1, 2}}}));
+  /* a particle is found from the remaining bonds of an owner */
+  BOOST_CHECK(remove(storage, 0, {2, 1}));
+  BOOST_CHECK((bonds_of(storage, 1) ==
+               std::vector<Tuple>{
+                   {1, {1, 2}}, {4, {1, 3}}, {3, {2, 1}}, {2, {3, 1, 2}}}));
+  BOOST_CHECK(remove(storage, 3, {2, 1}));
+  BOOST_CHECK((bonds_of(storage, 1) ==
+               std::vector<Tuple>{{1, {1, 2}}, {4, {1, 3}}, {2, {3, 1, 2}}}));
+  /* negative ids are never found */
+  BOOST_CHECK(bonds_of(storage, -1).empty());
+  BOOST_CHECK(not remove(storage, 1, {-1, 2}));
+}
+
+BOOST_AUTO_TEST_CASE(removal_and_reuse) {
   BondStorage storage;
   add(storage, 0, {1, 2});
   add(storage, 0, {2, 3});
@@ -161,7 +187,7 @@ BOOST_AUTO_TEST_CASE(slot_reuse) {
   BOOST_CHECK(
       (all_bonds(storage) ==
        std::vector<Tuple>{{0, {1, 2}}, {0, {3, 4}}, {1, {5, 3}}, {1, {6, 3}}}));
-  /* the bonds of a particle keep their insertion order */
+  /* the remaining bonds of a particle keep their order */
   BOOST_CHECK((bonds_of(storage, 3) ==
                std::vector<Tuple>{{0, {3, 4}}, {1, {5, 3}}, {1, {6, 3}}}));
   BOOST_CHECK((bonds_of(storage, 2) == std::vector<Tuple>{{0, {1, 2}}}));
@@ -209,11 +235,11 @@ BOOST_AUTO_TEST_CASE(owned_bonds) {
   add(storage, 4, {2, 6, 5});
   add(storage, 0, {1, 2});
 
-  /* only the bonds a particle owns, grouped by number of partners, with
-   * the partners in creation order */
+  /* only the bonds a particle owns, in insertion order, with the partners
+   * in creation order */
   BOOST_CHECK(
       (owned_by(storage, 2) ==
-       std::vector<Tuple>{{0, {1}}, {0, {7}}, {1, {1, 3}}, {4, {6, 5}}}));
+       std::vector<Tuple>{{0, {1}}, {1, {1, 3}}, {0, {7}}, {4, {6, 5}}}));
   BOOST_CHECK((owned_by(storage, 1) == std::vector<Tuple>{{0, {2}}}));
   BOOST_CHECK((owned_by(storage, 4) == std::vector<Tuple>{{2, {3, 2, 1}}}));
   BOOST_CHECK(owned_by(storage, 3).empty());
@@ -235,7 +261,8 @@ BOOST_AUTO_TEST_CASE(owned_bonds) {
   /* the view follows modifications of the storage */
   BOOST_CHECK(remove(storage, 0, {2, 1}));
   BOOST_CHECK((owned_by(storage, 2) ==
-               std::vector<Tuple>{{0, {7}}, {1, {1, 3}}, {4, {6, 5}}}));
+               std::vector<Tuple>{{1, {1, 3}}, {0, {7}}, {4, {6, 5}}}));
+  BOOST_CHECK((counts(storage, 2) == std::vector<int>{1, 2, 0}));
   BOOST_CHECK((owned_by(storage, 1) == std::vector<Tuple>{{0, {2}}}));
   add(storage, 5, {9, 2});
   BOOST_CHECK((owned_by(storage, 9) == std::vector<Tuple>{{5, {2}}}));

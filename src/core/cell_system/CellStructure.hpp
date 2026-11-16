@@ -965,7 +965,7 @@ public:
    * @param angle_count     Index for angle bond storage.
    * @param dihedral_count  Index for dihedral bond storage.
    * @param p               Particle residing on this rank.
-   * @param owned_bonds     Global bond topology, sorted by owner.
+   * @param owned_bonds     Bonds of the global bond topology, by owner.
    */
   void update_bond_storage(int &pair_count, int &angle_count,
                            int &dihedral_count, Particle const &p,

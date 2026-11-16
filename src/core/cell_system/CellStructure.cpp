@@ -350,7 +350,6 @@ void CellStructure::set_index_map() {
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
 
-  // not thread-safe: fetched before the parallel sweep
   auto const &owned_bonds = get_bond_storage().owned_bonds();
   enumerate_local_particles(
       *this, [&unique_particles, &thread_counts,

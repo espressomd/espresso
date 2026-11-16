@@ -22,7 +22,6 @@
 #include <boost/container/static_vector.hpp>
 
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <cstddef>
 #include <span>
@@ -43,6 +42,10 @@
  * the participating particles in creation order. The first particle is the
  * owner of the bond: the bond is evaluated on the MPI rank where the owner
  * resides. The same bond may be stored more than once.
+ *
+ * The bonds are stored per owner, in a table indexed by particle id, so
+ * that the bonds a particle owns are found without any search. A bond is
+ * found from its other participants through links to its owner.
  */
 class BondStorage {
 public:
@@ -50,7 +53,7 @@ public:
   static constexpr std::size_t max_particles = 4u;
 
   struct Bond {
-    /** @brief Key of the bonded interaction, negative for unused slots. */
+    /** @brief Key of the bonded interaction. */
     int bond_id = -1;
     /** @brief Participants in creation order; the first one is the owner. */
     boost::container::static_vector<int, max_particles> particle_ids;
@@ -66,12 +69,12 @@ public:
   };
 
   /**
-   * @brief Read-only view of the pair, angle and dihedral bonds, sorted by
+   * @brief Read-only view of the pair, angle and dihedral bonds of each
    * owner.
    *
-   * For each number of partners, the bonds are stored in one contiguous
-   * table in compressed-row format, so that the bonds of a particle are
-   * found without any search. Bonds without partners are not included.
+   * Bonds without partners are not included. Always up to date with the
+   * storage, and safe to read concurrently as long as the storage is not
+   * modified.
    */
   class OwnedBonds {
   public:
@@ -84,12 +87,13 @@ public:
 
     /** @brief Number of pair, angle and dihedral bonds owned by a particle. */
     Counts counts(int pid) const {
-      return {m_tables[0].count(pid), m_tables[1].count(pid),
-              m_tables[2].count(pid)};
+      auto const *owner = find(pid);
+      return (owner) ? owner->counts : Counts{};
     }
 
     /**
-     * @brief Execute a kernel for the bonds owned by a particle.
+     * @brief Execute a kernel for the bonds owned by a particle, in
+     * insertion order.
      *
      * Over all particles, every bond is visited exactly once.
      *
@@ -100,13 +104,11 @@ public:
      */
     template <typename Kernel>
     void for_each_bond_of(int pid, Kernel &&kernel) const {
-      for (std::size_t n_partners = 1u; n_partners <= 3u; ++n_partners) {
-        auto const &table = m_tables[n_partners - 1u];
-        auto const width = n_partners + 1u;
-        auto const [begin, end] = table.range(pid);
-        for (auto row = begin; row < end; ++row) {
-          auto const *data = table.rows.data() + row * width;
-          kernel(data[0], std::span<const int>(data + 1, n_partners));
+      if (auto const *owner = find(pid)) {
+        for (auto const &bond : owner->bonds) {
+          if (bond.particle_ids.size() > 1u) {
+            kernel(bond.bond_id, bond.partner_ids());
+          }
         }
       }
     }
@@ -114,76 +116,49 @@ public:
   private:
     friend class BondStorage;
 
-    struct Table {
-      /** @brief Rows of particle @c pid are
-       *  <tt>[offsets[pid], offsets[pid + 1])</tt>. */
-      std::vector<std::size_t> offsets;
-      /** @brief Per bond, the bond id followed by the partner ids. */
-      std::vector<int> rows;
+    struct Owner {
+      /** @brief Bonds owned by the particle, in insertion order. */
+      std::vector<Bond> bonds;
+      /** @brief Number of bonds in @ref bonds, by number of partners. */
+      Counts counts;
 
-      std::pair<std::size_t, std::size_t> range(int pid) const {
-        auto const i = static_cast<std::size_t>(pid);
-        if (pid < 0 or i + 1u >= offsets.size()) {
-          return {0u, 0u};
+      void update_counts(Bond const &bond, int delta) {
+        switch (bond.particle_ids.size()) {
+        case 2u:
+          counts.pair += delta;
+          break;
+        case 3u:
+          counts.angle += delta;
+          break;
+        case 4u:
+          counts.dihedral += delta;
+          break;
+        default:
+          break;
         }
-        return {offsets[i], offsets[i + 1u]};
-      }
-      int count(int pid) const {
-        auto const [begin, end] = range(pid);
-        return static_cast<int>(end - begin);
       }
     };
 
-    void rebuild(std::vector<Bond> const &bonds) {
-      int max_owner_id = -1;
-      for (auto const &bond : bonds) {
-        if (bond.bond_id >= 0) {
-          max_owner_id = std::max(max_owner_id, bond.owner_id());
-        }
-      }
-      auto const n_owners = static_cast<std::size_t>(max_owner_id + 1);
-      for (std::size_t n_partners = 1u; n_partners <= 3u; ++n_partners) {
-        auto &table = m_tables[n_partners - 1u];
-        auto const width = n_partners + 1u;
-        auto const selected = [width](Bond const &bond) {
-          return bond.bond_id >= 0 and bond.particle_ids.size() == width;
-        };
-        // counting sort by owner
-        table.offsets.assign(n_owners + 1u, 0u);
-        for (auto const &bond : bonds) {
-          if (selected(bond)) {
-            ++table.offsets[static_cast<std::size_t>(bond.owner_id()) + 1u];
-          }
-        }
-        for (std::size_t i = 0u; i < n_owners; ++i) {
-          table.offsets[i + 1u] += table.offsets[i];
-        }
-        table.rows.resize(table.offsets[n_owners] * width);
-        auto next_row = table.offsets;
-        for (auto const &bond : bonds) {
-          if (selected(bond)) {
-            auto const owner = static_cast<std::size_t>(bond.owner_id());
-            auto *data = table.rows.data() + next_row[owner]++ * width;
-            data[0] = bond.bond_id;
-            std::ranges::copy(bond.partner_ids(), data + 1);
-          }
-        }
-      }
+    Owner const *find(int pid) const {
+      auto const i = static_cast<std::size_t>(pid);
+      return (pid >= 0 and i < m_owners.size()) ? &m_owners[i] : nullptr;
+    }
+    Owner *find(int pid) {
+      return const_cast<Owner *>(std::as_const(*this).find(pid));
     }
 
-    /** @brief Tables for the bonds with 1, 2 and 3 partners. */
-    std::array<Table, 3> m_tables;
+    /** @brief Bonds of every particle, indexed by particle id. */
+    std::vector<Owner> m_owners;
   };
 
   /** @brief Number of bonds. */
-  auto size() const { return m_bonds.size() - m_free_slots.size(); }
+  auto size() const { return m_size; }
   bool empty() const { return size() == 0u; }
 
   void clear() {
-    m_bonds.clear();
-    m_free_slots.clear();
-    m_particles.clear();
-    m_owned_bonds_dirty = true;
+    m_owned_bonds.m_owners.clear();
+    m_links.clear();
+    m_size = 0u;
   }
 
   /**
@@ -194,25 +169,27 @@ public:
   void add(int bond_id, std::span<const int> particle_ids) {
     assert(bond_id >= 0);
     assert(not particle_ids.empty() and particle_ids.size() <= max_particles);
-    int slot;
-    if (m_free_slots.empty()) {
-      slot = static_cast<int>(m_bonds.size());
-      m_bonds.emplace_back();
-    } else {
-      slot = m_free_slots.back();
-      m_free_slots.pop_back();
+    assert(std::ranges::all_of(particle_ids, [](int pid) { return pid >= 0; }));
+    auto &owners = m_owned_bonds.m_owners;
+    auto const owner_id = particle_ids[0];
+    if (static_cast<std::size_t>(owner_id) >= owners.size()) {
+      owners.resize(static_cast<std::size_t>(owner_id) + 1u);
     }
-    auto &bond = m_bonds[static_cast<std::size_t>(slot)];
+    auto &owner = owners[static_cast<std::size_t>(owner_id)];
+    auto &bond = owner.bonds.emplace_back();
     bond.bond_id = bond_id;
     bond.particle_ids.assign(particle_ids.begin(), particle_ids.end());
-    for (std::size_t i = 0u; i < particle_ids.size(); ++i) {
-      // a particle listed several times in a bond is indexed once
-      auto const first = std::ranges::find(particle_ids, particle_ids[i]);
-      if (first == particle_ids.begin() + static_cast<std::ptrdiff_t>(i)) {
-        m_particles[particle_ids[i]].slots.push_back(slot);
+    owner.update_counts(bond, +1);
+    for_each_linked_partner(bond, [&](int pid) {
+      auto &links = m_links[pid];
+      auto const it = std::ranges::find(links, owner_id, &Link::owner_id);
+      if (it != links.end()) {
+        ++it->n_bonds;
+      } else {
+        links.push_back({owner_id, 1});
       }
-    }
-    m_owned_bonds_dirty = true;
+    });
+    ++m_size;
   }
 
   /**
@@ -229,10 +206,6 @@ public:
     if (particle_ids.empty() or particle_ids.size() > max_particles) {
       return false;
     }
-    auto const it = m_particles.find(particle_ids[0]);
-    if (it == m_particles.end()) {
-      return false;
-    }
     using Ids = boost::container::static_vector<int, max_particles>;
     auto const sorted = [](std::span<const int> ids) {
       Ids out(ids.begin(), ids.end());
@@ -240,35 +213,40 @@ public:
       return out;
     };
     auto const wanted = sorted(particle_ids);
-    int fallback = -1;
-    int match = -1;
-    for (auto const slot : it->second.slots) {
-      auto const &bond = m_bonds[static_cast<std::size_t>(slot)];
-      if (bond.bond_id != bond_id or sorted(bond.particle_ids) != wanted) {
-        continue;
+    auto const remove_from = [&](OwnedBonds::Owner &owner) {
+      auto const it = std::ranges::find_if(owner.bonds, [&](Bond const &bond) {
+        return bond.bond_id == bond_id and
+               bond.particle_ids.size() == wanted.size() and
+               sorted(bond.particle_ids) == wanted;
+      });
+      if (it == owner.bonds.end()) {
+        return false;
       }
-      if (bond.owner_id() == particle_ids[0]) {
-        match = slot;
-        break;
-      }
-      if (fallback == -1) {
-        fallback = slot;
+      erase_bond(owner, it);
+      return true;
+    };
+    auto const pid = particle_ids[0];
+    if (auto *owner = m_owned_bonds.find(pid)) {
+      if (remove_from(*owner)) {
+        return true;
       }
     }
-    if (match == -1) {
-      match = fallback;
+    if (auto const it = m_links.find(pid); it != m_links.end()) {
+      for (auto const &link : it->second) {
+        // the links are modified by a removal: leave the loop right after
+        if (remove_from(*m_owned_bonds.find(link.owner_id))) {
+          return true;
+        }
+      }
     }
-    if (match == -1) {
-      return false;
-    }
-    erase_slot(match);
-    return true;
+    return false;
   }
 
   /**
    * @brief Execute a kernel for all bonds a particle participates in,
    * whether it owns them or not.
    *
+   * The bonds the particle owns are visited first, in insertion order.
    * The storage must not be modified by the kernel.
    *
    * @param pid     Particle id.
@@ -276,13 +254,10 @@ public:
    */
   template <typename Kernel>
   void for_each_bond_of(int pid, Kernel &&kernel) const {
-    auto const it = m_particles.find(pid);
-    if (it == m_particles.end()) {
-      return;
-    }
-    for (auto const slot : it->second.slots) {
-      kernel(std::as_const(m_bonds[static_cast<std::size_t>(slot)]));
-    }
+    any_bond_of(pid, [&](Bond const &bond) {
+      kernel(bond);
+      return false;
+    });
   }
 
   /**
@@ -293,30 +268,30 @@ public:
    * @param pred  Callable <tt>bool(Bond const &)</tt>.
    */
   template <typename Pred> bool any_bond_of(int pid, Pred &&pred) const {
-    auto const it = m_particles.find(pid);
-    if (it == m_particles.end()) {
+    if (auto const *owner = m_owned_bonds.find(pid)) {
+      if (std::ranges::any_of(owner->bonds, pred)) {
+        return true;
+      }
+    }
+    auto const it = m_links.find(pid);
+    if (it == m_links.end()) {
       return false;
     }
-    return std::ranges::any_of(it->second.slots, [&](int slot) {
-      return pred(std::as_const(m_bonds[static_cast<std::size_t>(slot)]));
+    return std::ranges::any_of(it->second, [&](Link const &link) {
+      auto const &bonds = m_owned_bonds.find(link.owner_id)->bonds;
+      return std::ranges::any_of(bonds, [&](Bond const &bond) {
+        return bond.has_participant(pid) and pred(bond);
+      });
     });
   }
 
   /**
-   * @brief The bonds sorted by owner, for fast traversal.
+   * @brief The bonds of each owner, for fast traversal.
    *
-   * Rebuilt here if the storage was modified since the last call, with a
-   * cost proportional to the number of bonds; this function must therefore
-   * not be called concurrently. The returned object is safe to read
-   * concurrently, and is valid until the storage is modified.
+   * The returned object is safe to read concurrently, as long as the
+   * storage is not modified.
    */
-  OwnedBonds const &owned_bonds() const {
-    if (m_owned_bonds_dirty) {
-      m_owned_bonds.rebuild(m_bonds);
-      m_owned_bonds_dirty = false;
-    }
-    return m_owned_bonds;
-  }
+  OwnedBonds const &owned_bonds() const { return m_owned_bonds; }
 
   /**
    * @brief Execute a kernel for all bonds.
@@ -326,45 +301,61 @@ public:
    * @param kernel  Callable invoked as <tt>kernel(Bond const &)</tt>.
    */
   template <typename Kernel> void for_each_bond(Kernel &&kernel) const {
-    for (auto const &bond : m_bonds) {
-      if (bond.bond_id >= 0) {
+    for (auto const &owner : m_owned_bonds.m_owners) {
+      for (auto const &bond : owner.bonds) {
         kernel(bond);
       }
     }
   }
 
 private:
-  void erase_slot(int slot) {
-    auto &bond = m_bonds[static_cast<std::size_t>(slot)];
-    for (auto const pid : bond.particle_ids) {
-      auto const it = m_particles.find(pid);
-      if (it == m_particles.end()) {
-        continue; // particle listed several times in the bond
-      }
-      // keep the relative order of the remaining bonds of the particle
-      std::erase(it->second.slots, slot);
-      if (it->second.slots.empty()) {
-        m_particles.erase(it);
-      }
-    }
-    bond.bond_id = -1;
-    bond.particle_ids.clear();
-    m_free_slots.push_back(slot);
-    m_owned_bonds_dirty = true;
-  }
-
-  /** @brief Bonds; slots are recycled and may be unused. */
-  std::vector<Bond> m_bonds;
-  /** @brief Unused slots of @ref m_bonds. */
-  std::vector<int> m_free_slots;
-  struct ParticleEntry {
-    /** @brief Slots of the bonds the particle participates in. */
-    std::vector<int> slots;
+  /** @brief Bonds of an owner in which another particle participates. */
+  struct Link {
+    int owner_id;
+    /** @brief Number of such bonds. */
+    int n_bonds;
   };
 
-  /** @brief Bonds of every particle that participates in a bond. */
-  std::unordered_map<int, ParticleEntry> m_particles;
-  /** @brief Cache of the bonds sorted by owner, see @ref owned_bonds(). */
-  mutable OwnedBonds m_owned_bonds;
-  mutable bool m_owned_bonds_dirty = false;
+  /**
+   * @brief Execute a kernel for the participants of a bond that reach it
+   * through a link, i.e. once for every particle other than the owner.
+   */
+  template <typename Kernel>
+  static void for_each_linked_partner(Bond const &bond, Kernel &&kernel) {
+    auto const partner_ids = bond.partner_ids();
+    for (auto it = partner_ids.begin(); it != partner_ids.end(); ++it) {
+      if (*it != bond.owner_id() and
+          std::find(partner_ids.begin(), it, *it) == it) {
+        kernel(*it);
+      }
+    }
+  }
+
+  void erase_bond(OwnedBonds::Owner &owner,
+                  std::vector<Bond>::iterator bond_it) {
+    auto const bond = *bond_it;
+    // keep the relative order of the remaining bonds of the owner
+    owner.bonds.erase(bond_it);
+    owner.update_counts(bond, -1);
+    for_each_linked_partner(bond, [&](int pid) {
+      auto const map_it = m_links.find(pid);
+      auto &links = map_it->second;
+      auto const it =
+          std::ranges::find(links, bond.owner_id(), &Link::owner_id);
+      if (--it->n_bonds == 0) {
+        links.erase(it);
+        if (links.empty()) {
+          m_links.erase(map_it);
+        }
+      }
+    });
+    --m_size;
+  }
+
+  /** @brief Bonds, stored with their owner. */
+  OwnedBonds m_owned_bonds;
+  /** @brief For every particle, the owners of the bonds it participates in
+   *  without owning them. */
+  std::unordered_map<int, std::vector<Link>> m_links;
+  std::size_t m_size = 0u;
 };
