@@ -27,9 +27,10 @@ import numpy as np
 class BrownianThermostat(ut.TestCase):
 
     """Test Brownian Dynamics"""
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10., 10., 10.])
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
-    system.cell_system.skin = 0
+    system.cell_system.skin = 0.
+    system.min_global_cut = 2.
     system.periodicity = [False, False, False]
 
     def setUp(self):

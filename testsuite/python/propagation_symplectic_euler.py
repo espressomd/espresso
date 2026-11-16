@@ -27,6 +27,7 @@ class SymplecticEuler(ut.TestCase):
 
     system = espressomd.System(box_l=[10., 10., 10.])
     system.cell_system.skin = 0.4
+    system.min_global_cut = 2.
     system.time_step = 0.01
 
     def tearDown(self):
