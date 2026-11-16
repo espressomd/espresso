@@ -703,7 +703,6 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
   {
     auto const is_head_node = rank == 0;
     auto &cell_structure = *system.cell_structure;
-    BOOST_CHECK_THROW(throw BondResolutionError(), std::exception);
     BOOST_CHECK_THROW(throw BondUnknownTypeError(), std::exception);
     BOOST_CHECK_THROW(throw BondInvalidSizeError(2), std::exception);
     BOOST_CHECK_EQUAL(BondInvalidSizeError(2).size, 2);

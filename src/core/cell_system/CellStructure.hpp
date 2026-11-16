@@ -744,27 +744,27 @@ public:
   /**
    * @brief Resolve ids to particles.
    *
-   * @throws BondResolutionError if one of the ids
-   *         was not found.
-   *
    * @param partner_ids Ids to resolve.
-   * @return Vector of Particle pointers.
+   * @return Vector of Particle pointers, or nothing if one of the ids was
+   *         not found on this MPI rank.
    */
   auto resolve_bond_partners(std::span<const int> partner_ids) {
-    boost::container::static_vector<Particle *, 4> partners;
+    using Partners = boost::container::static_vector<Particle *, 4>;
+    Partners partners;
     get_local_particles(partner_ids, std::back_inserter(partners));
 
     /* Check if id resolution failed for any partner */
     if (std::ranges::find(partners, nullptr) != partners.end()) {
-      throw BondResolutionError{};
+      return std::optional<Partners>{};
     }
 
-    return partners;
+    return std::optional<Partners>{std::move(partners)};
   }
 
 private:
   /**
-   * @brief Execute kernel for every bond on particle.
+   * @brief Execute kernel for every bond owned by a particle, reading the
+   * bonds from the global bond topology.
    * @tparam Handler Callable, which can be invoked with
    *                 (Particle, int, std::span<Particle *>),
    *                 returning a bool.
@@ -774,8 +774,8 @@ private:
    *                partners as arguments. Its return value
    *                should indicate if the bond was broken.
    */
-  void execute_bond_handler(Particle &p, BondStorage const &bond_storage,
-                            auto const &handler) {
+  void handle_owned_bonds(Particle &p, BondStorage const &bond_storage,
+                          auto const &handler) {
     // Owned bonds only: they carry the partner order the bond was created
     // with (e.g. the vertex-first order angle bonds rely on), and every
     // bond is processed exactly once.
@@ -784,15 +784,15 @@ private:
       if (partner_ids.empty()) {
         return; // bonds without partners are not evaluated
       }
-      try {
-        auto partners = resolve_bond_partners(partner_ids);
-        auto const partners_span = std::span(partners.data(), partners.size());
-        auto const bond_broken = handler(p, bond.bond_id, partners_span);
-        if (bond_broken) {
-          bond_broken_error(p.id(), partner_ids);
-        }
-      } catch (BondResolutionError const &) {
+      auto partners = resolve_bond_partners(partner_ids);
+      if (not partners) {
         bond_resolution_error(partner_ids);
+        return;
+      }
+      auto const partners_span = std::span(partners->data(), partners->size());
+      auto const bond_broken = handler(p, bond.bond_id, partners_span);
+      if (bond_broken) {
+        bond_broken_error(p.id(), partner_ids);
       }
     });
   }
@@ -801,11 +801,10 @@ private:
    * @brief Execute kernel for every bond of a flat bond list.
    * @param bonds    One of the bond lists of @ref LocalBondState, holding
    *                 one row of indices into the unique particles per bond.
-   * @param handler  See the overload taking a particle.
+   * @param handler  See @ref handle_owned_bonds().
    */
   template <std::size_t N>
-  void execute_bond_handler(LocalBondList<N> const &bonds,
-                            auto const &handler) {
+  void handle_bond_list(LocalBondList<N> const &bonds, auto const &handler) {
     constexpr auto n_partners = N - 1u;
     for (int i = 0; i < bonds.count; ++i) {
       std::array<Particle *, n_partners> partners;
@@ -1083,13 +1082,13 @@ public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     if (are_local_bond_lists_valid()) {
       auto const &bs = *m_bond_state;
-      execute_bond_handler(bs.pairs, bond_kernel);
-      execute_bond_handler(bs.angles, bond_kernel);
-      execute_bond_handler(bs.dihedrals, bond_kernel);
+      handle_bond_list(bs.pairs, bond_kernel);
+      handle_bond_list(bs.angles, bond_kernel);
+      handle_bond_list(bs.dihedrals, bond_kernel);
     } else {
       auto const &bond_storage = get_bond_storage();
       for (auto &p : local_particles()) {
-        execute_bond_handler(p, bond_storage, bond_kernel);
+        handle_owned_bonds(p, bond_storage, bond_kernel);
       }
     }
   }

@@ -294,13 +294,11 @@ void CellStructure::append_owned_bonds(Particle const &p,
   // which therefore carries the NOLINT.
   // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
   bond_storage.for_each_owned_bond(p.id(), [&](auto const &bond) {
-    try {
-      // the partners must be known on this rank
-      [[maybe_unused]] auto const partners =
-          resolve_bond_partners(bond.partner_ids());
+    // the partners must be known on this rank
+    if (resolve_bond_partners(bond.partner_ids())) {
       m_bond_state->append(
           bond.bond_id, {bond.particle_ids.data(), bond.particle_ids.size()});
-    } catch (BondResolutionError const &) {
+    } else {
       bond_resolution_error(bond.partner_ids());
     }
   });
