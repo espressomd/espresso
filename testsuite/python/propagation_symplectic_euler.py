@@ -107,8 +107,8 @@ class SymplecticEuler(ut.TestCase):
                 system.integrator.run(1, recalc_forces=(i == 2))
                 omega_lab = np.copy(p.omega_lab)
                 torque_lab = np.copy(p.torque_lab)
-                ref = ext_torque * system.time
-                np.testing.assert_allclose(omega_lab, ref, rtol=1e-10)
+                ref_omega = ext_torque * system.time
+                np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
                 np.testing.assert_allclose(torque_lab, ext_torque, rtol=1e-10)
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])

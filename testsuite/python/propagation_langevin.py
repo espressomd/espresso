@@ -457,6 +457,7 @@ class LangevinThermostat(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
     def test_body_lab_conversion(self):
+        Propagation = espressomd.propagation.Propagation
         system = self.system
         system.time = 0.
         system.time_step = dt = 1e-6
@@ -467,11 +468,21 @@ class LangevinThermostat(ut.TestCase):
         p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
                             director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
                             ext_torque=ext_torque)
+        p2 = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                             director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                             ext_torque=ext_torque)
+        p2.propagation = Propagation.TRANS_NEWTON | Propagation.ROT_EULER
         for i in range(4):
             system.integrator.run(1, recalc_forces=(i == 2))
             omega_lab = np.copy(p.omega_lab)
             ref_omega = ext_torque / 5. * (1. - np.exp(-5. * system.time))
             np.testing.assert_allclose(omega_lab, ref_omega, rtol=10. * dt)
+            # per-particle propagation case
+            omega_lab = np.copy(p2.omega_lab)
+            torque_lab = np.copy(p2.torque_lab)
+            ref_omega = ext_torque * system.time
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
+            np.testing.assert_allclose(torque_lab, ext_torque, rtol=1e-10)
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
     def test_body_lab_vs_relative(self):
