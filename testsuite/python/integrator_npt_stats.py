@@ -20,6 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
+import espressomd.code_info
 import tests_common
 
 
@@ -51,6 +52,7 @@ class IntegratorNPT:
     def test_compressibility_and_pressure(self):
         system = self.system
         system.box_l = [5.86326165] * 3
+        has_fast_math = espressomd.code_info._CodeInfo().call_method("has_fast_math")
 
         data = np.genfromtxt(tests_common.data_path("npt_lj_system.data"))
         p_ext = 1.0
@@ -84,7 +86,7 @@ class IntegratorNPT:
         # averaged virial pressure by get_instantaneous_pressure_virial()
         avp_inst_vir = 0
         # large sample size needed due to precision loss in fast-math builds
-        n = 55000
+        n = 60000 if has_fast_math else 20000
         skip_p = 8
         ls = np.zeros(n)
         for t in range(n):
