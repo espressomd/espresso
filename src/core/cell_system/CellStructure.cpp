@@ -285,9 +285,9 @@ BondStorage const &CellStructure::get_bond_storage() const {
   return *get_system().bond_storage;
 }
 
-void CellStructure::update_bond_storage(
-    int &pair_count, int &angle_count, int &dihedral_count, Particle const &p,
-    BondStorage::OwnedBonds const &owned_bonds) {
+void CellStructure::append_owned_bonds(int &pair_count, int &angle_count,
+                                       int &dihedral_count, Particle const &p,
+                                       BondStorage const &bond_storage) {
   auto &pair_list = m_bond_state->pair_list;
   auto &pair_ids = m_bond_state->pair_ids;
   auto &angle_list = m_bond_state->angle_list;
@@ -299,7 +299,9 @@ void CellStructure::update_bond_storage(
   // formatting of the View accesses below (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK);
   // it anchors the report at this call, which therefore carries the NOLINT.
   // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
-  owned_bonds.for_each_bond_of(p.id(), [&](int bond_id, auto partner_ids) {
+  bond_storage.for_each_owned_bond(p.id(), [&](auto const &bond) {
+    auto const bond_id = bond.bond_id;
+    auto const partner_ids = bond.partner_ids();
     try {
       auto const partners = resolve_bond_partners(partner_ids);
       if (partners.size() == 1u) { // pair bonds
@@ -350,17 +352,17 @@ void CellStructure::set_index_map() {
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
 
-  auto const &owned_bonds = get_bond_storage().owned_bonds();
+  auto const &bond_storage = get_bond_storage();
   enumerate_local_particles(
       *this, [&unique_particles, &thread_counts,
-              &owned_bonds](std::size_t index, Particle &p) {
+              &bond_storage](std::size_t index, Particle &p) {
         unique_particles[index] = &p;
         auto &counts = thread_counts[omp_get_thread_num()];
         counts.max_id = std::max(p.id(), counts.max_id);
         // The counts of owned bonds are read in constant time. They must
-        // agree with what update_bond_storage() fills in, or the Kokkos views
+        // agree with what append_owned_bonds() fills in, or the Kokkos views
         // overflow.
-        auto const bond_counts = owned_bonds.counts(p.id());
+        auto const bond_counts = bond_storage.owned_counts(p.id());
         counts.pair += bond_counts.pair;
         counts.angle += bond_counts.angle;
         counts.dihedral += bond_counts.dihedral;

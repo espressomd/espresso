@@ -773,17 +773,20 @@ private:
    *                partners as arguments. Its return value
    *                should indicate if the bond was broken.
    */
-  void execute_bond_handler(Particle &p,
-                            BondStorage::OwnedBonds const &owned_bonds,
+  void execute_bond_handler(Particle &p, BondStorage const &bond_storage,
                             auto const &handler) {
     // Owned bonds only: they carry the partner order the bond was created
     // with (e.g. the vertex-first order angle bonds rely on), and every
     // bond is processed exactly once.
-    owned_bonds.for_each_bond_of(p.id(), [&](int bond_id, auto partner_ids) {
+    bond_storage.for_each_owned_bond(p.id(), [&](auto const &bond) {
+      auto const partner_ids = bond.partner_ids();
+      if (partner_ids.empty()) {
+        return; // bonds without partners are not evaluated
+      }
       try {
         auto partners = resolve_bond_partners(partner_ids);
         auto const partners_span = std::span(partners.data(), partners.size());
-        auto const bond_broken = handler(p, bond_id, partners_span);
+        auto const bond_broken = handler(p, bond.bond_id, partners_span);
         if (bond_broken) {
           bond_broken_error(p.id(), partner_ids);
         }
@@ -965,11 +968,11 @@ public:
    * @param angle_count     Index for angle bond storage.
    * @param dihedral_count  Index for dihedral bond storage.
    * @param p               Particle residing on this rank.
-   * @param owned_bonds     Bonds of the global bond topology, by owner.
+   * @param bond_storage    Global bond topology.
    */
-  void update_bond_storage(int &pair_count, int &angle_count,
-                           int &dihedral_count, Particle const &p,
-                           BondStorage::OwnedBonds const &owned_bonds);
+  void append_owned_bonds(int &pair_count, int &angle_count,
+                          int &dihedral_count, Particle const &p,
+                          BondStorage const &bond_storage);
 
   /**
    * @brief Reset local properties of the Verlet list.
@@ -1091,9 +1094,9 @@ public:
       execute_bond_handler(bs.dihedral_list, bs.dihedral_ids, bs.dihedral_count,
                            bond_kernel);
     } else {
-      auto const &owned_bonds = get_bond_storage().owned_bonds();
+      auto const &bond_storage = get_bond_storage();
       for (auto &p : local_particles()) {
-        execute_bond_handler(p, owned_bonds, bond_kernel);
+        execute_bond_handler(p, bond_storage, bond_kernel);
       }
     }
   }

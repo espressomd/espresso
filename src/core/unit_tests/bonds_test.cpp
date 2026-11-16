@@ -67,11 +67,21 @@ auto bonds_of(int pid) {
   return ::get_bonds_of_particle(System::get_system(), pid, any_bond);
 }
 
-/** @brief Sorted ids of the bonds visited by for_each_bond(). */
-template <BondEntries entries> auto visited_bond_ids(int pid) {
+/** @brief Sorted ids of the bonds a particle owns. */
+auto owned_bond_ids(int pid) {
   std::vector<int> bond_ids;
-  for_each_bond<entries>(
-      *System::get_system().bond_storage, pid,
+  System::get_system().bond_storage->for_each_owned_bond(
+      pid,
+      [&](BondStorage::Bond const &bond) { bond_ids.push_back(bond.bond_id); });
+  std::ranges::sort(bond_ids);
+  return bond_ids;
+}
+
+/** @brief Sorted ids of the bonds a particle participates in. */
+auto all_bond_ids(int pid) {
+  std::vector<int> bond_ids;
+  System::get_system().bond_storage->for_each_bond_with(
+      pid,
       [&](BondStorage::Bond const &bond) { bond_ids.push_back(bond.bond_id); });
   std::ranges::sort(bond_ids);
   return bond_ids;
@@ -136,33 +146,32 @@ BOOST_FIXTURE_TEST_CASE(bond_queries, RemoveAllParticles) {
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, angle_bond_id, {2, 1, 3});
 
-  using enum BondEntries;
   /* owned bonds: every bond is visited exactly once over all particles,
    * on its owner */
-  BOOST_CHECK((visited_bond_ids<owned>(1) == std::vector<int>{pair_bond_id}));
-  BOOST_CHECK((visited_bond_ids<owned>(2) == std::vector<int>{angle_bond_id}));
-  BOOST_CHECK(visited_bond_ids<owned>(3).empty());
+  BOOST_CHECK((owned_bond_ids(1) == std::vector<int>{pair_bond_id}));
+  BOOST_CHECK((owned_bond_ids(2) == std::vector<int>{angle_bond_id}));
+  BOOST_CHECK(owned_bond_ids(3).empty());
   /* all bonds: a bond is visited once per participant */
-  BOOST_CHECK((visited_bond_ids<all>(1) ==
-               std::vector<int>{pair_bond_id, angle_bond_id}));
-  BOOST_CHECK((visited_bond_ids<all>(2) ==
-               std::vector<int>{pair_bond_id, angle_bond_id}));
-  BOOST_CHECK((visited_bond_ids<all>(3) == std::vector<int>{angle_bond_id}));
-  BOOST_CHECK(visited_bond_ids<all>(4).empty());
+  BOOST_CHECK(
+      (all_bond_ids(1) == std::vector<int>{pair_bond_id, angle_bond_id}));
+  BOOST_CHECK(
+      (all_bond_ids(2) == std::vector<int>{pair_bond_id, angle_bond_id}));
+  BOOST_CHECK((all_bond_ids(3) == std::vector<int>{angle_bond_id}));
+  BOOST_CHECK(all_bond_ids(4).empty());
 
   /* the partners of an owned bond are in creation order */
-  for_each_bond(bond_storage, 2, [&](BondStorage::Bond const &bond) {
+  bond_storage.for_each_owned_bond(2, [&](BondStorage::Bond const &bond) {
     BOOST_REQUIRE_EQUAL(bond.partner_ids().size(), 2u);
     BOOST_CHECK_EQUAL(bond.partner_ids()[0], 1);
     BOOST_CHECK_EQUAL(bond.partner_ids()[1], 3);
   });
 
-  /* find_bond_id() */
+  /* find_owned_bond_id() and find_bond_id_with() */
   auto const is_angle = [=](int id) { return id == angle_bond_id; };
-  BOOST_CHECK(not find_bond_id(bond_storage, 1, is_angle));
-  BOOST_CHECK(find_bond_id<all>(bond_storage, 1, is_angle) == angle_bond_id);
-  BOOST_CHECK(find_bond_id(bond_storage, 2, is_angle) == angle_bond_id);
-  BOOST_CHECK(not find_bond_id<all>(bond_storage, 4, is_angle));
+  BOOST_CHECK(not find_owned_bond_id(bond_storage, 1, is_angle));
+  BOOST_CHECK(find_bond_id_with(bond_storage, 1, is_angle) == angle_bond_id);
+  BOOST_CHECK(find_owned_bond_id(bond_storage, 2, is_angle) == angle_bond_id);
+  BOOST_CHECK(not find_bond_id_with(bond_storage, 4, is_angle));
 
   /* pair_bond_exists() finds a pair bond whichever particle owns it */
   BOOST_CHECK(pair_bond_exists(bond_storage, 1, 2, pair_bond_id));

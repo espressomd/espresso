@@ -113,7 +113,7 @@ template <typename Pred>
 std::vector<BondTuple> get_bonds_of_particle(System::System const &system,
                                              int pid, Pred &&pred) {
   std::vector<BondTuple> bonds;
-  system.bond_storage->for_each_bond_of(
+  system.bond_storage->for_each_bond_with(
       pid, [&](BondStorage::Bond const &bond) {
         if (pred(bond)) {
           bonds.emplace_back(bond.bond_id,

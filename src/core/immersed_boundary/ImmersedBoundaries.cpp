@@ -84,7 +84,7 @@ void ImmersedBoundaries::init_volume_conservation(CellStructure &cs) {
 static IBMVolCons const *
 vol_cons_parameters(BondedInteractionsMap const &bonded_ias,
                     BondStorage const &bond_storage, Particle const &p1) {
-  auto const bond_id = find_bond_id(bond_storage, p1.id(), [&](int id) {
+  auto const bond_id = find_owned_bond_id(bond_storage, p1.id(), [&](int id) {
     return std::holds_alternative<IBMVolCons>(*bonded_ias.at(id));
   });
 

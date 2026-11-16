@@ -46,6 +46,9 @@
  * The bonds are stored per owner, in a table indexed by particle id, so
  * that the bonds a particle owns are found without any search. A bond is
  * found from its other participants through links to its owner.
+ *
+ * All read-only functions are safe to call concurrently, as long as the
+ * storage is not modified.
  */
 class BondStorage {
 public:
@@ -68,87 +71,11 @@ public:
     }
   };
 
-  /**
-   * @brief Read-only view of the pair, angle and dihedral bonds of each
-   * owner.
-   *
-   * Bonds without partners are not included. Always up to date with the
-   * storage, and safe to read concurrently as long as the storage is not
-   * modified.
-   */
-  class OwnedBonds {
-  public:
-    /** @brief Number of bonds owned by a particle, by number of partners. */
-    struct Counts {
-      int pair = 0;
-      int angle = 0;
-      int dihedral = 0;
-    };
-
-    /** @brief Number of pair, angle and dihedral bonds owned by a particle. */
-    Counts counts(int pid) const {
-      auto const *owner = find(pid);
-      return (owner) ? owner->counts : Counts{};
-    }
-
-    /**
-     * @brief Execute a kernel for the bonds owned by a particle, in
-     * insertion order.
-     *
-     * Over all particles, every bond is visited exactly once.
-     *
-     * @param pid     Particle id.
-     * @param kernel  Callable invoked as
-     *                <tt>kernel(int bond_id, std::span<const int>
-     *                partner_ids)</tt>, with the partners in creation order.
-     */
-    template <typename Kernel>
-    void for_each_bond_of(int pid, Kernel &&kernel) const {
-      if (auto const *owner = find(pid)) {
-        for (auto const &bond : owner->bonds) {
-          if (bond.particle_ids.size() > 1u) {
-            kernel(bond.bond_id, bond.partner_ids());
-          }
-        }
-      }
-    }
-
-  private:
-    friend class BondStorage;
-
-    struct Owner {
-      /** @brief Bonds owned by the particle, in insertion order. */
-      std::vector<Bond> bonds;
-      /** @brief Number of bonds in @ref bonds, by number of partners. */
-      Counts counts;
-
-      void update_counts(Bond const &bond, int delta) {
-        switch (bond.particle_ids.size()) {
-        case 2u:
-          counts.pair += delta;
-          break;
-        case 3u:
-          counts.angle += delta;
-          break;
-        case 4u:
-          counts.dihedral += delta;
-          break;
-        default:
-          break;
-        }
-      }
-    };
-
-    Owner const *find(int pid) const {
-      auto const i = static_cast<std::size_t>(pid);
-      return (pid >= 0 and i < m_owners.size()) ? &m_owners[i] : nullptr;
-    }
-    Owner *find(int pid) {
-      return const_cast<Owner *>(std::as_const(*this).find(pid));
-    }
-
-    /** @brief Bonds of every particle, indexed by particle id. */
-    std::vector<Owner> m_owners;
+  /** @brief Number of bonds owned by a particle, by number of partners. */
+  struct Counts {
+    int pair = 0;
+    int angle = 0;
+    int dihedral = 0;
   };
 
   /** @brief Number of bonds. */
@@ -156,7 +83,7 @@ public:
   bool empty() const { return size() == 0u; }
 
   void clear() {
-    m_owned_bonds.m_owners.clear();
+    m_owners.clear();
     m_links.clear();
     m_size = 0u;
   }
@@ -170,12 +97,11 @@ public:
     assert(bond_id >= 0);
     assert(not particle_ids.empty() and particle_ids.size() <= max_particles);
     assert(std::ranges::all_of(particle_ids, [](int pid) { return pid >= 0; }));
-    auto &owners = m_owned_bonds.m_owners;
     auto const owner_id = particle_ids[0];
-    if (static_cast<std::size_t>(owner_id) >= owners.size()) {
-      owners.resize(static_cast<std::size_t>(owner_id) + 1u);
+    if (static_cast<std::size_t>(owner_id) >= m_owners.size()) {
+      m_owners.resize(static_cast<std::size_t>(owner_id) + 1u);
     }
-    auto &owner = owners[static_cast<std::size_t>(owner_id)];
+    auto &owner = m_owners[static_cast<std::size_t>(owner_id)];
     auto &bond = owner.bonds.emplace_back();
     bond.bond_id = bond_id;
     bond.particle_ids.assign(particle_ids.begin(), particle_ids.end());
@@ -213,7 +139,7 @@ public:
       return out;
     };
     auto const wanted = sorted(particle_ids);
-    auto const remove_from = [&](OwnedBonds::Owner &owner) {
+    auto const remove_from = [&](Owner &owner) {
       auto const it = std::ranges::find_if(owner.bonds, [&](Bond const &bond) {
         return bond.bond_id == bond_id and
                bond.particle_ids.size() == wanted.size() and
@@ -226,7 +152,7 @@ public:
       return true;
     };
     auto const pid = particle_ids[0];
-    if (auto *owner = m_owned_bonds.find(pid)) {
+    if (auto *owner = find_owner(pid)) {
       if (remove_from(*owner)) {
         return true;
       }
@@ -234,7 +160,7 @@ public:
     if (auto const it = m_links.find(pid); it != m_links.end()) {
       for (auto const &link : it->second) {
         // the links are modified by a removal: leave the loop right after
-        if (remove_from(*m_owned_bonds.find(link.owner_id))) {
+        if (remove_from(*find_owner(link.owner_id))) {
           return true;
         }
       }
@@ -243,18 +169,60 @@ public:
   }
 
   /**
-   * @brief Execute a kernel for all bonds a particle participates in,
-   * whether it owns them or not.
+   * @brief Number of pair, angle and dihedral bonds owned by a particle,
+   * read in constant time.
+   */
+  Counts owned_counts(int pid) const {
+    auto const *owner = find_owner(pid);
+    return (owner) ? owner->counts : Counts{};
+  }
+
+  /**
+   * @brief Execute a kernel for the bonds a particle owns, i.e. where it
+   * is the first particle, in insertion order.
    *
-   * The bonds the particle owns are visited first, in insertion order.
-   * The storage must not be modified by the kernel.
+   * Over all particles, every bond is visited exactly once. Use for
+   * anything that evaluates, counts or exports bonds. The storage must not
+   * be modified by the kernel.
    *
    * @param pid     Particle id.
    * @param kernel  Callable invoked as <tt>kernel(Bond const &)</tt>.
    */
   template <typename Kernel>
-  void for_each_bond_of(int pid, Kernel &&kernel) const {
-    any_bond_of(pid, [&](Bond const &bond) {
+  void for_each_owned_bond(int pid, Kernel &&kernel) const {
+    if (auto const *owner = find_owner(pid)) {
+      for (auto const &bond : owner->bonds) {
+        kernel(bond);
+      }
+    }
+  }
+
+  /**
+   * @brief Check whether a particle owns a bond accepted by @p pred.
+   *
+   * @param pid   Particle id.
+   * @param pred  Callable <tt>bool(Bond const &)</tt>.
+   */
+  template <typename Pred> bool any_owned_bond(int pid, Pred &&pred) const {
+    auto const *owner = find_owner(pid);
+    return owner and std::ranges::any_of(owner->bonds, pred);
+  }
+
+  /**
+   * @brief Execute a kernel for all bonds a particle participates in,
+   * whether it owns them or not.
+   *
+   * A bond is visited once per participant. Use for questions about a
+   * particle's connectivity. The bonds the particle owns are visited
+   * first, in insertion order. The storage must not be modified by the
+   * kernel.
+   *
+   * @param pid     Particle id.
+   * @param kernel  Callable invoked as <tt>kernel(Bond const &)</tt>.
+   */
+  template <typename Kernel>
+  void for_each_bond_with(int pid, Kernel &&kernel) const {
+    any_bond_with(pid, [&](Bond const &bond) {
       kernel(bond);
       return false;
     });
@@ -262,36 +230,26 @@ public:
 
   /**
    * @brief Check whether a particle participates in a bond accepted by
-   * @p pred. Safe to call concurrently.
+   * @p pred, whether it owns it or not.
    *
    * @param pid   Particle id.
    * @param pred  Callable <tt>bool(Bond const &)</tt>.
    */
-  template <typename Pred> bool any_bond_of(int pid, Pred &&pred) const {
-    if (auto const *owner = m_owned_bonds.find(pid)) {
-      if (std::ranges::any_of(owner->bonds, pred)) {
-        return true;
-      }
+  template <typename Pred> bool any_bond_with(int pid, Pred &&pred) const {
+    if (any_owned_bond(pid, pred)) {
+      return true;
     }
     auto const it = m_links.find(pid);
     if (it == m_links.end()) {
       return false;
     }
     return std::ranges::any_of(it->second, [&](Link const &link) {
-      auto const &bonds = m_owned_bonds.find(link.owner_id)->bonds;
+      auto const &bonds = find_owner(link.owner_id)->bonds;
       return std::ranges::any_of(bonds, [&](Bond const &bond) {
         return bond.has_participant(pid) and pred(bond);
       });
     });
   }
-
-  /**
-   * @brief The bonds of each owner, for fast traversal.
-   *
-   * The returned object is safe to read concurrently, as long as the
-   * storage is not modified.
-   */
-  OwnedBonds const &owned_bonds() const { return m_owned_bonds; }
 
   /**
    * @brief Execute a kernel for all bonds.
@@ -301,7 +259,7 @@ public:
    * @param kernel  Callable invoked as <tt>kernel(Bond const &)</tt>.
    */
   template <typename Kernel> void for_each_bond(Kernel &&kernel) const {
-    for (auto const &owner : m_owned_bonds.m_owners) {
+    for (auto const &owner : m_owners) {
       for (auto const &bond : owner.bonds) {
         kernel(bond);
       }
@@ -309,12 +267,43 @@ public:
   }
 
 private:
+  struct Owner {
+    /** @brief Bonds owned by the particle, in insertion order. */
+    std::vector<Bond> bonds;
+    /** @brief Number of bonds in @ref bonds, by number of partners. */
+    Counts counts;
+
+    void update_counts(Bond const &bond, int delta) {
+      switch (bond.particle_ids.size()) {
+      case 2u:
+        counts.pair += delta;
+        break;
+      case 3u:
+        counts.angle += delta;
+        break;
+      case 4u:
+        counts.dihedral += delta;
+        break;
+      default:
+        break;
+      }
+    }
+  };
+
   /** @brief Bonds of an owner in which another particle participates. */
   struct Link {
     int owner_id;
     /** @brief Number of such bonds. */
     int n_bonds;
   };
+
+  Owner const *find_owner(int pid) const {
+    auto const i = static_cast<std::size_t>(pid);
+    return (pid >= 0 and i < m_owners.size()) ? &m_owners[i] : nullptr;
+  }
+  Owner *find_owner(int pid) {
+    return const_cast<Owner *>(std::as_const(*this).find_owner(pid));
+  }
 
   /**
    * @brief Execute a kernel for the participants of a bond that reach it
@@ -331,8 +320,7 @@ private:
     }
   }
 
-  void erase_bond(OwnedBonds::Owner &owner,
-                  std::vector<Bond>::iterator bond_it) {
+  void erase_bond(Owner &owner, std::vector<Bond>::iterator bond_it) {
     auto const bond = *bond_it;
     // keep the relative order of the remaining bonds of the owner
     owner.bonds.erase(bond_it);
@@ -352,8 +340,9 @@ private:
     --m_size;
   }
 
-  /** @brief Bonds, stored with their owner. */
-  OwnedBonds m_owned_bonds;
+  /** @brief Bonds of every particle that owns some, indexed by particle
+   *  id. */
+  std::vector<Owner> m_owners;
   /** @brief For every particle, the owners of the bonds it participates in
    *  without owning them. */
   std::unordered_map<int, std::vector<Link>> m_links;

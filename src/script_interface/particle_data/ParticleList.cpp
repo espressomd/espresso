@@ -69,7 +69,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   auto const &bond_storage = *system.bond_storage;
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
-    for_each_bond(bond_storage, pid1, [&](BondStorage::Bond const &bond) {
+    bond_storage.for_each_owned_bond(pid1, [&](BondStorage::Bond const &bond) {
       if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {

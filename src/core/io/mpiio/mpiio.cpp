@@ -299,9 +299,10 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
       auto const &bond_storage = *System::get_system().bond_storage;
       for (auto const &p : particles) {
         BondList bond_list;
-        for_each_bond(bond_storage, p.id(), [&](BondStorage::Bond const &b) {
-          bond_list.insert(BondView{b.bond_id, b.partner_ids()});
-        });
+        bond_storage.for_each_owned_bond(
+            p.id(), [&](BondStorage::Bond const &b) {
+              bond_list.insert(BondView{b.bond_id, b.partner_ids()});
+            });
         bond_archiver << bond_list;
       }
     }

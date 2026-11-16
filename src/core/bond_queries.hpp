@@ -37,69 +37,46 @@
 #include <optional>
 #include <utility>
 
-/** @brief Which bonds of a particle to visit. */
-enum class BondEntries {
-  /**
-   * Only the bonds this particle owns, i.e. where it is the first
-   * particle. Over all particles, every bond is visited exactly once. Use
-   * for anything that evaluates, counts or exports bonds.
-   */
-  owned,
-  /**
-   * Every bond this particle participates in, whether it owns it or not.
-   * A bond is visited once per participant. Use for questions about a
-   * particle's connectivity.
-   */
-  all,
-};
-
 /**
- * @brief Execute a kernel for the bonds of a particle.
+ * @brief Find the first bond owned by a particle whose bond id is accepted
+ * by @p pred.
  *
- * @tparam entries      Which bonds to visit, see @ref BondEntries.
- * @param bond_storage  Global bond topology.
- * @param pid           Particle id.
- * @param kernel        Callable invoked as
- *                      <tt>kernel(BondStorage::Bond const &)</tt>.
- */
-template <BondEntries entries = BondEntries::owned, typename Kernel>
-inline void for_each_bond(BondStorage const &bond_storage, int pid,
-                          Kernel &&kernel) {
-  bond_storage.for_each_bond_of(pid, [&](BondStorage::Bond const &bond) {
-    if constexpr (entries == BondEntries::owned) {
-      if (bond.owner_id() != pid) {
-        return;
-      }
-    }
-    kernel(bond);
-  });
-}
-
-/**
- * @brief Find the first bond of a particle whose bond id is accepted by
- * @p pred.
- *
- * @tparam entries      Which bonds to search, see @ref BondEntries.
  * @param bond_storage  Global bond topology.
  * @param pid           Particle id.
  * @param pred          Callable <tt>bool(int bond_id)</tt>.
  * @return The bond id, if any.
  */
-template <BondEntries entries = BondEntries::owned, typename Pred>
-inline std::optional<int> find_bond_id(BondStorage const &bond_storage, int pid,
-                                       Pred &&pred) {
+template <typename Pred>
+inline std::optional<int> find_owned_bond_id(BondStorage const &bond_storage,
+                                             int pid, Pred &&pred) {
   std::optional<int> result;
-  bond_storage.any_bond_of(pid, [&](BondStorage::Bond const &bond) {
-    if constexpr (entries == BondEntries::owned) {
-      if (bond.owner_id() != pid) {
-        return false;
-      }
-    }
+  bond_storage.any_owned_bond(pid, [&](BondStorage::Bond const &bond) {
     if (pred(bond.bond_id)) {
       result = bond.bond_id;
-      return true;
     }
-    return false;
+    return result.has_value();
+  });
+  return result;
+}
+
+/**
+ * @brief Find the first bond a particle participates in, whether it owns
+ * it or not, whose bond id is accepted by @p pred.
+ *
+ * @param bond_storage  Global bond topology.
+ * @param pid           Particle id.
+ * @param pred          Callable <tt>bool(int bond_id)</tt>.
+ * @return The bond id, if any.
+ */
+template <typename Pred>
+inline std::optional<int> find_bond_id_with(BondStorage const &bond_storage,
+                                            int pid, Pred &&pred) {
+  std::optional<int> result;
+  bond_storage.any_bond_with(pid, [&](BondStorage::Bond const &bond) {
+    if (pred(bond.bond_id)) {
+      result = bond.bond_id;
+    }
+    return result.has_value();
   });
   return result;
 }
@@ -120,7 +97,7 @@ inline bool pair_bond_exists(BondStorage const &bond_storage, int pid1,
   if (pid1 == pid2) {
     return false;
   }
-  return bond_storage.any_bond_of(pid1, [&](BondStorage::Bond const &bond) {
+  return bond_storage.any_bond_with(pid1, [&](BondStorage::Bond const &bond) {
     return bond.particle_ids.size() == 2u and bond.has_participant(pid2) and
            pred(bond.bond_id);
   });

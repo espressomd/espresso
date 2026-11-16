@@ -49,7 +49,7 @@ auto all_bonds(BondStorage const &storage) {
 /** @brief Bonds of a particle, in the order they are visited. */
 auto bonds_of(BondStorage const &storage, int pid) {
   std::vector<Tuple> bonds;
-  storage.for_each_bond_of(pid, [&](BondStorage::Bond const &bond) {
+  storage.for_each_bond_with(pid, [&](BondStorage::Bond const &bond) {
     bonds.push_back(as_tuple(bond));
   });
   return bonds;
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(add_and_query) {
   BOOST_CHECK(bonds_of(storage, 6).empty());
 
   /* accessors */
-  storage.for_each_bond_of(3, [](BondStorage::Bond const &bond) {
+  storage.for_each_bond_with(3, [](BondStorage::Bond const &bond) {
     BOOST_CHECK(bond.has_participant(3));
     BOOST_CHECK(not bond.has_participant(5));
     BOOST_CHECK_EQUAL(bond.owner_id(), bond.particle_ids.front());
@@ -210,14 +210,14 @@ BOOST_AUTO_TEST_CASE(owned_bonds) {
   /* bonds owned by a particle, in the order they are visited */
   auto const owned_by = [](BondStorage const &storage, int pid) {
     std::vector<Tuple> bonds;
-    storage.owned_bonds().for_each_bond_of(
-        pid, [&](int bond_id, std::span<const int> partner_ids) {
-          bonds.push_back({bond_id, {partner_ids.begin(), partner_ids.end()}});
-        });
+    storage.for_each_owned_bond(pid, [&](BondStorage::Bond const &bond) {
+      auto const partner_ids = bond.partner_ids();
+      bonds.push_back({bond.bond_id, {partner_ids.begin(), partner_ids.end()}});
+    });
     return bonds;
   };
   auto const counts = [](BondStorage const &storage, int pid) {
-    auto const c = storage.owned_bonds().counts(pid);
+    auto const c = storage.owned_counts(pid);
     return std::vector<int>{c.pair, c.angle, c.dihedral};
   };
 
@@ -230,7 +230,7 @@ BOOST_AUTO_TEST_CASE(owned_bonds) {
   add(storage, 0, {2, 1});
   add(storage, 1, {2, 1, 3});
   add(storage, 2, {4, 3, 2, 1});
-  add(storage, 3, {5}); // bonds without partners are not included
+  add(storage, 3, {5}); // bond without partners: owned, but not counted
   add(storage, 0, {2, 7});
   add(storage, 4, {2, 6, 5});
   add(storage, 0, {1, 2});
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(owned_bonds) {
   BOOST_CHECK((owned_by(storage, 1) == std::vector<Tuple>{{0, {2}}}));
   BOOST_CHECK((owned_by(storage, 4) == std::vector<Tuple>{{2, {3, 2, 1}}}));
   BOOST_CHECK(owned_by(storage, 3).empty());
-  BOOST_CHECK(owned_by(storage, 5).empty());
+  BOOST_CHECK((owned_by(storage, 5) == std::vector<Tuple>{{3, {}}}));
   BOOST_CHECK(owned_by(storage, 7).empty());
   BOOST_CHECK(owned_by(storage, 100).empty());
   BOOST_CHECK((counts(storage, 2) == std::vector<int>{2, 2, 0}));
@@ -251,12 +251,23 @@ BOOST_AUTO_TEST_CASE(owned_bonds) {
   BOOST_CHECK((counts(storage, 5) == std::vector<int>{0, 0, 0}));
   BOOST_CHECK((counts(storage, 100) == std::vector<int>{0, 0, 0}));
 
-  /* over all particles, every bond with partners is visited once */
+  /* over all particles, every bond is visited once */
   std::size_t n_bonds = 0u;
   for (int pid = 0; pid < 10; ++pid) {
     n_bonds += owned_by(storage, pid).size();
   }
-  BOOST_CHECK_EQUAL(n_bonds, storage.size() - 1u);
+  BOOST_CHECK_EQUAL(n_bonds, storage.size());
+
+  /* any_owned_bond() only considers the bonds a particle owns */
+  auto const has_id = [](int bond_id) {
+    return
+        [=](BondStorage::Bond const &bond) { return bond.bond_id == bond_id; };
+  };
+  BOOST_CHECK(storage.any_owned_bond(2, has_id(1)));
+  BOOST_CHECK(not storage.any_owned_bond(1, has_id(1)));
+  BOOST_CHECK(storage.any_bond_with(1, has_id(1)));
+  BOOST_CHECK(not storage.any_owned_bond(100, has_id(1)));
+  BOOST_CHECK(not storage.any_owned_bond(-1, has_id(1)));
 
   /* the view follows modifications of the storage */
   BOOST_CHECK(remove(storage, 0, {2, 1}));

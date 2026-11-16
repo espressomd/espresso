@@ -66,11 +66,12 @@ void ClusterStructure::run_for_bonded_particles() {
   auto const &bond_storage = *System::get_system().bond_storage;
   for (const auto &p : partCfg) {
     // owned bonds: every pair bond is added once
-    for_each_bond(bond_storage, p.id(), [&](BondStorage::Bond const &bond) {
-      if (bond.partner_ids().size() == 1) {
-        add_pair(p, get_particle_data(bond.partner_ids()[0]));
-      }
-    });
+    bond_storage.for_each_owned_bond(
+        p.id(), [&](BondStorage::Bond const &bond) {
+          if (bond.partner_ids().size() == 1) {
+            add_pair(p, get_particle_data(bond.partner_ids()[0]));
+          }
+        });
   }
 
   merge_clusters();
