@@ -148,12 +148,12 @@ Observable_stat const &System::calculate_energy() {
   auto &bs = cell_structure->bond_state();
   BondsEnergyKernelData bonds_e_data{*bonded_ias, *box_geo, local_energy,
                                      layout, cell_structure->get_aosoa()};
-  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pair_list, bs.pair_ids,
-                                       get_ptr(coulomb_kernel)};
-  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angle_list,
-                                         bs.angle_ids};
-  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedral_list,
-                                          bs.dihedral_ids};
+  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pairs.list,
+                                       bs.pairs.ids, get_ptr(coulomb_kernel)};
+  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angles.list,
+                                         bs.angles.ids};
+  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedrals.list,
+                                          bs.dihedrals.ids};
 
   cabana_short_range(pair_be_kernel, angle_be_kernel, dih_be_kernel,
                      pair_e_kernel, *cell_structure, get_interaction_range(),

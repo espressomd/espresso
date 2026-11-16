@@ -621,9 +621,9 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         init_n_pairs = 2;
       }
     }
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(), init_n_pairs);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
-    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
+    BOOST_CHECK_EQUAL(cs.bond_state().pairs.count, init_n_pairs);
+    BOOST_CHECK_EQUAL(cs.bond_state().angles.count, init_n_angles);
+    BOOST_CHECK_EQUAL(cs.bond_state().dihedrals.count, init_n_dihes);
 #ifdef ESPRESSO_COLLISION_DETECTION
     auto const has_particles = [&cs](std::vector<int> const &pids) {
       return std::ranges::all_of(pids, [&cs](int pid) {
@@ -639,33 +639,29 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
     if (n_new_pairs) {
       cs.add_new_bond(2, pair_pids); // local update
     }
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(),
-                      init_n_pairs + n_new_pairs);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
-    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
+    BOOST_CHECK_EQUAL(cs.bond_state().pairs.count, init_n_pairs + n_new_pairs);
+    BOOST_CHECK_EQUAL(cs.bond_state().angles.count, init_n_angles);
+    BOOST_CHECK_EQUAL(cs.bond_state().dihedrals.count, init_n_dihes);
     if (n_new_angles) {
       cs.add_new_bond(3, angle_pids); // local update
     }
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(),
-                      init_n_pairs + n_new_pairs);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(),
+    BOOST_CHECK_EQUAL(cs.bond_state().pairs.count, init_n_pairs + n_new_pairs);
+    BOOST_CHECK_EQUAL(cs.bond_state().angles.count,
                       init_n_angles + n_new_angles);
-    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
+    BOOST_CHECK_EQUAL(cs.bond_state().dihedrals.count, init_n_dihes);
     if (n_new_dihes) {
       cs.add_new_bond(4, dihe_pids); // local update
     }
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(),
-                      init_n_pairs + n_new_pairs);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(),
+    BOOST_CHECK_EQUAL(cs.bond_state().pairs.count, init_n_pairs + n_new_pairs);
+    BOOST_CHECK_EQUAL(cs.bond_state().angles.count,
                       init_n_angles + n_new_angles);
-    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(),
+    BOOST_CHECK_EQUAL(cs.bond_state().dihedrals.count,
                       init_n_dihes + n_new_dihes);
     cs.clear_new_bonds();
-    cs.set_local_bond_numbers(init_n_pairs, init_n_angles, init_n_dihes);
     cs.rebuild_bond_list();
-    BOOST_CHECK_EQUAL(cs.get_local_pair_bond_numbers(), init_n_pairs);
-    BOOST_CHECK_EQUAL(cs.get_local_angle_bond_numbers(), init_n_angles);
-    BOOST_CHECK_EQUAL(cs.get_local_dihedral_bond_numbers(), init_n_dihes);
+    BOOST_CHECK_EQUAL(cs.bond_state().pairs.count, init_n_pairs);
+    BOOST_CHECK_EQUAL(cs.bond_state().angles.count, init_n_angles);
+    BOOST_CHECK_EQUAL(cs.bond_state().dihedrals.count, init_n_dihes);
 #endif // ESPRESSO_COLLISION_DETECTION
   }
 

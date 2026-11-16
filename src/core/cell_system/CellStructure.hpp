@@ -562,13 +562,14 @@ public:
   std::size_t get_num_local_particles_cached() const {
     return m_num_local_particles_cached;
   }
-  int get_local_pair_bond_numbers() const;
-  int get_local_angle_bond_numbers() const;
-  int get_local_dihedral_bond_numbers() const;
-  void set_local_bond_numbers(int p, int a, int d);
 #ifdef ESPRESSO_COLLISION_DETECTION
+  /** @brief Forget the bonds added to the flat bond lists with
+   *  @ref add_new_bond() since the last @ref rebuild_bond_list(). */
   void clear_new_bonds();
+  /** @brief Add a bond between particles known on this rank to the flat
+   *  bond lists (@ref LocalBondState), without rebuilding them. */
   void add_new_bond(int bond_id, std::vector<int> const &particle_ids);
+  /** @brief Store the bonds added with @ref add_new_bond(). */
   void rebuild_bond_list();
 #endif // ESPRESSO_COLLISION_DETECTION
 
@@ -798,24 +799,22 @@ private:
 
   /**
    * @brief Execute kernel for every bond of a flat bond list.
-   * @param bond_list  One of the bond lists of @ref LocalBondState, holding
-   *                   one row of indices into the unique particles per bond.
-   * @param bond_ids   Bond ids matching the rows of @p bond_list.
-   * @param n_bonds    Number of bonds in the list.
-   * @param handler    See the overload taking a particle.
+   * @param bonds    One of the bond lists of @ref LocalBondState, holding
+   *                 one row of indices into the unique particles per bond.
+   * @param handler  See the overload taking a particle.
    */
-  template <typename BondListT>
-  void execute_bond_handler(BondListT const &bond_list, auto const &bond_ids,
-                            int n_bonds, auto const &handler) {
-    constexpr auto n_partners = BondListT::static_extent(1) - 1u;
-    for (int i = 0; i < n_bonds; ++i) {
+  template <std::size_t N>
+  void execute_bond_handler(LocalBondList<N> const &bonds,
+                            auto const &handler) {
+    constexpr auto n_partners = N - 1u;
+    for (int i = 0; i < bonds.count; ++i) {
       std::array<Particle *, n_partners> partners;
       for (std::size_t j = 0u; j < n_partners; ++j) {
-        partners[j] = m_unique_particles[bond_list(i, j + 1u)];
+        partners[j] = m_unique_particles[bonds.list(i, j + 1u)];
       }
-      auto &p = *m_unique_particles[bond_list(i, 0)];
+      auto &p = *m_unique_particles[bonds.list(i, 0)];
       auto const bond_broken =
-          handler(p, bond_ids(i), std::span<Particle *>(partners));
+          handler(p, bonds.ids(i), std::span<Particle *>(partners));
       if (bond_broken) {
         std::array<int, n_partners> partner_ids;
         std::ranges::transform(partners, partner_ids.begin(),
@@ -963,16 +962,13 @@ public:
 
   /**
    * @brief Append the bonds owned by a particle to the flat bond lists
-   * (@ref LocalBondState), as particle ids.
-   * @param pair_count      Index for pair bond storage.
-   * @param angle_count     Index for angle bond storage.
-   * @param dihedral_count  Index for dihedral bond storage.
-   * @param p               Particle residing on this rank.
-   * @param bond_storage    Global bond topology.
+   * (@ref LocalBondState), as particle ids. Safe to call concurrently.
+   * Bonds whose partners are not known on this rank are reported and not
+   * stored.
+   * @param p             Particle residing on this rank.
+   * @param bond_storage  Global bond topology.
    */
-  void append_owned_bonds(int &pair_count, int &angle_count,
-                          int &dihedral_count, Particle const &p,
-                          BondStorage const &bond_storage);
+  void append_owned_bonds(Particle const &p, BondStorage const &bond_storage);
 
   /**
    * @brief Reset local properties of the Verlet list.
@@ -1087,12 +1083,9 @@ public:
   template <class BondKernel> void bond_loop(BondKernel const &bond_kernel) {
     if (are_local_bond_lists_valid()) {
       auto const &bs = *m_bond_state;
-      execute_bond_handler(bs.pair_list, bs.pair_ids, bs.pair_count,
-                           bond_kernel);
-      execute_bond_handler(bs.angle_list, bs.angle_ids, bs.angle_count,
-                           bond_kernel);
-      execute_bond_handler(bs.dihedral_list, bs.dihedral_ids, bs.dihedral_count,
-                           bond_kernel);
+      execute_bond_handler(bs.pairs, bond_kernel);
+      execute_bond_handler(bs.angles, bond_kernel);
+      execute_bond_handler(bs.dihedrals, bond_kernel);
     } else {
       auto const &bond_storage = get_bond_storage();
       for (auto &p : local_particles()) {

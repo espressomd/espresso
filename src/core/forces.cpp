@@ -494,11 +494,11 @@ void System::System::calculate_forces() {
   auto &bs = cell_structure->bond_state();
   auto bonds_kernel_data = create_kokkos_bonds_kernel_data(*this);
   auto pair_bonds_kernel = PairBondsKernel{
-      bonds_kernel_data, bs.pair_list, bs.pair_ids, get_ptr(coulomb_kernel)};
+      bonds_kernel_data, bs.pairs.list, bs.pairs.ids, get_ptr(coulomb_kernel)};
   auto angle_bonds_kernel =
-      AngleBondsKernel{bonds_kernel_data, bs.angle_list, bs.angle_ids};
-  auto dihedral_bonds_kernel =
-      DihedralBondsKernel{bonds_kernel_data, bs.dihedral_list, bs.dihedral_ids};
+      AngleBondsKernel{bonds_kernel_data, bs.angles.list, bs.angles.ids};
+  auto dihedral_bonds_kernel = DihedralBondsKernel{
+      bonds_kernel_data, bs.dihedrals.list, bs.dihedrals.ids};
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
@@ -543,9 +543,7 @@ void System::System::calculate_forces() {
   }
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_NPT
-  auto const have_bonds = cell_structure->get_local_pair_bond_numbers() > 0 or
-                          cell_structure->get_local_angle_bond_numbers() > 0 or
-                          cell_structure->get_local_dihedral_bond_numbers() > 0;
+  auto const have_bonds = not cell_structure->bond_state().empty();
   if (generic_pair_path or
       (bonded_ias->maximal_cutoff() >= 0. and have_bonds)) {
     cell_structure->mark_virial_replicas_dirty();

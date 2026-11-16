@@ -285,46 +285,23 @@ BondStorage const &CellStructure::get_bond_storage() const {
   return *get_system().bond_storage;
 }
 
-void CellStructure::append_owned_bonds(int &pair_count, int &angle_count,
-                                       int &dihedral_count, Particle const &p,
+void CellStructure::append_owned_bonds(Particle const &p,
                                        BondStorage const &bond_storage) {
-  auto &pair_list = m_bond_state->pair_list;
-  auto &pair_ids = m_bond_state->pair_ids;
-  auto &angle_list = m_bond_state->angle_list;
-  auto &angle_ids = m_bond_state->angle_ids;
-  auto &dihedral_list = m_bond_state->dihedral_list;
-  auto &dihedral_ids = m_bond_state->dihedral_ids;
   // Owned bonds only: every bond enters the flat lists exactly once.
   // The analyzer reports a false positive in the Kokkos bounds-check error
-  // formatting of the View accesses below (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK);
-  // it anchors the report at this call, which therefore carries the NOLINT.
+  // formatting of the View accesses in LocalBondList::append()
+  // (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK); it anchors the report at this call,
+  // which therefore carries the NOLINT.
   // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
   bond_storage.for_each_owned_bond(p.id(), [&](auto const &bond) {
-    auto const bond_id = bond.bond_id;
-    auto const partner_ids = bond.partner_ids();
     try {
-      auto const partners = resolve_bond_partners(partner_ids);
-      if (partners.size() == 1u) { // pair bonds
-        auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
-        pair_list(p_index, 0) = p.id();
-        pair_list(p_index, 1) = partners[0]->id();
-        pair_ids(p_index) = bond_id;
-      } else if (partners.size() == 2u) { // angle bond
-        auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
-        angle_list(a_index, 0) = p.id();
-        angle_list(a_index, 1) = partners[0]->id();
-        angle_list(a_index, 2) = partners[1]->id();
-        angle_ids(a_index) = bond_id;
-      } else if (partners.size() == 3u) { // dihedral bond
-        auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
-        dihedral_list(d_index, 0) = p.id();
-        dihedral_list(d_index, 1) = partners[0]->id();
-        dihedral_list(d_index, 2) = partners[1]->id();
-        dihedral_list(d_index, 3) = partners[2]->id();
-        dihedral_ids(d_index) = bond_id;
-      }
+      // the partners must be known on this rank
+      [[maybe_unused]] auto const partners =
+          resolve_bond_partners(bond.partner_ids());
+      m_bond_state->append(
+          bond.bond_id, {bond.particle_ids.data(), bond.particle_ids.size()});
     } catch (BondResolutionError const &) {
-      bond_resolution_error(partner_ids);
+      bond_resolution_error(bond.partner_ids());
     }
   });
 }
@@ -340,7 +317,6 @@ void CellStructure::set_index_map() {
   using execution_space = Kokkos::DefaultHostExecutionSpace;
   int n_threads = execution_space().concurrency();
 
-  m_bond_state->reset_counts();
   // one cache line per thread: these counters are written on every particle,
   // so packing them into shared cache lines makes the sweep bounce lines
   // between L3 domains
@@ -378,8 +354,7 @@ void CellStructure::set_index_map() {
     dihedral_count += counts.dihedral;
     max_id = std::max(counts.max_id, max_id);
   }
-  set_local_bond_numbers(pair_count, angle_count, dihedral_count);
-  m_bond_state->allocate();
+  m_bond_state->allocate(pair_count, angle_count, dihedral_count);
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
     if (not local_particle or not local_particle->is_ghost()) {
@@ -523,26 +498,13 @@ int CellStructure::get_max_local_particle_id() const {
   return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
-int CellStructure::get_local_pair_bond_numbers() const {
-  return m_bond_state->pair_count;
-}
-int CellStructure::get_local_angle_bond_numbers() const {
-  return m_bond_state->angle_count;
-}
-int CellStructure::get_local_dihedral_bond_numbers() const {
-  return m_bond_state->dihedral_count;
-}
-void CellStructure::set_local_bond_numbers(int pair_value, int angle_value,
-                                           int dihedral_value) {
-  m_bond_state->set_counts(pair_value, angle_value, dihedral_value);
-}
 #ifdef ESPRESSO_COLLISION_DETECTION
-void CellStructure::clear_new_bonds() { m_bond_state->clear_new_bonds(); }
+void CellStructure::clear_new_bonds() { m_bond_state->discard_new_bonds(); }
 void CellStructure::add_new_bond(int bond_id,
                                  std::vector<int> const &particle_ids) {
   m_bond_state->add_new_bond(bond_id, particle_ids, get_id_to_index());
 }
-void CellStructure::rebuild_bond_list() { m_bond_state->rebuild(); }
+void CellStructure::rebuild_bond_list() { m_bond_state->merge_new_bonds(); }
 #endif // ESPRESSO_COLLISION_DETECTION
 
 void CellStructure::remove_all_particles() {
