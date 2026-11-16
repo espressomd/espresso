@@ -248,10 +248,30 @@ class StokesianThermostat(ut.TestCase):
         p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
                             director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
                             ext_torque=[0.5, -0.5, 2.])
-        ref = np.array([7.1318334, 1.39379095, 3.89043016]) / 100.
+        ref_omega = np.array([7.1318334, 1.39379095, 3.89043016]) / 100.
         for i in range(3):
             system.integrator.run(1, recalc_forces=(i == 1))
-            np.testing.assert_allclose(np.copy(p.omega_lab), ref, rtol=5e-6)
+            omega_lab = np.copy(p.omega_lab)
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=5e-6)
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
+    def test_body_lab_vs_relative(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = 1e-6
+        system.thermostat.set_stokesian(kT=0., seed=42)
+        system.integrator.set_stokesian_dynamics(viscosity=2., radii={0: 0.8})
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5)
+        p_vs = system.part.add(
+            pos=[0.5, 0.2, -0.3], rotation=3 * [True], ext_force=[0.5, -0.5, 2.])
+        p_vs.vs_auto_relate_to(p)
+
+        ref_omega = np.array([-1.7761976, -1.9741621, 3.96334347]) / 100.
+        for i in range(3):
+            system.integrator.run(1, recalc_forces=(i == 1))
+            omega_lab = np.copy(p.omega_lab)
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-6)
 
 
 if __name__ == "__main__":

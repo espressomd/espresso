@@ -459,7 +459,7 @@ class LangevinThermostat(ut.TestCase):
     def test_body_lab_conversion(self):
         system = self.system
         system.time = 0.
-        system.time_step = time_step = 1e-6
+        system.time_step = dt = 1e-6
         system.thermostat.set_langevin(
             kT=0., gamma=5., gamma_rotation=5., seed=42)
         system.integrator.set_vv()
@@ -470,8 +470,32 @@ class LangevinThermostat(ut.TestCase):
         for i in range(4):
             system.integrator.run(1, recalc_forces=(i == 2))
             omega_lab = np.copy(p.omega_lab)
-            ref = ext_torque / 5. * (1. - np.exp(-5. * system.time))
-            np.testing.assert_allclose(omega_lab, ref, rtol=10. * time_step)
+            ref_omega = ext_torque / 5. * (1. - np.exp(-5. * system.time))
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=10. * dt)
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
+    def test_body_lab_vs_relative(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = dt = 1e-6
+        system.thermostat.set_langevin(
+            kT=0., gamma=5., gamma_rotation=5., seed=42)
+        system.integrator.set_vv()
+        ext_force = np.array([1., -0.5, 2.])
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5)
+        p_vs = system.part.add(
+            pos=[0.5, 0.2, -0.3], rotation=3 * [True], ext_force=ext_force)
+        p_vs.vs_auto_relate_to(p)
+
+        for i in range(4):
+            system.integrator.run(1, recalc_forces=(i == 2))
+            omega_lab = np.copy(p.omega_lab)
+            torque_lab = np.copy(p.torque_lab)
+            ref_torque = np.cross(np.copy(p_vs.pos - p.pos), ext_force)
+            ref_omega = ref_torque / 5. * (1. - np.exp(-5. * system.time))
+            np.testing.assert_allclose(torque_lab, ref_torque, rtol=100. * dt)
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=10. * dt)
 
 
 if __name__ == "__main__":

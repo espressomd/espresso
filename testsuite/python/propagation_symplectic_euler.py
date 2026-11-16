@@ -110,6 +110,30 @@ class SymplecticEuler(ut.TestCase):
                 np.testing.assert_allclose(omega_lab, ref, rtol=1e-10)
                 np.testing.assert_allclose(torque_lab, ext_torque, rtol=1e-10)
 
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
+    def test_body_lab_vs_relative(self):
+        system = self.system
+        for integrator_name in ["vv", "symplectic_euler"]:
+            system.time = 0.
+            system.time_step = 1e-6
+            getattr(system.integrator, f"set_{integrator_name}")()
+            system.part.clear()
+            ext_force = np.array([1., -0.5, 2.])
+            p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                                director=np.array([1., 0.5, 0.3]) / 1.34**0.5)
+            p_vs = system.part.add(
+                pos=[0.5, 0.2, -0.3], rotation=3 * [True], ext_force=ext_force)
+            p_vs.vs_auto_relate_to(p)
+
+            for i in range(4):
+                system.integrator.run(1, recalc_forces=(i == 2))
+                omega_lab = np.copy(p.omega_lab)
+                torque_lab = np.copy(p.torque_lab)
+                ref_torque = np.cross(np.copy(p_vs.pos - p.pos), ext_force)
+                ref_omega = ref_torque * system.time
+                np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
+                np.testing.assert_allclose(torque_lab, ref_torque, rtol=1e-10)
+
     @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
     def test_torque_lab_for_zero_steps(self):
         """
