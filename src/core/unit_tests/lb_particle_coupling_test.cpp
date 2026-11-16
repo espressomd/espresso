@@ -199,7 +199,8 @@ BOOST_FIXTURE_TEST_CASE(rng, CleanupActorLB) {
   thermostat.gamma = 0.2;
   espresso::set_lb_kT(1.);
 
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
   BOOST_CHECK_EQUAL(thermostat.rng_counter(), 11ul);
   BOOST_CHECK(not thermostat.is_seed_required());
@@ -227,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE(rng, CleanupActorLB) {
 
   espresso::set_lb_kT(0.);
   LB::ParticleCoupling coupling_unthermalized{thermostat, lb, box_geo,
-                                              local_box};
+                                              local_box, params.time_step};
   auto const step3_norandom =
       coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
@@ -274,7 +275,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   // swimmer coupling
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                    params.time_step};
       coupling.kernel({&p});
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
@@ -328,7 +330,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
   Particle p{};
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   auto expected = coupling.get_noise_term(p);
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
@@ -390,7 +393,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   auto expected = Utils::Vector3d{};
   {
     auto const p_opt = copy_particle_to_head_node(comm, system, pid);
