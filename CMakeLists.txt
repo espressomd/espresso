@@ -1087,8 +1087,30 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
+  # runtime headers of the generated kernels: from the pystencils package of the
+  # Python environment (see requirements.txt), else from its sources
+  find_package(Pystencils 2.1...<2.2 QUIET)
+  if(NOT Pystencils_FOUND)
+    message(STATUS "Fetching the pystencils runtime headers")
+    # cmake-format: off
+    FetchContent_Declare(
+      pystencils
+      GIT_REPOSITORY https://gitos.rrze.fau.de/cs10/pycodegen/pystencils.git
+      GIT_TAG        release/2.1
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SOURCE_SUBDIR  src/pystencils/include  # header-only, not a CMake project
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(pystencils)
+    add_library(Pystencils::runtime INTERFACE IMPORTED)
+    set_target_properties(
+      Pystencils::runtime
+      PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
+                 "${pystencils_SOURCE_DIR}/src/pystencils/include")
+  endif()
   if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/walberla-src)
-    find_package(waLBerla 7.2 QUIET)
+    find_package(waLBerla 7.3 QUIET)
     if(waLBerla_FOUND AND NOT TARGET walberla::core AND DEFINED
                                                         walberla_SOURCE_DIR)
       add_subdirectory(${walberla_SOURCE_DIR} ${walberla_BINARY_DIR}
@@ -1099,10 +1121,11 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     # cmake-format: off
     FetchContent_Declare(
       walberla
-      GIT_REPOSITORY https://github.com/lssfau/walberla.git
-      GIT_TAG        623a60c1 # v7.2 with patches
+      GIT_REPOSITORY https://gitos.rrze.fau.de/cs10/walberla/walberla.git
+      GIT_TAG        a7ac6d0b13273d9886bd1cde7c6016176b6cab06 # v7.4
       GIT_SHALLOW    FALSE
       GIT_SUBMODULES ""  # don't clone submodules
+      PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/walberla.patch
       SYSTEM
     )
     # cmake-format: on

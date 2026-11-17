@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "generated_kernels/ReactionKernelIndexed_all.h"
+#include "ReactionKernelSelector.hpp"
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/BlockAndCell.hpp>
@@ -35,6 +35,11 @@
 #include <field/FlagUID.h>
 #include <waLBerlaDefinitions.h>
 
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#include <gpu/ErrorChecking.h>
+#include <gpu/GPUWrapper.h>
+#endif
+
 #include <utils/Vector.hpp>
 
 #include <cassert>
@@ -48,8 +53,11 @@ namespace walberla {
 template <lbmpy::Arch Architecture = lbmpy::Arch::CPU>
 class EKReactionImplIndexed : public EKReactionBaseIndexed {
 private:
+  /** Cells with a reaction, in unified memory on the device. */
+  using IndexList = detail::ReactionKernelSelector::IndexList<Architecture>;
+
   BlockDataID m_flagfield_id;
-  BlockDataID m_indexvector_id;
+  IndexList m_index_list;
   bool m_pending_changes;
 
 public:
@@ -59,25 +67,6 @@ public:
   FlagUID const Boundary_flag{"boundary"};
 
   using FlagField = field::FlagField<uint8_t>;
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
-  using IndexVectors = std::conditional_t<
-      Architecture == lbmpy::Arch::CPU,
-      detail::ReactionKernelIndexedSelector::KernelTrait<>::
-          ReactionKernelIndexed::IndexVectors,
-      detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
-          ReactionKernelIndexedGPU::IndexVectors>;
-  using IndexInfo = std::conditional_t<
-      Architecture == lbmpy::Arch::CPU,
-      detail::ReactionKernelIndexedSelector::KernelTrait<>::
-          ReactionKernelIndexed::IndexInfo,
-      detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
-          ReactionKernelIndexedGPU::IndexInfo>;
-#else
-  using IndexVectors = detail::ReactionKernelIndexedSelector::KernelTrait<>::
-      ReactionKernelIndexed::IndexVectors;
-  using IndexInfo = detail::ReactionKernelIndexedSelector::KernelTrait<>::
-      ReactionKernelIndexed::IndexInfo;
-#endif
 
 private:
   auto get_flag_field_and_flag(IBlock *block, BlockDataID const &flagfield_id) {
@@ -91,18 +80,10 @@ public:
   EKReactionImplIndexed(std::shared_ptr<LatticeWalberla> const &lattice,
                         reactants_type const &reactants, double coefficient)
       : EKReactionBaseIndexed(lattice, reactants, coefficient),
-        m_pending_changes(false) {
+        m_index_list(*get_lattice()->get_blocks()), m_pending_changes(false) {
     m_flagfield_id = field::addFlagFieldToStorage<FlagField>(
         get_lattice()->get_blocks(), "flag field reaction",
         get_lattice()->get_ghost_layers());
-
-    auto createIdxVector = [](IBlock *const, StructuredBlockStorage *const) {
-      return new IndexVectors();
-    };
-    m_indexvector_id = get_lattice()
-                           ->get_blocks()
-                           ->template addStructuredBlockData<IndexVectors>(
-                               createIdxVector, "IndexField");
 
     for (auto &block : *get_lattice()->get_blocks()) {
       auto flag_field = block.template getData<FlagField>(m_flagfield_id);
@@ -126,16 +107,9 @@ public:
 
   void perform_reaction() override {
     boundary_update();
-    std::function<void(IBlock *)> kernel;
-    if (Architecture == lbmpy::Arch::CPU) {
-      kernel = detail::ReactionKernelIndexedSelector::get_kernel(
-          get_reactants(), get_coefficient(), m_indexvector_id);
-    } else {
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
-      kernel = detail::ReactionKernelIndexedSelector::get_kernel_gpu(
-          get_reactants(), get_coefficient(), m_indexvector_id);
-#endif
-    }
+    auto const kernel =
+        detail::ReactionKernelSelector::get_indexed_kernel<Architecture>(
+            get_reactants(), get_coefficient(), m_index_list);
     for (auto &block : *get_lattice()->get_blocks()) {
       kernel(&block);
     }
@@ -227,6 +201,14 @@ public:
 
   void boundary_update() {
     if (m_pending_changes) {
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+      if constexpr (Architecture == lbmpy::Arch::GPU) {
+        // the index list is in unified memory, which doesn't need to be copied
+        // to the device, but the host must not modify it while a previous
+        // reaction kernel is still reading it
+        WALBERLA_GPU_CHECK(gpuDeviceSynchronize());
+      }
+#endif
       for (auto &block : *get_lattice()->get_blocks()) {
         fillFromFlagField(block);
       }
@@ -236,46 +218,22 @@ public:
 
 private:
   void fillFromFlagField(IBlock &block) {
-    auto *indexVectors =
-        block.uncheckedFastGetData<IndexVectors>(m_indexvector_id);
-    auto &indexVectorAll = indexVectors->indexVector(IndexVectors::ALL);
-    auto &indexVectorInner = indexVectors->indexVector(IndexVectors::INNER);
-    auto &indexVectorOuter = indexVectors->indexVector(IndexVectors::OUTER);
-
+    auto &cells = m_index_list.getVector(block);
     auto *flagField = block.getData<FlagField>(m_flagfield_id);
 
     assert(flagField->flagExists(Boundary_flag) and
            flagField->flagExists(Domain_flag));
 
-    auto boundaryFlag = flagField->getFlag(Boundary_flag);
-    auto domainFlag = flagField->getFlag(Domain_flag);
+    auto const boundaryFlag = flagField->getFlag(Boundary_flag);
+    auto const domainFlag = flagField->getFlag(Domain_flag);
 
-    auto inner = flagField->xyzSize();
-    inner.expand(cell_idx_t(-1));
-
-    indexVectorAll.clear();
-    indexVectorInner.clear();
-    indexVectorOuter.clear();
-
-    auto flagWithGLayers = flagField->xyzSizeWithGhostLayer();
+    cells.clear();
     for (auto it = flagField->beginWithGhostLayerXYZ(); it != flagField->end();
          ++it) {
-      if (!isFlagSet(it, boundaryFlag))
-        continue;
-
-      if (flagWithGLayers.contains(it.x(), it.y(), it.z()) &&
-          isFlagSet(it.neighbor(0, 0, 0, 0), domainFlag)) {
-        auto element = IndexInfo(it.x(), it.y(), it.z());
-        indexVectorAll.push_back(element);
-        if (inner.contains(it.x(), it.y(), it.z())) {
-          indexVectorInner.push_back(element);
-        } else {
-          indexVectorOuter.push_back(element);
-        }
+      if (isFlagSet(it, boundaryFlag) and isFlagSet(it, domainFlag)) {
+        cells.emplace_back(Cell(it.x(), it.y(), it.z()));
       }
     }
-
-    indexVectors->syncGPU();
   }
 };
 
