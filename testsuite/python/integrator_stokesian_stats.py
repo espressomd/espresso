@@ -61,7 +61,7 @@ class StokesianDynamicsTest(ut.TestCase):
         self.system.constraints.add(gravity)
         self.system.time_step = 1.0 * t_factor
 
-        obs = espressomd.observables.ParticlePositions(ids=(0, 1, 2))
+        obs = espressomd.observables.ParticlePositions(particles=(0, 1, 2))
         acc = espressomd.accumulators.TimeSeries(obs=obs, delta_N=1)
         self.system.auto_update_accumulators.add(acc)
         acc.update()

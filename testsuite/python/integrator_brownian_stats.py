@@ -110,7 +110,7 @@ class BrownianThermostat(ut.TestCase, thermostats_common.ThermostatsCommon):
         system.thermostat.set_brownian(kT=kT, gamma=gamma, seed=41)
         system.cell_system.skin = 0.4
 
-        pos_obs = espressomd.observables.ParticlePositions(ids=(p.id,))
+        pos_obs = espressomd.observables.ParticlePositions(particles=(p.id,))
 
         c_pos = espressomd.accumulators.Correlator(
             obs1=pos_obs, tau_lin=16, tau_max=100., delta_N=1,
