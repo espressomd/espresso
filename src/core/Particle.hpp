@@ -226,7 +226,7 @@ struct ParticleProperties {
   /** External force. */
   Utils::Vector3d ext_force = {0., 0., 0.};
 #ifdef ESPRESSO_ROTATION
-  /** External torque. */
+  /** External torque in lab frame. */
   Utils::Vector3d ext_torque = {0., 0., 0.};
 #endif // ESPRESSO_ROTATION
 #endif // ESPRESSO_EXTERNAL_FORCES
@@ -357,7 +357,7 @@ struct ParticleForce {
   Utils::Vector3d f = {0., 0., 0.};
 
 #ifdef ESPRESSO_ROTATION
-  /** torque. */
+  /** torque in lab frame. */
   Utils::Vector3d torque = {0., 0., 0.};
 #endif
 

@@ -671,12 +671,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
       cell_structure->ghosts_reduce_forces_finish();
     }
 
-    if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef ESPRESSO_ROTATION
-      convert_initial_torques(cell_structure->local_particles());
-#endif
-    }
-
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_END("Initial Force Calculation");
 #endif

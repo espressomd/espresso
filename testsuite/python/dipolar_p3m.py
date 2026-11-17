@@ -66,18 +66,14 @@ class MagnetostaticsP3M(ut.TestCase):
         np.testing.assert_allclose(np.copy(p1.f), ref_dp3m_force, atol=tol)
         np.testing.assert_allclose(np.copy(p2.f), -ref_dp3m_force, atol=tol)
         np.testing.assert_allclose(
-            np.copy(p1.convert_vector_space_to_body(p1.torque_lab)),
-            ref_dp3m_torque1, atol=tol)
+            np.copy(p1.torque_lab), ref_dp3m_torque1, atol=tol)
         np.testing.assert_allclose(
-            np.copy(p2.convert_vector_space_to_body(p2.torque_lab)),
-            ref_dp3m_torque2, atol=tol)
+            np.copy(p2.torque_lab), ref_dp3m_torque2, atol=tol)
 
         # keep current values as reference to check for DP3M dipole correction
         ref_dp3m_energy_metallic = self.system.analysis.energy()['dipolar']
         ref_dp3m_forces_metallic = np.copy(partcls.f)
-        ref_dp3m_torque_metallic = np.array([
-            p1.convert_vector_space_to_body(p1.torque_lab),
-            p2.convert_vector_space_to_body(p2.torque_lab)])
+        ref_dp3m_torque_metallic = np.array([p1.torque_lab, p2.torque_lab])
 
         # MDLC cancels out dipole correction
         self.system.magnetostatics.clear()
@@ -123,9 +119,7 @@ class MagnetostaticsP3M(ut.TestCase):
             self.system.magnetostatics.solver = dp3m
             self.system.integrator.run(0, recalc_forces=True)
             dp3m_forces = np.copy(partcls.f)
-            dp3m_torque = np.array([
-                p1.convert_vector_space_to_body(p1.torque_lab),
-                p2.convert_vector_space_to_body(p2.torque_lab)])
+            dp3m_torque = np.array([p1.torque_lab, p2.torque_lab])
             dp3m_energy = self.system.analysis.energy()['dipolar']
             np.testing.assert_allclose(dp3m_forces, ref_dp3m_forces, atol=tol)
             np.testing.assert_allclose(dp3m_torque, ref_dp3m_torque, atol=tol)
