@@ -1050,7 +1050,7 @@ and will therefore have lower precedence.
 
 Be aware that fast-math mode can break |es|. It is incompatible with the
 ``ADDITIONAL_CHECKS`` feature due to the loss of precision in the LB code
-on CPU. The Clang 10 compiler breaks field couplings with ``-ffast-math``.
+on CPU. The NpT Andersen barostat is very sensitive to ``-ffast-math``.
 The IntelLLVM compiler enables the ``-fp-model fast=1`` flag by default;
 it can be disabled by adding the ``-fp-model=strict`` flag.
 

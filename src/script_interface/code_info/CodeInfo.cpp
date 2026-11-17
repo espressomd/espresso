@@ -62,7 +62,8 @@ Variant CodeInfo::do_call_method(std::string const &name, VariantMap const &) {
 #endif // ESPRESSO_SCAFACOS
   }
   if (name == "has_fast_math") {
-#if defined(__FAST_MATH__)
+#if defined(__FAST_MATH__) or defined(__ASSOCIATIVE_MATH__) or                 \
+    defined(__RECIPROCAL_MATH__)
     return true;
 #else
     return false;
