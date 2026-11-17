@@ -61,7 +61,14 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
   auto const desc = (dx1 * direc);
   auto const theta = std::acos(sc) * std::copysign(1., desc);
 
-  auto const DTh = theta - theta0;
+  // The dynamic angle theta is confined to [-pi, pi], whereas the reference
+  // angle theta0 spans [0, 2*pi] (initialize() maps concave dihedrals, with
+  // desc < 0, to the branch 2*pi - acos). The two therefore live on different
+  // branches, so the raw difference theta - theta0 can be off by a full turn
+  // for a concave reference (DTh = -2*pi instead of 0 at equilibrium). Reduce
+  // it to (-pi, pi] so that the bending force vanishes at the reference shape
+  // for any reference geometry, concave or convex.
+  auto const DTh = std::remainder(theta - theta0, 2. * std::numbers::pi);
   auto const Pre = kb * DTh * std::copysign(1., theta);
 
   auto const v1 = (n2 - sc * n1).normalize();
