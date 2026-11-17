@@ -68,10 +68,8 @@ class p3m_interpolation_cache {
   int m_cao = 0;
   /** Charge fractions for mesh assignment. */
   Kokkos::View<double *, Kokkos::LayoutRight, Kokkos::HostSpace> ca_frac;
-  std::vector<double> ca_frac_spillover;
   /** index of first mesh point for charge assignment. */
   Kokkos::View<int *, Kokkos::LayoutRight, Kokkos::HostSpace> ca_fmp;
-  std::vector<int> ca_fmp_spillover;
 
 public:
   p3m_interpolation_cache()
@@ -82,7 +80,7 @@ public:
    * @brief Number of points in the cache.
    * @return Number of points currently in the cache.
    */
-  auto size() const { return ca_fmp.size() + ca_fmp_spillover.size(); }
+  auto size() const { return ca_fmp.size(); }
 
   /**
    * @brief Charge assignment order the weights are for.
@@ -101,28 +99,9 @@ public:
       Kokkos::realloc(Kokkos::WithoutInitializing, ca_fmp, size);
       Kokkos::realloc(Kokkos::WithoutInitializing, ca_frac, size_frac);
     }
-    assert(ca_frac_spillover.empty());
-    assert(ca_fmp_spillover.empty());
     // data must be contiguous in memory
     assert(size == 0 or
            (std::distance(&ca_fmp(0), &ca_fmp(size - 1)) == size - 1));
-  }
-
-  /**
-   * @brief Push back weights for one point.
-   *
-   * @tparam cao Interpolation order has to match the order
-   *         set at last call to @ref p3m_interpolation_cache::reset.
-   * @param weights Interpolation weights to store.
-   */
-  template <int cao> void store(InterpolationWeights<cao> const &weights) {
-    assert(cao == m_cao);
-
-    ca_fmp_spillover.emplace_back(weights.ind);
-    auto it = std::back_inserter(ca_frac_spillover);
-    std::ranges::copy(weights.w_x, it);
-    std::ranges::copy(weights.w_y, it);
-    std::ranges::copy(weights.w_z, it);
   }
 
   /**
@@ -167,18 +146,9 @@ public:
     assert(cao == m_cao);
     assert(p_index < size());
 
-    int index = -1;
-    double const *ptr = nullptr;
-    if (p_index >= ca_fmp.size()) {
-      p_index -= ca_fmp.size();
-      index = ca_fmp_spillover[p_index];
-      auto const offset = p_index * static_cast<std::size_t>(cao * 3);
-      ptr = std::as_const(ca_frac_spillover).data() + offset;
-    } else {
-      index = ca_fmp(p_index);
-      auto const offset = p_index * static_cast<std::size_t>(cao * 3);
-      ptr = std::as_const(ca_frac).data() + offset;
-    }
+    int const index = ca_fmp(p_index);
+    auto const offset = p_index * static_cast<std::size_t>(cao * 3);
+    double const *ptr = std::as_const(ca_frac).data() + offset;
     std::span<double const, cao> w_x(ptr, cao);
     std::advance(ptr, cao);
     std::span<double const, cao> w_y(ptr, cao);
@@ -196,8 +166,6 @@ public:
     m_cao = cao;
     Kokkos::realloc(Kokkos::WithoutInitializing, ca_fmp, 0ul);
     Kokkos::realloc(Kokkos::WithoutInitializing, ca_frac, 0ul);
-    ca_frac_spillover.clear();
-    ca_fmp_spillover.clear();
   }
 };
 

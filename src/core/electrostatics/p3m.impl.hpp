@@ -209,8 +209,8 @@ public:
   Utils::Vector9d long_range_pressure() override;
 
   void charge_assign() override;
-  void assign_charge(double q, Utils::Vector3d const &real_pos,
-                     bool skip_cache) override;
+  void charge_assign_elc(ElcImageLayers const &layers, bool assign_real,
+                         bool assign_images) override;
   void prepare_fft_mesh(bool reset_weights) override {
     if (reset_weights) {
       p3m.inter_weights.reset(p3m.params.cao);

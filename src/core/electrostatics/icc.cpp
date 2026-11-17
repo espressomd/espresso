@@ -109,7 +109,6 @@ void ICCStar::iteration() {
   auto &system = get_system();
   auto &cell_structure = *system.cell_structure;
   auto const &coulomb = system.coulomb;
-  auto const particles = cell_structure.local_particles();
   auto const prefactor = std::visit(
       [](auto const &ptr) { return ptr->prefactor; }, *coulomb.impl->solver);
   auto const pref = 1. / (prefactor * 2. * std::numbers::pi);
@@ -123,6 +122,8 @@ void ICCStar::iteration() {
   auto scatter_force = system.cell_structure->get_scatter_force();
 
   auto global_max_rel_diff = 0.;
+  auto const n_local = cell_structure.count_local_particles();
+  std::vector<double> running_density_max;
 
   for (int j = 0; j < icc_cfg.max_iterations; j++) {
     auto charge_density_max = 0.;
@@ -145,66 +146,105 @@ void ICCStar::iteration() {
 
     auto max_rel_diff = 0.;
 
-    for (auto &p : particles) {
-      auto const pid = p.id();
-      if (pid >= icc_cfg.first_id and pid < icc_cfg.n_icc + icc_cfg.first_id) {
-        if (p.q() == 0.) {
-          runtimeErrorMsg()
-              << "ICC found zero electric charge on a particle. This must "
-                 "never happen";
-          break;
-        }
-        auto const id = p.id() - icc_cfg.first_id;
-        /* the dielectric-related prefactor: */
-        auto const eps_in = icc_cfg.epsilons[id];
-        auto const eps_out = icc_cfg.eps_out;
-        auto const del_eps = (eps_in - eps_out) / (eps_in + eps_out);
-        /* calculate the electric field at the certain position */
-        auto const local_e_field = p.force() / p.q() + icc_cfg.ext_field;
+    // Per-particle charge update. The relative difference uses a running
+    // maximum of the old charge densities in particle order, so that maximum
+    // is computed serially from per-particle values before the parallel
+    // update; this reproduces the serial loop exactly.
+    running_density_max.assign(n_local, 0.);
+    kokkos_parallel_range_for<execution_space>(
+        "icc_density_old", std::size_t{0}, n_local, [&](std::size_t const i) {
+          auto const &p = *unique_particles.at(i);
+          auto const pid = p.id();
+          if (pid >= icc_cfg.first_id and
+              pid < icc_cfg.n_icc + icc_cfg.first_id and p.q() != 0.) {
+            running_density_max[i] =
+                std::abs(p.q() / icc_cfg.areas[pid - icc_cfg.first_id]);
+          }
+        });
+    Kokkos::fence();
+    for (std::size_t i = 0; i < n_local; ++i) {
+      charge_density_max = std::max(charge_density_max, running_density_max[i]);
+      running_density_max[i] = charge_density_max;
+    }
 
-        if (local_e_field.norm2() == 0.) {
-          runtimeErrorMsg()
-              << "ICC found zero electric field on a charge. This must "
-                 "never happen";
-        }
+    int n_zero_charge = 0;
+    int n_zero_field = 0;
+    auto constexpr no_particle = std::numeric_limits<std::size_t>::max();
+    auto first_too_large = no_particle;
+    Kokkos::parallel_reduce(
+        "icc_charge_update", Kokkos::RangePolicy<execution_space>(0, n_local),
+        [&](std::size_t const i, double &max_diff, int &zero_charge,
+            int &zero_field, std::size_t &too_large) {
+          auto &p = *unique_particles.at(i);
+          auto const pid = p.id();
+          if (pid < icc_cfg.first_id or pid >= icc_cfg.n_icc + icc_cfg.first_id)
+            return;
+          if (p.q() == 0.) {
+            zero_charge += 1;
+            return;
+          }
+          auto const id = pid - icc_cfg.first_id;
+          /* the dielectric-related prefactor: */
+          auto const eps_in = icc_cfg.epsilons[id];
+          auto const eps_out = icc_cfg.eps_out;
+          auto const del_eps = (eps_in - eps_out) / (eps_in + eps_out);
+          /* calculate the electric field at the certain position */
+          auto const local_e_field = p.force() / p.q() + icc_cfg.ext_field;
 
-        auto const charge_density_old = p.q() / icc_cfg.areas[id];
+          if (local_e_field.norm2() == 0.) {
+            zero_field += 1;
+          }
 
-        charge_density_max =
-            std::max(charge_density_max, std::abs(charge_density_old));
+          auto const charge_density_old = p.q() / icc_cfg.areas[id];
 
-        auto const charge_density_update =
-            del_eps * pref * (local_e_field * icc_cfg.normals[id]) +
-            2. * icc_cfg.eps_out / (icc_cfg.eps_out + icc_cfg.epsilons[id]) *
-                icc_cfg.sigmas[id];
-        /* relative variation: never use an estimator which can be negative
-         * here */
-        auto const charge_density_new =
-            (1. - icc_cfg.relaxation) * charge_density_old +
-            (icc_cfg.relaxation) * charge_density_update;
+          auto const charge_density_update =
+              del_eps * pref * (local_e_field * icc_cfg.normals[id]) +
+              2. * icc_cfg.eps_out / (icc_cfg.eps_out + icc_cfg.epsilons[id]) *
+                  icc_cfg.sigmas[id];
+          /* relative variation: never use an estimator which can be negative
+           * here */
+          auto const charge_density_new =
+              (1. - icc_cfg.relaxation) * charge_density_old +
+              (icc_cfg.relaxation) * charge_density_update;
 
-        /* Take the largest error to check for convergence */
-        auto const relative_difference =
-            std::abs((charge_density_new - charge_density_old) /
-                     (charge_density_max +
-                      std::abs(charge_density_new + charge_density_old)));
+          /* Take the largest error to check for convergence */
+          auto const relative_difference =
+              std::abs((charge_density_new - charge_density_old) /
+                       (running_density_max[i] +
+                        std::abs(charge_density_new + charge_density_old)));
 
-        max_rel_diff = std::max(max_rel_diff, relative_difference);
+          max_diff = std::max(max_diff, relative_difference);
 
-        p.q() = charge_density_new * icc_cfg.areas[id];
+          p.q() = charge_density_new * icc_cfg.areas[id];
 
-        /* check if the charge now is more than 1e6, to determine if ICC still
-         * leads to reasonable results. This is kind of an arbitrary measure
-         * but does a good job of spotting divergence! */
-        if (std::abs(p.q()) > 1e6) {
-          runtimeErrorMsg()
-              << "Particle with id " << p.id() << " has a charge (q=" << p.q()
-              << ") that is too large for the ICC algorithm";
+          /* check if the charge now is more than 1e6, to determine if ICC
+           * still leads to reasonable results. This is kind of an arbitrary
+           * measure but does a good job of spotting divergence! */
+          if (std::abs(p.q()) > 1e6) {
+            too_large = std::min(too_large, i);
+          }
+        },
+        Kokkos::Max<double>(max_rel_diff), Kokkos::Sum<int>(n_zero_charge),
+        Kokkos::Sum<int>(n_zero_field),
+        Kokkos::Min<std::size_t>(first_too_large));
+    Kokkos::fence();
+    // Kokkos::Max starts from its identity; keep the serial starting value 0
+    max_rel_diff = std::max(max_rel_diff, 0.);
 
-          max_rel_diff = std::numeric_limits<double>::max();
-          break;
-        }
-      }
+    if (n_zero_charge != 0) {
+      runtimeErrorMsg() << "ICC found zero electric charge on a particle. This "
+                           "must never happen";
+    }
+    if (n_zero_field != 0) {
+      runtimeErrorMsg() << "ICC found zero electric field on a charge. This "
+                           "must never happen";
+    }
+    if (first_too_large != no_particle) {
+      auto const &p = *unique_particles.at(first_too_large);
+      runtimeErrorMsg() << "Particle with id " << p.id()
+                        << " has a charge (q=" << p.q()
+                        << ") that is too large for the ICC algorithm";
+      max_rel_diff = std::numeric_limits<double>::max();
     }
 
     /* Update charges on ghosts. */
