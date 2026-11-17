@@ -976,6 +976,14 @@ These optimization flags are suitable for homogeneous computing environments,
 e.g. HPC clusters, but not for environments with heterogeneous computing resources,
 since different hardware may not share the same instruction set.
 
+Likewise, consider building libraries from sources with microarchitecture-specific
+SIMD features. For example on x86, P3M on CPU can get a few percents faster when
+FFTW is built with ``--enable-sse2 --enable-avx --enable-avx2 --enable-avx512``
+and |es| is built with ``-D CMAKE_CXX_FLAGS="-march=native"``.
+The x86 version of FFTW packaged on Ubuntu 26.04 only has SSE2 and AVX kernels.
+To check which SIMD features FFTW was built against, use this command:
+``nm -D /usr/lib/*-linux-gnu/libfftw3.so.3 | grep -oE '_(sse|avx|sve|neon)[a-z0-9_]*' | sort -u``.
+
 Cluster users and HPC developers may be interested in manually editing the
 ``espresso_compiler_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed

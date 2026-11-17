@@ -22,6 +22,7 @@
 #include "p3m/P3MFFTBackend.hpp"
 
 #include "communication.hpp"
+#include "fft/vector.hpp"
 
 #include <instrumentation/fe_trap.hpp>
 
@@ -52,7 +53,9 @@ public:
       std::conditional_t<Architecture == Arch::CPU, heffte::backend::fftw,
                          heffte::backend::cufft>;
   template <class T = OutputType>
-  using buffer_container = heffte::fft3d<backend>::template buffer_container<T>;
+  using buffer_container = std::conditional_t<
+      Architecture == Arch::CPU, fft::vector<T>,
+      typename heffte::fft3d<backend>::template buffer_container<T>>;
 
 private:
   using FFT3D =
@@ -235,5 +238,5 @@ struct P3MFFTHeffte final : public P3MFFTBackend<FloatType, FFTConfig> {
 
 private:
   P3MFFT<FloatType, Arch::CPU, FFTConfig> m_impl;
-  std::vector<RSpaceScalar> m_input;
+  fft::vector<RSpaceScalar> m_input;
 };
