@@ -1129,8 +1129,10 @@ class TabulatedDihedral(BondedInteraction):
     energy: array_like of :obj:`float`
         The energy table for the range :math:`0-2\\pi`.
     force: array_like of :obj:`float`
-        The force table for the range :math:`0-2\\pi`.
-
+        The table of :math:`-\\mathrm{d}V/\\mathrm{d}\\phi` for the range
+        :math:`0-2\\pi`, i.e. the negative derivative of the energy with
+        respect to the dihedral angle. Since :math:`\\phi` is dimensionless,
+        these values have units of energy, not force.
     """
 
     _so_name = "Interactions::TabulatedDihedralBond"
