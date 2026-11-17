@@ -103,6 +103,10 @@ enum DataPart : unsigned {
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   DATA_PART_DIPFLD = 512u, /**< Particle::dip_fld */
 #endif
+#ifdef ESPRESSO_BOND_CONSTRAINT
+  /** Particle::pos_last_time_step (pushed with position, needed by RATTLE) */
+  DATA_PART_POS_LAST = 1024u,
+#endif
 };
 } // namespace Cells
 

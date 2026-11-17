@@ -59,6 +59,11 @@ static void check_convergence(int cnt, char const *const name) {
 /**
  * @brief copy current position
  *
+ * The values stored in the ghosts are not read: RATTLE's ghost update in
+ * @ref correct_position_shake sends the owners' values
+ * (@ref Cells::DATA_PART_POS_LAST), since the ghosts can be rebuilt by a
+ * resort in between.
+ *
  * @param particles particle range
  * @param ghost_particles ghost particle range
  */
@@ -178,7 +183,10 @@ static void apply_positional_correction(const ParticleRange &particles) {
 
 void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
                             BondedInteractionsMap &bonded_ias) {
-  unsigned const flag = Cells::DATA_PART_POSITION | Cells::DATA_PART_PROPERTIES;
+  // the ghosts need the positions at the start of the time step for the
+  // constraint direction (calculate_positional_correction)
+  unsigned const flag = Cells::DATA_PART_POSITION |
+                        Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_POS_LAST;
   cs.update_ghosts_and_resort_particle(flag);
 
   auto particles = cs.local_particles();
