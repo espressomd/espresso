@@ -22,6 +22,7 @@ target_sources(
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/bmhtf-nacl.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/buckingham.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/gaussian.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/gaussian_aniso.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/gay_berne.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/hat.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/hertzian.cpp
