@@ -48,7 +48,7 @@ private:
   /* output box */
   std::unique_ptr<Box> out_box;
   /* workspace for the FFT */
-  std::vector<std::complex<FloatType>> m_workspace;
+  fft::vector<std::complex<FloatType>> m_workspace;
   /* FFT backend */
   std::unique_ptr<FFT3D> fft3d;
 

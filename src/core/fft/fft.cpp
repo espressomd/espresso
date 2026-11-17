@@ -47,6 +47,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <complex>
 #include <cstddef>
 #include <limits>
 #include <optional>
@@ -801,8 +802,8 @@ template <typename FloatType> void fft_plan<FloatType>::destroy_plan() {
 }
 
 template <class FloatType>
-FloatType *allocator<FloatType>::allocate(const std::size_t n) const {
-  if (n == 0) {
+FloatType *allocator<FloatType>::allocate(std::size_t const n) const {
+  if (n == 0ul) {
     return nullptr;
   }
   if (n > std::numeric_limits<std::size_t>::max() / sizeof(FloatType)) {
@@ -823,6 +824,8 @@ void allocator<FloatType>::deallocate(FloatType *const p,
 
 template struct allocator<float>;
 template struct allocator<double>;
+template struct allocator<std::complex<float>>;
+template struct allocator<std::complex<double>>;
 
 template struct fft_plan<float>;
 template struct fft_plan<double>;

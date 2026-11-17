@@ -453,11 +453,11 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 
       for (auto dir : {0u, 1u, 2u}) {
         // get real-space dipoles density without ghost layers
-        auto rs_field_no_halo = extract_block<Utils::MemoryOrder::ROW_MAJOR,
-                                              FFTConfig::r_space_order>(
+        fft::vector<FloatType> rs_field_no_halo{};
+        extract_block<Utils::MemoryOrder::ROW_MAJOR, FFTConfig::r_space_order>(
             dp3m.heffte.rs_dipole_density[dir], dp3m.local_mesh.dim,
             dp3m.local_mesh.n_halo_ld,
-            dp3m.local_mesh.dim - dp3m.local_mesh.n_halo_ur);
+            dp3m.local_mesh.dim - dp3m.local_mesh.n_halo_ur, rs_field_no_halo);
         // re-order data in row-major
         std::vector<FloatType> rs_field_no_halo_reorder;
         rs_field_no_halo_reorder.resize(rs_field_no_halo.size());

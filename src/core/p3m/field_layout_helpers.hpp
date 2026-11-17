@@ -36,14 +36,15 @@
 // Function to extract a 3D block from the halo field
 template <Utils::MemoryOrder memory_order,
           Utils::MemoryOrder output_memory_order, typename Container>
-auto extract_block(Container const &in_array, Utils::Vector3i const &dimensions,
-                   Utils::Vector3i const &start, Utils::Vector3i const &stop) {
+void extract_block(Container const &in_array, Utils::Vector3i const &dimensions,
+                   Utils::Vector3i const &start, Utils::Vector3i const &stop,
+                   auto &out_array) {
   // Calculate the size of the block excluding halo regions
   auto const block_dim = stop - start;
   auto const size = static_cast<std::size_t>(Utils::product(block_dim));
 
   // Output vector to hold the block
-  std::vector<typename Container::value_type> out_array(size);
+  out_array.resize(size);
 
   // Extract the block
   if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR and
@@ -72,8 +73,6 @@ auto extract_block(Container const &in_array, Utils::Vector3i const &dimensions,
           out_array[out_index] = in_array[in_index];
         });
   }
-
-  return out_array;
 }
 
 /** @brief Pad a 3D matrix with zeros to restore halo regions. */

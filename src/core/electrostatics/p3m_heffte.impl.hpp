@@ -543,10 +543,10 @@ void CoulombP3MHeffte<FloatType, Architecture,
                             p3m.local_mesh.dim);
 
   // get real space charge density without ghost layers
-  auto charge_density_no_halos =
-      extract_block<Utils::MemoryOrder::ROW_MAJOR, FFTConfig::r_space_order>(
-          p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
-          p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur);
+  fft::vector<FloatType> charge_density_no_halos{};
+  extract_block<Utils::MemoryOrder::ROW_MAJOR, FFTConfig::r_space_order>(
+      p3m.rs_charge_density, p3m.local_mesh.dim, p3m.local_mesh.n_halo_ld,
+      p3m.local_mesh.dim - p3m.local_mesh.n_halo_ur, charge_density_no_halos);
 
   // Set up the FFT using the Heffte library.
   // This is in global mesh coordinates without any ghost layers
