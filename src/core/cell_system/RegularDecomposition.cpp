@@ -184,208 +184,240 @@ static void fold_and_reset(Particle &p, BoxGeometry const &box_geo) {
   p.pos_at_last_verlet_update() = p.pos();
 }
 
+namespace {
+/** A particle that is in the wrong cell after the position update. */
+struct Move {
+  /** Index of the particle in its current cell. */
+  unsigned index;
+  /** Target cell, or nullptr if the particle left the local domain. */
+  Cell *target;
+};
+
+/** A particle taken out of its cell, waiting for insertion into its target. */
+struct OutgoingParticle {
+  /** Target cell, or nullptr if the particle left the local domain. */
+  Cell *target;
+  Particle particle;
+};
+
+/**
+ * @brief Take the movers out of the particle list of one cell.
+ *
+ * ParticleList::erase() moves the last element into the erased slot.
+ * The movers are erased in descending index order. Hence all movers with
+ * a larger index are already gone, the swapped-in element is a particle
+ * that stays, and the remaining movers keep their index.
+ *
+ * @param[in,out] particles Particles of the cell.
+ * @param[in] moves Movers of the cell, in ascending index order.
+ * @param[out] outgoing Removed particles with their target cell.
+ */
+void take_out_movers(ParticleList &particles, std::vector<Move> const &moves,
+                     std::vector<OutgoingParticle> &outgoing) {
+  outgoing.reserve(moves.size());
+  for (auto move = moves.rbegin(); move != moves.rend(); ++move) {
+    auto const it = particles.begin() + move->index;
+    outgoing.emplace_back(move->target, std::move(*it));
+    particles.erase(it);
+  }
+}
+} // namespace
+
+void RegularDecomposition::resort_local_serial(
+    ParticleList &displaced, std::vector<ParticleChange> &diff) {
+  for (auto *const c : local_cells()) {
+    auto &parts = c->particles();
+    for (auto it = parts.begin(); it != parts.end();) {
+      fold_and_reset(*it, m_box);
+
+      auto *const target_cell = particle_to_cell(*it);
+
+      /* Particle is in place */
+      if (target_cell == c) {
+        std::advance(it, 1);
+        continue;
+      }
+
+      auto p = std::move(*it);
+      it = parts.erase(it);
+      diff.emplace_back(ModifiedList{parts});
+      /* Particle is not local */
+      if (target_cell == nullptr) {
+        diff.emplace_back(RemovedParticle{p.id()});
+        displaced.insert(std::move(p));
+      }
+      /* Particle belongs on this node but is in the wrong cell. */
+      else {
+        target_cell->particles().insert(std::move(p));
+        diff.emplace_back(ModifiedList{target_cell->particles()});
+      }
+    }
+  }
+}
+
+void RegularDecomposition::resort_local_parallel(
+    ParticleList &displaced, std::vector<ParticleChange> &diff) {
+  using exec_space = Kokkos::DefaultHostExecutionSpace;
+  auto const cells_span = local_cells();
+  auto const n_cells = cells_span.size();
+
+  /* Step 1 (parallel over local cells): fold every particle position and
+   * list the movers of each cell. Only particle-local state and the cell's
+   * own move list are written. fold_and_reset() throws on image-box
+   * overflow; exceptions must not escape the parallel region, so the first
+   * error is captured and rethrown afterwards. */
+  std::vector<std::vector<Move>> moves(n_cells);
+  std::mutex fold_error_mutex;
+  std::string fold_error_msg;
+  Kokkos::parallel_for(
+      "RegularDecomposition::resort::classify",
+      Kokkos::RangePolicy<exec_space>(std::size_t{0}, n_cells),
+      [&](std::size_t const ci) {
+        auto *cell = cells_span[ci];
+        unsigned index = 0u;
+        for (auto &p : cell->particles()) {
+          try {
+            fold_and_reset(p, m_box);
+          } catch (std::exception const &err) {
+            std::lock_guard<std::mutex> guard{fold_error_mutex};
+            if (fold_error_msg.empty()) {
+              fold_error_msg = err.what();
+            }
+            return;
+          }
+          if (auto *const target = particle_to_cell(p); target != cell) {
+            moves[ci].emplace_back(index, target);
+          }
+          ++index;
+        }
+      });
+  Kokkos::fence();
+  if (not fold_error_msg.empty()) {
+    throw std::runtime_error(fold_error_msg);
+  }
+
+  /* Step 2 (parallel over cells with movers): take the movers out of their
+   * cell. Only the cell and its own outgoing list are written. */
+  std::vector<std::size_t> cells_with_movers;
+  for (std::size_t ci = 0; ci < n_cells; ++ci) {
+    if (not moves[ci].empty()) {
+      cells_with_movers.push_back(ci);
+    }
+  }
+  std::vector<std::vector<OutgoingParticle>> outgoing(n_cells);
+  Kokkos::parallel_for(
+      "RegularDecomposition::resort::remove",
+      Kokkos::RangePolicy<exec_space>(std::size_t{0}, cells_with_movers.size()),
+      [&](std::size_t const k) {
+        auto const ci = cells_with_movers[k];
+        take_out_movers(cells_span[ci]->particles(), moves[ci], outgoing[ci]);
+      });
+  Kokkos::fence();
+
+  /* Step 3 (serial, pointers only): sort out the removed particles.
+   * Particles that left the local domain go to the displaced list. The
+   * others are grouped by target cell with a counting sort, so that step 4
+   * can fill each target cell from one contiguous range. No particle is
+   * copied; the groups hold pointers into the outgoing lists. */
+
+  /* Position of a cell in the cell storage @c cells (local and ghost cells).
+   * The counting sort uses it as the bin of the target cell. */
+  auto const cell_index = [this](Cell const *cell) {
+    return static_cast<std::size_t>(cell - cells.data());
+  };
+
+  /* Step 3a: count the arrivals per target cell, and move the particles
+   * that left the local domain to the displaced list.
+   * arrivals_begin has one entry per cell in @c cells plus one. The count
+   * for cells[j] goes into entry j + 1, so that the prefix sum in step 3b
+   * turns the entries into start offsets. */
+  std::vector<std::size_t> arrivals_begin(cells.size() + 1u, 0u);
+  for (auto const ci : cells_with_movers) {
+    diff.emplace_back(ModifiedList{cells_span[ci]->particles()});
+    for (auto &[target, p] : outgoing[ci]) {
+      if (target == nullptr) { // leaves this MPI rank
+        diff.emplace_back(RemovedParticle{p.id()});
+        displaced.insert(std::move(p));
+      } else { // count as arriving on local cell with index target
+        ++arrivals_begin[cell_index(target) + 1u];
+      }
+    }
+  }
+
+  /* Step 3b: convert counts of arrriving particles per cell into offsets by
+   * means of a prefix sum over the counts. Afterwards, the arrivals of cells[j]
+   * occupy arrivals[arrivals_begin[j]] up to, but excluding,
+   * arrivals[arrivals_begin[j + 1]]. The last entry is the total number
+   * of arrivals. */
+  std::partial_sum(arrivals_begin.begin(), arrivals_begin.end(),
+                   arrivals_begin.begin());
+
+  /* Step 3c: write a pointer to each arriving particle into the range of
+   * its target cell. Visiting the source cells in index order keeps the
+   * sort stable: within a range, the arrivals are in (source cell, removal)
+   * order, independent of the number of threads.
+   * arrivals: pointers to the particles in the outgoing lists, grouped by
+   * target cell.
+   * next[j]: next free slot in the range of cells[j]. */
+  std::vector<Particle *> arrivals(arrivals_begin.back());
+  {
+    auto next = arrivals_begin;
+    for (auto const ci : cells_with_movers) {
+      for (auto &[target, p] : outgoing[ci]) {
+        if (target != nullptr) {
+          arrivals[next[cell_index(target)]++] = &p;
+        }
+      }
+    }
+  }
+
+  /* Step 3d: list the cells that receive particles (non-empty ranges).
+   * target_cells: positions in @c cells, the iteration range of step 4. */
+  std::vector<std::size_t> target_cells;
+  for (std::size_t j = 0; j < cells.size(); ++j) {
+    if (arrivals_begin[j + 1u] != arrivals_begin[j]) {
+      target_cells.push_back(j);
+    }
+  }
+
+  /* Step 4 (parallel over target cells): append the arrivals. Only the
+   * target cell is written. The resulting in-cell order differs from the
+   * serial sweep, but it does not depend on the number of threads. */
+  Kokkos::parallel_for(
+      "RegularDecomposition::resort::insert",
+      Kokkos::RangePolicy<exec_space>(std::size_t{0}, target_cells.size()),
+      [&](std::size_t const k) {
+        auto const j = target_cells[k];
+        auto &parts = cells[j].particles();
+        for (auto l = arrivals_begin[j]; l < arrivals_begin[j + 1u]; ++l) {
+          parts.insert(std::move(*arrivals[l]));
+        }
+      });
+  Kokkos::fence();
+  for (auto const j : target_cells) {
+    diff.emplace_back(ModifiedList{cells[j].particles()});
+  }
+
+  /* Release the per-cell buffers (and the moved-from particles) in
+   * parallel rather than in the serial destructors at scope exit. */
+  Kokkos::parallel_for("RegularDecomposition::resort::release",
+                       Kokkos::RangePolicy<exec_space>(std::size_t{0}, n_cells),
+                       [&](std::size_t const ci) {
+                         std::vector<OutgoingParticle>{}.swap(outgoing[ci]);
+                         std::vector<Move>{}.swap(moves[ci]);
+                       });
+  Kokkos::fence();
+}
+
 void RegularDecomposition::resort(bool global,
                                   std::vector<ParticleChange> &diff) {
   ParticleList displaced_parts;
 
-  auto const cells_span = local_cells();
-  auto const n_cells = cells_span.size();
-
-  /* Remove a misplaced particle from its cell and hand it to its target
-   * cell (or the displaced list when it left the local domain), recording
-   * the changes (single-threaded sweep). */
-  auto const apply_move = [&](ParticleList &parts, Particle &&p,
-                              Cell *target_cell) {
-    diff.emplace_back(ModifiedList{parts});
-    /* Particle is not local */
-    if (target_cell == nullptr) {
-      diff.emplace_back(RemovedParticle{p.id()});
-      displaced_parts.insert(std::move(p));
-    }
-    /* Particle belongs on this node but is in the wrong cell. */
-    else {
-      target_cell->particles().insert(std::move(p));
-      diff.emplace_back(ModifiedList{target_cell->particles()});
-    }
-  };
-
   if (Kokkos::DefaultHostExecutionSpace().concurrency() == 1) {
-    /* Single-threaded rank: one-pass sweep without the bookkeeping overhead
-     * of the two-phase version below. */
-    for (auto *const c : cells_span) {
-      for (auto it = c->particles().begin(); it != c->particles().end();) {
-        fold_and_reset(*it, m_box);
-
-        auto *const target_cell = particle_to_cell(*it);
-
-        /* Particle is in place */
-        if (target_cell == c) {
-          std::advance(it, 1);
-          continue;
-        }
-
-        auto p = std::move(*it);
-        it = c->particles().erase(it);
-        apply_move(c->particles(), std::move(p), target_cell);
-      }
-    }
+    /* Avoid the bookkeeping overhead of the parallel version. */
+    resort_local_serial(displaced_parts, diff);
   } else {
-    using exec_space = Kokkos::DefaultHostExecutionSpace;
-    /* Phase 1 (parallel): fold every particle position and classify it
-     * against its target cell. Only particle-local state and this cell's own
-     * move list are written, so cells can be swept concurrently.
-     * fold_and_reset() throws on image-box overflow; exceptions must not
-     * escape the parallel region, so the first error is captured and
-     * rethrown afterwards. */
-    struct Move {
-      unsigned index;
-      Cell *target;
-    };
-    std::vector<std::vector<Move>> moves(n_cells);
-    std::mutex fold_error_mutex;
-    std::string fold_error_msg;
-    Kokkos::RangePolicy<exec_space> policy(std::size_t{0}, n_cells);
-    Kokkos::parallel_for(
-        "RegularDecomposition::resort::classify", policy,
-        [&](std::size_t const ci) {
-          auto *cell = cells_span[ci];
-          unsigned index = 0u;
-          for (auto &p : cell->particles()) {
-            try {
-              fold_and_reset(p, m_box);
-            } catch (std::exception const &err) {
-              std::lock_guard<std::mutex> guard{fold_error_mutex};
-              if (fold_error_msg.empty()) {
-                fold_error_msg = err.what();
-              }
-              return;
-            }
-            if (auto *const target = particle_to_cell(p); target != cell) {
-              moves[ci].emplace_back(index, target);
-            }
-            ++index;
-          }
-        });
-    Kokkos::fence();
-    if (not fold_error_msg.empty()) {
-      throw std::runtime_error(fold_error_msg);
-    }
-
-    /* Phase 2 (parallel): apply the moves in three passes.
-     * 2a (parallel over cells with moves): remove the movers from their cell
-     *    and stash them, with their target cell, in a per-cell outgoing list.
-     *    ParticleList::erase() swaps the last element into the erased slot,
-     *    so a slot-to-original-index map is maintained to look up the
-     *    phase-1 classification of swapped-in elements. Only the cell itself
-     *    and its own outgoing list are written.
-     * 2b (serial, pointers only): particles that left the local domain go to
-     *    the displaced list; the others are grouped by target cell with a
-     *    stable counting sort, i.e. in (source cell, removal) order.
-     * 2c (parallel over target cells): append the incoming particles.
-     * The resulting in-cell order differs from the one-pass sweep above
-     * (all removals happen before the insertions), but it does not depend
-     * on the number of threads. */
-    std::vector<std::vector<std::pair<Cell *, Particle>>> outgoing(n_cells);
-    std::vector<std::size_t> active;
-    for (std::size_t ci = 0; ci < n_cells; ++ci) {
-      if (not moves[ci].empty()) {
-        active.push_back(ci);
-      }
-    }
-    Kokkos::parallel_for(
-        "RegularDecomposition::resort::remove",
-        Kokkos::RangePolicy<exec_space>(std::size_t{0}, active.size()),
-        [&](std::size_t const k) {
-          auto const ci = active[k];
-          auto *const c = cells_span[ci];
-          auto &parts = c->particles();
-          auto const n = static_cast<int>(parts.size());
-          // target == own cell: particle is in place
-          std::vector<Cell *> target_of(n, c);
-          for (auto const &move : moves[ci]) {
-            target_of[move.index] = move.target;
-          }
-          std::vector<int> slot(n);
-          std::iota(slot.begin(), slot.end(), 0);
-          auto &out = outgoing[ci];
-          out.reserve(moves[ci].size());
-          int i = 0;
-          int end = n;
-          while (i < end) {
-            auto *const target_cell = target_of[slot[i]];
-            if (target_cell == c) {
-              ++i;
-              continue;
-            }
-            out.emplace_back(target_cell, std::move(*(parts.begin() + i)));
-            parts.erase(parts.begin() + i); // swaps the last element into i
-            slot[i] = slot[--end];
-          }
-        });
-    Kokkos::fence();
-
-    /* Counting sort of the incoming particles by the position of their
-     * target cell in the cell storage. */
-    auto const *const cells_begin = cells.data();
-    auto const cell_offset = [cells_begin](Cell const *cell) {
-      return static_cast<std::size_t>(cell - cells_begin);
-    };
-    std::vector<std::size_t> group_begin(cells.size() + 1u, 0u);
-    for (auto const ci : active) {
-      diff.emplace_back(ModifiedList{cells_span[ci]->particles()});
-      for (auto &[target, p] : outgoing[ci]) {
-        if (target == nullptr) {
-          diff.emplace_back(RemovedParticle{p.id()});
-          displaced_parts.insert(std::move(p));
-        } else {
-          ++group_begin[cell_offset(target) + 1u];
-        }
-      }
-    }
-    std::partial_sum(group_begin.begin(), group_begin.end(),
-                     group_begin.begin());
-    std::vector<std::pair<Cell *, Particle *>> incoming(group_begin.back());
-    {
-      auto next = group_begin;
-      for (auto const ci : active) {
-        for (auto &[target, p] : outgoing[ci]) {
-          if (target != nullptr) {
-            incoming[next[cell_offset(target)]++] = {target, &p};
-          }
-        }
-      }
-    }
-    std::vector<std::size_t> targets;
-    for (std::size_t j = 0; j < cells.size(); ++j) {
-      if (group_begin[j + 1u] != group_begin[j]) {
-        targets.push_back(j);
-      }
-    }
-    Kokkos::parallel_for(
-        "RegularDecomposition::resort::insert",
-        Kokkos::RangePolicy<exec_space>(std::size_t{0}, targets.size()),
-        [&](std::size_t const k) {
-          auto const j = targets[k];
-          for (auto l = group_begin[j]; l < group_begin[j + 1u]; ++l) {
-            incoming[l].first->particles().insert(
-                std::move(*incoming[l].second));
-          }
-        });
-    Kokkos::fence();
-    for (auto const j : targets) {
-      diff.emplace_back(ModifiedList{cells[j].particles()});
-    }
-
-    /* Release the per-cell buffers (and the moved-from particles) in
-     * parallel rather than in the serial destructors at scope exit. */
-    Kokkos::parallel_for(
-        "RegularDecomposition::resort::release",
-        Kokkos::RangePolicy<exec_space>(std::size_t{0}, n_cells),
-        [&](std::size_t const ci) {
-          std::vector<std::pair<Cell *, Particle>>{}.swap(outgoing[ci]);
-          std::vector<Move>{}.swap(moves[ci]);
-        });
-    Kokkos::fence();
+    resort_local_parallel(displaced_parts, diff);
   }
 
   if (global) {
