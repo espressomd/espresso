@@ -21,7 +21,6 @@
 
 #include "BondStorage.hpp"
 #include "hdf5_patches.hpp" // must appear first
-#include "system/System.hpp"
 
 #include "h5md_core.hpp"
 #include "h5md_dataset.hpp"
@@ -568,7 +567,7 @@ static void write_le_normal(LeesEdwardsBC const &lebc,
 }
 
 void File::write(const ParticleRange &particles, double time, int step,
-                 BoxGeometry const &box_geo) {
+                 BoxGeometry const &box_geo, BondStorage const &bond_storage) {
   auto &datasets = m_datasets;
   if (m_fields & H5MD_OUT_BOX_L) {
     write_box(box_geo, datasets.at("/particles/atoms/box/edges/value"));
@@ -656,13 +655,13 @@ void File::write(const ParticleRange &particles, double time, int step,
                                   detail::make_serializer(&Particle::q));
   }
   if (m_fields & H5MD_OUT_BONDS) {
-    write_connectivity(particles);
+    write_connectivity(particles, bond_storage);
   }
 }
 
-void File::write_connectivity(const ParticleRange &particles) {
+void File::write_connectivity(const ParticleRange &particles,
+                              BondStorage const &bond_storage) {
   MultiArray3i bond(boost::extents[0][0][0]);
-  auto const &bond_storage = *System::get_system().bond_storage;
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     // Owned bonds only, so that every pair-bond edge is written once.
