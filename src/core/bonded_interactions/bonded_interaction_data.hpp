@@ -57,6 +57,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -92,7 +93,7 @@ class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
 
   /**
    * @brief Bond topology of the system this container is bound to.
-   * Cached on @ref bind_system(), since @ref pair_bond_exists_between()
+   * Cached by @ref set_bond_storage(), since @ref pair_bond_exists_between()
    * is called from pair kernels, where locking the system is too costly.
    */
   std::shared_ptr<BondStorage const> m_bond_storage;
@@ -212,11 +213,13 @@ public:
         });
   }
 
-  /** @brief Bind to a system and cache its bond topology. */
-  void bind_system(std::shared_ptr<System::System> const &system);
-
-  /** @brief Detach from a system and drop its bond topology. */
-  void detach_system(std::shared_ptr<System::System> const &system);
+  /**
+   * @brief Set the bond topology queried by @ref pair_bond_exists_between.
+   * Must be called when attaching the container to a system.
+   */
+  void set_bond_storage(std::shared_ptr<BondStorage const> bond_storage) {
+    m_bond_storage = std::move(bond_storage);
+  }
 
   void on_ia_change();
 
