@@ -55,6 +55,7 @@
 #include <map>
 #include <mutex>
 #include <numeric>
+#include <ranges>
 #include <set>
 #include <stdexcept>
 #include <string>
@@ -215,9 +216,9 @@ struct OutgoingParticle {
 void take_out_movers(ParticleList &particles, std::vector<Move> const &moves,
                      std::vector<OutgoingParticle> &outgoing) {
   outgoing.reserve(moves.size());
-  for (auto move = moves.rbegin(); move != moves.rend(); ++move) {
-    auto const it = particles.begin() + move->index;
-    outgoing.emplace_back(move->target, std::move(*it));
+  for (auto const &move : std::views::reverse(moves)) {
+    auto const it = particles.begin() + move.index;
+    outgoing.emplace_back(move.target, std::move(*it));
     particles.erase(it);
   }
 }
@@ -260,6 +261,8 @@ void RegularDecomposition::resort_local_parallel(
   using exec_space = Kokkos::DefaultHostExecutionSpace;
   auto const cells_span = local_cells();
   auto const n_cells = cells_span.size();
+  /* Iteration range over all local cells. */
+  Kokkos::RangePolicy<exec_space> const all_cells(std::size_t{0}, n_cells);
 
   /* Step 1 (parallel over local cells): fold every particle position and
    * list the movers of each cell. Only particle-local state and the cell's
@@ -270,8 +273,7 @@ void RegularDecomposition::resort_local_parallel(
   std::mutex fold_error_mutex;
   std::string fold_error_msg;
   Kokkos::parallel_for(
-      "RegularDecomposition::resort::classify",
-      Kokkos::RangePolicy<exec_space>(std::size_t{0}, n_cells),
+      "RegularDecomposition::resort::classify", all_cells,
       [&](std::size_t const ci) {
         auto *cell = cells_span[ci];
         unsigned index = 0u;
@@ -400,8 +402,7 @@ void RegularDecomposition::resort_local_parallel(
 
   /* Release the per-cell buffers (and the moved-from particles) in
    * parallel rather than in the serial destructors at scope exit. */
-  Kokkos::parallel_for("RegularDecomposition::resort::release",
-                       Kokkos::RangePolicy<exec_space>(std::size_t{0}, n_cells),
+  Kokkos::parallel_for("RegularDecomposition::resort::release", all_cells,
                        [&](std::size_t const ci) {
                          std::vector<OutgoingParticle>{}.swap(outgoing[ci]);
                          std::vector<Move>{}.swap(moves[ci]);
