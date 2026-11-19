@@ -801,7 +801,7 @@ private:
    * @brief Execute kernel for every bond of a flat bond list.
    * @param bonds    One of the bond lists of @ref LocalBondState, holding
    *                 one row of indices into the unique particles per bond.
-   * @param handler  See @ref handle_owned_bonds().
+   * @param handler  See @c handle_owned_bonds().
    */
   template <std::size_t N>
   void handle_bond_list(LocalBondList<N> const &bonds, auto const &handler) {

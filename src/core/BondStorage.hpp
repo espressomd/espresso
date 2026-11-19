@@ -270,7 +270,7 @@ private:
   struct Owner {
     /** @brief Bonds owned by the particle, in insertion order. */
     std::vector<Bond> bonds;
-    /** @brief Number of bonds in @ref bonds, by number of partners. */
+    /** @brief Number of bonds in @c bonds, by number of partners. */
     Counts counts;
 
     void update_counts(Bond const &bond, int delta) {
