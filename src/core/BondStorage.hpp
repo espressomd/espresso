@@ -119,71 +119,32 @@ public:
   }
 
   /**
-   * @brief Remove one bond.
+   * @brief Remove one bond with exactly the given participants, in the
+   * given order, i.e. owned by @p particle_ids[0].
    *
-   * A bond matches when it has the given bond id and the same participants.
-   * Among the matching bonds, the first one found is removed, in this order
-   * of preference:
-   * 1. a bond with exactly the given participants, in the given order, i.e.
-   *    owned by @p particle_ids[0];
-   * 2. a bond owned by @p particle_ids[0], with its partners in any order;
-   * 3. a bond owned by another participant.
-   *
-   * The exact match comes first because the order of the partners matters
-   * for some bonds: e.g. the dihedrals (1, 2, 3, 4) and (1, 3, 2, 4) are
-   * different bonds with the same participants. The later choices
-   * disambiguate bonds stored twice with swapped ownership.
+   * The order of the partners matters: e.g. the dihedrals (1, 2, 3, 4) and
+   * (1, 3, 2, 4) are different bonds. If the same bond is stored more than
+   * once, the first occurrence is removed.
    *
    * @return whether a bond was removed.
    */
   bool remove(int bond_id, std::span<const int> particle_ids) {
-    if (particle_ids.empty() or particle_ids.size() > max_particles) {
+    if (particle_ids.empty()) {
       return false;
     }
-    if (auto *owner = find_owner(particle_ids[0])) {
-      auto const it = std::ranges::find_if(owner->bonds, [&](Bond const &b) {
-        return b.bond_id == bond_id and
-               std::ranges::equal(b.particle_ids, particle_ids);
-      });
-      if (it != owner->bonds.end()) {
-        erase_bond(*owner, it);
-        return true;
-      }
+    auto *owner = find_owner(particle_ids[0]);
+    if (owner == nullptr) {
+      return false;
     }
-    using Ids = boost::container::static_vector<int, max_particles>;
-    auto const sorted = [](std::span<const int> ids) {
-      Ids out(ids.begin(), ids.end());
-      std::ranges::sort(out);
-      return out;
-    };
-    auto const wanted = sorted(particle_ids);
-    auto const remove_from = [&](Owner &owner) {
-      auto const it = std::ranges::find_if(owner.bonds, [&](Bond const &bond) {
-        return bond.bond_id == bond_id and
-               bond.particle_ids.size() == wanted.size() and
-               sorted(bond.particle_ids) == wanted;
-      });
-      if (it == owner.bonds.end()) {
-        return false;
-      }
-      erase_bond(owner, it);
-      return true;
-    };
-    auto const pid = particle_ids[0];
-    if (auto *owner = find_owner(pid)) {
-      if (remove_from(*owner)) {
-        return true;
-      }
+    auto const it = std::ranges::find_if(owner->bonds, [&](Bond const &bond) {
+      return bond.bond_id == bond_id and
+	     std::ranges::equal(bond.particle_ids, particle_ids);
+    });
+    if (it == owner->bonds.end()) {
+      return false;
     }
-    if (auto const it = m_links.find(pid); it != m_links.end()) {
-      for (auto const &link : it->second) {
-        // the links are modified by a removal: leave the loop right after
-        if (remove_from(*find_owner(link.owner_id))) {
-          return true;
-        }
-      }
-    }
-    return false;
+    erase_bond(*owner, it);
+    return true;
   }
 
   /**

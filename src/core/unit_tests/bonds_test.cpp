@@ -116,22 +116,22 @@ BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
   BOOST_CHECK(
       (bonds_of(3) == std::vector<BondTuple>{{angle_bond_id, {2, 1, 3}}}));
 
-  /* a bond can be removed from any participant, in any order */
-  BOOST_CHECK(::remove_bond(system, angle_bond_id, {3, 2, 1}));
+  /* a bond can be removed in exact order */
+  BOOST_CHECK(::remove_bond(system, angle_bond_id, {2, 1, 3}));
   BOOST_CHECK(bonds_of(3).empty());
-  BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
+  BOOST_CHECK(::remove_bond(system, pair_bond_id, {1, 2}));
   BOOST_CHECK(bond_storage.empty());
 
   /* removing a bond that does not exist is reported */
   BOOST_CHECK(not ::remove_bond(system, pair_bond_id, {1, 2}));
 
-  /* the same bond added from both sides: each removal removes one of
-   * them, preferring the one owned by the first particle */
+  /* the same bond added from both sides: each removal removes in
+   * exact order */
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, pair_bond_id, {2, 1});
   BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
   BOOST_CHECK((bonds_of(2) == std::vector<BondTuple>{{pair_bond_id, {1, 2}}}));
-  BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
+  BOOST_CHECK(::remove_bond(system, pair_bond_id, {1, 2}));
   BOOST_CHECK(bond_storage.empty());
 }
 

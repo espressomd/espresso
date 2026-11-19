@@ -118,9 +118,11 @@ BOOST_AUTO_TEST_CASE(remove_matching) {
   BOOST_CHECK(not remove(storage, 0, {1, 2, 3, 4, 5}));
   BOOST_CHECK_EQUAL(storage.size(), 2u);
 
-  /* a bond can be removed from any participant, in any order */
-  BOOST_CHECK(remove(storage, 1, {3, 2, 1}));
-  BOOST_CHECK(remove(storage, 0, {2, 1}));
+  /* a bond can be removed in exact order */
+  BOOST_CHECK(not remove(storage, 1, {3, 2, 1}));
+  BOOST_CHECK(not remove(storage, 0, {2, 1}));
+  BOOST_CHECK(remove(storage, 1, {2, 1, 3}));
+  BOOST_CHECK(remove(storage, 0, {1, 2}));
   BOOST_CHECK(storage.empty());
   BOOST_CHECK(bonds_of(storage, 1).empty());
   BOOST_CHECK(bonds_of(storage, 2).empty());
@@ -138,18 +140,19 @@ BOOST_AUTO_TEST_CASE(remove_duplicates) {
   add(storage, 0, {1, 2});
   BOOST_CHECK_EQUAL(storage.size(), 3u);
 
-  /* the bond owned by the first particle is preferred */
+  /* only the exact tuple is removed: (2, 1) is a different bond than (1, 2) */
   BOOST_CHECK(remove(storage, 0, {2, 1}));
   BOOST_CHECK(
       (all_bonds(storage) == std::vector<Tuple>{{0, {1, 2}}, {0, {1, 2}}}));
-  /* otherwise any bond with the same participants is removed */
-  BOOST_CHECK(remove(storage, 0, {2, 1}));
+  BOOST_CHECK(not remove(storage, 0, {2, 1}));
+  /* a bond stored twice is removed one occurrence at a time */
+  BOOST_CHECK(remove(storage, 0, {1, 2}));
   BOOST_CHECK((all_bonds(storage) == std::vector<Tuple>{{0, {1, 2}}}));
   BOOST_CHECK(remove(storage, 0, {1, 2}));
   BOOST_CHECK(storage.empty());
 }
 
-BOOST_AUTO_TEST_CASE(remove_exact_order_first) {
+BOOST_AUTO_TEST_CASE(remove_exact_order) {
   BondStorage storage;
   /* two dihedrals with the same participants, but different bonds */
   add(storage, 0, {1, 2, 3, 4});
@@ -167,9 +170,12 @@ BOOST_AUTO_TEST_CASE(remove_exact_order_first) {
   BOOST_CHECK((storage.owned_counts(1).angle == 1));
   BOOST_CHECK((storage.owned_counts(1).dihedral == 1));
 
-  /* without an exact match, the partner order still does not matter */
-  BOOST_CHECK(remove(storage, 0, {1, 4, 3, 2}));
-  BOOST_CHECK(remove(storage, 1, {3, 2, 1}));
+  /* a different partner order is a different bond: nothing is removed */
+  BOOST_CHECK(not remove(storage, 0, {1, 4, 3, 2}));
+  BOOST_CHECK(not remove(storage, 1, {3, 2, 1}));
+  BOOST_CHECK_EQUAL(storage.size(), 2u);
+  BOOST_CHECK(remove(storage, 0, {1, 2, 3, 4}));
+  BOOST_CHECK(remove(storage, 1, {1, 2, 3}));
   BOOST_CHECK(storage.empty());
 }
 
@@ -224,7 +230,8 @@ BOOST_AUTO_TEST_CASE(repeated_participant) {
   add(storage, 1, {2, 1, 1});
   BOOST_CHECK((bonds_of(storage, 1) ==
                std::vector<Tuple>{{0, {1, 1}}, {1, {2, 1, 1}}}));
-  BOOST_CHECK(remove(storage, 1, {1, 1, 2}));
+  BOOST_CHECK(not remove(storage, 1, {1, 1, 2}));
+  BOOST_CHECK(remove(storage, 1, {2, 1, 1}));
   BOOST_CHECK(remove(storage, 0, {1, 1}));
   BOOST_CHECK(storage.empty());
   BOOST_CHECK(bonds_of(storage, 1).empty());
