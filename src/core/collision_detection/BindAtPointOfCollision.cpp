@@ -101,7 +101,8 @@ void BindAtPointOfCollision::handle_collisions(
   int current_vs_pid = global_max_seen_particle + 1;
 
   // Bonds to create. Every bond is recorded on exactly one rank, the one
-  // where the first particle of the colliding pair resides.
+  // where the first particle of the colliding pair resides, and is
+  // synchronized across ranks after the loop.
   std::vector<BondTuple> new_bonds;
 
   // Iterate over global collision queue
@@ -178,9 +179,9 @@ void BindAtPointOfCollision::handle_collisions(
     }
   } // Loop over all collisions in the queue
 
-  // Create the bonds on all ranks: add_bond() registers them in the global
-  // bond topology and writes the entries on whichever participants are
-  // locally known.
+  // Create the bonds on all ranks: the bonds recorded locally are gathered
+  // and broadcast, so that add_bond() modifies the global bond storage
+  // identically on every rank.
   if (not global_collision_queue.empty()) {
     ::sync_bond_tuples(new_bonds, ::comm_cart);
     for (auto const &[bond_id, particle_ids] : new_bonds) {

@@ -83,10 +83,11 @@ inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
 /**
  * @brief Bind the centers of the colliding particles.
  *
- * The local queue is gathered first, so that every rank creates the bond
- * entries of all collisions: the rank that detected a collision across a
- * rank boundary only holds a ghost copy of the bond partner, and an entry
- * written there never reaches the rank owning the partner.
+ * The bonds are registered in the flat bond lists of the rank that detected
+ * the collision, which avoids rebuilding these lists. The local queues are then
+ * gathered into the global collision queue, because the global bond
+ * storage must be modified identically on every rank, while a collision
+ * across a rank boundary is only queued on the rank that detected it.
  *
  * @param[in,out] collision_queue  Local queue. Pairs are reordered such
  *                                 that the first particle is not a ghost.
@@ -107,10 +108,10 @@ inline auto add_bind_centers(std::vector<CollisionPair> &collision_queue,
   // Because MPI rank 1's queue containing (@c p1_on_rank_1, @c p2_on_rank_2)
   // doesn't guarantee that the same pair (with or without swapped order) is
   // also queued on the MPI rank 2, both ranks may independently create
-  // the bond. This is orthogonal to bond storage and not addressed here.
+  // the bond. Such duplicates are not filtered here.
   auto global_collision_queue = gather_collision_queue(collision_queue);
   for (auto const &c : global_collision_queue) {
-    // writes the entries on whichever participants are locally known
+    // the global collision queue is identical on all ranks
     ::add_bond(system, bond_id, {c.first, c.second});
   }
   return global_collision_queue;
