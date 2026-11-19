@@ -22,7 +22,6 @@
 #include <utils/Vector.hpp>
 
 #include <complex>
-#include <type_traits>
 
 /**
  * @brief Abstract interface for the P3M reciprocal-space FFT.

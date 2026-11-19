@@ -37,8 +37,10 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <array>
 #include <complex>
 #include <cstddef>
+#include <initializer_list>
 #include <span>
 #include <utility>
 
@@ -111,14 +113,12 @@ void p3m_send_mesh<FloatType>::resize(boost::mpi::communicator const &comm,
     }
     done[i] = 1;
   }
-  max = 0;
   for (int i = 0; i < 6; i++) {
     s_size[i] = 1;
     for (int j = 0; j < 3; j++) {
       s_dim[i][j] = s_ur[i][j] - s_ld[i][j];
       s_size[i] *= s_dim[i][j];
     }
-    max = std::max(max, s_size[i]);
   }
   /* communication */
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
@@ -157,7 +157,40 @@ void p3m_send_mesh<FloatType>::resize(boost::mpi::communicator const &comm,
       r_dim[i][j] = r_ur[i][j] - r_ld[i][j];
       r_size[i] *= r_dim[i][j];
     }
-    max = std::max(max, r_size[i]);
+  }
+  /* both directions of a dimension share the send/recv buffers */
+  max = 0;
+  for (int d = 0; d < 3; ++d) {
+    auto const l = 2 * d;
+    auto const r = l + 1;
+    max = std::max(max, s_size[l] + s_size[r]);
+    max = std::max(max, r_size[l] + r_size[r]);
+  }
+}
+
+template <typename FloatType>
+void p3m_send_mesh<FloatType>::exchange(boost::mpi::communicator const &comm,
+                                        int left, int right, int send_left,
+                                        int send_right, int recv_right,
+                                        int recv_left, int tag) {
+  if (left == comm.rank()) {
+    // 1 MPI rank along this direction: exchange with self
+    std::swap(send_grid, recv_grid);
+  } else if (left == right) {
+    // 2 MPI ranks along this direction: send both blocks in a single message
+    mesh_sendrecv(send_grid.data(), send_left + send_right, left,
+                  recv_grid.data(), recv_right + recv_left, left, comm, tag);
+  } else {
+    // 3 or more MPI ranks along this direction: overlapping communication
+    auto const type = boost::mpi::get_mpi_datatype(FloatType{});
+    std::array<MPI_Request, 4> reqs;
+    MPI_Irecv(recv_grid.data(), recv_right, type, right, tag, comm, &reqs[0]);
+    MPI_Irecv(recv_grid.data() + recv_right, recv_left, type, left, tag, comm,
+              &reqs[1]);
+    MPI_Isend(send_grid.data(), send_left, type, left, tag, comm, &reqs[2]);
+    MPI_Isend(send_grid.data() + send_left, send_right, type, right, tag, comm,
+              &reqs[3]);
+    MPI_Waitall(4, reqs.data(), MPI_STATUSES_IGNORE);
   }
 }
 
@@ -166,36 +199,36 @@ void p3m_send_mesh<FloatType>::gather_grid(boost::mpi::communicator const &comm,
                                            std::span<FloatType *> meshes,
                                            Utils::Vector3i const &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
-  send_grid.resize(max * meshes.size());
-  recv_grid.resize(max * meshes.size());
+  auto const n_meshes = static_cast<int>(meshes.size());
+  send_grid.resize(static_cast<std::size_t>(max) * meshes.size());
+  recv_grid.resize(static_cast<std::size_t>(max) * meshes.size());
 
-  /* direction loop */
-  for (int s_dir = 0; s_dir < 6; s_dir++) {
-    auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+  /* dimension loop: both directions of a dimension are independent, since
+   * margins are packed and received blocks are added to inner layers */
+  for (int d = 0; d < 3; d++) {
+    auto const l = 2 * d;
+    auto const r = l + 1;
 
-    /* pack send block */
-    if (s_size[s_dir] > 0) {
-      for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft_pack_block(meshes[i], send_grid.data() + i * s_size[s_dir],
-                       s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
+    /* pack send blocks */
+    auto *out = send_grid.data();
+    for (auto const dir : {l, r}) {
+      for (auto *mesh : meshes) {
+        fft_pack_block(mesh, out, s_ld[dir], s_dim[dir], dim.data(), 1);
+        out += s_size[dir];
       }
     }
 
     /* communication */
-    if (node_neighbors[s_dir] != comm.rank()) {
-      auto const send_size = static_cast<int>(meshes.size()) * s_size[s_dir];
-      auto const recv_size = static_cast<int>(meshes.size()) * r_size[r_dir];
-      mesh_sendrecv(send_grid.data(), send_size, node_neighbors[s_dir],
-                    recv_grid.data(), recv_size, node_neighbors[r_dir], comm,
-                    REQ_P3M_GATHER);
-    } else {
-      std::swap(send_grid, recv_grid);
-    }
-    /* add recv block */
-    if (r_size[r_dir] > 0) {
-      for (std::size_t i = 0; i < meshes.size(); i++) {
-        p3m_add_block(recv_grid.data() + i * r_size[r_dir], meshes[i],
-                      r_ld[r_dir], r_dim[r_dir], dim.data());
+    exchange(comm, node_neighbors[l], node_neighbors[r], n_meshes * s_size[l],
+             n_meshes * s_size[r], n_meshes * r_size[r], n_meshes * r_size[l],
+             REQ_P3M_GATHER);
+
+    /* add recv blocks */
+    auto const *in = recv_grid.data();
+    for (auto const dir : {r, l}) {
+      for (auto *mesh : meshes) {
+        p3m_add_block(in, mesh, r_ld[dir], r_dim[dir], dim.data());
+        in += r_size[dir];
       }
     }
   }
@@ -206,35 +239,36 @@ void p3m_send_mesh<FloatType>::spread_grid(boost::mpi::communicator const &comm,
                                            std::span<FloatType *> meshes,
                                            Utils::Vector3i const &dim) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(comm);
-  send_grid.resize(max * meshes.size());
-  recv_grid.resize(max * meshes.size());
+  auto const n_meshes = static_cast<int>(meshes.size());
+  send_grid.resize(static_cast<std::size_t>(max) * meshes.size());
+  recv_grid.resize(static_cast<std::size_t>(max) * meshes.size());
 
-  /* direction loop */
-  for (int s_dir = 5; s_dir >= 0; s_dir--) {
-    auto const r_dir = (s_dir % 2 == 0) ? s_dir + 1 : s_dir - 1;
+  /* dimension loop: both directions of a dimension are independent, since
+   * inner layers are packed and received blocks overwrite the margins */
+  for (int d = 2; d >= 0; --d) {
+    auto const l = 2 * d;
+    auto const r = l + 1;
 
-    /* pack send block */
-    if (r_size[r_dir] > 0) {
-      for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft_pack_block(meshes[i], send_grid.data() + i * r_size[r_dir],
-                       r_ld[r_dir], r_dim[r_dir], dim.data(), 1);
+    /* pack send blocks */
+    auto *out = send_grid.data();
+    for (auto const dir : {l, r}) {
+      for (auto *mesh : meshes) {
+        fft_pack_block(mesh, out, r_ld[dir], r_dim[dir], dim.data(), 1);
+        out += r_size[dir];
       }
     }
+
     /* communication */
-    if (node_neighbors[r_dir] != comm.rank()) {
-      auto const send_size = static_cast<int>(meshes.size()) * r_size[r_dir];
-      auto const recv_size = static_cast<int>(meshes.size()) * s_size[s_dir];
-      mesh_sendrecv(send_grid.data(), send_size, node_neighbors[r_dir],
-                    recv_grid.data(), recv_size, node_neighbors[s_dir], comm,
-                    REQ_P3M_SPREAD);
-    } else {
-      std::swap(send_grid, recv_grid);
-    }
-    /* unpack recv block */
-    if (s_size[s_dir] > 0) {
-      for (std::size_t i = 0; i < meshes.size(); i++) {
-        fft_unpack_block(recv_grid.data() + i * s_size[s_dir], meshes[i],
-                         s_ld[s_dir], s_dim[s_dir], dim.data(), 1);
+    exchange(comm, node_neighbors[l], node_neighbors[r], n_meshes * r_size[l],
+             n_meshes * r_size[r], n_meshes * s_size[r], n_meshes * s_size[l],
+             REQ_P3M_SPREAD);
+
+    /* unpack recv blocks */
+    auto const *in = recv_grid.data();
+    for (auto const dir : {r, l}) {
+      for (auto *mesh : meshes) {
+        fft_unpack_block(in, mesh, s_ld[dir], s_dim[dir], dim.data(), 1);
+        in += s_size[dir];
       }
     }
   }
