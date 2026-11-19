@@ -291,7 +291,7 @@ void RegularDecomposition::resort_local_parallel(
           ++index;
         }
       });
-  Kokkos::fence();
+  exec_space().fence();
   if (not fold_error_msg.empty()) {
     throw std::runtime_error(fold_error_msg);
   }
@@ -312,7 +312,7 @@ void RegularDecomposition::resort_local_parallel(
         auto const ci = cells_with_movers[k];
         take_out_movers(cells_span[ci]->particles(), moves[ci], outgoing[ci]);
       });
-  Kokkos::fence();
+  exec_space().fence();
 
   /* Step 3 (serial, pointers only): sort out the removed particles.
    * Particles that left the local domain go to the displaced list. The
@@ -393,7 +393,7 @@ void RegularDecomposition::resort_local_parallel(
           parts.insert(std::move(*arrivals[l]));
         }
       });
-  Kokkos::fence();
+  exec_space().fence();
   for (auto const j : target_cells) {
     diff.emplace_back(ModifiedList{cells[j].particles()});
   }
@@ -406,7 +406,7 @@ void RegularDecomposition::resort_local_parallel(
                          std::vector<OutgoingParticle>{}.swap(outgoing[ci]);
                          std::vector<Move>{}.swap(moves[ci]);
                        });
-  Kokkos::fence();
+  exec_space().fence();
 }
 
 void RegularDecomposition::resort(bool global,
