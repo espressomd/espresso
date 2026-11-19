@@ -441,7 +441,7 @@ class CheckpointTest(ut.TestCase):
             (vtk_root / filename.format(1)).unlink(missing_ok=True)
             (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
-    @utx.skipIfMissingFeatures(["WALBERLA"])
+    @utx.skipIfMissingFeatures(["WALBERLA", "FFTW"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_solver_vtk(self):
         lbf = system.lb

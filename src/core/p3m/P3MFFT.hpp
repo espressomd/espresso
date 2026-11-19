@@ -117,8 +117,9 @@ public:
     // perform better (depending on hardware and backend)
     options.use_pencils = true;
     if constexpr (FFTConfig::use_r2c) {
-      fft3d = std::make_unique<FFT3D>(*in_box, *out_box, FFTConfig::r2c_dir,
-                                      comm, options);
+      auto constexpr r2c_dir = static_cast<int>(FFTConfig::r2c_dir);
+      fft3d =
+          std::make_unique<FFT3D>(*in_box, *out_box, r2c_dir, comm, options);
     } else {
       fft3d = std::make_unique<FFT3D>(*in_box, *out_box, comm, options);
     }

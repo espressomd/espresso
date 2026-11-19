@@ -42,6 +42,7 @@ group.add_argument('--constant_pH_ensemble', action='store_const', dest='mode',
                    const='constant_pH_ensemble')
 args = parser.parse_args()
 
+espressomd.assert_features(["ELECTROSTATICS"])
 
 # System parameters
 #############################################################

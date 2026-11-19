@@ -95,7 +95,7 @@ are required to be able to compile and use |es|:
         CUDA 12.0 or later [6]_ is required.
 
     MPI
-        An MPI library that implements the MPI standard version 1.2 is required
+        An MPI library that implements the MPI standard version 3.0 is required
         to run simulations in parallel. |es| is currently tested against
         `Open MPI <https://www.open-mpi.org>`__ and
         `MPICH <https://www.mpich.org>`__, with and without
@@ -152,13 +152,13 @@ are required to be able to compile and use |es|:
 Installing requirements on Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To compile |es| on Ubuntu 24.04 LTS, install the following build dependencies:
+To compile |es| on Ubuntu 26.04 LTS, install the following build dependencies:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cmake-curses-gui python3-dev openmpi-bin \
+    ssudo apt install build-essential cmake cmake-curses-gui python3-dev cython3 openmpi-bin \
       libboost-all-dev libfftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-pip libgsl-dev freeglut3-dev
+      python3-pip libgsl-dev freeglut3-dev libnlopt-cxx-dev
 
 To run |es|, install the following Python dependencies:
 
@@ -167,7 +167,7 @@ To run |es|, install the following Python dependencies:
     python3 -m venv espresso_env # here other virtual environment tools are also ok
     . espresso_env/bin/activate
     python3 -m pip install -c requirements.txt \
-      cmake cython numpy scipy packaging setuptools h5py
+      numpy scipy packaging setuptools h5py vtk
 
 These are the only hard requirements. In the following subsections,
 only optional dependencies will be discussed. Unless you need extra features,
@@ -294,7 +294,9 @@ the NVIDIA driver without GCC 13 due to a dependency resolution issue
 
 On Ubuntu 26.04, only GCC <= 13 can be used with nvcc 12.4.
 Alternatively, the Clang toolchain can be used.
-If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
+If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13,
+but the FFTW library must in that case be compiled with NVHPC too to avoid
+mixing the ``libgomp`` and ``libnvomp`` OpenMP runtime libraries.
 
 .. tabs::
 
@@ -303,7 +305,7 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
       .. code-block:: bash
 
          CC=gcc-15 CXX=g++-15 CUDAHOSTCXX=g++-13 CUDACXX=/usr/lib/nvidia-cuda-toolkit/bin/nvcc \
-           CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/15 cmake .. \
+           CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/13 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/lib/nvidia-cuda-toolkit
 
@@ -319,7 +321,7 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
 
       .. code-block:: bash
 
-         CC=clang-20 CXX=clang++-20 CUDACXX=clang++-20 cmake .. \
+         CC=clang-22 CXX=clang++-22 CUDACXX=clang++-22 cmake .. \
            -D ESPRESSO_BUILD_WITH_CUDA=ON \
            -D CUDAToolkit_ROOT=/usr/lib/cuda \
            -D CMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15" \
@@ -330,8 +332,8 @@ If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13.
       .. code-block:: bash
 
          sudo apt install \
-            clang-20 clang-tidy-20 clang-format-20 llvm-20 libc++-20-dev \
-            libclang-rt-20-dev libomp-20-dev gcc-15 g++-15 libstdc++-15-dev
+            clang-22 clang-tidy-22 clang-format-22 llvm-22 libc++-22-dev \
+            libclang-rt-22-dev libomp-22-dev gcc-15 g++-15 libstdc++-15-dev
 
    .. group-tab:: NVHPC on Ubuntu 26.04
 

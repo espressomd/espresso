@@ -615,7 +615,7 @@ public:
     assert(axis <= 2u);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
-  void set_fixed_along(int const axis, bool const fixed_flag) {
+  void set_fixed_along(unsigned int const axis, bool const fixed_flag) {
     // set new flag
     if (fixed_flag) {
       p.ext_flag |= static_cast<uint8_t>(1u << axis);

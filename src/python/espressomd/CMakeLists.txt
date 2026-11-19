@@ -71,12 +71,14 @@ target_compile_options(
     $<$<CXX_COMPILER_ID:GNU>:-Wno-shadow=compatible-local>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-conditionally-supported>
     $<$<CXX_COMPILER_ID:GNU>:-Wno-suggest-attribute=format>
+    $<$<CXX_COMPILER_ID:Clang>:-Wno-unused-template>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-sometimes-uninitialized>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-\#warnings>
     $<$<CXX_COMPILER_ID:Clang,AppleClang,IntelLLVM>:-Wno-deprecated-volatile>
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wno-format-signedness>
     $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=set_but_not_used>
     $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=identifier_not_keyword>
+    $<$<CXX_COMPILER_ID:NVHPC>:--diag_suppress=unrecognized_attribute>
     -Wno-cast-align
     -Wno-unused-variable)
 

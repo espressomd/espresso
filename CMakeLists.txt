@@ -491,11 +491,15 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-unknown-cuda-version>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-pass-failed>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-pass-failed>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-format-nonliteral>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
@@ -701,6 +705,41 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
   find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
 endif()
 
+# We need the parallel hdf5 version! Has to appear before Cabana.
+if(ESPRESSO_BUILD_WITH_HDF5)
+  # The FindHDF5 function will fall back to the serial version if no parallel
+  # version was found, and print to the CMake log that HDF5 was found. There is
+  # no QUIET argument to override that message. This can be confusing to people
+  # who are not familiar with the way hdf5 is distributed in Linux package
+  # repositories (libhdf5-dev is the serial version).
+  set(HDF5_PREFER_PARALLEL 1)
+  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
+  if(HDF5_FOUND)
+    if(HDF5_IS_PARALLEL)
+      add_feature_info(HDF5 ON "parallel")
+    else()
+      set(HDF5_FOUND FALSE)
+      message(FATAL_ERROR "HDF5 parallel version not found.")
+    endif()
+  endif()
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
+    find_package(HighFive 3.3.0 QUIET)
+  endif()
+  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      HighFive
+      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+      GIT_TAG        v3.3.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(HighFive)
+  endif()
+endif()
+
 if(ESPRESSO_BUILD_WITH_FFTW)
   if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
     list(APPEND FFTW3_COMPONENTS omp)
@@ -719,6 +758,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
       GIT_SHALLOW    TRUE
       GIT_SUBMODULES ""  # don't clone submodules
       OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
@@ -754,6 +794,7 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
       GIT_SHALLOW    TRUE
       GIT_SUBMODULES ""  # don't clone submodules
       OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS OFF)
@@ -784,6 +825,9 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
     target_compile_options(
       kokkoscore
       PRIVATE
+        $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-unknown-cuda-version>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>
         $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
     )
     # mark kokkos headers as system headers to disable compiler diagnostics
@@ -805,49 +849,19 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
       GIT_SHALLOW    FALSE
       GIT_SUBMODULES ""  # don't clone submodules
       PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
+      OVERRIDE_FIND_PACKAGE
+      SYSTEM
     )
     # cmake-format: on
     set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
+    set(Cabana_ENABLE_GRID OFF CACHE BOOL "")
+    set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
     FetchContent_MakeAvailable(cabana)
     # mark Cabana headers as system headers to disable compiler diagnostics
     set_property(
       TARGET Core APPEND
       PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
                $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
-  endif()
-endif()
-
-# We need the parallel hdf5 version!
-if(ESPRESSO_BUILD_WITH_HDF5)
-  # The FindHDF5 function will fall back to the serial version if no parallel
-  # version was found, and print to the CMake log that HDF5 was found. There is
-  # no QUIET argument to override that message. This can be confusing to people
-  # who are not familiar with the way hdf5 is distributed in Linux package
-  # repositories (libhdf5-dev is the serial version).
-  set(HDF5_PREFER_PARALLEL 1)
-  find_package(HDF5 "1.8" REQUIRED COMPONENTS C)
-  if(HDF5_FOUND)
-    if(HDF5_IS_PARALLEL)
-      add_feature_info(HDF5 ON "parallel")
-    else()
-      set(HDF5_FOUND FALSE)
-      message(FATAL_ERROR "HDF5 parallel version not found.")
-    endif()
-  endif()
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
-    find_package(HighFive 3.3.0 QUIET)
-  endif()
-  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      HighFive
-      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-      GIT_TAG        v3.3.0
-      GIT_SHALLOW    TRUE
-      GIT_SUBMODULES ""  # don't clone submodules
-    )
-    # cmake-format: on
-    FetchContent_MakeAvailable(HighFive)
   endif()
 endif()
 
@@ -868,6 +882,7 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
     GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
     GIT_SHALLOW    FALSE
     GIT_SUBMODULES ""  # don't clone submodules
+    SYSTEM
   )
   # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
@@ -888,6 +903,7 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
       GIT_TAG        v2.11.0
       GIT_SHALLOW    TRUE
       GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS off)
