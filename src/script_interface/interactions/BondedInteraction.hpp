@@ -122,7 +122,7 @@ public:
       auto const particle_ids = get_value<std::vector<int>>(params, "part_id");
       auto &system = ::System::get_system();
       context()->parallel_try_catch(
-          [&]() { ::check_particles_exist(system, particle_ids); });
+          [&]() { ::check_bond_can_be_added(system, bond_id, particle_ids); });
       ::add_bond(system, bond_id, particle_ids);
       system.on_particle_change();
       return {};
@@ -131,6 +131,9 @@ public:
       auto const bond_id = get_value<int>(params, "bond_id");
       auto const particle_ids = get_value<std::vector<int>>(params, "part_id");
       auto &system = ::System::get_system();
+      context()->parallel_try_catch([&]() {
+        ::check_bond_can_be_removed(system, bond_id, particle_ids);
+      });
       ::remove_bond(system, bond_id, particle_ids);
       system.on_particle_change();
       return {};

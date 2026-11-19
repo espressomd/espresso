@@ -67,6 +67,35 @@ void check_particles_exist(System::System const &system,
                            std::span<const int> particle_ids);
 
 /**
+ * @brief Check that a bond can be added, e.g. before a user adds it.
+ *
+ * The bond must have the number of partners its bonded interaction
+ * expects, its partners must be distinct and differ from the owner
+ * (@p particle_ids[0]), all particles must exist, and the owner must not
+ * own the same bond yet, with the same partners in the same order.
+ *
+ * Collective over all MPI ranks, see @ref check_particles_exist().
+ *
+ * @throw std::invalid_argument on all ranks, if the bond is malformed.
+ * @throw std::runtime_error on all ranks, if a particle does not exist or
+ *        the bond already exists.
+ */
+void check_bond_can_be_added(System::System const &system, int bond_id,
+                             std::span<const int> particle_ids);
+
+/**
+ * @brief Check that a bond can be removed, e.g. before a user removes it.
+ *
+ * The bond must be owned by @p particle_ids[0], with the remaining
+ * particles as its partners, in this order.
+ *
+ * @throw std::invalid_argument on all ranks, if @p particle_ids is empty.
+ * @throw std::runtime_error on all ranks, if the bond does not exist.
+ */
+void check_bond_can_be_removed(System::System const &system, int bond_id,
+                               std::span<const int> particle_ids);
+
+/**
  * @brief Remove a bond between particles.
  *
  * Must be called on all MPI ranks, with the same arguments and in the same

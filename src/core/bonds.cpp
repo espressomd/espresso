@@ -21,6 +21,7 @@
 
 #include "BondStorage.hpp"
 #include "Particle.hpp"
+#include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "system/System.hpp"
@@ -70,6 +71,73 @@ void check_particles_exist(System::System const &system,
                                std::to_string(particle_ids[i]) +
                                " does not exist");
     }
+  }
+}
+
+static std::string format_ids(std::span<const int> ids) {
+  std::string out = "[";
+  for (std::size_t i = 0u; i < ids.size(); ++i) {
+    out += ((i == 0u) ? "" : ", ") + std::to_string(ids[i]);
+  }
+  return out + "]";
+}
+
+/** @brief Whether @p particle_ids[0] owns exactly this bond. */
+static bool owns_bond(System::System const &system, int bond_id,
+                      std::span<const int> particle_ids) {
+  return system.bond_storage->any_owned_bond(
+      particle_ids[0], [&](BondStorage::Bond const &bond) {
+        return bond.bond_id == bond_id and
+               std::ranges::equal(bond.particle_ids, particle_ids);
+      });
+}
+
+static void check_not_empty(std::span<const int> particle_ids) {
+  if (particle_ids.empty()) {
+    throw std::invalid_argument("At least one particle is required");
+  }
+}
+
+void check_bond_can_be_added(System::System const &system, int bond_id,
+                             std::span<const int> particle_ids) {
+  check_not_empty(particle_ids);
+  auto const owner_id = particle_ids[0];
+  auto const partner_ids = particle_ids.subspan(1u);
+  if (std::ranges::find(partner_ids, owner_id) != partner_ids.end()) {
+    throw std::invalid_argument("Bond partners " + format_ids(partner_ids) +
+                                " include the particle " +
+                                std::to_string(owner_id) + " itself");
+  }
+  std::vector<int> sorted(partner_ids.begin(), partner_ids.end());
+  std::ranges::sort(sorted);
+  if (std::ranges::adjacent_find(sorted) != sorted.end()) {
+    throw std::invalid_argument("Cannot add duplicate bond partners " +
+                                format_ids(partner_ids) + " to particle " +
+                                std::to_string(owner_id));
+  }
+  auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_id));
+  if (std::cmp_not_equal(partner_ids.size(), n_partners)) {
+    throw std::invalid_argument("Bond " + std::to_string(bond_id) + " needs " +
+                                std::to_string(n_partners) + " partners, got " +
+                                std::to_string(partner_ids.size()));
+  }
+  check_particles_exist(system, particle_ids);
+  if (owns_bond(system, bond_id, particle_ids)) {
+    throw std::runtime_error("Bond " + std::to_string(bond_id) +
+                             " with partners " + format_ids(partner_ids) +
+                             " already exists on particle " +
+                             std::to_string(owner_id));
+  }
+}
+
+void check_bond_can_be_removed(System::System const &system, int bond_id,
+                               std::span<const int> particle_ids) {
+  check_not_empty(particle_ids);
+  if (not owns_bond(system, bond_id, particle_ids)) {
+    throw std::runtime_error(
+        "Bond " + std::to_string(bond_id) + " with partners " +
+        format_ids(particle_ids.subspan(1u)) + " doesn't exist on particle " +
+        std::to_string(particle_ids[0]));
   }
 }
 

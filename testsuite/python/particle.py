@@ -144,7 +144,7 @@ class ParticleProperties(ut.TestCase):
             system.bonds[self.f1].add((self.partcl, missing))
         with self.assertRaisesRegex(RuntimeError, err_msg):
             system.bonds[self.f3].add((self.partcl, partner, missing))
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(RuntimeError, err_msg):
             system.bonds[self.f1].add((missing, self.partcl))
         # particle property
         with self.assertRaisesRegex(RuntimeError, err_msg):
@@ -685,11 +685,11 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "already exists on particle"):
             self.system.bonds[harmonic].add((p2, p1))
         self.system.bonds[harmonic].remove((p2, p1))
-        with self.assertRaisesRegex(ValueError, r"Bond HarmonicBond\(.+?\) needs 1 partner"):
+        with self.assertRaisesRegex(ValueError, r"Bond [0-9]+ needs 1 partners, got 2"):
             self.system.bonds[harmonic].add((p2, p1, p3))
-        with self.assertRaisesRegex(Exception, "include the particle 17 itself"):
+        with self.assertRaisesRegex(ValueError, "include the particle 17 itself"):
             self.system.bonds[harmonic].add((p1, p1))
-        with self.assertRaisesRegex(Exception, r"Cannot add duplicate bond partners \[17, 17\]"):
+        with self.assertRaisesRegex(ValueError, r"Cannot add duplicate bond partners \[17, 17\]"):
             self.system.bonds[self.f3].add((p2, p1, p1))
 
     def test_zz_remove_all(self):
