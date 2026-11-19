@@ -40,7 +40,6 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -52,8 +51,7 @@ static void set_particles_bonds(
     std::vector<int> const &pids,
     std::vector<std::vector<int>> const &all_bonds_ids,
     std::vector<std::vector<std::vector<int>>> const &all_bonds_partner_ids,
-    ::CellStructure &cell_structure, ::System::System &system) {
-  std::unordered_set<int> const pid_set(pids.begin(), pids.end());
+    ::System::System &system) {
   // Validate the new bonds before touching the old ones
   {
     std::vector<int> all_ids(pids.begin(), pids.end());
@@ -64,34 +62,30 @@ static void set_particles_bonds(
     }
     ::check_particles_exist(system, all_ids);
   }
-  for (std::size_t i = 0; i < pids.size(); ++i) {
-    auto const pid = pids[i];
-    auto const bonds_ids = all_bonds_ids[i];
-    auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // Remove old bonds. A bond owned by pid is always safe to remove. A
-    // bond owned by another particle is only safe to remove if all of its
-    // participants are part of this bulk reassignment too, otherwise it
-    // belongs to a bond some untouched particle still owns. The bonds are
-    // read from the global bond topology, so that ::remove_bond() is
-    // called identically on every rank.
-    auto const bonds_to_remove = ::get_bonds_of_particle(
-        system, pid, [&](BondStorage::Bond const &bond) {
-          return bond.owner_id() == pid or
-                 std::ranges::all_of(bond.particle_ids, [&](int other) {
-                   return pid_set.contains(other);
-                 });
+  // Remove the bonds owned by every particle of the slice before adding
+  // any new bond, so that a new bond between two particles of the slice is
+  // not removed again when its partner is processed. Bonds owned by
+  // particles outside the slice are left untouched. The bonds are read
+  // from the global bond topology, so that ::remove_bond() is called
+  // identically on every rank.
+  for (auto const pid : pids) {
+    auto const owned_bonds = ::get_bonds_of_particle(
+        system, pid, [pid](BondStorage::Bond const &bond) {
+          return bond.owner_id() == pid;
         });
-    for (auto const &[bond_id, ids] : bonds_to_remove) {
+    for (auto const &[bond_id, ids] : owned_bonds) {
       ::remove_bond(system, bond_id, ids);
     }
-    // Add new bonds
-    for (std::size_t j = 0; j < bonds_ids.size(); ++j) {
-      std::vector<int> particle_ids = {pid};
-      std::ranges::copy(bonds_partner_ids[j], std::back_inserter(particle_ids));
-      ::add_bond(system, bonds_ids[j], particle_ids);
-      system.on_particle_change();
+  }
+  for (std::size_t i = 0; i < pids.size(); ++i) {
+    for (std::size_t j = 0; j < all_bonds_ids[i].size(); ++j) {
+      std::vector<int> particle_ids = {pids[i]};
+      std::ranges::copy(all_bonds_partner_ids[i][j],
+                        std::back_inserter(particle_ids));
+      ::add_bond(system, all_bonds_ids[i][j], particle_ids);
     }
   }
+  system.on_particle_change();
 }
 
 #ifdef ESPRESSO_EXCLUSIONS
@@ -254,7 +248,7 @@ Variant ParticleSlice::do_call_method(std::string const &name,
               get_value<std::vector<std::vector<int>>>(params, "all_bonds_ids"),
               get_value<std::vector<std::vector<std::vector<int>>>>(
                   params, "all_bonds_partner_ids"),
-              *get_cell_structure(), *get_system());
+              *get_system());
         }
       });
     } else {

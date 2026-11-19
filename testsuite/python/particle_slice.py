@@ -197,6 +197,51 @@ class ParticleSliceTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Parameter 'values' is missing"):
             self.all_partcls.call_method("set_param_parallel", name="type")
 
+    def test_bonds_within_slice(self):
+        """Bonds between particles of the same slice survive the assignment."""
+        fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
+        angle = espressomd.interactions.AngleHarmonic(bend=1., phi0=np.pi)
+        self.system.bonded_inter.add(fene)
+        self.system.bonded_inter.add(angle)
+
+        # the partner is processed after the owner
+        self.p0p1.bonds = [[(fene, 1)], []]
+        self.assertEqual(self.all_partcls.bonds,
+                         [((fene, 1),), (), (), ()])
+        # the partner is processed before the owner
+        self.p0p1.bonds = [[], [(fene, 0)]]
+        self.assertEqual(self.all_partcls.bonds,
+                         [(), ((fene, 0),), (), ()])
+        # bonds in both directions
+        self.p0p1.bonds = [[(fene, 1)], [(fene, 0)]]
+        self.assertEqual(self.all_partcls.bonds,
+                         [((fene, 1),), ((fene, 0),), (), ()])
+        # angle bond over the whole slice, the owner in the middle
+        self.all_partcls.bonds = [[], [(angle, 0, 2)], [(fene, 3)], []]
+        self.assertEqual(self.all_partcls.bonds,
+                         [(), ((angle, 0, 2),), ((fene, 3),), ()])
+
+        # bonds owned by particles outside the slice are kept, even when
+        # all their partners are in the slice
+        self.all_partcls.bonds = []
+        self.p2.bonds = [(fene, 0)]
+        self.p3.bonds = [(angle, 0, 1)]
+        self.p0p1.bonds = [[(fene, 1)], []]
+        self.assertEqual(self.all_partcls.bonds,
+                         [((fene, 1),), (), ((fene, 0),), ((angle, 0, 1),)])
+        self.p0p1.bonds = []
+        self.assertEqual(self.all_partcls.bonds,
+                         [(), (), ((fene, 0),), ((angle, 0, 1),)])
+
+        # the bonds are evaluated: particles 0 and 1 are 1 apart
+        harmonic = espressomd.interactions.HarmonicBond(k=1., r_0=0.)
+        self.system.bonded_inter.add(harmonic)
+        self.all_partcls.bonds = []
+        self.p0p1.bonds = [[(harmonic, 1)], []]
+        self.assertAlmostEqual(
+            self.system.analysis.energy()["bonded"], 0.5, delta=1e-10)
+        self.all_partcls.bonds = []
+
     def test_bonds(self):
 
         fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
