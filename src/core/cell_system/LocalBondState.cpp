@@ -85,8 +85,12 @@ void LocalBondList<N>::add_new_bond(int bond_id,
   assert(particle_ids.size() == N);
   for (auto const pid : particle_ids) {
     assert(pid >= 0 and static_cast<std::size_t>(pid) < id_to_index.extent(0));
-    assert(id_to_index(pid) != -1);
-    m_new_list.emplace_back(id_to_index(pid));
+    // The bounds are checked above. Reading the raw data keeps the
+    // message formatting of the Kokkos bounds check out of the paths of
+    // the static analyzer, which reports a false positive there.
+    auto const index = id_to_index.data()[pid];
+    assert(index != -1);
+    m_new_list.emplace_back(index);
   }
   m_new_ids.emplace_back(bond_id);
   count++;
