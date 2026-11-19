@@ -66,7 +66,6 @@ public:
 private:
   void on_bind_system(::System::System &system) override {
     system.bonded_ias = m_handle;
-    m_handle->set_bond_storage(system.bond_storage);
     m_handle->bind_system(m_system.lock());
     m_handle->on_ia_change();
     if (m_params and not m_params->empty()) {

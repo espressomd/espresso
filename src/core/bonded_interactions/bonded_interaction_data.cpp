@@ -25,9 +25,22 @@
 #include "thermalized_bond.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <numeric>
 #include <ranges>
 #include <variant>
+
+void BondedInteractionsMap::bind_system(
+    std::shared_ptr<System::System> const &system) {
+  Leaf::bind_system(system);
+  m_bond_storage = system->bond_storage;
+}
+
+void BondedInteractionsMap::detach_system(
+    std::shared_ptr<System::System> const &system) {
+  Leaf::detach_system(system);
+  m_bond_storage.reset();
+}
 
 double BondedInteractionsMap::maximal_cutoff() const {
   auto const max_cut_bonded = std::accumulate(
