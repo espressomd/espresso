@@ -190,6 +190,26 @@ private:
                           std::vector<ParticleChange> &modified_cells);
 
   /**
+   * @brief Fold the particle positions and move the particles into their
+   * local target cell, single-threaded.
+   *
+   * @param[out] displaced Particles that left the local domain.
+   * @param[out] diff Cells and particles that got touched.
+   */
+  void resort_local_serial(ParticleList &displaced,
+                           std::vector<ParticleChange> &diff);
+
+  /**
+   * @brief Fold the particle positions and move the particles into their
+   * local target cell, multi-threaded.
+   *
+   * @param[out] displaced Particles that left the local domain.
+   * @param[out] diff Cells and particles that got touched.
+   */
+  void resort_local_parallel(ParticleList &displaced,
+                             std::vector<ParticleChange> &diff);
+
+  /**
    *  @brief Calculate cell grid dimensions, cell sizes and number of cells.
    *
    *  Calculates the cell grid, based on the local box size and the range.
