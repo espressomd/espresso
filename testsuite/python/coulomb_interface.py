@@ -183,6 +183,12 @@ class Test(ut.TestCase):
             P3M(**{**p3m_params, 'prefactor': -2.})
         with self.assertRaisesRegex(ValueError, "Parameter 'timings' must be > 0"):
             P3M(**{**p3m_params, 'timings': -2})
+        with self.assertRaisesRegex(TypeError, "Parameter 'tune_with_integration' has to be a boolean"):
+            P3M(**{**p3m_params, 'tune_with_integration': 1})
+        with self.assertRaisesRegex(TypeError, "Parameter 'tune_skin' has to be a boolean"):
+            P3M(**{**p3m_params, 'tune_skin': 1})
+        with self.assertRaisesRegex(ValueError, "Parameter 'tune_skin' requires 'tune_with_integration'"):
+            P3M(**{**p3m_params, 'tune_skin': True})
         with self.assertRaisesRegex(ValueError, "Parameter 'mesh' has to be an integer or integer list of length 3"):
             P3M(**{**p3m_params, 'mesh': [8, 8]})
         if espressomd.has_features(["CUDA"]) and espressomd.gpu_available():

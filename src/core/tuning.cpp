@@ -36,6 +36,9 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <string>
 
 std::string TuningFailed::get_first_error() {
@@ -52,39 +55,51 @@ std::string TuningFailed::get_first_error() {
   return message;
 }
 
-static void check_statistics(Utils::Statistics::RunningAverage<double> &acc) {
+static void check_statistics(Utils::Statistics::RunningAverage<double> &acc,
+                             bool with_integration) {
   if (acc.avg() <= 5 * MPI_Wtick()) {
     runtimeWarningMsg()
         << "Clock resolution is too low to reliably time integration.";
   }
-  if (acc.sig() >= 0.1 * acc.avg()) {
+  // with integration, the step times are bimodal (steps with and without
+  // Verlet list rebuild), so the relative spread is no quality measure
+  if (not with_integration and acc.sig() >= 0.1 * acc.avg()) {
     runtimeWarningMsg() << "Statistics of tuning samples is very bad.";
   }
 }
 
-static void run_full_force_calc(System::System &system, int reuse_forces) {
-  auto const error_code = system.integrate(0, reuse_forces);
+static void run_integration(System::System &system, int n_steps,
+                            int reuse_forces) {
+  auto const error_code = system.integrate(n_steps, reuse_forces);
   if (error_code == INTEG_ERROR_RUNTIME) {
     throw TuningFailed{};
   }
 }
 
-double benchmark_integration_step(System::System &system, int int_steps) {
+double benchmark_integration_step(System::System &system, int int_steps,
+                                  bool with_integration) {
   Utils::Statistics::RunningAverage<double> running_average;
 
-  // check if the system can be integrated with the current parameters
-  run_full_force_calc(system, INTEG_REUSE_FORCES_CONDITIONALLY);
+  // check if the system can be integrated with the current parameters;
+  // this also computes the forces for the current positions
+  run_integration(system, 0, INTEG_REUSE_FORCES_CONDITIONALLY);
 
-  // measure force calculation time
+  // with integration, time full integration steps: the particles move, so
+  // Verlet list updates and particle propagation are included; the forces
+  // from the previous step are reused at the start of each step;
+  // otherwise, time the force calculation on fixed particle positions
+  auto const n_steps = with_integration ? 1 : 0;
+  auto const reuse_forces = with_integration ? INTEG_REUSE_FORCES_CONDITIONALLY
+                                             : INTEG_REUSE_FORCES_NEVER;
   for (int i = 0; i < int_steps; i++) {
     auto const tick = MPI_Wtime();
-    run_full_force_calc(system, INTEG_REUSE_FORCES_NEVER);
+    run_integration(system, n_steps, reuse_forces);
     auto const tock = MPI_Wtime();
     running_average.add_sample((tock - tick));
   }
 
   if (this_node == 0) {
-    check_statistics(running_average);
+    check_statistics(running_average, with_integration);
   }
 
   /* MPI returns in seconds, returned value should be in ms. */
@@ -122,35 +137,81 @@ static double time_calc(System::System &system, int int_steps) {
 }
 
 namespace System {
+double System::get_max_permissible_skin() const {
+  /* The maximal skin is the remainder from the required cutoff to
+   * the maximal range that can be supported by the cell system, but
+   * never larger than half the box size. */
+  return std::min(std::ranges::min(cell_structure->max_cutoff()) -
+                      maximal_cutoff(),
+                  0.5 * std::ranges::max(box_geo->length()));
+}
+
 void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
                               int int_steps, bool adjust_max_skin) {
 
   double a = min_skin;
   double b = max_skin;
 
-  /* The maximal skin is the remainder from the required cutoff to
-   * the maximal range that can be supported by the cell system, but
-   * never larger than half the box size. */
-  auto const max_permissible_skin = std::min(
-      std::ranges::min(cell_structure->max_cutoff()) - maximal_cutoff(),
-      0.5 * std::ranges::max(box_geo->length()));
-
+  auto const max_permissible_skin = get_max_permissible_skin();
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;
 
-  while (fabs(a - b) > tol) {
-    cell_structure->set_verlet_skin(a);
-    auto const time_a = time_calc(*this, int_steps);
+  if (b < a) {
+    throw std::runtime_error(
+        "Cannot tune the Verlet skin: the maximal permissible skin " +
+        std::to_string(b) + " is smaller than the minimal skin " +
+        std::to_string(a));
+  }
 
-    cell_structure->set_verlet_skin(b);
-    auto const time_b = time_calc(*this, int_steps);
+  /* Minimize the time per step: coarse scan of interior skins, then
+   * repeated halving of the bracket around the best sample. The best
+   * measured skin is kept. The timings of the head node are used on all
+   * ranks, so that they all take the same decisions. */
+  auto best_skin = 0.5 * (a + b);
+  auto best_time = std::numeric_limits<double>::max();
+  auto const evaluate = [&](double skin) {
+    cell_structure->set_verlet_skin(skin);
+    auto time = time_calc(*this, int_steps);
+    boost::mpi::broadcast(::comm_cart, time, 0);
+    if (time >= 0. and time < best_time) {
+      best_time = time;
+      best_skin = skin;
+    }
+  };
 
-    if (time_a > time_b) {
-      a = 0.5 * (a + b);
-    } else {
-      b = 0.5 * (a + b);
+  if (b - a <= tol) {
+    evaluate(best_skin);
+  } else {
+    // up to six interior points, but not finer than the tolerance
+    auto const n_coarse =
+        std::clamp(static_cast<int>(std::ceil((b - a) / tol)) - 1, 1, 6);
+    auto const h = (b - a) / (n_coarse + 1);
+    for (int k = 1; k <= n_coarse; ++k) {
+      evaluate(a + k * h);
+    }
+    auto lo = std::max(a, best_skin - h);
+    auto hi = std::min(b, best_skin + h);
+    while (hi - lo > tol) {
+      auto const centre = best_skin;
+      auto const m1 = 0.5 * (lo + centre);
+      auto const m2 = 0.5 * (centre + hi);
+      evaluate(m1);
+      evaluate(m2);
+      if (best_skin == m1) {
+        hi = centre;
+      } else if (best_skin == m2) {
+        lo = centre;
+      } else {
+        lo = m1;
+        hi = m2;
+      }
     }
   }
-  cell_structure->set_verlet_skin(0.5 * (a + b));
+  if (this_node == 0 and best_time == std::numeric_limits<double>::max()) {
+    runtimeWarningMsg() << "Verlet skin tuning failed: no integration could "
+                           "be timed, the skin was set to the middle of the "
+                           "interval without a measurement";
+  }
+  cell_structure->set_verlet_skin(best_skin);
 }
 } // namespace System

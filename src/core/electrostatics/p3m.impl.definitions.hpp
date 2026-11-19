@@ -795,10 +795,9 @@ protected:
 
 public:
   CoulombTuningAlgorithm(System::System &system, auto &input_p3m,
-                         double prefactor, int timings,
-                         decltype(m_tune_limits) tune_limits)
-      : TuningAlgorithm(system, prefactor, timings), p3m{input_p3m},
-        m_tune_limits{std::move(tune_limits)} {}
+                         double prefactor, TuningParameters const &tuning)
+      : TuningAlgorithm(system, prefactor, tuning), p3m{input_p3m},
+        m_tune_limits{tuning.limits} {}
 
   void on_solver_change() const override { m_system.on_coulomb_change(); }
 
@@ -984,13 +983,11 @@ public:
           m_r_cut_iL_max = trial_params.r_cut_iL;
         }
 
-        if (trial_time < time_best) {
-          /* new optimum */
-          reset_n_trials();
+        auto const step = update_mesh_scan(trial_time, time_best);
+        if (step == MeshScanStep::new_optimum) {
           tuned_params = trial_params;
           time_best = tuned_params.time = trial_time;
-        } else if (trial_time > time_best + time_granularity or
-                   get_n_trials() > max_n_consecutive_trials) {
+        } else if (step == MeshScanStep::stop) {
           /* no hope of further optimisation */
           break;
         }
@@ -1024,7 +1021,7 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::tune() {
     }
     try {
       CoulombTuningAlgorithm<FloatType, Architecture, FFTConfig> parameters(
-          system, p3m, prefactor, tuning.timings, tuning.limits);
+          system, p3m, prefactor, tuning);
       parameters.setup_logger(tuning.verbose);
       // parameter ranges
       parameters.determine_mesh_limits();

@@ -59,6 +59,27 @@ public:
     }
   }
 
+  void log_skin_tuning_start() const {
+    if (m_verbose) {
+      std::printf("\nskin tuning for the fastest parameter sets:\n"
+                  "mesh cao r_cut_iL    skin        time [ms]\n");
+    }
+  }
+
+  void log_skin_tuning(double time, int mesh, int cao, double r_cut_iL,
+                       double skin) const {
+    if (m_verbose) {
+      std::printf("%-4d %-3d %.5e %.5e %-8.2f\n", mesh, cao, r_cut_iL, skin,
+                  time);
+    }
+  }
+
+  void log_tuned_skin(double skin) const {
+    if (m_verbose) {
+      std::printf("tuned skin: %.4e\n", skin);
+    }
+  }
+
   void log_cao_too_large(int mesh, int cao) const {
     if (m_verbose) {
       std::printf("%-4d %-3d cao too large for this mesh\n", mesh, cao);
