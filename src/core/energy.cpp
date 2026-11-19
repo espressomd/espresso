@@ -44,17 +44,20 @@
 
 namespace System {
 
-std::shared_ptr<Observable_stat> System::calculate_energy() {
+Observable_stat const &System::calculate_energy() {
 
-  auto obs_energy_ptr = std::make_shared<Observable_stat>(
-      1ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
-
-  if (long_range_interactions_sanity_checks()) {
-    return obs_energy_ptr;
+  if (not m_obs_energy) {
+    m_obs_energy = std::make_unique<Observable_stat>(1ul, 0ul, 0);
   }
 
-  auto &obs_energy = *obs_energy_ptr;
+  auto &obs_energy = *m_obs_energy;
+  obs_energy.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                   nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_energy;
+  }
+
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
   gpu->clear_energy_on_device();
@@ -117,7 +120,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 #endif
 
   obs_energy.mpi_reduce();
-  return obs_energy_ptr;
+  return obs_energy;
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 

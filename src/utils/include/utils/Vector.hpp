@@ -30,6 +30,8 @@
 #include <boost/qvm/vec_traits.hpp>
 
 #include "utils/Array.hpp"
+#include "utils/attributes.hpp"
+#include "utils/device_qualifier.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -42,7 +44,10 @@
 #include <numeric>
 #include <ranges>
 #include <span>
+#include <stdexcept>
+#include <tuple>
 #include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace Utils {
@@ -71,8 +76,8 @@ public:
   struct is_vector<Vector<U, Np>> : std::true_type {};
 
   Vector() noexcept = default;
-  Vector(Vector const &) = default;
-  Vector &operator=(Vector const &) = default;
+  Vector(Vector const &) noexcept = default;
+  Vector &operator=(Vector const &) noexcept = default;
 
   void swap(Vector &rhs) { std::ranges::swap_ranges(*this, rhs); }
 
@@ -167,14 +172,22 @@ public:
   Vector &normalize() {
     auto const l = norm();
     if (l != T(0)) {
-      for (std::size_t i = 0u; i < N; ++i)
-        (*this)[i] /= l;
+      *this /= l;
     }
 
     return *this;
   }
 
-  Vector normalized() const { return (*this) / (*this).norm(); }
+  /*
+   * @brief Return a normalized copy of the vector.
+   *
+   * Normalize the vector by its length,
+   * if not zero, otherwise the vector is unchanged.
+   */
+  Vector normalized() const {
+    auto const l = norm();
+    return (l != T(0)) ? (*this) / l : *this;
+  }
 };
 
 template <class T> using Vector3 = Vector<T, 3>;
@@ -441,6 +454,11 @@ T const &get(Vector<T, N> const &a) noexcept {
 
 } // namespace Utils
 
+// Tuple-like interface for structured bindings.
+// Specializing these for user-defined types is permitted by [namespace.std],
+// but Clang-Tidy 22 reports partial specializations as a false positive.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
+
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Vector<T, N>> {
   static_assert(I < N, "Utils::Vector index must be in range");
@@ -450,6 +468,8 @@ struct std::tuple_element<I, Utils::Vector<T, N>> {
 template <class T, std::size_t N>
 struct std::tuple_size<Utils::Vector<T, N>>
     : std::integral_constant<std::size_t, N> {};
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 namespace boost::qvm {
 

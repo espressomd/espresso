@@ -66,6 +66,13 @@ target_link_libraries(
 set_source_files_properties(
   ${CMAKE_CURRENT_SOURCE_DIR}/particle_data/ParticleHandle.cpp
   PROPERTIES COMPILE_OPTIONS -fno-finite-math-only)
+if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+  set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/shapes/initialize.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/reaction_methods/initialize.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/reaction_methods/ReactionAlgorithm.cpp
+    PROPERTIES COMPILE_OPTIONS -expt-relaxed-constexpr)
+endif()
 
 target_include_directories(espresso_script_interface
                            PUBLIC ${CMAKE_SOURCE_DIR}/src)

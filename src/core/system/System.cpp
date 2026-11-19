@@ -25,6 +25,7 @@
 #include "BoxGeometry.hpp"
 #include "GpuParticleData.hpp"
 #include "LocalBox.hpp"
+#include "Observable_stat.hpp"
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -140,6 +141,11 @@ void set_system(std::shared_ptr<System> new_instance) {
 }
 
 System &get_system() { return *instance; }
+
+bool is_same_system(System const *const system) {
+  assert(system != nullptr);
+  return system == instance.get();
+}
 
 void System::set_time_step(double value) {
   if (value <= 0.)

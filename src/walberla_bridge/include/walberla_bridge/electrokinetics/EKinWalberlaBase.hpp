@@ -24,6 +24,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <vector>
 

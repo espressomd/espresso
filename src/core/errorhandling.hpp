@@ -100,5 +100,12 @@ RuntimeErrorStream _runtimeMessageStream(RuntimeError::ErrorLevel level,
 std::vector<RuntimeError> mpi_gather_runtime_errors();
 /** @brief Gather messages on main rank. Call on all ranks. */
 std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node);
+/**
+ * @brief Check whether there is at least 1 flying runtime messages on any node.
+ * This has to be called on the head node.
+ *
+ * @return true if at least one message was found.
+ */
+bool mpi_poll_runtime_messages();
 
 } // namespace ErrorHandling

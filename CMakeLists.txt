@@ -28,6 +28,10 @@ if(POLICY CMP0167)
   # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
   cmake_policy(SET CMP0167 NEW)
 endif()
+if(POLICY CMP0168)
+  # FetchContent no longer relies on a sub-build
+  cmake_policy(SET CMP0168 NEW)
+endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -211,6 +215,12 @@ set_property(
   TARGET espresso_compiler_flags APPEND
   PROPERTY INTERFACE_COMPILE_FEATURES cxx_std_${ESPRESSO_MINIMAL_CXX_STANDARD})
 
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  add_library(espresso_kokkos_compiler_flags INTERFACE)
+  add_library(espresso::kokkos::compiler_flags ALIAS
+              espresso_kokkos_compiler_flags)
+endif()
+
 #
 # AVX2 support
 #
@@ -282,13 +292,20 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   endif()
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
-      # 1. sm_61: GTX-1000 series (Pascal)
-      # 2. sm_75: RTX-2000 series (Turing)
-      # 3. sm_86: RTX-3000 series (Ampere)
-      # 4. sm_89: RTX-4000 series (Ada)
-      # 5. sm_90: H100 series (Hopper)
-      # 6. sm_120: RTX-5000 series (Blackwell)
+      # cmake-format: off
+      # sm_60: P100 series (Pascal)
+      # sm_61: GTX-1000 series (Pascal)
+      # sm_70: V100 series (Volta)
+      # sm_75: RTX-2000 series (Turing)
+      # sm_86: RTX-3000 series (Ampere)
+      # sm_89: RTX-4000 series (Ada)
+      # sm_90: H100 series (Hopper)
+      # sm_120: RTX-5000 series (Blackwell)
+      # cmake-format: on
       set(ESPRESSO_CUDA_ARCHITECTURES "75;86;89")
+      if(Kokkos_ENABLE_CUDA)
+        set(ESPRESSO_CUDA_ARCHITECTURES "86")
+      endif()
     else()
       set(ESPRESSO_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
     endif()
@@ -296,6 +313,14 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         CACHE INTERNAL "")
   endif()
   set(CMAKE_CUDA_ARCHITECTURES "${ESPRESSO_CMAKE_CUDA_ARCHITECTURES}")
+  list(LENGTH CMAKE_CUDA_ARCHITECTURES ESPRESSO_CMAKE_CUDA_ARCHITECTURES_LEN)
+  if(Kokkos_ENABLE_CUDA AND ESPRESSO_CMAKE_CUDA_ARCHITECTURES_LEN GREATER 1
+     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
+    message(
+      FATAL_ERROR
+        "Kokkos can only be built against a single CUDA architecture when using the nvcc_wrapper, got CMAKE_CUDA_ARCHITECTURES=${CMAKE_CUDA_ARCHITECTURES}"
+    )
+  endif()
   cmake_path(GET CUDA_cuda_driver_LIBRARY PARENT_PATH ESPRESSO_LIBCUDA_RPATH)
   cmake_path(GET CUDA_cudart_LIBRARY PARENT_PATH ESPRESSO_LIBCUDART_RPATH)
   macro(espresso_add_cuda_rpaths)
@@ -345,7 +370,10 @@ if(ESPRESSO_BUILD_WITH_CUDA)
              cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
 endif()
 
-# Python interpreter and Cython interface library
+#
+# Python interpreter, Jupyter and Cython
+#
+
 if(ESPRESSO_BUILD_WITH_PYTHON)
   find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development NumPy)
   find_package(Cython 3.0.4...<4.0.0 REQUIRED)
@@ -375,6 +403,13 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
     endblock()
   endif()
 endif()
+
+#
+# Documentation tools
+#
+
+find_package(Sphinx 3.4.3)
+find_package(Doxygen)
 
 #
 # Installation folders
@@ -456,11 +491,15 @@ target_compile_options(
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-unknown-cuda-version>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-pass-failed>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-pass-failed>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-format-nonliteral>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-float-conversion>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
@@ -474,8 +513,8 @@ target_compile_options(
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-old-style-cast>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=storage_class_not_first>
     $<$<AND:$<VERSION_LESS:${ESPRESSO_MINIMAL_CXX_STANDARD},23>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=bad_pp_directive_keyword>
-    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=code_is_unreachable>
-    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=loop_not_reachable>
+    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=code_is_unreachable>
+    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=loop_not_reachable>
     # disable GCC's C++17 processor-specific ABI warning (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94383)
     $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<IN_LIST:${CMAKE_SYSTEM_PROCESSOR},arm;arm64;aarch64;aarch64_be;powerpc64le>>:-Wno-psabi>
     # warnings are errors
@@ -666,110 +705,7 @@ if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
   find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
 endif()
 
-if(ESPRESSO_BUILD_WITH_FFTW)
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    list(APPEND FFTW3_COMPONENTS omp)
-  endif()
-  find_package(fftw3 REQUIRED COMPONENTS ${FFTW3_COMPONENTS})
-
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
-    find_package(Heffte 2.4.1 QUIET)
-  endif()
-  if(NOT DEFINED Heffte_FOUND OR NOT ${Heffte_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      heffte
-      GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
-      GIT_TAG        v2.4.1
-      OVERRIDE_FIND_PACKAGE
-    )
-    # cmake-format: on
-    set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
-    if(ESPRESSO_BUILD_WITH_CUDA)
-      set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
-    endif()
-    set(BUILD_SHARED_LIBS OFF)
-    FetchContent_MakeAvailable(heffte)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    foreach(HEFFTE_MODULE IN ITEMS FFTW CUDA)
-      if(TARGET Heffte::${HEFFTE_MODULE})
-        set(Heffte_${HEFFTE_MODULE}_FOUND true)
-      endif()
-    endforeach()
-    add_library(Heffte::Heffte INTERFACE IMPORTED GLOBAL)
-    target_link_libraries(Heffte::Heffte INTERFACE Heffte)
-    set_property(TARGET Heffte PROPERTY INSTALL_RPATH "")
-    install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-  endif()
-endif()
-
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
-    find_package(Kokkos 4.6 QUIET)
-  endif()
-  if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      kokkos
-      GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-      GIT_TAG        5.0.2
-      OVERRIDE_FIND_PACKAGE
-    )
-    # cmake-format: on
-    set(BUILD_SHARED_LIBS ON)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-    set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
-    set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
-    set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
-    set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
-    set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
-    set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
-    set(Kokkos_ENABLE_DEPRECATED_CODE_4 OFF CACHE BOOL "")
-    set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
-    FetchContent_MakeAvailable(kokkos)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-    install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-    # install all kokkos shared objects
-    get_target_property(ESPRESSO_KOKKOS_LIBS kokkos INTERFACE_LINK_LIBRARIES)
-    foreach(target_name IN LISTS ESPRESSO_KOKKOS_LIBS)
-      get_target_property(target_type ${target_name} TYPE)
-      if(${target_type} STREQUAL "SHARED_LIBRARY" AND ${target_name} MATCHES
-                                                      "^kokkos[a-zA-Z0-9_]+$")
-        install(TARGETS ${target_name}
-                LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-      endif()
-    endforeach()
-    # mark kokkos headers as system headers to disable compiler diagnostics
-    set_property(
-      TARGET kokkos APPEND
-      PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-               $<TARGET_PROPERTY:kokkos,INTERFACE_INCLUDE_DIRECTORIES>)
-  endif()
-
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
-    find_package(Cabana 0.7.0 QUIET)
-  endif()
-  if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG        e76c1a1 # 0.7.0 with patches
-      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
-    )
-    # cmake-format: on
-    set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
-    FetchContent_MakeAvailable(cabana)
-    # mark Cabana headers as system headers to disable compiler diagnostics
-    set_property(
-      TARGET Core APPEND
-      PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
-               $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
-  endif()
-endif()
-
-# We need the parallel hdf5 version!
+# We need the parallel hdf5 version! Has to appear before Cabana.
 if(ESPRESSO_BUILD_WITH_HDF5)
   # The FindHDF5 function will fall back to the serial version if no parallel
   # version was found, and print to the CMake log that HDF5 was found. There is
@@ -795,9 +731,137 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       HighFive
       GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
       GIT_TAG        v3.3.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
     )
     # cmake-format: on
     FetchContent_MakeAvailable(HighFive)
+  endif()
+endif()
+
+if(ESPRESSO_BUILD_WITH_FFTW)
+  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    list(APPEND FFTW3_COMPONENTS omp)
+  endif()
+  find_package(fftw3 REQUIRED COMPONENTS ${FFTW3_COMPONENTS})
+
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
+    find_package(Heffte 2.4.1 QUIET)
+  endif()
+  if(NOT DEFINED Heffte_FOUND OR NOT ${Heffte_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      heffte
+      GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
+      GIT_TAG        v2.4.1
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      OVERRIDE_FIND_PACKAGE
+      SYSTEM
+    )
+    # cmake-format: on
+    set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
+    if(ESPRESSO_BUILD_WITH_CUDA)
+      set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
+    endif()
+    set(Heffte_ENABLE_DOXYGEN OFF CACHE BOOL "")
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(heffte)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    foreach(HEFFTE_MODULE IN ITEMS FFTW CUDA)
+      if(TARGET Heffte::${HEFFTE_MODULE})
+        set(Heffte_${HEFFTE_MODULE}_FOUND true)
+      endif()
+    endforeach()
+    add_library(Heffte::Heffte INTERFACE IMPORTED GLOBAL)
+    target_link_libraries(Heffte::Heffte INTERFACE Heffte)
+    set_property(TARGET Heffte PROPERTY INSTALL_RPATH "")
+    install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+  endif()
+endif()
+
+if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
+    find_package(Kokkos 4.6 QUIET)
+  endif()
+  if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      kokkos
+      GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+      GIT_TAG        5.0.2
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      OVERRIDE_FIND_PACKAGE
+      SYSTEM
+    )
+    # cmake-format: on
+    set(BUILD_SHARED_LIBS OFF)
+    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+    set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
+    set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
+    set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
+    set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
+    set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
+    set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
+    set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
+    set(Kokkos_ENABLE_DEPRECATED_CODE_4 OFF CACHE BOOL "")
+    set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
+    FetchContent_MakeAvailable(kokkos)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+    install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+    # install all kokkos shared objects
+    get_target_property(ESPRESSO_KOKKOS_LIBS kokkos INTERFACE_LINK_LIBRARIES)
+    foreach(target_name IN LISTS ESPRESSO_KOKKOS_LIBS)
+      get_target_property(target_type ${target_name} TYPE)
+      if(${target_type} STREQUAL "SHARED_LIBRARY" AND ${target_name} MATCHES
+                                                      "^kokkos[a-zA-Z0-9_]+$")
+        install(TARGETS ${target_name}
+                LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+      endif()
+    endforeach()
+    target_compile_options(
+      kokkoscore
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-unknown-cuda-version>
+        $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>
+        $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
+    )
+    # mark kokkos headers as system headers to disable compiler diagnostics
+    set_property(
+      TARGET kokkos APPEND
+      PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+               $<TARGET_PROPERTY:kokkos,INTERFACE_INCLUDE_DIRECTORIES>)
+  endif()
+
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
+    find_package(Cabana 0.7.0 QUIET)
+  endif()
+  if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      cabana
+      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+      GIT_TAG        e76c1a1 # 0.7.0 with patches
+      GIT_SHALLOW    FALSE
+      GIT_SUBMODULES ""  # don't clone submodules
+      PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
+      OVERRIDE_FIND_PACKAGE
+      SYSTEM
+    )
+    # cmake-format: on
+    set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
+    set(Cabana_ENABLE_GRID OFF CACHE BOOL "")
+    set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
+    FetchContent_MakeAvailable(cabana)
+    # mark Cabana headers as system headers to disable compiler diagnostics
+    set_property(
+      TARGET Core APPEND
+      PROPERTY INTERFACE_SYSTEM_INCLUDE_DIRECTORIES
+               $<TARGET_PROPERTY:Core,INTERFACE_INCLUDE_DIRECTORIES>)
   endif()
 endif()
 
@@ -816,6 +880,9 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
     GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
+    GIT_SHALLOW    FALSE
+    GIT_SUBMODULES ""  # don't clone submodules
+    SYSTEM
   )
   # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
@@ -833,7 +900,10 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
     FetchContent_Declare(
       nlopt
       GIT_REPOSITORY https://github.com/stevengj/nlopt.git
-      GIT_TAG        v2.10.0
+      GIT_TAG        v2.11.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
     )
     # cmake-format: on
     set(BUILD_SHARED_LIBS off)
@@ -847,6 +917,13 @@ if(ESPRESSO_BUILD_WITH_NLOPT)
     set(NLOPT_LUKSAN off CACHE BOOL "")
     FetchContent_MakeAvailable(nlopt)
     set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    target_compile_options(
+      nlopt
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=integer_sign_change>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=deprecated_entity>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=mixed_enum_type>)
   endif()
 endif()
 
@@ -856,6 +933,12 @@ if(ESPRESSO_BUILD_WITH_VALGRIND)
   if(VALGRIND_FOUND)
     message(STATUS "Found valgrind: ${VALGRIND_INCLUDE_DIRS}")
   endif()
+endif()
+
+if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+  # allow constexpr __host__ function calls in __device__ functions
+  target_compile_options(espresso_kokkos_compiler_flags
+                         INTERFACE -expt-relaxed-constexpr)
 endif()
 
 #
@@ -980,6 +1063,11 @@ if(ESPRESSO_BUILD_TESTS)
   target_compile_options(
     espresso_tests_compiler_flags
     INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION
+                                                VERSION_GREATER_EQUAL "19.1.0")
+    target_compile_options(espresso_tests_compiler_flags
+                           INTERFACE -Wno-c2y-extensions)
+  endif()
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
@@ -1013,8 +1101,11 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     # cmake-format: off
     FetchContent_Declare(
       walberla
-      GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
+      GIT_REPOSITORY https://github.com/lssfau/walberla.git
       GIT_TAG        3247aa73 # v7.2 with patches
+      GIT_SHALLOW    FALSE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
     )
     # cmake-format: on
     string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
@@ -1056,6 +1147,20 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
         -Wno-unused-but-set-variable)
     target_link_libraries(walberla_sqlite
                           PRIVATE espresso_walberla_sqlite_compiler_flags)
+    target_compile_options(
+      sqlite3
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-incompatible-pointer-types-discards-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
+    if(CMAKE_BUILD_TYPE MATCHES "^Release$|^RelWith|^MinSizeRel$")
+      # reduce build time and RAM usage of one source file with 50k lines
+      set_source_files_properties(
+        ${walberla_SOURCE_DIR}/src/core/math/Parser.cpp TARGET_DIRECTORY
+        walberla_core PROPERTIES COMPILE_OPTIONS "-O2")
+    endif()
   endif()
   add_library(espresso_walberla_deps INTERFACE)
   add_library(espresso::walberla_deps ALIAS espresso_walberla_deps)
@@ -1082,7 +1187,9 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   FetchContent_Declare(
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-    GIT_TAG        v2.14.0
+    GIT_TAG        v2.15.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
   )
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
@@ -1131,7 +1238,7 @@ function(espresso_set_common_target_properties)
     if(ESPRESSO_BUILD_WITH_CUDA)
       if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
         set_target_properties(${TARGET_NAME}
-                              PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+                              PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
       elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
         set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
       endif()

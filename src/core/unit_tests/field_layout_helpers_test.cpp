@@ -28,6 +28,7 @@
 #endif
 
 #include <utils/Vector.hpp>
+#include <utils/device_qualifier.hpp>
 #include <utils/index.hpp>
 
 #include <complex>
@@ -46,7 +47,7 @@ BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
 
 template <Utils::MemoryOrder MemOrderReal, Utils::MemoryOrder MemOrderFourier>
-void check_add_remove_halo() {
+HOST_ONLY_QUALIFIER void check_add_remove_halo() {
   auto constexpr n_x = 3;
   auto constexpr n_y = 7;
   auto constexpr n_z = 11;
@@ -117,10 +118,14 @@ void check_add_remove_halo() {
   }
 
   // Remove halo again
-  auto real_without_halo_new = extract_block<MemOrderFourier, MemOrderReal>(
-      real_with_halo, shape_with_halo, halo_left, shape_with_halo - halo_right);
-  auto cplx_without_halo_new = extract_block<MemOrderFourier, MemOrderReal>(
-      cplx_with_halo, shape_with_halo, halo_left, shape_with_halo - halo_right);
+  std::vector<double> real_without_halo_new{};
+  std::vector<std::complex<double>> cplx_without_halo_new{};
+  extract_block<MemOrderFourier, MemOrderReal>(
+      real_with_halo, shape_with_halo, halo_left, shape_with_halo - halo_right,
+      real_without_halo_new);
+  extract_block<MemOrderFourier, MemOrderReal>(
+      cplx_with_halo, shape_with_halo, halo_left, shape_with_halo - halo_right,
+      cplx_without_halo_new);
   for (std::size_t i = 0u; i < buf_size; ++i) {
     BOOST_CHECK_EQUAL(real_without_halo_new[i], real_without_halo_orig[i]);
     BOOST_CHECK_EQUAL(cplx_without_halo_new[i],

@@ -84,6 +84,19 @@ def check_type_or_throw_except(x, n, t, msg):
                 f"{msg} -- Item {i} was of type {type(x[i]).__name__}")
 
 
+# map of the most common function keyword argument names, converted to bytes
+cdef dict _fast_map_str2bytes = {x: x.encode() for x in [
+    "id", "type", "pos", "v", "f", "q", "dipm", "dip", "quat", "director",
+    "mass", "omega_lab", "omega_body", "torque_lab", "fix", "rotation",
+    "pos_folded", "image_box", "by_id", "by_ids", "part", "steps",
+    "pid", "pids", "ptype", "box_l", "properties", "add_particle",
+    "get_highest_particle_id", "integrator", "id_selection", "cell_system",
+    "analysis", "integrate", "recalc_forces", "reuse_forces",
+    "get_particle_ids", "name", "get_param_parallel", "calculate_energy",
+    "non_bonded_inter", "index", "_index", "node_sip", "parent_sip", "shape",
+    "slice_lower_corner", "slice_upper_corner"]}
+
+
 def to_bytes(s):
     """
     Return a Cython bytes object which contains the information of the provided
@@ -94,13 +107,18 @@ def to_bytes(s):
     s : :obj:`str` or :obj:`bytes`
 
     """
-    if isinstance(s, str):
+    if type(s) is str:
+        # dict lookup is much cheaper than conversion
+        if s in _fast_map_str2bytes:
+            return _fast_map_str2bytes[s]
+        return s.encode()
+    if type(s) is bytes:
+        return s
+    if isinstance(s, np.str_):
         return s.encode()
     if isinstance(s, np.bytes_):
         return bytes(s)
-    if isinstance(s, bytes):
-        return s
-    raise ValueError(f"Unknown string type {type(s)}")
+    raise TypeError(f"Unknown string type {type(s)}")
 
 
 def to_str(s):
@@ -112,13 +130,15 @@ def to_str(s):
     s : char*
 
     """
-    if isinstance(s, bytes):
+    if type(s) is bytes:
+        return s.decode()
+    if type(s) is str:
+        return s
+    if isinstance(s, np.bytes_):
         return s.decode()
     if isinstance(s, np.str_):
         return str(s)
-    if isinstance(s, str):
-        return s
-    raise ValueError(f"Unknown string type {type(s)}")
+    raise TypeError(f"Unknown bytes type {type(s)}")
 
 
 class array_locked(np.ndarray):

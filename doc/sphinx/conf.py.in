@@ -264,7 +264,7 @@ class SpdxRole(sphinx.util.docutils.SphinxRole):
         spdx_id = self.text
         node_spdx = docutils.nodes.inline(text='SPDX license identifier: ')
         node_spdx_id = docutils.nodes.inline(text=spdx_id)
-        node_spdx_id.set_class('pre')
+        node_spdx_id['classes'].append('pre')
         node_spdx_url = docutils.nodes.reference(refuri=f'https://spdx.org/licenses/{spdx_id}.html')
         node_spdx_url += node_spdx_id
         node_spdx += node_spdx_url
@@ -277,7 +277,6 @@ class SpdxRole(sphinx.util.docutils.SphinxRole):
 # https://stackoverflow.com/questions/12206334/sphinx-autosummary-toctree-contains-reference-to-nonexisting-document-warnings
 autodoc_mock_imports = ['featuredefs', 'matplotlib', 'OpenGL', 'vtk', 'zndraw', 'znsocket', 'znjson']
 
-# Add custom stylesheets
 def setup(app):
     app.add_css_file('blockquotes.css')
     app.add_css_file('custom.css')

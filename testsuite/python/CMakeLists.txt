@@ -128,11 +128,16 @@ function(python_test)
     math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
   endif()
 
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
+
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_CORES} SKIP_RETURN_CODE 5
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=${TEST_NUM_THREADS}"
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
   # cmake-format: on
 
@@ -400,6 +405,7 @@ python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2)
 python_test(FILE elc.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE elc_nonneutral.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
@@ -446,6 +452,8 @@ python_test(FILE propagation_stokesian.py MAX_NUM_PROC 2)
 python_test(FILE integrator_symplectic_euler_langevin.py MAX_NUM_PROC 4)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
 python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
+python_test(FILE integrator_recalc_forces.py MAX_NUM_PROC 1 NUM_THREADS 1)
+python_test(FILE integrator_time_step_restore.py MAX_NUM_PROC 1 NUM_THREADS 1)
 python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_brownian_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)

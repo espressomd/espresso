@@ -54,6 +54,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 #include <memory>
 #include <optional>

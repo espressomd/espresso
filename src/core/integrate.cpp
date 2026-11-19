@@ -255,6 +255,15 @@ void System::System::integrator_sanity_checks() const {
         << "Thermalized bonds require the thermalized_bond thermostat";
   }
 
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  if ((propagation->used_propagations & PropagationMode::TRANS_STOKESIAN) and
+      (propagation->default_propagation & PropagationMode::TRANS_STOKESIAN)) {
+    auto pred = PropagationPredicateStokesian(propagation->default_propagation);
+    stokesian_dynamics->sanity_checks(
+        cell_structure->local_particles().filter(pred));
+  }
+#endif // ESPRESSO_STOKESIAN_DYNAMICS
+
 #ifdef ESPRESSO_ROTATION
   for (auto const &p : cell_structure->local_particles()) {
     using namespace PropagationMode;
@@ -583,12 +592,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
     calculate_forces();
-
-    if (propagation.integ_switch != INTEG_METHOD_STEEPEST_DESCENT) {
-#ifdef ESPRESSO_ROTATION
-      convert_initial_torques(cell_structure->local_particles());
-#endif
-    }
 
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_END("Initial Force Calculation");

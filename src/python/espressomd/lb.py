@@ -118,7 +118,7 @@ class LBFluid(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
         v : (3,) array_like :obj:`float`
             The LB fluid velocity at ``pos``.
 
-    add_force_at_pos():
+    add_force_at_pos()
         Adds a force to the fluid at given position.
 
         Parameters

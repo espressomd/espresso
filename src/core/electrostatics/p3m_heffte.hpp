@@ -28,6 +28,8 @@
 #include "electrostatics/p3m.hpp"
 
 #include "communication.hpp"
+#include "fft/vector.hpp"
+#include "kokkos_helpers.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
@@ -77,13 +79,13 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
   /** charge density in real-space with halo */
   std::vector<FloatType> rs_charge_density;
   /** charge density in k-space without halo */
-  std::vector<ComplexType> ks_charge_density;
+  fft::vector<ComplexType> ks_charge_density;
   /** electric fields in real-space with halo */
   std::array<std::vector<FloatType>, 3> rs_E_fields;
   /** electric fields in k-space without halo */
-  std::array<std::vector<ComplexType>, 3> ks_E_fields;
+  std::array<fft::vector<ComplexType>, 3> ks_E_fields;
   /** electric fields in real-space without halo */
-  std::array<std::vector<FloatType>, 3> rs_E_fields_no_halo;
+  std::array<fft::vector<FloatType>, 3> rs_E_fields_no_halo;
   p3m_send_mesh<FloatType> halo_comm;
   std::shared_ptr<P3MFFT<FloatType, FFTConfig>> fft;
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
@@ -222,7 +224,8 @@ public:
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, p3m.rs_charge_density_kokkos,
                     num_threads, p3m.local_mesh.size);
-    Kokkos::deep_copy(p3m.rs_charge_density_kokkos, FloatType{0});
+    kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
+                     FloatType{0});
 #endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
     std::ranges::fill(p3m.rs_charge_density, FloatType{0});
   }

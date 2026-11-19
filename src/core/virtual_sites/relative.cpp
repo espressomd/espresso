@@ -66,7 +66,7 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
 
   // Get omega of real particle in space-fixed frame
   auto const omega_space_frame =
-      convert_vector_body_to_space(p_ref, p_ref.omega());
+      convert_vector_body_to_space(p_ref.quat(), p_ref.omega());
   // Obtain velocity from v = v_real particle + omega_real_particle * director
   return vector_product(omega_space_frame, d) + p_ref.v();
 }
@@ -98,7 +98,7 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(-p_vs.force(), connection_vector(p_ref, p_vs));
+  return tensor_product(connection_vector(p_ref, p_vs), -p_vs.force());
 }
 
 static bool is_vs_relative_trans(Particle const &p) {

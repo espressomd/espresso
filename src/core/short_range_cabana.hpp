@@ -28,6 +28,7 @@
 #include "aosoa_pack.hpp"
 #include "custom_verlet_list.hpp"
 #include "forces_cabana.hpp"
+#include "kokkos_helpers.hpp"
 
 #include <Cabana_Core.hpp>
 #include <Cabana_NeighborList.hpp>
@@ -39,20 +40,6 @@
 #include <iterator>
 #include <span>
 #include <utility>
-
-template <class KokkosRangePolicy = Kokkos::RangePolicy<>>
-ESPRESSO_ATTR_ALWAYS_INLINE inline void
-kokkos_parallel_range_for(auto const &name, auto start, auto end,
-                          auto const &kernel) {
-  if (Kokkos::num_threads() > 1) {
-    KokkosRangePolicy policy(start, end);
-    Kokkos::parallel_for(name, policy, kernel);
-  } else {
-    for (auto p_index = start; p_index < end; ++p_index) {
-      kernel(p_index);
-    }
-  }
-}
 
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 commit_particle(Particle const &p, auto const index,
@@ -148,10 +135,12 @@ link_cell_kokkos(std::span<Cell *const> cells, BoxGeometry const &box_geo,
     }
   };
 
-  Kokkos::parallel_for("inter", cells.size(), intra_kernel);
+  kokkos_parallel_range_for<Kokkos::DefaultExecutionSpace>(
+      "intra", std::size_t{0}, cells.size(), intra_kernel);
   Kokkos::fence();
 
-  Kokkos::parallel_for("intra", cells.size(), inter_kernel);
+  kokkos_parallel_range_for<Kokkos::DefaultExecutionSpace>(
+      "inter", std::size_t{0}, cells.size(), inter_kernel);
   Kokkos::fence();
 }
 
@@ -162,7 +151,6 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
   CALI_CXX_MARK_FUNCTION;
 #endif
   using execution_space = Kokkos::DefaultExecutionSpace;
-  using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const n_part = unique_particles.size();
@@ -178,7 +166,7 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("AoSoA commit full");
 #endif
-    kokkos_parallel_range_for<policy_type>(
+    kokkos_parallel_range_for<execution_space>(
         "AoSoA write", std::size_t{0}, n_part,
         [&unique_particles, &aosoa, &id_to_index](int const index) {
           auto const &p = *unique_particles.at(index);
@@ -233,7 +221,7 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
 #ifdef ESPRESSO_CALIPER
     CALI_MARK_BEGIN("AoSoA commit partial");
 #endif
-    kokkos_parallel_range_for<policy_type>(
+    kokkos_parallel_range_for<execution_space>(
         "AoSoA write", std::size_t{0}, n_part,
         [&unique_particles, &aosoa](int const index) {
           auto const &p = *unique_particles.at(index);
@@ -250,12 +238,11 @@ update_cabana_state(CellStructure &cell_structure, auto const &verlet_criterion,
 ESPRESSO_ATTR_ALWAYS_INLINE inline void
 update_aosoa_charges(CellStructure &cell_structure) {
   using execution_space = Kokkos::DefaultExecutionSpace;
-  using policy_type = Kokkos::RangePolicy<execution_space>;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const n_part = unique_particles.size();
   auto &aosoa = cell_structure.get_aosoa();
 
-  kokkos_parallel_range_for<policy_type>(
+  kokkos_parallel_range_for<execution_space>(
       "Views update charges", std::size_t{0}, n_part,
       [&unique_particles, &aosoa](std::size_t const index) {
         aosoa.charge(index) = unique_particles.at(index)->q();

@@ -43,17 +43,20 @@
 #include <span>
 
 namespace System {
-std::shared_ptr<Observable_stat> System::calculate_pressure() {
 
-  auto obs_pressure_ptr = std::make_shared<Observable_stat>(
-      9ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
+Observable_stat const &System::calculate_pressure() {
 
-  if (long_range_interactions_sanity_checks()) {
-    return obs_pressure_ptr;
+  if (not m_obs_pressure) {
+    m_obs_pressure = std::make_unique<Observable_stat>(9ul, 0ul, 0);
   }
 
-  auto &obs_pressure = *obs_pressure_ptr;
+  auto &obs_pressure = *m_obs_pressure;
+  obs_pressure.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                     nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_pressure;
+  }
 
   on_observable_calc();
 
@@ -124,6 +127,7 @@ std::shared_ptr<Observable_stat> System::calculate_pressure() {
   obs_pressure.rescale(volume);
 
   obs_pressure.mpi_reduce();
-  return obs_pressure_ptr;
+  return obs_pressure;
 }
+
 } // namespace System

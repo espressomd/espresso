@@ -22,11 +22,13 @@
 #if defined(__CUDACC__)
 #define DEVICE_THROW(E)
 #define DEVICE_QUALIFIER __host__ __device__
+#define HOST_ONLY_QUALIFIER __host__
 #define DEVICE_ASSERT(A) void((A))
 #else
 #include <cassert>
 #define DEVICE_THROW(E) throw(E)
 #define DEVICE_QUALIFIER
+#define HOST_ONLY_QUALIFIER
 #define DEVICE_ASSERT(A) assert((A))
 #endif
 

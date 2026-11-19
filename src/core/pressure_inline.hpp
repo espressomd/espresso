@@ -74,9 +74,9 @@ inline void add_non_bonded_pair_virials(
     f +=
         thole_pair_force(p1, p2, ia_params, d, dist, bonded_ias, kernel_forces);
 #endif
-    auto const stress = Utils::tensor_product(d, f);
+    auto const pressure = Utils::tensor_product(d, f);
     obs_pressure.add_non_bonded_contribution(p1.type(), p2.type(), p1.mol_id(),
-                                             p2.mol_id(), flatten(stress));
+                                             p2.mol_id(), flatten(pressure));
   }
 
 #ifdef ESPRESSO_ELECTROSTATICS
@@ -110,7 +110,7 @@ calc_bonded_virial_pressure_tensor(
   auto const pair_force = calc_bond_pair_force(iaparams, p1, p2, dx, kernel);
   std::optional<Utils::Matrix<double, 3, 3>> pressure{std::nullopt};
   if (pair_force) {
-    pressure = Utils::tensor_product(*pair_force, dx);
+    pressure = Utils::tensor_product(dx, *pair_force);
   }
   return pressure;
 }
@@ -134,9 +134,8 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
     if (result) {
       Utils::Vector3d force2, force3;
       std::tie(std::ignore, force2, force3) = result.value();
-
-      return Utils::tensor_product(force2, dx21) +
-             Utils::tensor_product(force3, dx31);
+      return Utils::tensor_product(dx21, force2) +
+             Utils::tensor_product(dx31, force3);
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +

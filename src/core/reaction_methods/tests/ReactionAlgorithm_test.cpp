@@ -70,6 +70,7 @@ namespace Testing {
 class ReactionAlgorithm : public ReactionMethods::ReactionAlgorithm {
 public:
   using Base = ReactionMethods::ReactionAlgorithm;
+  using Base::check_exclusion_range;
   using Base::clear_old_system_state;
   using Base::displacement_mc_move;
   using Base::get_old_system_state;
@@ -341,6 +342,73 @@ BOOST_FIXTURE_TEST_CASE(ReactionAlgorithm_test, ParticleFactory) {
     BOOST_REQUIRE(r_algo.particle_inside_exclusion_range_touched);
     r_algo.clear_old_system_state();
   }
+}
+
+// Test exclusion range larger than ghost layer. The order N range check must
+// detect a candidate particle that is owned by a *different* MPI rank and is
+// not a ghost on the inserted particle's rank. On the buggy code the distance
+// loop runs only on the inserted particle's owning rank and resolves the
+// candidate via get_local_particle (local + ghost only), so a remote,
+// non-ghost particle within exclusion_range is silently missed and the flag
+// stays false. The correct behavior is that the overlap is detected on any
+// number of ranks.
+BOOST_FIXTURE_TEST_CASE(order_n_remote_particle_exclusion_range,
+                        ParticleFactory) {
+  auto const comm = boost::mpi::communicator();
+  auto const &cell_structure = *espresso::system->cell_structure;
+
+  // start from a clean, consistent distributed state (earlier test cases may
+  // leave particles behind, possibly with a stale real copy on more than one
+  // rank)
+  ::remove_all_particles();
+  // box 1x1x1; with 2 ranks the node grid is {2, 1, 1}, splitting the box
+  // along x. The ghost layer (max_range) is then about one cell wide in x, so
+  // a particle sitting 0.05 from an x-boundary is real on exactly one rank and
+  // NOT a ghost on the other rank.
+  espresso::system->set_box_l(Utils::Vector3d::broadcast(1.));
+
+  int const type = 0;
+  // particle 0 -> owned by the rank holding small x, particle 1 -> owned by
+  // the rank holding large x; neither is a ghost on the other rank.
+  ::make_new_particle(0, {0.05, 0.5, 0.5});
+  ::make_new_particle(1, {0.95, 0.5, 0.5});
+  set_particle_property(0, &Particle::type, type);
+  set_particle_property(1, &Particle::type, type);
+
+  if (comm.size() == 2) {
+    // precondition: the ghost layer is much narrower than the distance of
+    // either particle to the far domain, so the particles are genuinely not
+    // mutual ghosts (the condition that makes the bug observable)
+    BOOST_REQUIRE_LT(cell_structure.max_range()[0], 0.45);
+
+    // exclusion_range (0.5) larger than the minimum-image distance between
+    // the two particles (mi-distance is 0.1) so an exclusion-range violation
+    // exists, but the candidate is on a remote rank beyond the ghost layer.
+    auto r_algo = Testing::ReactionAlgorithm(comm, 42, 1., 0.5, {});
+    r_algo.neighbor_search_order_n = true;
+
+    // inserted particle == particle 0; particle 1 lies within the exclusion
+    // range and must be detected.
+    r_algo.particle_inside_exclusion_range_touched = false;
+    r_algo.check_exclusion_range(0, type);
+    BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
+
+    // symmetric case: inserted particle == particle 1
+    r_algo.particle_inside_exclusion_range_touched = false;
+    r_algo.check_exclusion_range(1, type);
+    BOOST_CHECK(r_algo.particle_inside_exclusion_range_touched);
+
+    // negative control: a small exclusion range below the mi-distance must
+    // NOT flag an overlap (the order_n branch must not over-detect either)
+    auto r_algo_small = Testing::ReactionAlgorithm(comm, 42, 1., 0.05, {});
+    r_algo_small.neighbor_search_order_n = true;
+    r_algo_small.particle_inside_exclusion_range_touched = false;
+    r_algo_small.check_exclusion_range(0, type);
+    BOOST_CHECK(!r_algo_small.particle_inside_exclusion_range_touched);
+  }
+
+  remove_particle(0);
+  remove_particle(1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

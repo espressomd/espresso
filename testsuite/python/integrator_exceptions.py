@@ -273,7 +273,7 @@ class Test(ut.TestCase):
         self.system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
         self.system.thermostat.set_langevin(kT=2., gamma=1., seed=42)
         self.system.thermostat.set_brownian(kT=2., gamma=1., seed=42)
-        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1[.0]*: there are currently active thermostats with kT=2[.0]*"):
             self.system.thermostat.set_brownian(kT=1., gamma=1., seed=42)
         with self.assertRaisesRegex(RuntimeError, f"Parameter 'kT' is read-only"):
             self.system.thermostat.kT = 2.
