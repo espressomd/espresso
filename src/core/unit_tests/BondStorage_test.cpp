@@ -149,6 +149,30 @@ BOOST_AUTO_TEST_CASE(remove_duplicates) {
   BOOST_CHECK(storage.empty());
 }
 
+BOOST_AUTO_TEST_CASE(remove_exact_order_first) {
+  BondStorage storage;
+  /* two dihedrals with the same participants, but different bonds */
+  add(storage, 0, {1, 2, 3, 4});
+  add(storage, 0, {1, 3, 2, 4});
+  /* two angles with the same participants, but different vertices */
+  add(storage, 1, {1, 2, 3});
+  add(storage, 1, {1, 3, 2});
+
+  /* the bond with the given partner order is removed, not the one stored
+   * first */
+  BOOST_CHECK(remove(storage, 0, {1, 3, 2, 4}));
+  BOOST_CHECK(remove(storage, 1, {1, 3, 2}));
+  BOOST_CHECK((all_bonds(storage) ==
+               std::vector<Tuple>{{0, {1, 2, 3, 4}}, {1, {1, 2, 3}}}));
+  BOOST_CHECK((storage.owned_counts(1).angle == 1));
+  BOOST_CHECK((storage.owned_counts(1).dihedral == 1));
+
+  /* without an exact match, the partner order still does not matter */
+  BOOST_CHECK(remove(storage, 0, {1, 4, 3, 2}));
+  BOOST_CHECK(remove(storage, 1, {3, 2, 1}));
+  BOOST_CHECK(storage.empty());
+}
+
 BOOST_AUTO_TEST_CASE(visiting_order) {
   BondStorage storage;
   add(storage, 0, {2, 1});

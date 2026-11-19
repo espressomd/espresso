@@ -122,15 +122,33 @@ public:
    * @brief Remove one bond.
    *
    * A bond matches when it has the given bond id and the same participants.
-   * A bond that is also owned by @p particle_ids[0] is preferred, which
-   * disambiguates bonds stored twice with swapped ownership; the order of
-   * the other participants never matters.
+   * Among the matching bonds, the first one found is removed, in this order
+   * of preference:
+   * 1. a bond with exactly the given participants, in the given order, i.e.
+   *    owned by @p particle_ids[0];
+   * 2. a bond owned by @p particle_ids[0], with its partners in any order;
+   * 3. a bond owned by another participant.
+   *
+   * The exact match comes first because the order of the partners matters
+   * for some bonds: e.g. the dihedrals (1, 2, 3, 4) and (1, 3, 2, 4) are
+   * different bonds with the same participants. The later choices
+   * disambiguate bonds stored twice with swapped ownership.
    *
    * @return whether a bond was removed.
    */
   bool remove(int bond_id, std::span<const int> particle_ids) {
     if (particle_ids.empty() or particle_ids.size() > max_particles) {
       return false;
+    }
+    if (auto *owner = find_owner(particle_ids[0])) {
+      auto const it = std::ranges::find_if(owner->bonds, [&](Bond const &b) {
+        return b.bond_id == bond_id and
+               std::ranges::equal(b.particle_ids, particle_ids);
+      });
+      if (it != owner->bonds.end()) {
+        erase_bond(*owner, it);
+        return true;
+      }
     }
     using Ids = boost::container::static_vector<int, max_particles>;
     auto const sorted = [](std::span<const int> ids) {

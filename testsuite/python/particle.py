@@ -692,6 +692,23 @@ class ParticleProperties(ut.TestCase):
         with self.assertRaisesRegex(ValueError, r"Cannot add duplicate bond partners \[17, 17\]"):
             self.system.bonds[self.f3].add((p2, p1, p1))
 
+    def test_remove_bond_partner_order(self):
+        """Dihedrals with the same participants in a different order are
+        different torsions, and only the one given is removed."""
+        p1 = self.system.part.by_id(self.pid)
+        p2, p3, p4 = self.system.part.add(pos=[p1.pos + [i, i**2, 0.]
+                                               for i in (1, 2, 3)])
+        dihedral = self.f4
+
+        self.system.bonds[dihedral].add((p1, p2, p3, p4))
+        self.system.bonds[dihedral].add((p1, p3, p2, p4))
+        self.system.bonds[dihedral].remove((p1, p3, p2, p4))
+        self.assertEqual(p1.bonds, ((dihedral, p2.id, p3.id, p4.id),))
+        with self.assertRaisesRegex(RuntimeError, "doesn't exist on particle"):
+            self.system.bonds[dihedral].remove((p1, p3, p2, p4))
+        self.system.bonds[dihedral].remove((p1, p2, p3, p4))
+        self.assertEqual(p1.bonds, ())
+
     def test_zz_remove_all(self):
         for p in self.system.part.all():
             p.remove()
