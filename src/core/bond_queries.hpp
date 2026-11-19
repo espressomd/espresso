@@ -97,10 +97,16 @@ inline bool pair_bond_exists(BondStorage const &bond_storage, int pid1,
   if (pid1 == pid2) {
     return false;
   }
-  return bond_storage.any_bond_with(pid1, [&](BondStorage::Bond const &bond) {
-    return bond.particle_ids.size() == 2u and bond.has_participant(pid2) and
-           pred(bond.bond_id);
-  });
+  // A pair bond is owned by one of its two particles: look at the bonds
+  // each of them owns, not at all bonds they participate in.
+  auto const owns_pair_with = [&](int owner_id, int partner_id) {
+    return bond_storage.any_owned_bond(
+        owner_id, [&](BondStorage::Bond const &bond) {
+          return bond.particle_ids.size() == 2u and
+                 bond.particle_ids[1] == partner_id and pred(bond.bond_id);
+        });
+  };
+  return owns_pair_with(pid1, pid2) or owns_pair_with(pid2, pid1);
 }
 
 /**

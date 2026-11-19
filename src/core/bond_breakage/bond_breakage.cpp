@@ -154,17 +154,27 @@ public:
                   {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1]});
   }
   void operator()(DeleteAllBonds const &d) const {
-    // Delete every pair bond (of any type) between the two particles,
-    // whichever of them owns it. The bonds are read from the global bond
-    // topology, so that all ranks remove the same bonds. The same bond
-    // can co-exist more than once between the same particles, and each
-    // occurrence is removed.
-    auto const bonds = ::get_bonds_of_particle(
-        system, d.particle_id_1, [&d](BondStorage::Bond const &bond) {
-          return bond.particle_ids.size() == 2u and
-                 bond.has_participant(d.particle_id_2) and
-                 d.particle_id_1 != d.particle_id_2;
-        });
+    // Delete every pair bond (of any type) between the two particles. A
+    // pair bond is owned by one of them, so only their owned bonds are
+    // read. The same bond can be stored more than once, and each
+    // occurrence is removed. The bonds are read from the global bond
+    // topology, so that all ranks remove the same bonds.
+    if (d.particle_id_1 == d.particle_id_2) {
+      return;
+    }
+    std::vector<BondTuple> bonds;
+    auto const collect = [&](int owner_id, int partner_id) {
+      system.bond_storage->for_each_owned_bond(
+          owner_id, [&](BondStorage::Bond const &bond) {
+            if (bond.particle_ids.size() == 2u and
+                bond.particle_ids[1] == partner_id) {
+              bonds.emplace_back(bond.bond_id,
+                                 std::vector<int>{owner_id, partner_id});
+            }
+          });
+    };
+    collect(d.particle_id_1, d.particle_id_2);
+    collect(d.particle_id_2, d.particle_id_1);
     for (auto const &[bond_id, ids] : bonds) {
       ::remove_bond(system, bond_id, ids);
     }

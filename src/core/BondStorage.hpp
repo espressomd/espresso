@@ -138,7 +138,7 @@ public:
     }
     auto const it = std::ranges::find_if(owner->bonds, [&](Bond const &bond) {
       return bond.bond_id == bond_id and
-	     std::ranges::equal(bond.particle_ids, particle_ids);
+             std::ranges::equal(bond.particle_ids, particle_ids);
     });
     if (it == owner->bonds.end()) {
       return false;
