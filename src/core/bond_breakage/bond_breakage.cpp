@@ -159,9 +159,6 @@ public:
     // read. The same bond can be stored more than once, and each
     // occurrence is removed. The bonds are read from the global bond
     // topology, so that all ranks remove the same bonds.
-    if (d.particle_id_1 == d.particle_id_2) {
-      return;
-    }
     std::vector<BondTuple> bonds;
     auto const collect = [&](int owner_id, int partner_id) {
       system.bond_storage->for_each_owned_bond(
