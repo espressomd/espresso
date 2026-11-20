@@ -67,6 +67,7 @@ class CellSystem(ut.TestCase):
                     "max_cut_nonbonded", "max_cut_bonded", "interaction_range"]:
             with self.assertRaisesRegex(RuntimeError, f"Parameter '{key}' is read-only"):
                 setattr(self.system.cell_system, key, None)
+        self.assertIsNone(self.system.cell_system.call_method("unknown"))
 
     @ut.skipIf(n_nodes == 1, "Skipping test: only runs for n_nodes >= 2")
     def check_node_grid(self):

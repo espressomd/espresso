@@ -130,14 +130,25 @@ function(python_test)
       set_property(TEST ${TEST_NAME} PROPERTY TIMEOUT ${TEST_TIMEOUT})
     endif()
   endif()
+  if(ESPRESSO_INSIDE_DOCKER)
+    set_tests_properties(${TEST_NAME} PROPERTIES COST 10)
+    if("long" IN_LIST TEST_LABELS)
+      set_tests_properties(${TEST_NAME} PROPERTIES COST 20)
+    endif()
+  endif()
 
   math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
+
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
 
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_CORES} SKIP_RETURN_CODE 5
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=${TEST_NUM_THREADS}"
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
   # cmake-format: on
 

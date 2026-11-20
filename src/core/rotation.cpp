@@ -168,7 +168,7 @@ void convert_torque_propagate_omega(Particle &p, double time_step) {
   p.omega() += hadamard_division(0.5 * time_step * p.torque(), p.rinertia());
 
   // zeroth estimate of omega
-  Utils::Vector3d omega_0 = p.omega();
+  auto const omega_0 = p.omega();
 
   /* if the tensor of inertia is isotropic, the following refinement is not
      needed.
@@ -186,14 +186,6 @@ void convert_torque_propagate_omega(Particle &p, double time_step) {
     Wd[2] = p.omega()[0] * p.omega()[1] * rinertia_diff_01 / p.rinertia()[2];
 
     p.omega() = omega_0 + (0.5 * time_step) * Wd;
-  }
-}
-
-void convert_initial_torques(const ParticleRange &particles) {
-  for (auto &p : particles) {
-    if (!p.can_rotate())
-      continue;
-    convert_torque_to_body_frame_apply_fix(p);
   }
 }
 

@@ -1189,7 +1189,7 @@ public:
       /* simple heuristic to limit the tried meshes if the accuracy cannot
          be obtained with smaller meshes, but normally not all these
          meshes have to be tested */
-      auto const expo = std::log(std::cbrt(dp3m.sum_dip_part)) / std::log(2.);
+      auto const expo = std::log2(dp3m.sum_dip_part) / 3.;
       /* Medium-educated guess for the minimal mesh */
       m_mesh_min = static_cast<int>(std::round(std::pow(2., std::floor(expo))));
       /* avoid using more than 1 GB of FFT arrays */
