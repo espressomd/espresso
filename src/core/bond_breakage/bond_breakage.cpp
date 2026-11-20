@@ -51,6 +51,10 @@ using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
 
+/** @brief Tag of an action type when encoded, see @ref encode_action. */
+template <typename T>
+constexpr int tag_of = static_cast<int>(Action(std::in_place_type<T>).index());
+
 /** Add a particle+bond combination to the breakage queue */
 void BondBreakage::queue_breakage(int particle_id,
                                   BondPartners const &bond_partners,
@@ -154,11 +158,10 @@ public:
                   {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1]});
   }
   void operator()(DeleteAllBonds const &d) const {
-    // Delete every pair bond (of any type) between the two particles. A
-    // pair bond is owned by one of them, so only their owned bonds are
-    // read. The same bond can be stored more than once, and each
-    // occurrence is removed. The bonds are read from the global bond
-    // topology, so that all ranks remove the same bonds.
+    // Remove every pair bond (any type, every occurrence) between the two
+    // particles, owned by either one. Read from the global bond storage so
+    // that all ranks remove the same bonds. Collect first: the storage must
+    // not be modified while iterating over it.
     std::vector<BondTuple> bonds;
     auto const collect = [&](int owner_id, int partner_id) {
       system.bond_storage->for_each_owned_bond(
@@ -181,27 +184,29 @@ public:
 /** @brief Encode an action for communication, see @ref decode_action. */
 struct encode_action {
   BondTuple operator()(DeleteBond const &d) const {
-    return {0, {d.particle_id, d.bond_partner_id, d.bond_type}};
+    return {tag_of<DeleteBond>,
+      	     {d.particle_id, d.bond_partner_id, d.bond_type}};
   }
   BondTuple operator()(DeleteAngleBond const &d) const {
-    return {1,
+    return {tag_of<DeleteAngleBond>,
             {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1],
              d.bond_type}};
   }
   BondTuple operator()(DeleteAllBonds const &d) const {
-    return {2, {d.particle_id_1, d.particle_id_2}};
+    return {tag_of<DeleteAllBonds>,
+      	    {d.particle_id_1, d.particle_id_2}};
   }
 };
 
 static Action decode_action(BondTuple const &encoded) {
   auto const &[kind, v] = encoded;
-  if (kind == 0) {
+  if (kind == tag_of<DeleteBond>) {
     return DeleteBond{v[0], v[1], v[2]};
   }
-  if (kind == 1) {
+  if (kind == tag_of<DeleteAngleBond>) {
     return DeleteAngleBond{v[0], {{v[1], v[2]}}, v[3]};
   }
-  assert(kind == 2);
+  assert(kind == tag_of<DeleteAllBonds>);
   return DeleteAllBonds{v[0], v[1]};
 }
 
@@ -236,8 +241,10 @@ void BondBreakage::process_queue_impl(System::System &system) {
     auto const action = decode_action(encoded);
     if (executed.insert(action).second) {
       std::visit(execute(system), action);
-      system.on_particle_change();
     }
+  }
+  if (not executed.empty()) {
+    system.on_particle_change();
   }
 }
 
