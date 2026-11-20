@@ -185,7 +185,7 @@ public:
 struct encode_action {
   BondTuple operator()(DeleteBond const &d) const {
     return {tag_of<DeleteBond>,
-      	     {d.particle_id, d.bond_partner_id, d.bond_type}};
+            {d.particle_id, d.bond_partner_id, d.bond_type}};
   }
   BondTuple operator()(DeleteAngleBond const &d) const {
     return {tag_of<DeleteAngleBond>,
@@ -193,8 +193,7 @@ struct encode_action {
              d.bond_type}};
   }
   BondTuple operator()(DeleteAllBonds const &d) const {
-    return {tag_of<DeleteAllBonds>,
-      	    {d.particle_id_1, d.particle_id_2}};
+    return {tag_of<DeleteAllBonds>, {d.particle_id_1, d.particle_id_2}};
   }
 };
 
