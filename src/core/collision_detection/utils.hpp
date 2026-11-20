@@ -80,22 +80,41 @@ inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
   return global;
 }
 
-inline void add_bind_centers(std::vector<CollisionPair> &collision_queue,
+/**
+ * @brief Bind the centers of the colliding particles.
+ *
+ * The bonds are registered in the flat bond lists of the rank that detected
+ * the collision, which avoids rebuilding these lists. The local queues are then
+ * gathered into the global collision queue, because the global bond
+ * storage must be modified identically on every rank, while a collision
+ * across a rank boundary is only queued on the rank that detected it.
+ *
+ * @param[in,out] collision_queue  Local queue. Pairs are reordered such
+ *                                 that the first particle is not a ghost.
+ * @return The global collision queue, identical on all ranks.
+ */
+inline auto add_bind_centers(std::vector<CollisionPair> &collision_queue,
                              System::System &system, int bond_id) {
+  auto &cell_structure = *system.cell_structure;
   for (auto &c : collision_queue) {
     // Ensure that the bond is associated with the non-ghost particle
-    if (system.cell_structure->get_local_particle(c.first)->is_ghost()) {
+    if (cell_structure.get_local_particle(c.first)->is_ghost()) {
       std::swap(c.first, c.second);
     }
-
-    // Because MPI rank 1's queue containing (@c p1_on_rank_1, @c p2_on_rank_2)
-    // doesn't guarantee that the same pair (with or without swapped order) is
-    // also queued on the MPI rank 2.
-    // Once we change bond storage, some syncing has to be done.
-    assert(use_one_sided_bond_storage);
-    ::add_bond(system, bond_id, {c.first, c.second});
-    system.cell_structure->add_new_bond(bond_id, {c.first, c.second});
+    // The bond is evaluated on the rank that detected the collision.
+    cell_structure.add_new_bond(bond_id, {c.first, c.second});
   }
+
+  // Because MPI rank 1's queue containing (@c p1_on_rank_1, @c p2_on_rank_2)
+  // doesn't guarantee that the same pair (with or without swapped order) is
+  // also queued on the MPI rank 2, both ranks may independently create
+  // the bond. Such duplicates are not filtered here.
+  auto global_collision_queue = gather_collision_queue(collision_queue);
+  for (auto const &c : global_collision_queue) {
+    // the global collision queue is identical on all ranks
+    ::add_bond(system, bond_id, {c.first, c.second});
+  }
+  return global_collision_queue;
 }
 
 } // namespace CollisionDetection

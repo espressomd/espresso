@@ -197,6 +197,51 @@ class ParticleSliceTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Parameter 'values' is missing"):
             self.all_partcls.call_method("set_param_parallel", name="type")
 
+    def test_bonds_within_slice(self):
+        """Bonds between particles of the same slice survive the assignment."""
+        fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
+        angle = espressomd.interactions.AngleHarmonic(bend=1., phi0=np.pi)
+        self.system.bonded_inter.add(fene)
+        self.system.bonded_inter.add(angle)
+
+        # the partner is processed after the owner
+        self.p0p1.bonds = [[(fene, 1)], []]
+        self.assertEqual(self.all_partcls.bonds,
+                         [((fene, 1),), (), (), ()])
+        # the partner is processed before the owner
+        self.p0p1.bonds = [[], [(fene, 0)]]
+        self.assertEqual(self.all_partcls.bonds,
+                         [(), ((fene, 0),), (), ()])
+        # bonds in both directions
+        self.p0p1.bonds = [[(fene, 1)], [(fene, 0)]]
+        self.assertEqual(self.all_partcls.bonds,
+                         [((fene, 1),), ((fene, 0),), (), ()])
+        # angle bond over the whole slice, the owner in the middle
+        self.all_partcls.bonds = [[], [(angle, 0, 2)], [(fene, 3)], []]
+        self.assertEqual(self.all_partcls.bonds,
+                         [(), ((angle, 0, 2),), ((fene, 3),), ()])
+
+        # bonds owned by particles outside the slice are kept, even when
+        # all their partners are in the slice
+        self.all_partcls.bonds = []
+        self.p2.bonds = [(fene, 0)]
+        self.p3.bonds = [(angle, 0, 1)]
+        self.p0p1.bonds = [[(fene, 1)], []]
+        self.assertEqual(self.all_partcls.bonds,
+                         [((fene, 1),), (), ((fene, 0),), ((angle, 0, 1),)])
+        self.p0p1.bonds = []
+        self.assertEqual(self.all_partcls.bonds,
+                         [(), (), ((fene, 0),), ((angle, 0, 1),)])
+
+        # the bonds are evaluated: particles 0 and 1 are 1 apart
+        harmonic = espressomd.interactions.HarmonicBond(k=1., r_0=0.)
+        self.system.bonded_inter.add(harmonic)
+        self.all_partcls.bonds = []
+        self.p0p1.bonds = [[(harmonic, 1)], []]
+        self.assertAlmostEqual(
+            self.system.analysis.energy()["bonded"], 0.5, delta=1e-10)
+        self.all_partcls.bonds = []
+
     def test_bonds(self):
 
         fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
@@ -243,19 +288,19 @@ class ParticleSliceTest(ut.TestCase):
 
         # Add/Del bonds
         self.all_partcls.bonds = []
-        self.p2.add_bond((fene, 0))
+        self.system.bonds[fene].add((self.p2, 0))
         self.assertEqual(self.all_partcls.bonds, [(), (), ((fene, 0),), ()])
-        self.p2.add_bond((fene, 1))
+        self.system.bonds[fene].add((self.p2, 1))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0), (fene, 1)), ()])
-        self.p2.delete_bond((fene, 1))
+        self.system.bonds[fene].remove((self.p2, 1))
         self.assertEqual(self.all_partcls.bonds, [(), (), ((fene, 0),), ()])
-        self.p2.delete_bond((fene, 0))
+        self.system.bonds[fene].remove((self.p2, 0))
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
         self.all_partcls.bonds = []
-        self.p2.add_bond((fene, 0))
-        self.p2.add_bond((fene, 1))
+        self.system.bonds[fene].add((self.p2, 0))
+        self.system.bonds[fene].add((self.p2, 1))
         self.p2.delete_all_bonds()
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
@@ -317,24 +362,52 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
 
-        # Add/Del bonds
+        # Add/Del bonds (deprecated slice methods)
         self.all_partcls.bonds = []
-        self.p2p3.add_bond((fene, 0))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.add_bond((fene, 0))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
-        self.p2p3.add_bond((fene, 1))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.add_bond((fene, 1))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0), (fene, 1)), ((fene, 0), (fene, 1))])
-        self.p2p3.delete_bond((fene, 1))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.delete_bond((fene, 1))
         self.assertEqual(self.all_partcls.bonds,
                          [(), (), ((fene, 0),), ((fene, 0),)])
-        self.p2p3.delete_bond((fene, 0))
+        with self.assertWarns(FutureWarning):
+            self.p2p3.delete_bond((fene, 0))
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
 
         b = [[[fene, 0], [fene, 1]], [[fene, 0], [fene, 1]]]
         self.p2p3.bonds = b
         self.all_partcls.delete_all_bonds()
         self.assertEqual(self.all_partcls.bonds, [(), (), (), ()])
+
+    def test_bonds_slice_assignment_keeps_bond_owned_elsewhere(self):
+        """
+        Regression test: bulk-assigning bonds through a particle slice must
+        only clear a bond whose *every* participant is part of that same
+        reassignment. A mirror entry whose owner lies outside the slice
+        must survive, otherwise a bond that particle still needs would be
+        silently deleted.
+        """
+        fene = espressomd.interactions.FeneBond(k=1, d_r_max=1, r_0=1)
+        self.system.bonded_inter.add(fene)
+
+        self.all_partcls.bonds = []
+        self.system.bonds[fene].add((self.p0, self.p2.id))
+        self.assertEqual(self.p0.bonds, ((fene, self.p2.id),))
+
+        # p0 (the bond owner) is not part of this slice; only p2 (which
+        # holds a mirror entry for that bond) and p3 are reassigned.
+        self.p2p3.bonds = []
+        self.assertEqual(self.p0.bonds, ((fene, self.p2.id),))
+
+        # once the owner is included, the bond can be cleared normally
+        self.all_partcls.bonds = []
+        self.assertEqual(self.p0.bonds, ())
 
     @utx.skipIfMissingFeatures(["EXCLUSIONS"])
     def test_exclusions(self):

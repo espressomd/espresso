@@ -43,8 +43,8 @@ public:
 
   void handle_collisions(System::System &, std::vector<CollisionPair> &) {}
 
-  bool detect_collision(Particle const &, Particle const &,
-                        double const) const {
+  bool detect_collision(Particle const &, Particle const &, double const,
+                        BondStorage const &) const {
     return false;
   }
 };

@@ -43,7 +43,7 @@ for polymer in positions:
     previous_part = None
     for part in monomers:
         if previous_part:
-            part.add_bond((fene, previous_part))
+            system.bonds[fene].add((part, previous_part))
         previous_part = part
 
 h5_units = espressomd.io.writer.h5md.UnitSystem(

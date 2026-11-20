@@ -50,7 +50,7 @@ n_part = 200
 for i in range(0, n_part - 1, 2):
     part1 = system.part.add(pos=np.random.random(3) * system.box_l)
     part2 = system.part.add(pos=np.random.random(3) * system.box_l)
-    part1.add_bond((system.bonded_inter[0], part2.id))
+    system.bonds[0].add((part1, part2.id))
 
 print("E before minimization:", system.analysis.energy()["total"])
 system.integrator.set_steepest_descent(f_max=0.0, gamma=30.0,

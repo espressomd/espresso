@@ -22,6 +22,7 @@
 #include "bond_breakage/actions.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
@@ -33,7 +34,6 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <memory>
 #include <mutex>
@@ -50,6 +50,10 @@ using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
+
+/** @brief Tag of an action type when encoded, see @ref encode_action. */
+template <typename T>
+constexpr int tag_of = static_cast<int>(Action(std::in_place_type<T>).index());
 
 /** Add a particle+bond combination to the breakage queue */
 void BondBreakage::queue_breakage(int particle_id,
@@ -100,12 +104,9 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
         return {
             // Bond between virtual sites
             DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type},
-            // Bond between base particles. We do not know, on which of these
-            // the bond is defined, since bonds are stored only on one partner
+            // Bond between base particles, of unspecified bond type.
             DeleteAllBonds{p1->vs_relative().to_particle_id,
                            p2->vs_relative().to_particle_id},
-            DeleteAllBonds{p2->vs_relative().to_particle_id,
-                           p1->vs_relative().to_particle_id},
         };
       }
     } else {
@@ -126,10 +127,8 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
         return {
             // Angle bond on the virtual site
             DeleteAngleBond{e.particle_id, {p1->id(), p2->id()}, e.bond_type},
-            // Bond between base particles. We do not know, on which of these
-            // the bond is defined, since bonds are stored only on one partner
-            DeleteAllBonds{p1->id(), p2->id()},
-            DeleteAllBonds{p2->id(), p1->id()}};
+            // Bond between base particles, of unspecified bond type.
+            DeleteAllBonds{p1->id(), p2->id()}};
       }
     }
   }
@@ -144,72 +143,106 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
   return {DeleteBond{e.particle_id, *(e.bond_partners[0]), e.bond_type}};
 }
 
-/**
- * @brief Delete specific bond.
- */
-static void remove_bond(Particle &p, BondView const &view) {
-  auto &bond_list = p.bonds();
-  auto it = std::find(bond_list.begin(), bond_list.end(), view);
-  if (it != bond_list.end()) {
-    bond_list.erase(it);
-  }
-}
-
-/**
- * @brief Delete pair bonds to a specific partner
- */
-static void remove_pair_bonds_to(Particle &p, int other_pid) {
-  std::vector<std::pair<int, int>> to_delete;
-  for (auto b : p.bonds()) {
-    if (b.partner_ids().size() == 1 and b.partner_ids()[0] == other_pid)
-      to_delete.emplace_back(b.bond_id(), other_pid);
-  }
-  for (auto const &b : to_delete) {
-    remove_bond(p, BondView(b.first, {&b.second, 1}));
-  }
-}
-
 // Handler for the different delete events
 class execute {
-  CellStructure &cell_structure;
+  System::System &system;
 
 public:
-  explicit execute(CellStructure &cell_structure)
-      : cell_structure{cell_structure} {}
+  explicit execute(System::System &system) : system{system} {}
 
   void operator()(DeleteBond const &d) const {
-    if (auto p = cell_structure.get_local_particle(d.particle_id)) {
-      remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id, 1}));
-    }
+    ::remove_bond(system, d.bond_type, {d.particle_id, d.bond_partner_id});
   }
   void operator()(DeleteAngleBond const &d) const {
-    if (auto p = cell_structure.get_local_particle(d.particle_id)) {
-      remove_bond(*p, BondView(d.bond_type, {&d.bond_partner_id[0], 2}));
-    }
+    ::remove_bond(system, d.bond_type,
+                  {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1]});
   }
   void operator()(DeleteAllBonds const &d) const {
-    if (auto p = cell_structure.get_local_particle(d.particle_id_1)) {
-      remove_pair_bonds_to(*p, d.particle_id_2);
+    // Remove every pair bond (any type, every occurrence) between the two
+    // particles, owned by either one. Read from the global bond storage so
+    // that all ranks remove the same bonds. Collect first: the storage must
+    // not be modified while iterating over it.
+    std::vector<BondTuple> bonds;
+    auto const collect = [&](int owner_id, int partner_id) {
+      system.bond_storage->for_each_owned_bond(
+          owner_id, [&](BondStorage::Bond const &bond) {
+            if (bond.particle_ids.size() == 2u and
+                bond.particle_ids[1] == partner_id) {
+              bonds.emplace_back(bond.bond_id,
+                                 std::vector<int>{owner_id, partner_id});
+            }
+          });
+    };
+    collect(d.particle_id_1, d.particle_id_2);
+    collect(d.particle_id_2, d.particle_id_1);
+    for (auto const &[bond_id, ids] : bonds) {
+      ::remove_bond(system, bond_id, ids);
     }
   }
 };
+
+/** @brief Encode an action for communication, see @ref decode_action. */
+struct encode_action {
+  BondTuple operator()(DeleteBond const &d) const {
+    return {tag_of<DeleteBond>,
+            {d.particle_id, d.bond_partner_id, d.bond_type}};
+  }
+  BondTuple operator()(DeleteAngleBond const &d) const {
+    return {tag_of<DeleteAngleBond>,
+            {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1],
+             d.bond_type}};
+  }
+  BondTuple operator()(DeleteAllBonds const &d) const {
+    return {tag_of<DeleteAllBonds>, {d.particle_id_1, d.particle_id_2}};
+  }
+};
+
+static Action decode_action(BondTuple const &encoded) {
+  auto const &[kind, v] = encoded;
+  if (kind == tag_of<DeleteBond>) {
+    return DeleteBond{v[0], v[1], v[2]};
+  }
+  if (kind == tag_of<DeleteAngleBond>) {
+    return DeleteAngleBond{v[0], {{v[1], v[2]}}, v[3]};
+  }
+  assert(kind == tag_of<DeleteAllBonds>);
+  return DeleteAllBonds{v[0], v[1]};
+}
 
 void BondBreakage::process_queue_impl(System::System &system) {
   auto global_queue = gather_global_queue(m_queue);
   auto &cell_structure = *system.cell_structure;
 
+  if (global_queue.empty()) {
+    return;
+  }
+
   // Construct delete actions from breakage queue
-  ActionSet actions = {};
+  ActionSet local_actions = {};
   for (auto const &e : global_queue) {
     // Retrieve relevant breakage spec
     assert(breakage_specs.contains(e.bond_type));
     auto const &spec = breakage_specs.at(e.bond_type);
-    actions.merge(actions_for_breakage(cell_structure, e, *spec));
+    local_actions.merge(actions_for_breakage(cell_structure, e, *spec));
   }
 
-  // Execute actions
-  for (auto const &a : actions) {
-    std::visit(execute(cell_structure), a);
+  // Some actions can only be constructed on the ranks where the involved
+  // particles are known, but bonds must be removed identically on all
+  // ranks: execute the actions found on any rank, on every rank and in the
+  // same order.
+  std::vector<BondTuple> encoded_actions;
+  for (auto const &a : local_actions) {
+    encoded_actions.emplace_back(std::visit(encode_action{}, a));
+  }
+  ::sync_bond_tuples(encoded_actions, ::comm_cart);
+  ActionSet executed = {};
+  for (auto const &encoded : encoded_actions) {
+    auto const action = decode_action(encoded);
+    if (executed.insert(action).second) {
+      std::visit(execute(system), action);
+    }
+  }
+  if (not executed.empty()) {
     system.on_particle_change();
   }
 }

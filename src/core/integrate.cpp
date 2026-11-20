@@ -39,7 +39,9 @@
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
+#include "bond_queries.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/for_each_particle.hpp"
 #include "cells.hpp"
@@ -308,12 +310,11 @@ void System::System::integrator_sanity_checks() const {
     using namespace PropagationMode;
     for (auto const &p : cell_structure->local_particles()) {
       if (p.propagation() & TRANS_VS_CENTER_OF_MASS) {
-        for (auto const bond : p.bonds()) {
-          if (std::holds_alternative<RigidBond>(
-                  *bonded_ias->at(bond.bond_id()))) {
-            runtimeErrorMsg() << "VS COM particles cannot use rigid bonds";
-            break;
-          }
+        auto const is_rigid_bond = [this](int bond_id) {
+          return std::holds_alternative<RigidBond>(*bonded_ias->at(bond_id));
+        };
+        if (find_bond_id_with(*bond_storage, p.id(), is_rigid_bond)) {
+          runtimeErrorMsg() << "VS COM particles cannot use rigid bonds";
         }
       }
     }
@@ -627,6 +628,13 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
   auto const n_rigid_bonds = bonded_ias->get_n_rigid_bonds();
+#endif
+
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  if (not ::is_bond_storage_consistent(*this)) {
+    throw std::runtime_error(
+        "bond storage is inconsistent (integration start)");
+  }
 #endif
 
   // Prepare particle structure and run sanity checks of all active algorithms
@@ -953,6 +961,11 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     }
 
   } // for-loop over integration steps
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  if (not ::is_bond_storage_consistent(*this)) {
+    throw std::runtime_error("bond storage is inconsistent (integration end)");
+  }
+#endif
   if (lb_active) {
     lb.ghost_communication();
   }

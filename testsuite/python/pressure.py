@@ -121,8 +121,8 @@ class PressureLJ(ut.TestCase):
 
         harmonic = espressomd.interactions.HarmonicBond(k=1e4, r_0=0)
         system.bonded_inter.add(harmonic)
-        p0.add_bond((harmonic, p1))
-        p2.add_bond((harmonic, p3))
+        system.bonds[harmonic].add((p0, p1))
+        system.bonds[harmonic].add((p2, p3))
 
         system.non_bonded_inter[0, 0].lennard_jones.set_params(
             epsilon=1.0, sigma=1.0, cutoff=2.0, shift=0)
@@ -382,7 +382,7 @@ class PressureFENE(ut.TestCase):
 
         fene = espressomd.interactions.FeneBond(k=k, d_r_max=d_r_max, r_0=r_0)
         system.bonded_inter.add(fene)
-        p0.add_bond((fene, p1))
+        system.bonds[fene].add((p0, p1))
         system.integrator.run(steps=0)
 
         sim_pressure_tensor = system.analysis.pressure_tensor()

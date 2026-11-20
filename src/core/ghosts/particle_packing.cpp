@@ -30,11 +30,6 @@
 
 #include <utils/serialization/memcpy_archive.hpp>
 
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/stream.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
@@ -242,15 +237,8 @@ void pack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
                 unsigned data_parts) {
   /* reallocate send buffer */
   buf.resize(calc_transmit_size(cells, box_geo, data_parts));
-  buf.bonds().clear();
 
   auto archiver = Utils::MemcpyOArchive{buf.make_span()};
-
-  /* Construct archive that pushes back to the bond buffer */
-  namespace io = boost::iostreams;
-  io::stream<io::back_insert_device<std::vector<char>>> os{
-      io::back_inserter(buf.bonds())};
-  boost::archive::binary_oarchive bond_archiver{os};
 
   /* put in data */
   for (auto part_list : cells) {
@@ -262,9 +250,6 @@ void pack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
       for (auto &p : *part_list) {
         serialize_and_reduce(archiver, p, data_parts, ReductionPolicy::MOVE,
                              SerializationDirection::SAVE, box_geo, &shift);
-        if (data_parts & GHOSTTRANS_BONDS) {
-          bond_archiver << p.bonds();
-        }
       }
     }
   }
@@ -290,23 +275,9 @@ void unpack_cells(CommBuf &buf, std::span<ParticleList *const> cells,
                              SerializationDirection::LOAD, box_geo, nullptr);
       }
     }
-    if (data_parts & GHOSTTRANS_BONDS) {
-      namespace io = boost::iostreams;
-      io::stream<io::array_source> bond_stream(
-          io::array_source{buf.bonds().data(), buf.bonds().size()});
-      boost::archive::binary_iarchive bond_archiver(bond_stream);
-
-      for (auto part_list : cells) {
-        for (auto &p : *part_list) {
-          bond_archiver >> p.bonds();
-        }
-      }
-    }
   }
 
   assert(archiver.bytes_read() == buf.size());
-
-  buf.bonds().clear();
 }
 
 void add_forces(CommBuf &buf, std::span<ParticleList *const> cells,
@@ -377,9 +348,6 @@ void local_cell_copy(ParticleList &src, ParticleList &dst,
                            SerializationDirection::SAVE, box_geo, &shift);
       serialize_and_reduce(ar_in, p2, data_parts, ReductionPolicy::UPDATE,
                            SerializationDirection::LOAD, box_geo, nullptr);
-      if (data_parts & GHOSTTRANS_BONDS) {
-        p2.bonds() = p1.bonds();
-      }
     }
   }
 }

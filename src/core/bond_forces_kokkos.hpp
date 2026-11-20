@@ -48,13 +48,13 @@ struct BondsKernelData {
 
 struct PairBondsKernel {
   BondsKernelData data;
-  LocalBondState::PairBondlistType bond_list;
-  LocalBondState::PairBondIDType bond_ids;
+  LocalBondList<2>::ListType bond_list;
+  LocalBondList<2>::IdsType bond_ids;
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_kernel;
 
   PairBondsKernel(
-      BondsKernelData data_, LocalBondState::PairBondlistType bond_list_,
-      LocalBondState::PairBondIDType bond_ids_,
+      BondsKernelData data_, LocalBondList<2>::ListType bond_list_,
+      LocalBondList<2>::IdsType bond_ids_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_kernel_)
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)), coulomb_kernel(coulomb_kernel_) {}
@@ -142,12 +142,11 @@ struct PairBondsKernel {
 
 struct AngleBondsKernel {
   BondsKernelData data;
-  LocalBondState::AngleBondlistType bond_list;
-  LocalBondState::AngleBondIDType bond_ids;
+  LocalBondList<3>::ListType bond_list;
+  LocalBondList<3>::IdsType bond_ids;
 
-  AngleBondsKernel(BondsKernelData data_,
-                   LocalBondState::AngleBondlistType bond_list_,
-                   LocalBondState::AngleBondIDType bond_ids_)
+  AngleBondsKernel(BondsKernelData data_, LocalBondList<3>::ListType bond_list_,
+                   LocalBondList<3>::IdsType bond_ids_)
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 
@@ -205,12 +204,12 @@ struct AngleBondsKernel {
 
 struct DihedralBondsKernel {
   BondsKernelData data;
-  LocalBondState::DihedralBondlistType bond_list;
-  LocalBondState::DihedralBondIDType bond_ids;
+  LocalBondList<4>::ListType bond_list;
+  LocalBondList<4>::IdsType bond_ids;
 
   DihedralBondsKernel(BondsKernelData data_,
-                      LocalBondState::DihedralBondlistType bond_list_,
-                      LocalBondState::DihedralBondIDType bond_ids_)
+                      LocalBondList<4>::ListType bond_list_,
+                      LocalBondList<4>::IdsType bond_ids_)
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 

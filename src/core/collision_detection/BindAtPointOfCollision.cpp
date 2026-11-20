@@ -86,13 +86,12 @@ void BindAtPointOfCollision::handle_collisions(
   auto const min_global_cut = system.get_min_global_cut();
   auto const &box_geo = *system.box_geo;
 
-  add_bind_centers(local_collision_queue, system, bond_centers);
-
-  // Gather the global collision queue, because only one node has a collision
-  // across node boundaries in its queue.
-  // The other node might still have to change particle properties on its
-  // non-ghost particle
-  auto global_collision_queue = gather_collision_queue(local_collision_queue);
+  // Bind the particle centers. This also gathers the global collision
+  // queue, because only one node has a collision across node boundaries in
+  // its queue. The other node might still have to change particle properties
+  // on its non-ghost particle
+  auto const global_collision_queue =
+      add_bind_centers(local_collision_queue, system, bond_centers);
 
   // Synchronize max_seen_part
   auto const global_max_seen_particle = boost::mpi::all_reduce(
@@ -100,6 +99,11 @@ void BindAtPointOfCollision::handle_collisions(
       boost::mpi::maximum<int>());
 
   int current_vs_pid = global_max_seen_particle + 1;
+
+  // Bonds to create. Every bond is recorded on exactly one rank, the one
+  // where the first particle of the colliding pair resides, and is
+  // synchronized across ranks after the loop.
+  std::vector<BondTuple> new_bonds;
 
   // Iterate over global collision queue
   for (auto const &[pid1, pid2] : global_collision_queue) {
@@ -158,25 +162,32 @@ void BindAtPointOfCollision::handle_collisions(
     // Increment counter
     current_vs_pid++;
 
-    // Create bonds
+    // Record the bonds to create
+    if (p1->is_ghost()) {
+      continue;
+    }
     auto const n_partners = number_of_partners(*system.bonded_ias->at(bond_vs));
     if (n_partners == 1) {
-      // Create bond between the virtual particles
-      const int bondG[] = {current_vs_pid - 2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
+      // Bond between the virtual particles
+      new_bonds.push_back({bond_vs, {current_vs_pid - 1, current_vs_pid - 2}});
     }
     if (n_partners == 2) {
-      // Create 1st bond between the virtual particles
-      const int bondG[] = {pid1, pid2};
-      // Only add bond if vs was created on this node
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 1))
-        p->bonds().insert({bond_vs, bondG});
-      if (auto p = cell_structure.get_local_particle(current_vs_pid - 2))
-        p->bonds().insert({bond_vs, bondG});
+      // An angle bond on each virtual site, connecting it to both base
+      // particles
+      new_bonds.push_back({bond_vs, {current_vs_pid - 1, pid1, pid2}});
+      new_bonds.push_back({bond_vs, {current_vs_pid - 2, pid1, pid2}});
     }
   } // Loop over all collisions in the queue
+
+  // Create the bonds on all ranks: the bonds recorded locally are gathered
+  // and broadcast, so that add_bond() modifies the global bond storage
+  // identically on every rank.
+  if (not global_collision_queue.empty()) {
+    ::sync_bond_tuples(new_bonds, ::comm_cart);
+    for (auto const &[bond_id, particle_ids] : new_bonds) {
+      ::add_bond(system, bond_id, particle_ids);
+    }
+  }
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   assert(Utils::Mpi::all_compare(::comm_cart, current_vs_pid) &&
@@ -187,7 +198,7 @@ void BindAtPointOfCollision::handle_collisions(
   if (not global_collision_queue.empty()) {
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
     cell_structure.update_ghosts_and_resort_particle(
-        Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
+        Cells::DATA_PART_PROPERTIES);
     system.update_used_propagations();
   }
 }

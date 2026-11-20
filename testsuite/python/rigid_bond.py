@@ -43,7 +43,7 @@ class RigidBondTest(ut.TestCase):
         for i in range(5):
             p = system.part.add(pos=(i * 1.2, 0, 0))
             if last_p is not None:
-                p.add_bond((rigid_bond, last_p))
+                system.bonds[rigid_bond].add((p, last_p))
             last_p = p
 
         system.integrator.run(5000)

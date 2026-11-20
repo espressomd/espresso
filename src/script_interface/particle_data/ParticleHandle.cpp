@@ -29,6 +29,7 @@
 
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
+#include "core/bond_queries.hpp"
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
 #include "core/bonds.hpp"
 #include "core/cell_system/CellStructure.hpp"
@@ -207,6 +208,25 @@ void ParticleHandle::set_exclusions(Variant const &value) {
   });
 }
 #endif // ESPRESSO_EXCLUSIONS
+
+/**
+ * @brief Delete the bonds owned by this particle.
+ *
+ * Bonds this particle participates in but that are owned by other
+ * particles are left untouched. The owned bonds are read from the global
+ * bond topology, so that @ref ::remove_bond() is called identically on
+ * all ranks.
+ */
+void ParticleHandle::delete_owned_bonds() const {
+  auto const owned_bonds = ::get_bonds_of_particle(
+      *get_system(), m_pid, [pid = m_pid](BondStorage::Bond const &bond) {
+        return bond.owner_id() == pid;
+      });
+  for (auto const &[bond_id, ids] : owned_bonds) {
+    ::remove_bond(*get_system(), bond_id, ids);
+  }
+  get_system()->on_particle_change();
+}
 
 ParticleHandle::ParticleHandle() {
   /* Warning: the order of particle property setters matters! Some properties
@@ -588,12 +608,20 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 
     // Set bonds
     if (params.contains("bonds_ids")) {
-      // Remove old bonds
-      set_particle_property([&](Particle &p) { p.bonds().clear(); });
-      // Add new bonds
       auto const bonds_ids = get_value<std::vector<int>>(params, "bonds_ids");
       auto const bonds_partner_ids =
           get_value<std::vector<std::vector<int>>>(params, "bonds_parts");
+      // Validate the new bonds before touching the old ones
+      context()->parallel_try_catch([&]() {
+        std::vector<int> all_ids = {m_pid};
+        for (auto const &partner_ids : bonds_partner_ids) {
+          std::ranges::copy(partner_ids, std::back_inserter(all_ids));
+        }
+        ::check_particles_exist(*get_system(), all_ids);
+      });
+      // Remove old bonds owned by this particle
+      delete_owned_bonds();
+      // Add new bonds
       for (std::size_t i = 0; i < bonds_ids.size(); i += 1) {
         std::vector<int> particle_ids = {m_pid};
         std::ranges::copy(bonds_partner_ids[i],
@@ -620,16 +648,18 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     if (not context()->is_head_node()) {
       return {};
     }
-    auto const bond_list = get_particle_data(m_pid).bonds();
+    auto const &bond_storage = *get_system()->bond_storage;
     std::vector<std::vector<Variant>> bonds_flat;
-    for (auto const &&bond_view : bond_list) {
-      std::vector<Variant> bond_flat;
-      bond_flat.emplace_back(bond_view.bond_id());
-      for (auto const pid : bond_view.partner_ids()) {
-        bond_flat.emplace_back(pid);
-      }
-      bonds_flat.emplace_back(std::move(bond_flat));
-    }
+    // Only the bonds this particle owns are exposed to Python.
+    bond_storage.for_each_owned_bond(
+        m_pid, [&](BondStorage::Bond const &bond_view) {
+          std::vector<Variant> bond_flat;
+          bond_flat.emplace_back(bond_view.bond_id);
+          for (auto const pid : bond_view.partner_ids()) {
+            bond_flat.emplace_back(pid);
+          }
+          bonds_flat.emplace_back(std::move(bond_flat));
+        });
     return make_vector_of_variants(bonds_flat);
   }
   if (name == "add_bond") {
@@ -637,22 +667,19 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const partner_ids = get_value<std::vector<int>>(params, "part_id");
     std::vector<int> particle_ids = {m_pid};
     std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
+    context()->parallel_try_catch(
+        [&]() { ::check_particles_exist(*get_system(), particle_ids); });
     ::add_bond(*get_system(), bond_id, particle_ids);
     get_system()->on_particle_change();
   } else if (name == "del_bond") {
-    set_particle_property([&params](Particle &p) {
-      auto const bond_id = get_value<int>(params, "bond_id");
-      auto const part_id = get_value<std::vector<int>>(params, "part_id");
-      auto const bond_view =
-          BondView(bond_id, {part_id.data(), part_id.size()});
-      auto &bond_list = p.bonds();
-      auto it = std::find(bond_list.begin(), bond_list.end(), bond_view);
-      if (it != bond_list.end()) {
-        bond_list.erase(it);
-      }
-    });
+    auto const bond_id = get_value<int>(params, "bond_id");
+    auto const partner_ids = get_value<std::vector<int>>(params, "part_id");
+    std::vector<int> particle_ids = {m_pid};
+    std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
+    ::remove_bond(*get_system(), bond_id, particle_ids);
+    get_system()->on_particle_change();
   } else if (name == "delete_all_bonds") {
-    set_particle_property([&](Particle &p) { p.bonds().clear(); });
+    delete_owned_bonds();
   } else if (name == "is_valid_bond_id") {
     auto const bond_id = get_value<int>(params, "bond_id");
     return get_system()->bonded_ias->get_zero_based_type(bond_id) != 0;

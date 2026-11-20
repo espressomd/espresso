@@ -48,7 +48,7 @@ class InteractionsAngleBondTest(ut.TestCase):
         harmonic_bond = espressomd.interactions.HarmonicBond(k=0, r_0=0)
         self.system.bonded_inter.add(harmonic_bond)
         self.harmonic_bond = harmonic_bond
-        self.p1.add_bond((harmonic_bond, self.p0))
+        self.system.bonds[harmonic_bond].add((self.p1, self.p0))
 
     def tearDown(self):
         self.system.part.clear()
@@ -87,9 +87,9 @@ class InteractionsAngleBondTest(ut.TestCase):
     def run_test(self, bond_instance, force_func, energy_func, phi0):
         self.system.bonded_inter.add(bond_instance)
         # Add bond angle
-        self.p0.add_bond((bond_instance, 1, 2))
+        self.system.bonds[bond_instance].add((self.p0, 1, 2))
         # Add an extra (strength 0) pair bond, which should change nothing
-        self.p0.add_bond((self.harmonic_bond, 1))
+        self.system.bonds[self.harmonic_bond].add((self.p0, 1))
 
         d_phi = np.pi / self.N
         for i in range(1, self.N):  # avoid corner cases at phi = 0 or phi = pi
@@ -162,8 +162,8 @@ class InteractionsAngleBondTest(ut.TestCase):
                 p_tensor_expected, atol=1E-12)
 
         # Remove bonds
-        self.p0.delete_bond((bond_instance, 1, 2))
-        self.p0.delete_bond((self.harmonic_bond, 1))
+        self.system.bonds[bond_instance].remove((self.p0, 1, 2))
+        self.system.bonds[self.harmonic_bond].remove((self.p0, 1))
 
     def test_angle_harmonic(self):
         ah_bend = 1.

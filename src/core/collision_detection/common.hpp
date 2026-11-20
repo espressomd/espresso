@@ -23,20 +23,20 @@
 
 #ifdef ESPRESSO_COLLISION_DETECTION
 
-#include "BondList.hpp"
 #include "Particle.hpp"
+#include "bond_queries.hpp"
 
 namespace CollisionDetection {
 
 inline auto detect_collision_common(Particle const &p1, Particle const &p2,
-                                    int const bond_centers) {
+                                    int const bond_centers,
+                                    BondStorage const &bond_storage) {
   // Ignore virtual particles
   if (p1.is_virtual() or p2.is_virtual())
     return false;
 
-  // Check, if there's already a bond between the particles
-  if (pair_bond_exists_on(p1.bonds(), p2.id(), bond_centers) or
-      pair_bond_exists_on(p2.bonds(), p1.id(), bond_centers))
+  // Check, if there's already a bond between the particles.
+  if (pair_bond_exists(bond_storage, p1.id(), p2.id(), bond_centers))
     return false;
 
   /* If we're still here, there is no previous bond between the particles,

@@ -26,7 +26,6 @@
 
 #include <boost/mpi.hpp>
 
-#include "BondList.hpp"
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleList.hpp"
@@ -117,47 +116,6 @@ BOOST_AUTO_TEST_CASE(reduce_forces_between_two_ranks,
   BOOST_CHECK_CLOSE(local.begin()->force()[0], 1., 1e-12);
   BOOST_CHECK_CLOSE(local.begin()->force()[1], 10. * double(other + 1), 1e-12);
   BOOST_CHECK_CLOSE(local.begin()->force()[2], 100. * double(other + 1), 1e-12);
-}
-
-/*
- * The cold, resort-only BONDS path is exchanged as a *second* per-neighbor
- * message (the CommBuf bond buffer) alongside the flat particle buffer. This
- * checks that a bond placed on the owner round-trips byte-correct into the
- * peer's ghost cell over the async engine.
- */
-BOOST_AUTO_TEST_CASE(push_bonds_between_two_ranks,
-                     *utf::precondition([](utf::test_unit_id) {
-                       return boost::mpi::communicator{}.size() == 2;
-                     })) {
-  using namespace GhostComm;
-  boost::mpi::communicator world;
-  int const me = world.rank();
-  int const other = 1 - me;
-
-  BoxGeometry box;
-  box.set_length({10., 10., 10.});
-
-  ParticleList local, ghost;
-  local.resize(1);
-  local.begin()->id() = me;
-  std::array<int, 2> partners{me, me + 5};
-  local.begin()->bonds().insert(BondView{me + 1, partners});
-  ghost.resize(1);
-
-  HaloPlan plan;
-  plan.comm = world;
-  plan.neighbors.push_back(
-      NeighborComm{other, {SendRegion{&local, {}}}, {&ghost}});
-
-  halo_exchange(plan, box, GHOSTTRANS_PROPRTS | GHOSTTRANS_BONDS,
-                {Direction::Push, Combine::Overwrite});
-
-  BOOST_REQUIRE_EQUAL(ghost.begin()->bonds().size(), 1);
-  auto it = ghost.begin()->bonds().begin();
-  BOOST_CHECK_EQUAL((*it).bond_id(), other + 1);
-  BOOST_REQUIRE_EQUAL((*it).partner_ids().size(), 2u);
-  BOOST_CHECK_EQUAL((*it).partner_ids()[0], other);
-  BOOST_CHECK_EQUAL((*it).partner_ids()[1], other + 5);
 }
 
 /*

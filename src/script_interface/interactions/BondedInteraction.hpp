@@ -26,7 +26,9 @@
  */
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/bonds.hpp"
 #include "core/immersed_boundary/ImmersedBoundaries.hpp"
+#include "core/system/System.hpp"
 #include "core/thermostat.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
@@ -112,6 +114,29 @@ public:
     }
     if (name == "get_num_partners") {
       return number_of_partners(*bonded_ia());
+    }
+    // Create/remove an instance of this bond between particles,
+    // independent of any single particle's handle.
+    if (name == "add_bond") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const particle_ids = get_value<std::vector<int>>(params, "part_id");
+      auto &system = ::System::get_system();
+      context()->parallel_try_catch(
+          [&]() { ::check_bond_can_be_added(system, bond_id, particle_ids); });
+      ::add_bond(system, bond_id, particle_ids);
+      system.on_particle_change();
+      return {};
+    }
+    if (name == "remove_bond") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const particle_ids = get_value<std::vector<int>>(params, "part_id");
+      auto &system = ::System::get_system();
+      context()->parallel_try_catch([&]() {
+        ::check_bond_can_be_removed(system, bond_id, particle_ids);
+      });
+      ::remove_bond(system, bond_id, particle_ids);
+      system.on_particle_change();
+      return {};
     }
 
     return {};

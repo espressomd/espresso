@@ -44,8 +44,8 @@
 #include "rigid_bond.hpp"
 #include "thermalized_bond.hpp"
 
-#include "BondList.hpp"
 #include "Particle.hpp"
+#include "bond_queries.hpp"
 #include "system/Leaf.hpp"
 
 #include <utils/Vector.hpp>
@@ -57,6 +57,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -89,6 +90,13 @@ using Bonded_IA_Parameters =
 class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
   using container_type =
       std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
+
+  /**
+   * @brief Bond topology of the system this container is bound to.
+   * Cached by @ref set_bond_storage(), since @ref pair_bond_exists_between()
+   * is called from pair kernels, where locking the system is too costly.
+   */
+  std::shared_ptr<BondStorage const> m_bond_storage;
 
 public:
   using key_type = container_type::key_type;
@@ -188,41 +196,29 @@ public:
   double maximal_cutoff() const;
 
   /**
-   * @brief Checks both particles for a specific bond, even on ghost particles.
+   * @brief Check whether a pair bond of a given type connects two particles,
+   * even on ghost particles.
    *
-   * @param p           particle to check for the bond
-   * @param p_partner   possible bond partner
-   * @tparam BondType   Bond type to check for. Must be of one of the types in
-   *                    @ref Bonded_IA_Parameters.
+   * @param p1     first particle
+   * @param p2     second particle
+   * @tparam BondType Bond type to check for. Must be of one of the types in
+   *                  @ref Bonded_IA_Parameters.
    */
   template <typename BondType>
-  bool pair_bond_exists_on(Particle const &p, Particle const &p_partner) const {
-    auto const &bonds = p.bonds();
-    return std::any_of(
-        bonds.begin(), bonds.end(),
-        [this, partner_id = p_partner.id()](BondView const &bond) {
-          auto const &bond_ptr = at(bond.bond_id());
-          return std::holds_alternative<BondType>(*bond_ptr.get()) and
-                 (bond.partner_ids()[0] == partner_id);
+  bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
+    assert(m_bond_storage);
+    return ::pair_bond_exists(
+        *m_bond_storage, p1.id(), p2.id(), [this](int bond_id) {
+          return std::holds_alternative<BondType>(*at(bond_id));
         });
   }
 
   /**
-   * @brief Checks both particles for a specific bond, even on ghost particles.
-   *
-   * @param p1     particle on which the bond may be stored
-   * @param p2     particle on which the bond may be stored
-   * @tparam BondType Bond type to check for.
+   * @brief Set the bond topology queried by @ref pair_bond_exists_between.
+   * Must be called when attaching the container to a system.
    */
-  template <typename BondType>
-  bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
-    if (&p1 == &p2)
-      return false;
-
-    // Check if particles have bonds and search for the bond of interest.
-    // Could be saved on either particle, so we need to check both.
-    return pair_bond_exists_on<BondType>(p1, p2) or
-           pair_bond_exists_on<BondType>(p2, p1);
+  void set_bond_storage(std::shared_ptr<BondStorage const> bond_storage) {
+    m_bond_storage = std::move(bond_storage);
   }
 
   void on_ia_change();

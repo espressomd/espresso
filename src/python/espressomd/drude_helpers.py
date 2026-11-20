@@ -102,8 +102,8 @@ class DrudeHelpers:
 
         p_core.q -= q_drude
         p_core.mass -= mass_drude
-        p_core.add_bond((harmonic_bond, id_drude))
-        p_core.add_bond((thermalized_bond, id_drude))
+        system.bonds[harmonic_bond].add((p_core, id_drude))
+        system.bonds[thermalized_bond].add((p_core, id_drude))
         if has_features("THERMOSTAT_PER_PARTICLE"):
             p_core.gamma = gamma_off
 
@@ -241,7 +241,7 @@ class DrudeHelpers:
             pd = system.part.by_id(drude_id)
             pc = system.part.by_id(core_id)
             bond = self.drude_dict[pd.type]["subtr_sr_bonds_drude-core"]
-            pc.add_bond((bond, drude_id))
+            system.bonds[bond].add((pc, drude_id))
             if verbose:
                 print(
                     f"Added drude-core SR bond {bond} between ids {drude_id} and {core_id}")
@@ -314,7 +314,7 @@ class DrudeHelpers:
                     pc = core_part
                     bond = self.drude_dict[pd.type][
                         "subtr_sr_bonds_intramol"][pc.type]
-                    pd.add_bond((bond, core_id))
+                    pd._add_bond((bond, core_id))
                     if verbose:
                         print(
                             f"Added subtr_sr bond {bond} between ids {drude_id} and {core_id}")

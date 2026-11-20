@@ -212,10 +212,16 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 
   using Checker = TraitChecker<TraitWrapper::template apply>;
 
-  // struct Particle is not statically serializable
+  // struct Particle is only statically serializable when none of its
+  // members allocates memory
   {
+#ifdef ESPRESSO_EXCLUSIONS
     static_assert(!TraitWrapper::template apply<Particle>::value);
     typename Checker::buffer_type buffer_ref = {"Particle"};
+#else
+    static_assert(TraitWrapper::template apply<Particle>::value);
+    typename Checker::buffer_type buffer_ref = {};
+#endif
     typename Checker::buffer_type buffer = {};
     Checker oa{buffer};
     Particle p;
@@ -226,7 +232,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
   // most members of Particle are statically serializable
   {
     typename Checker::buffer_type buffer_ref = {
-        "BondList",
 #ifdef ESPRESSO_EXCLUSIONS
         "Utils::compact_vector<int>",
 #endif

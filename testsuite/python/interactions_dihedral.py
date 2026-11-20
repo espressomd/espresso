@@ -166,7 +166,7 @@ class InteractionsBondedTest(ut.TestCase):
                 self.system.bonded_inter.add(dihedral)
                 self.system.part.clear()
                 p0, p1, p2, p3 = self.system.part.add(pos=4 * [(0., 0., 0.)])
-                p1.add_bond((dihedral, p0, p2, p3))
+                self.system.bonds[dihedral].add((p1, p0, p2, p3))
                 p1.pos = [5., 5., 5.]
                 p2.pos = p1.pos + [1., 0., 0.]
                 p0.pos = p1.pos + [0., 1., 0.]
@@ -208,7 +208,7 @@ class InteractionsBondedTest(ut.TestCase):
                 self.system.bonded_inter.add(dihedral_tabulated)
                 self.system.part.clear()
                 p0, p1, p2, p3 = self.system.part.add(pos=4 * [(0., 0., 0.)])
-                p1.add_bond((dihedral_tabulated, p0, p2, p3))
+                self.system.bonds[dihedral_tabulated].add((p1, p0, p2, p3))
                 p1.pos = [5., 5., 5.]
                 p2.pos = p1.pos + [1., 0., 0.]
                 p0.pos = p1.pos + [0., 1., 0.]

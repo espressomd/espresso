@@ -148,12 +148,12 @@ Observable_stat const &System::calculate_energy() {
   auto &bs = cell_structure->bond_state();
   BondsEnergyKernelData bonds_e_data{*bonded_ias, *box_geo, local_energy,
                                      layout, cell_structure->get_aosoa()};
-  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pair_list, bs.pair_ids,
-                                       get_ptr(coulomb_kernel)};
-  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angle_list,
-                                         bs.angle_ids};
-  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedral_list,
-                                          bs.dihedral_ids};
+  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pairs.list,
+                                       bs.pairs.ids, get_ptr(coulomb_kernel)};
+  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angles.list,
+                                         bs.angles.ids};
+  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedrals.list,
+                                          bs.dihedrals.ids};
 
   cabana_short_range(pair_be_kernel, angle_be_kernel, dih_be_kernel,
                      pair_e_kernel, *cell_structure, get_interaction_range(),
@@ -225,17 +225,16 @@ std::optional<double> System::particle_bond_energy(int pid, int bond_id,
   if (not p or p->is_ghost())
     return {}; // not available on this MPI rank or ghost
   auto const &iaparams = *bonded_ias->at(bond_id);
-  try {
-    auto resolved_partners = cell_structure->resolve_bond_partners(partners);
-    auto const coulomb_kernel = coulomb.pair_energy_kernel();
-    return calc_bonded_energy(
-        iaparams, *p,
-        std::span(resolved_partners.data(), resolved_partners.size()), *box_geo,
-        get_ptr(coulomb_kernel));
-  } catch (const BondResolutionError &) {
+  auto resolved_partners = cell_structure->resolve_bond_partners(partners);
+  if (not resolved_partners) {
     bond_broken_error(p->id(), partners);
     return {};
   }
+  auto const coulomb_kernel = coulomb.pair_energy_kernel();
+  return calc_bonded_energy(
+      iaparams, *p,
+      std::span(resolved_partners->data(), resolved_partners->size()), *box_geo,
+      get_ptr(coulomb_kernel));
 }
 
 } // namespace System

@@ -289,7 +289,7 @@ class Test(ut.TestCase):
         system.bonded_inter.add(bond)
         p1 = system.part.add(pos=[1.5, 2.0, 2.0])
         p2 = system.part.add(pos=[2.5, 2.0, 2.0])
-        p2.add_bond((bond, p1))
+        self.system.bonds[bond].add((p2, p1))
         error_msg = self.msg + \
             'Rigid bonds \\(RATTLE\\) require an inertial integrator'
 

@@ -89,10 +89,10 @@ prev_2 = None
 for part in monomers:
     if prev_1:
         # add harmonic bond between two neighbors
-        part.add_bond((harmonic_bond, prev_1))
+        system.bonds[harmonic_bond].add((part, prev_1))
         if prev_2:
             # add angle bond between three successive particles
-            prev_1.add_bond((angle_harmonic_bond, prev_2, part))
+            system.bonds[angle_harmonic_bond].add((prev_1, prev_2, part))
     prev_2 = prev_1
     prev_1 = part
 

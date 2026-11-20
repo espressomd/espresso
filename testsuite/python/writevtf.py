@@ -56,9 +56,9 @@ class CommonTests(ut.TestCase):
     system.bonded_inter.add(
         espressomd.interactions.FeneBond(k=1., d_r_max=10.0))
     p0 = system.part.by_id(0)
-    p0.add_bond((0, 1))
-    p0.add_bond((0, 2))
-    p0.add_bond((0, 3))
+    system.bonds[0].add((p0, 1))
+    system.bonds[0].add((p0, 2))
+    system.bonds[0].add((p0, 3))
 
     system.integrator.run(steps=0)
 

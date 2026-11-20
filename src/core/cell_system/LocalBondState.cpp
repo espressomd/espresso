@@ -21,178 +21,189 @@
 
 #include "LocalBondState.hpp"
 
-void LocalBondState::allocate() {
-  if (pair_list.is_allocated()) {
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_list,
-                    pair_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), pair_ids,
-                    pair_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_list,
-                    angle_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), angle_ids,
-                    angle_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
-                    dihedral_list, dihedral_count);
-    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing),
-                    dihedral_ids, dihedral_count);
+#include <Kokkos_Core.hpp>
+
+#include <cassert>
+#include <cstddef>
+#include <span>
+#include <utility>
+
+template <std::size_t N> void LocalBondList<N>::allocate(int capacity) {
+  count = 0;
+  auto const n_rows = static_cast<std::size_t>(capacity);
+  if (list.is_allocated()) {
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), list,
+                    n_rows);
+    Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), ids,
+                    n_rows);
   } else {
-    using execution_space = Kokkos::DefaultHostExecutionSpace;
-    pair_list = PairBondlistType(Kokkos::view_alloc(execution_space{},
-                                                    Kokkos::WithoutInitializing,
-                                                    "pair_bond_list"),
-                                 pair_count);
-    pair_ids = PairBondIDType(Kokkos::view_alloc(execution_space{},
-                                                 Kokkos::WithoutInitializing,
-                                                 "pair_bond_id"),
-                              pair_count);
-    angle_list = AngleBondlistType(
-        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
-                           "angle_bond_list"),
-        angle_count);
-    angle_ids = AngleBondIDType(Kokkos::view_alloc(execution_space{},
-                                                   Kokkos::WithoutInitializing,
-                                                   "angle_bond_id"),
-                                angle_count);
-    dihedral_list = DihedralBondlistType(
-        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
-                           "dihedral_bond_list"),
-        dihedral_count);
-    dihedral_ids = DihedralBondIDType(
-        Kokkos::view_alloc(execution_space{}, Kokkos::WithoutInitializing,
-                           "dihedral_bond_id"),
-        dihedral_count);
+    list =
+        ListType(Kokkos::view_alloc(execution_space{},
+                                    Kokkos::WithoutInitializing, "bond_list"),
+                 n_rows);
+    ids = IdsType(Kokkos::view_alloc(execution_space{},
+                                     Kokkos::WithoutInitializing, "bond_ids"),
+                  n_rows);
   }
+}
+
+template <std::size_t N> void LocalBondList<N>::clear() {
+  reset();
+  // Reset Kokkos Views to default (unallocated) state
+  list = ListType();
+  ids = IdsType();
+}
+
+template <std::size_t N> void LocalBondList<N>::reset() {
+  count = 0;
+#ifdef ESPRESSO_COLLISION_DETECTION
+  m_new_list.clear();
+  m_new_ids.clear();
+#endif
+}
+
+template <std::size_t N>
+void LocalBondList<N>::convert_ids_to_indices(IdToIndex const &id_to_index) {
+  if (count == 0) {
+    return;
+  }
+  Kokkos::parallel_for("convert_bond_ids_to_indices",
+                       Kokkos::RangePolicy<execution_space>(0, count),
+                       [&bond_list = list, &id_to_index](int row) {
+                         for (std::size_t col = 0u; col < N; ++col) {
+                           bond_list(row, col) =
+                               id_to_index(bond_list(row, col));
+                         }
+                       });
+}
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+template <std::size_t N>
+void LocalBondList<N>::add_new_bond(int bond_id,
+                                    std::span<const int> particle_ids,
+                                    IdToIndex const &id_to_index) {
+  assert(particle_ids.size() == N);
+  for (auto const pid : particle_ids) {
+    assert(pid >= 0 and static_cast<std::size_t>(pid) < id_to_index.extent(0));
+    // The bounds are checked above. Reading the raw data keeps the
+    // message formatting of the Kokkos bounds check out of the paths of
+    // the static analyzer, which reports a false positive there.
+    auto const index = id_to_index.data()[pid];
+    assert(index != -1);
+    m_new_list.emplace_back(index);
+  }
+  m_new_ids.emplace_back(bond_id);
+  count++;
+}
+
+template <std::size_t N> void LocalBondList<N>::discard_new_bonds() {
+  count -= static_cast<int>(m_new_ids.size());
+  m_new_list.clear();
+  m_new_ids.clear();
+}
+
+template <std::size_t N> void LocalBondList<N>::merge_new_bonds() {
+  if (m_new_ids.empty()) {
+    return;
+  }
+  auto const n_new = m_new_ids.size();
+  auto const old_count = count - static_cast<int>(n_new);
+
+  auto const n_rows = static_cast<std::size_t>(count);
+  ListType merged_list(Kokkos::view_alloc(execution_space{},
+                                          Kokkos::WithoutInitializing,
+                                          "bond_list"),
+                       n_rows);
+  IdsType merged_ids(Kokkos::view_alloc(execution_space{},
+                                        Kokkos::WithoutInitializing,
+                                        "bond_ids"),
+                     n_rows);
+
+  Kokkos::deep_copy(
+      Kokkos::subview(merged_list, std::make_pair(0, old_count), Kokkos::ALL()),
+      Kokkos::subview(list, std::make_pair(0, old_count), Kokkos::ALL()));
+  Kokkos::deep_copy(Kokkos::subview(merged_ids, std::make_pair(0, old_count)),
+                    Kokkos::subview(ids, std::make_pair(0, old_count)));
+
+  Kokkos::parallel_for(
+      "merge_new_bonds",
+      Kokkos::RangePolicy<execution_space>(std::size_t{0}, n_new),
+      [&merged_list, &merged_ids, old_count, &new_list = m_new_list,
+       &new_ids = m_new_ids](std::size_t i) {
+        auto const row = old_count + static_cast<int>(i);
+        for (std::size_t col = 0u; col < N; ++col) {
+          merged_list(row, col) = new_list[i * N + col];
+        }
+        merged_ids(row) = new_ids[i];
+      });
+
+  list = merged_list;
+  ids = merged_ids;
+  m_new_list.clear();
+  m_new_ids.clear();
+}
+#endif // ESPRESSO_COLLISION_DETECTION
+
+template struct LocalBondList<2>;
+template struct LocalBondList<3>;
+template struct LocalBondList<4>;
+
+void LocalBondState::allocate(int n_pairs, int n_angles, int n_dihedrals) {
+  pairs.allocate(n_pairs);
+  angles.allocate(n_angles);
+  dihedrals.allocate(n_dihedrals);
 }
 
 void LocalBondState::clear() {
-  reset_counts();
-  // Reset Kokkos Views to default (unallocated) state
-  pair_list = PairBondlistType();
-  pair_ids = PairBondIDType();
-  angle_list = AngleBondlistType();
-  angle_ids = AngleBondIDType();
-  dihedral_list = DihedralBondlistType();
-  dihedral_ids = DihedralBondIDType();
-#ifdef ESPRESSO_COLLISION_DETECTION
-  clear_new_bonds();
-#endif
+  pairs.clear();
+  angles.clear();
+  dihedrals.clear();
 }
 
 void LocalBondState::reset() {
-  reset_counts();
-#ifdef ESPRESSO_COLLISION_DETECTION
-  clear_new_bonds();
-#endif
+  pairs.reset();
+  angles.reset();
+  dihedrals.reset();
 }
 
-#ifdef ESPRESSO_COLLISION_DETECTION
-void LocalBondState::clear_new_bonds() {
-  new_pair_list.clear();
-  new_pair_ids.clear();
-  new_angle_list.clear();
-  new_angle_ids.clear();
-  new_dihedral_list.clear();
-  new_dihedral_ids.clear();
-}
-
-void LocalBondState::add_new_bond(
-    int bond_id, std::vector<int> const &particle_ids,
-    Kokkos::View<int *, execution_space> const &id_to_index) {
-#ifndef NDEBUG
-  for (auto pid : particle_ids) {
-    assert(pid >= 0 and static_cast<std::size_t>(pid) < id_to_index.extent(0));
-    assert(id_to_index(pid) != -1);
-  }
-#endif // not NDEBUG
-  if (particle_ids.size() == 2u) {
-    new_pair_list.reserve(new_pair_list.size() + 2u);
-    for (auto pid : particle_ids)
-      new_pair_list.emplace_back(id_to_index(pid));
-    new_pair_ids.emplace_back(bond_id);
-    pair_count++;
-  } else if (particle_ids.size() == 3u) {
-    new_angle_list.reserve(new_angle_list.size() + 3u);
-    for (auto pid : particle_ids)
-      new_angle_list.emplace_back(id_to_index(pid));
-    new_angle_ids.emplace_back(bond_id);
-    angle_count++;
-  } else if (particle_ids.size() == 4u) {
-    new_dihedral_list.reserve(new_dihedral_list.size() + 4u);
-    for (auto pid : particle_ids)
-      new_dihedral_list.emplace_back(id_to_index(pid));
-    new_dihedral_ids.emplace_back(bond_id);
-    dihedral_count++;
-  }
-}
-
-namespace {
-template <typename BondListT, typename BondIDT>
-void rebuild_bond_list_impl(std::vector<int> const &new_bond_list,
-                            std::vector<int> const &new_bond_ids,
-                            BondListT &bond_list, BondIDT &bond_ids,
-                            int total_bond_count) {
-  if (new_bond_list.empty())
+void LocalBondState::convert_ids_to_indices(IdToIndex const &id_to_index) {
+  if (empty()) {
     return;
-
-  auto new_data_view = Kokkos::View<const int *, Kokkos::HostSpace,
-                                    Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
-      new_bond_list.data(), new_bond_list.size());
-  auto new_id_view = Kokkos::View<const int *, Kokkos::HostSpace,
-                                  Kokkos::MemoryTraits<Kokkos::Unmanaged>>(
-      new_bond_ids.data(), new_bond_ids.size());
-
-  auto old_count = total_bond_count - static_cast<int>(new_bond_ids.size());
-
-  using execution_space = Kokkos::DefaultHostExecutionSpace;
-  BondListT rebuilt_list(Kokkos::view_alloc(execution_space{},
-                                            Kokkos::WithoutInitializing,
-                                            "bond_list_rebuild"),
-                         total_bond_count);
-  BondIDT rebuilt_ids(Kokkos::view_alloc(execution_space{},
-                                         Kokkos::WithoutInitializing,
-                                         "bond_id_rebuild"),
-                      total_bond_count);
-
-  Kokkos::deep_copy(
-      Kokkos::subview(rebuilt_list, std::make_pair(0, old_count),
-                      Kokkos::ALL()),
-      Kokkos::subview(bond_list, std::make_pair(0, old_count), Kokkos::ALL()));
-  Kokkos::deep_copy(Kokkos::subview(rebuilt_ids, std::make_pair(0, old_count)),
-                    Kokkos::subview(bond_ids, std::make_pair(0, old_count)));
-
-  Kokkos::parallel_for(
-      "copy_bondlist",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
-          std::size_t{0}, new_bond_list.size()),
-      [&bond_view = rebuilt_list, old_count, &new_data_view](auto flat_idx) {
-        constexpr int NCols =
-            BondListT::rank == 2 ? static_cast<int>(BondListT::static_extent(1))
-                                 : 1;
-        auto bond_idx = old_count + static_cast<int>(flat_idx / NCols);
-        auto col_idx = static_cast<int>(flat_idx % NCols);
-        bond_view(bond_idx, col_idx) = new_data_view(flat_idx);
-      });
-
-  Kokkos::parallel_for(
-      "copy_bond_ids",
-      Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
-          std::size_t{0}, new_bond_ids.size()),
-      [&id_view = rebuilt_ids, old_count, &new_id_view](auto idx) {
-        id_view(old_count + static_cast<int>(idx)) = new_id_view(idx);
-      });
-
-  bond_list = rebuilt_list;
-  bond_ids = rebuilt_ids;
+  }
+  pairs.convert_ids_to_indices(id_to_index);
+  angles.convert_ids_to_indices(id_to_index);
+  dihedrals.convert_ids_to_indices(id_to_index);
+  Kokkos::fence();
 }
-} // anonymous namespace
 
-void LocalBondState::rebuild() {
-  rebuild_bond_list_impl(new_pair_list, new_pair_ids, pair_list, pair_ids,
-                         pair_count);
-  rebuild_bond_list_impl(new_angle_list, new_angle_ids, angle_list, angle_ids,
-                         angle_count);
-  rebuild_bond_list_impl(new_dihedral_list, new_dihedral_ids, dihedral_list,
-                         dihedral_ids, dihedral_count);
-  clear_new_bonds();
+#ifdef ESPRESSO_COLLISION_DETECTION
+void LocalBondState::add_new_bond(int bond_id,
+                                  std::span<const int> particle_ids,
+                                  IdToIndex const &id_to_index) {
+  switch (particle_ids.size()) {
+  case 2u:
+    pairs.add_new_bond(bond_id, particle_ids, id_to_index);
+    break;
+  case 3u:
+    angles.add_new_bond(bond_id, particle_ids, id_to_index);
+    break;
+  case 4u:
+    dihedrals.add_new_bond(bond_id, particle_ids, id_to_index);
+    break;
+  default:
+    break;
+  }
+}
+
+void LocalBondState::discard_new_bonds() {
+  pairs.discard_new_bonds();
+  angles.discard_new_bonds();
+  dihedrals.discard_new_bonds();
+}
+
+void LocalBondState::merge_new_bonds() {
+  pairs.merge_new_bonds();
+  angles.merge_new_bonds();
+  dihedrals.merge_new_bonds();
 }
 #endif // ESPRESSO_COLLISION_DETECTION

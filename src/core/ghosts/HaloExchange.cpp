@@ -55,15 +55,13 @@ namespace {
  *
  * One tag per exchange-kind keeps concurrent exchanges (a future goal) from
  * aliasing: within a single exchange each message is already uniquely matched
- * by @c (peer, tag). The BONDS transfer needs its own tag because it is sent
- * as a *second* message to the same peer, mirroring the legacy two-transfer.
+ * by @c (peer, tag).
  */
 enum GhostTag : int {
   TAG_POSITION = 100,
   TAG_FORCE = 101,
   TAG_PARTNUM = 102,
   TAG_DEFAULT = 103,
-  TAG_BONDS = 104,
 };
 
 int main_tag(unsigned data_parts) {
@@ -96,23 +94,17 @@ std::vector<ParticleList *> region_cells(std::vector<SendRegion> const &send) {
 /**
  * @brief Pack all send regions of one NeighborComm into a single buffer.
  *
- * All regions are packed with a **single** @c pack_cells call so that bonds
- * produce exactly one boost binary archive per neighbor message -- matching
- * the single @c unpack_cells call on the receive side.  Concatenating
- * per-region archives would corrupt the bond stream (the second archive
- * header is misread as bond data by the receiver).
+ * All regions are packed with a **single** @c pack_cells call, matching
+ * the single @c unpack_cells call on the receive side.
  *
  * Per-region shifts are honored via the common shift. All @c SendRegion.shift
  * values within a @c NeighborComm are equal — @c RegularDecomposition::
  * make_halo_plan() sets them all to @c {}. This lets us pack every region's
- * cells in one @c pack_cells call (a single bond archive, matching the
- * receiver's single @c unpack_cells).
+ * cells in one @c pack_cells call.
  *
  * @note If a future decomposition (e.g. a Lees-Edwards refactor) ever stores
  * DISTINCT per-region shifts, @c pack_regions must be generalized to pack
- * each region's non-bond (flat) data with its own shift while still writing
- * all bonds into ONE shared archive — do not simply concatenate per-region
- * archives (that was the bond-corruption bug fixed in commit 314e7c366b).
+ * each region's data with its own shift.
  */
 void pack_regions(CommBuf &buf, std::vector<SendRegion> const &regions,
                   BoxGeometry const &box, unsigned data_parts) {
@@ -199,13 +191,10 @@ void run_collective(HaloPlan const &plan, BoxGeometry const &box,
         pack_cells(buf, cell_span, {}, box, data_parts);
         boost::mpi::broadcast(comm, safe_data(buf),
                               static_cast<int>(buf.size()), root);
-        boost::mpi::broadcast(comm, buf.bonds(), root);
       } else {
         buf.resize(calc_transmit_size(cell_span, box, data_parts));
-        buf.bonds().clear();
         boost::mpi::broadcast(comm, safe_data(buf),
                               static_cast<int>(buf.size()), root);
-        boost::mpi::broadcast(comm, buf.bonds(), root);
         unpack_cells(buf, cell_span, box, data_parts);
       }
     } else {
@@ -306,7 +295,6 @@ GhostExchange halo_exchange_start(HaloPlan const &plan, BoxGeometry const &box,
   bufs.requests.clear();
 
   bool const push = op.direction == Direction::Push;
-  bool const bonds = (data_parts & GHOSTTRANS_BONDS) != 0u;
   int const tag = main_tag(data_parts);
 
   // Resolve, per neighbor, which cells we send from and which we receive into.
@@ -367,22 +355,6 @@ GhostExchange halo_exchange_start(HaloPlan const &plan, BoxGeometry const &box,
                                        static_cast<int>(bufs.send[i].size())));
   }
 
-  // BONDS (cold, resort-only path): a second per-neighbor message for the bond
-  // buffers, mirroring the legacy two-transfer. Kept entirely off the hot
-  // POSITION/FORCE path via the flag guard. boost::mpi serializes the
-  // std::vector<char> length + payload, so recv sizing is automatic here.
-  if (bonds) {
-    for (std::size_t i = 0; i < n; ++i) {
-      auto const &nc = plan.neighbors[i];
-      bufs.requests.push_back(
-          comm.irecv(nc.peer, TAG_BONDS, bufs.recv[i].bonds()));
-    }
-    for (std::size_t i = 0; i < n; ++i) {
-      auto const &nc = plan.neighbors[i];
-      bufs.requests.push_back(
-          comm.isend(nc.peer, TAG_BONDS, bufs.send[i].bonds()));
-    }
-  }
 #ifdef ESPRESSO_CALIPER
   if (espresso_cali_active())
     CALI_MARK_END("ghost/post");
@@ -447,39 +419,13 @@ void halo_exchange_finish(GhostExchange &st) {
     run_collective(*st.plan, *st.box, st.data_parts, st.op);
 
   auto const n = st.plan->neighbors.size();
-  bool const bonds = (st.data_parts & GHOSTTRANS_BONDS) != 0u;
   bool const add = st.op.combine == Combine::Add;
 
   // Request layout (set by halo_exchange_start):
   //   [0..n)    = per-neighbor irecvs
   //   [n..2n)   = per-neighbor isends
-  //   [2n..3n)  = bond irecvs   (only when bonds)
-  //   [3n..4n)  = bond isends   (only when bonds)
 
-  if (bonds) {
-    // Cold path (resort-only): bonds need *both* the flat and bond message from
-    // each neighbor before unpack_cells can run.  Keep existing wait_all-then-
-    // unpack-in-order semantics; pipelining is not safe here.
-#ifdef ESPRESSO_CALIPER
-    if (espresso_cali_active())
-      CALI_MARK_BEGIN("ghost/wait");
-#endif
-    boost::mpi::wait_all(bufs.requests.begin(), bufs.requests.end());
-#ifdef ESPRESSO_CALIPER
-    if (espresso_cali_active())
-      CALI_MARK_END("ghost/wait");
-    if (espresso_cali_active())
-      CALI_MARK_BEGIN("ghost/unpack");
-#endif
-    for (std::size_t i = 0; i < n; ++i) {
-      auto dst = as_span(bufs.recv_cells[i]);
-      unpack_cells(bufs.recv[i], dst, *st.box, st.data_parts);
-    }
-#ifdef ESPRESSO_CALIPER
-    if (espresso_cali_active())
-      CALI_MARK_END("ghost/unpack");
-#endif
-  } else if (add) {
+  if (add) {
     // Add path (FORCE / RATTLE reduce): wait receives in *fixed neighbor order*
     // so that floating-point addition into shared local cells is bitwise
     // reproducible across runs.  Unpacking neighbor i overlaps delivery of
