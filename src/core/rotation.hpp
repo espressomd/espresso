@@ -50,19 +50,21 @@ void propagate_omega_quat_particle(Particle &p, double time_step);
 
 void convert_torque_propagate_omega(Particle &p, double time_step);
 
-/** Convert torques to the body-fixed frame before the integration loop. */
-void convert_initial_torques(const ParticleRange &particles);
-
 // Frame conversion routines
-inline Utils::Vector3d
-convert_vector_body_to_space(const Particle &p, const Utils::Vector3d &vec) {
-  return p.quat() * vec;
+inline auto convert_vector_body_to_space(Utils::Quaternion<double> const &quat,
+                                         Utils::Vector3d const &vec) {
+  return quat * vec;
 }
 
-inline Utils::Vector3d convert_vector_space_to_body(const Particle &p,
-                                                    const Utils::Vector3d &v) {
-  assert(p.quat().norm() > 0.0);
-  return rotation_matrix(p.quat()).transposed() * v;
+inline auto convert_vector_space_to_body(Utils::Quaternion<double> const &quat,
+                                         Utils::Vector3d const &vec) {
+  assert(quat.norm() > 0.0);
+  return rotation_matrix(quat).transposed() * vec;
+}
+
+inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
+  auto const torque = convert_vector_space_to_body(p.quat(), p.torque());
+  p.torque() = Utils::mask(p.rotation(), torque);
 }
 
 /**
@@ -136,14 +138,9 @@ inline void local_rotate_particle(Particle &p,
                                   const double phi) {
   if (std::abs(phi) > std::numeric_limits<double>::epsilon()) {
     // Convert rotation axis to body-fixed frame
-    Utils::Vector3d axis = convert_vector_space_to_body(p, axis_space_frame);
+    auto const axis = convert_vector_space_to_body(p.quat(), axis_space_frame);
     p.quat() = local_rotate_particle_body(p, axis, phi);
   }
-}
-
-inline void convert_torque_to_body_frame_apply_fix(Particle &p) {
-  auto const torque = convert_vector_space_to_body(p, p.torque());
-  p.torque() = mask(p.rotation(), torque);
 }
 
 #endif // ESPRESSO_ROTATION

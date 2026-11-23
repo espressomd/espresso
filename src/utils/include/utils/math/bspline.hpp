@@ -37,6 +37,8 @@
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #endif
 
+// NOLINTBEGIN(bugprone-unhandled-code-paths)
+
 namespace Utils {
 /** @brief Formula of the B-spline. */
 template <int order, typename T>
@@ -325,6 +327,8 @@ DEVICE_QUALIFIER auto bspline_d(int i, T x) -> T
   return T{};
 }
 } // namespace Utils
+
+// NOLINTEND(bugprone-unhandled-code-paths)
 
 #if defined(__clang__)
 #pragma clang diagnostic pop
