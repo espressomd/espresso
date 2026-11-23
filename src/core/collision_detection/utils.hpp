@@ -38,6 +38,7 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/utility.hpp>
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -83,38 +84,46 @@ inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
 /**
  * @brief Bind the centers of the colliding particles.
  *
- * The bonds are registered in the flat bond lists of the rank that detected
- * the collision, which avoids rebuilding these lists. The local queues are then
- * gathered into the global collision queue, because the global bond
- * storage must be modified identically on every rank, while a collision
- * across a rank boundary is only queued on the rank that detected it.
+ * The local queues are gathered into the global collision queue, because
+ * the global bond storage must be modified identically on every rank, while
+ * a collision across a rank boundary may be queued on only one of the ranks,
+ * or on both. Each pair is ordered as (smaller id, larger id) and duplicates
+ * are removed, so that exactly one bond is created per colliding pair,
+ * owned by the particle with the smaller id.
  *
- * @param[in,out] collision_queue  Local queue. Pairs are reordered such
- *                                 that the first particle is not a ghost.
- * @return The global collision queue, identical on all ranks.
+ * The bond is also registered in the flat bond lists of the rank where its
+ * owner is a non-ghost particle, which avoids rebuilding these lists. This
+ * matches the rank that evaluates the bond after the next rebuild.
+ *
+ * @param[in] collision_queue  Local queue.
+ * @return The global collision queue, identical on all ranks, without
+ *         duplicates, and with each pair ordered as (smaller id, larger id).
  */
-inline auto add_bind_centers(std::vector<CollisionPair> &collision_queue,
+inline auto add_bind_centers(std::vector<CollisionPair> const &collision_queue,
                              System::System &system, int bond_id) {
   auto &cell_structure = *system.cell_structure;
-  for (auto &c : collision_queue) {
-    // Ensure that the bond is associated with the non-ghost particle
-    if (cell_structure.get_local_particle(c.first)->is_ghost()) {
+  // gather and put every pair in a fixed order: (smaller id, larger id)
+  auto global_queue = gather_collision_queue(collision_queue);
+  for (auto &c : global_queue) {
+    if (c.first > c.second) {
       std::swap(c.first, c.second);
     }
-    // The bond is evaluated on the rank that detected the collision.
-    cell_structure.add_new_bond(bond_id, {c.first, c.second});
   }
+  std::ranges::sort(global_queue);
+  auto const [first, last] = std::ranges::unique(global_queue);
+  global_queue.erase(first, last);
 
-  // Because MPI rank 1's queue containing (@c p1_on_rank_1, @c p2_on_rank_2)
-  // doesn't guarantee that the same pair (with or without swapped order) is
-  // also queued on the MPI rank 2, both ranks may independently create
-  // the bond. Such duplicates are not filtered here.
-  auto global_collision_queue = gather_collision_queue(collision_queue);
-  for (auto const &c : global_collision_queue) {
-    // the global collision queue is identical on all ranks
+  for (auto const &c : global_queue) {
+    // bond list on all ranks: the same single bond, owned by c.first
     ::add_bond(system, bond_id, {c.first, c.second});
+    // local list for this step: only the rank where c.first is a real
+    // (non-ghost) particle adds it
+    auto const *p = cell_structure.get_local_particle(c.first);
+    if (p and not p->is_ghost()) {
+      cell_structure.add_new_bond(bond_id, {c.first, c.second});
+    }
   }
-  return global_collision_queue;
+  return global_queue;
 }
 
 } // namespace CollisionDetection

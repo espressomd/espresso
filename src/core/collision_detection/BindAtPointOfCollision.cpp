@@ -87,9 +87,9 @@ void BindAtPointOfCollision::handle_collisions(
   auto const &box_geo = *system.box_geo;
 
   // Bind the particle centers. This also gathers the global collision
-  // queue, because only one node has a collision across node boundaries in
-  // its queue. The other node might still have to change particle properties
-  // on its non-ghost particle
+  // queue, because a collision across node boundaries may be queued on
+  // only one of the nodes, while the other node might still have to change
+  // particle properties on its non-ghost particle
   auto const global_collision_queue =
       add_bind_centers(local_collision_queue, system, bond_centers);
 
