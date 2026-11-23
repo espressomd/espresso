@@ -24,7 +24,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <utils/math/orthonormal_vec.hpp>
+#include "utils/Vector.hpp"
+#include "utils/math/orthonormal_vec.hpp"
 
 namespace Utils {
 

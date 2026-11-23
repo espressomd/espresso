@@ -67,7 +67,10 @@ physical systems.
   [Guide](active_matter/active_matter.ipynb)
 * **Electrokinetics**  
   Modelling electrokinetics together with hydrodynamic interactions.  
-  [Guide](electrokinetics/electrokinetics.ipynb)
+  Guide
+  [Part 1](electrokinetics/electrokinetics_part1_advection_diffusion.ipynb) |
+  [Part 2](electrokinetics/electrokinetics_part2_electroosmotic_flow.ipynb) |
+  [Part 3](electrokinetics/electrokinetics_part3_reactive_flow.ipynb)
 * **Electrodes**  
   Modelling electrodes and measuring differential capacitance with the ELC method.  
   [Part 1](electrodes/electrodes_part1.ipynb) |

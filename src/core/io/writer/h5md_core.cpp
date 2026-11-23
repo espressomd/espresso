@@ -221,7 +221,7 @@ static std::vector<std::size_t> create_dims(hsize_t rank, hsize_t data_dim) {
     return {0ul, data_dim};
   }
   assert(rank == 1ul);
-  return {data_dim};
+  return {0ul};
 }
 
 static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
@@ -369,6 +369,12 @@ void File::create_file() {
 }
 
 void File::close() {
+  // release datasets first, since they reference the open file
+  m_datasets.clear();
+  // close the file in parallel (this also flushes the superblock)
+  m_h5md_file.reset();
+  // wait for all ranks to be successful before deleting the backup file
+  m_comm.barrier();
   if (m_comm.rank() == 0) {
     std::filesystem::remove(m_backup_path);
   }
@@ -592,14 +598,16 @@ void File::write(const ParticleRange &particles, double time, int step,
                                 detail::make_serializer(&Particle::id));
 
   {
-    HighFive::DataSet &dataset = datasets.at("/particles/atoms/id/value");
-    auto const extents = dataset.getSpace().getDimensions();
+    auto const time_ext =
+        datasets.at("/particles/atoms/id/time").getSpace().getDimensions()[0];
     write_dataset(std::vector<double>{time},
                   datasets.at("/particles/atoms/id/time"), Vector1s{1},
-                  Vector1s{extents[0]}, Vector1s{1});
+                  Vector1s{time_ext}, Vector1s{1});
+    auto const step_ext =
+        datasets.at("/particles/atoms/id/step").getSpace().getDimensions()[0];
     write_dataset(std::vector<int>{step},
                   datasets.at("/particles/atoms/id/step"), Vector1s{1},
-                  Vector1s{extents[0]}, Vector1s{1});
+                  Vector1s{step_ext}, Vector1s{1});
   }
 
   if (m_fields & H5MD_OUT_TYPE) {
@@ -717,8 +725,9 @@ File::File(std::filesystem::path file_path, std::filesystem::path script_path,
 }
 
 File::~File() {
-  m_datasets.clear();
-  m_h5md_file.reset();
+  if (m_h5md_file) {
+    close();
+  }
 }
 
 } /* namespace H5md */

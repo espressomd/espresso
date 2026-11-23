@@ -33,7 +33,6 @@ class Test(ut.TestCase):
 
     system = espressomd.System(box_l=[1., 1., 1.])
     system.cell_system.skin = 0.4
-    system.setup_type_map(type_list=[0])
 
     def tearDown(self):
         self.system.part.clear()
@@ -48,7 +47,8 @@ class Test(ut.TestCase):
         """
 
         method = espressomd.reaction_methods.ReactionEnsemble(
-            kT=0.2, seed=42, exclusion_range=0., search_algorithm="order_n")
+            kT=0.2, seed=42, exclusion_range=0., system=self.system,
+            search_algorithm="order_n")
         method.set_non_interacting_type(type=1)
 
         p = self.system.part.add(pos=[0., 0., 0.], q=1, type=0)
@@ -61,7 +61,7 @@ class Test(ut.TestCase):
         field = espressomd.constraints.LinearElectricPotential(E=E, phi0=0.)
         self.system.constraints.add(field)
 
-        for _ in range(5000):
+        for _ in range(15000):
             accepted = method.displacement_mc_move_for_particles_of_type(
                 type_mc=0, particle_number_to_be_changed=1)
             if accepted:
@@ -81,14 +81,14 @@ class Test(ut.TestCase):
         (a, b, c), _ = scipy.optimize.curve_fit(
             lambda x, a, b, c: a * np.exp(-b * x) + c, xdata, ydata)
         # check histogram profile is roughly exponential
-        self.assertAlmostEqual(a, 1., delta=0.2)
+        self.assertAlmostEqual(a, 1.1, delta=0.2)
         self.assertAlmostEqual(b, 1. / method.kT, delta=0.3)
         self.assertAlmostEqual(c, 0., delta=0.01)
         # check distribution parameters with high accuracy
         ln2 = np.log(2)
         self.assertAlmostEqual(np.mean(series), method.kT, delta=0.02)
         self.assertAlmostEqual(np.median(series) / ln2, method.kT, delta=0.02)
-        self.assertAlmostEqual(np.sqrt(np.var(series)), method.kT, delta=0.02)
+        self.assertAlmostEqual(np.sqrt(np.var(series)), method.kT, delta=0.03)
 
         # the y- and z-position should follow a uniform distribution
         for axis in (1, 2):

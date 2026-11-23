@@ -94,12 +94,12 @@ target_compile_options(
   espresso_walberla_compiler_flags
   INTERFACE
   $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
-  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=code_is_unreachable>
-  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=integer_sign_change>
-  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=conversion_function_not_usable>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
-  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
+  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=code_is_unreachable>
+  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=integer_sign_change>
+  $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=conversion_function_not_usable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=code_is_unreachable>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=integer_sign_change>
+  $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:-Xcompiler=--diag_suppress=conversion_function_not_usable>
 )
 target_compile_options(
   espresso_walberla_codegen_compiler_flags
@@ -126,9 +126,11 @@ espresso_configure_walberla_target(espresso_walberla)
 espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
-  espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
+  espresso_walberla
+  PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
           espresso::walberla_codegen
+          $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
@@ -137,20 +139,25 @@ target_link_libraries(
   espresso_walberla_codegen
   PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
           espresso::walberla_codegen::compiler_flags
+          $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
           OpenMP::OpenMP_CXX)
 
 function(espresso_set_walberla_codegen_kernel_source_properties source_file)
-  # disable sanitizers on kernels due to excessive runtime and VRAM usage
-  set(FLAGS "$<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-fno-sanitize=undefined>")
-  # enable debug-preserving optimizations on supported toolchains
-  set(FLAGS
-      "${FLAGS} $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xptxas=-O0 -Xcompiler=>$<IF:$<CXX_COMPILER_ID:NVHPC>,-O0,-Og>>"
-  )
+  list(
+    APPEND
+    SRC_COMPILE_OPTIONS
+    # disable sanitizers on kernels due to excessive runtime and VRAM usage
+    $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-fno-sanitize=undefined>
+    # enable debug-preserving optimizations on supported toolchains
+    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xptxas=-O0>>
+    $<$<CONFIG:Debug>:$<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Xcompiler=>$<IF:$<CXX_COMPILER_ID:NVHPC>,-O0,-Og>>
+    # disable GCC static analysis on large TUs to reduce RAM usage
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
   set_source_files_properties(
     ${source_file} TARGET_DIRECTORY espresso_walberla_codegen
-    PROPERTIES COMPILE_FLAGS "${FLAGS}")
+    PROPERTIES COMPILE_OPTIONS "${SRC_COMPILE_OPTIONS}")
 endfunction()
 
 if(WALBERLA_BUILD_WITH_CUDA)
@@ -162,4 +169,8 @@ endif()
 add_subdirectory(src)
 if(ESPRESSO_BUILD_TESTS)
   add_subdirectory(tests)
+endif()
+if(Kokkos_ENABLE_CUDA)
+  espresso_set_kokkos_properties_on_source_files(espresso_walberla)
+  espresso_set_kokkos_properties_on_source_files(espresso_walberla_codegen)
 endif()

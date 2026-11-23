@@ -1039,6 +1039,10 @@ class ShapeBasedConstraintTest(ut.TestCase):
         system = self.system
         box_l = self.box_l
         wall = espressomd.shapes.Wall(normal=[0., 1., 0.], dist=0.)
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'position' is missing"):
+            wall.calc_distance(pos=[1, 1, 1])
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'position' is missing"):
+            wall.is_inside(pos=[1, 1, 1])
         constraint = espressomd.constraints.ShapeBasedConstraint(
             shape=wall, particle_type=1)
         system.constraints.add(constraint)

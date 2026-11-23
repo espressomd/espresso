@@ -50,6 +50,8 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #include "LocalBox.hpp"
 
+#include <Kokkos_Core.hpp>
+
 #include <cstddef>
 #include <optional>
 #include <span>
@@ -160,8 +162,8 @@ struct P3MParameters {
    * @ref P3MParameters::cao_cut "cao_cut".
    */
   void recalc_a_ai_cao_cut(Utils::Vector3d const &box_l) {
+    a = Utils::hadamard_division(box_l, mesh);
     ai = Utils::hadamard_division(mesh, box_l);
-    a = Utils::hadamard_division(Utils::Vector3d::broadcast(1.), ai);
     cao_cut = (static_cast<double>(cao) / 2.) * a;
   }
 
@@ -174,7 +176,19 @@ struct P3MParameters {
   }
 };
 
-/** @brief Properties of the local mesh. */
+/**
+ * @brief Properties of the local mesh and halo region.
+ * The thickness of the halo region depends on the following parameters:
+ * - The half-width of the charge-assignment stencil (cao_cut = cao/2*a).
+ *   A charge at position (0,0,0) is spread onto a cube of width cao, hence
+ *   the half-width must be padded on both sides of the local domain.
+ * - The Verlet list skin must be added extra, since particles are not resorted
+ *   at every time step, but rather when they moved more than one skin.
+ * - The ELC space layer is also needed when dielectric contrast is active,
+ *   since real charges within `space_layer` of the bottom wall induce image
+ *   charges outside the simulation box, hence the halo region is thicker
+ *   in the non-periodic direction.
+ */
 struct P3MLocalMesh {
   /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
@@ -312,10 +326,19 @@ std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
   return ret;
 }
 
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 template <Utils::MemoryOrder RSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           Utils::MemoryOrder KSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
           bool UseR2C = false, unsigned int R2CDir = 2u>
 struct P3MFFTConfig {
+  /** @brief Data layout of the input real-space 3D matrix. */
+  using r_space_layout =
+      std::conditional_t<RSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
+  /** @brief Data layout of the output k-space 3D matrix. */
+  using k_space_layout =
+      std::conditional_t<KSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
   /** @brief Data layout of the input real-space 3D matrix. */
   static auto constexpr r_space_order = RSpaceOrder;
   /** @brief Data layout of the output k-space 3D matrix. */
@@ -325,3 +348,4 @@ struct P3MFFTConfig {
   /** @brief Direction of the reduced dimension (if @c use_r2c is true). */
   static auto constexpr r2c_dir = R2CDir;
 };
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

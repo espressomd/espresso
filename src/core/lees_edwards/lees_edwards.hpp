@@ -34,9 +34,10 @@ protected:
 
 public:
   UpdateOffset(BoxGeometry const &box) : m_le{box.lees_edwards_bc()} {}
+  virtual ~UpdateOffset() = default;
 
-  void operator()(Particle &,
-                  [[maybe_unused]] double pos_prefactor = 1.0) const {
+  virtual void operator()([[maybe_unused]] Particle &,
+                          [[maybe_unused]] double pos_prefactor = 1.0) const {
     // Disabled as long as we do not use a two step LE update
   }
 };
@@ -47,7 +48,7 @@ class Push : public UpdateOffset {
 public:
   Push(BoxGeometry const &box) : UpdateOffset{box}, m_box{box} {}
 
-  void operator()(Particle &p, double pos_prefactor = 1.0) const {
+  void operator()(Particle &p, double pos_prefactor = 1.0) const override {
     // Lees-Edwards acts at the zero step for the velocity half update and at
     // the midstep for the position.
     //
@@ -67,7 +68,6 @@ public:
     p.pos()[m_le.shear_direction] += pos_prefactor * dir * m_le.pos_offset;
     p.lees_edwards_offset() -= pos_prefactor * dir * m_le.pos_offset;
     m_box.fold_position(p.pos(), p.image_box());
-    //    UpdateOffset::operator()(p,pos_prefactor);
   }
 };
 
