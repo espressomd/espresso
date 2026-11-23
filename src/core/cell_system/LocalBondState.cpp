@@ -29,7 +29,9 @@
 #include <utility>
 
 template <std::size_t N> void LocalBondList<N>::allocate(int capacity) {
-  count = 0;
+  // also drops pending new bonds, which would otherwise make the count
+  // inconsistent in a later discard_new_bonds() or merge_new_bonds()
+  reset();
   auto const n_rows = static_cast<std::size_t>(capacity);
   if (list.is_allocated()) {
     Kokkos::realloc(Kokkos::view_alloc(Kokkos::WithoutInitializing), list,

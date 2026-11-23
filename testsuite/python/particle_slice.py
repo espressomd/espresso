@@ -543,6 +543,17 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(p0.type, 0)
         self.assertEqual(p1.type, 1)
 
+    def test_multiadd_bond_to_later_particle(self):
+        # a bond may refer to a particle created later in the same call
+        self.system.part.clear()
+        harmonic = espressomd.interactions.HarmonicBond(k=1., r_0=0.)
+        self.system.bonded_inter.add(harmonic)
+        p0, p1 = self.system.part.add(
+            id=[0, 1], pos=[[0., 0., 0.], [1., 0., 0.]],
+            bonds=[[(harmonic, 1)], []])
+        self.assertEqual(p0.bonds, ((harmonic, 1),))
+        self.assertEqual(p1.bonds, ())
+
     def test_empty(self):
         np.testing.assert_array_equal(
             self.system.part.by_ids([]).pos, np.empty(0))

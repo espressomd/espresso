@@ -102,9 +102,8 @@ void check_bond_can_be_removed(System::System const &system, int bond_id,
  * order relative to other bond mutations, since it removes the bond from
  * the global bond topology (@ref System::System::bond_storage).
  *
- * Removes one bond matching @p bond_id whose participants are exactly
- * @p particle_ids; a bond owned by @p particle_ids[0] is preferred, and the
- * order of the other ids does not matter.
+ * Removes one bond matching @p bond_id that is owned by @p particle_ids[0]
+ * and whose partners are exactly the remaining ids, in the given order.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().

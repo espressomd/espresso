@@ -19,13 +19,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "BondStorage.hpp"
 #include "hdf5_patches.hpp" // must appear first
 
 #include "h5md_core.hpp"
 #include "h5md_dataset.hpp"
 #include "h5md_specification.hpp"
 
+#include "BondStorage.hpp"
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "bond_queries.hpp"

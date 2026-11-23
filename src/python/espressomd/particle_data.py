@@ -1207,6 +1207,11 @@ class ParticleList(ScriptInterfaceHelper):
             return self._place_new_particle(particles_dict)
 
     def _place_new_particle(self, p_dict):
+        p, bonds = self._create_new_particle(p_dict)
+        self._add_bonds_to_new_particle(p, bonds)
+        return p
+
+    def _create_new_particle(self, p_dict):
         bonds = []
         if "propagation" in p_dict:
             p_dict["propagation"] = int(p_dict["propagation"])
@@ -1215,11 +1220,13 @@ class ParticleList(ScriptInterfaceHelper):
             if nesting_level(bonds) == 1:
                 bonds = [bonds]
         p = self.call_method("add_particle", **p_dict)
+        return p, bonds
+
+    def _add_bonds_to_new_particle(self, p, bonds):
         for bond in bonds:
             if len(bond):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)
                 p.add_verified_bond(bond)
-        return p
 
     def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
@@ -1235,10 +1242,14 @@ class ParticleList(ScriptInterfaceHelper):
             first_id = self.highest_particle_id + 1
             p_list_dict["id"] = np.arange(first_id, first_id + n_parts)
 
-        # Place the particles
+        # Place the particles first, then add the bonds, since a bond
+        # may refer to a particle that comes later in the list
+        new_particles = []
         for i in range(n_parts):
             p_dict = {k: v[i] for k, v in p_list_dict.items()}
-            self._place_new_particle(p_dict)
+            new_particles.append(self._create_new_particle(p_dict))
+        for p, bonds in new_particles:
+            self._add_bonds_to_new_particle(p, bonds)
 
         # Return slice of added particles
         return self.by_ids(p_list_dict["id"])
