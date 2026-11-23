@@ -96,9 +96,6 @@ void set_particle_pos(int p_id, Utils::Vector3d const &pos);
  */
 void remove_particle(int p_id);
 
-/** Remove all particles. */
-void remove_all_particles();
-
 /**
  * @brief Check if particle exists.
  *

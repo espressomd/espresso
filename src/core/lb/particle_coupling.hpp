@@ -73,22 +73,29 @@ class ParticleCoupling {
   BoxGeometry const &m_box_geo;
   LocalBox const &m_local_box;
   double m_noise_pref_wo_gamma;
+  /** Fraction of a LB time step covered by one MD time step. Forces on the
+   *  fluid are accumulated over all MD steps of one LB step. */
+  double m_md_to_lb_time_step_ratio;
   bool m_thermalized;
 
 public:
   ParticleCoupling(LBThermostat const &thermostat, LB::Solver &lb,
-                   BoxGeometry const &box_geo, LocalBox const &local_box)
+                   BoxGeometry const &box_geo, LocalBox const &local_box,
+                   double time_step)
       : m_thermostat{thermostat}, m_lb{lb}, m_box_geo{box_geo},
-        m_local_box{local_box} {
+        m_local_box{local_box},
+        m_md_to_lb_time_step_ratio{time_step / lb.get_tau()} {
     /* Eq. (16) @cite ahlrichs99a, without the gamma term.
      * The factor 12 comes from the fact that we use random numbers
      * from -0.5 to 0.5 (equally distributed) which have variance 1/12.
-     * The time step comes from the discretization.
+     * The time step comes from the discretization: the coupling force is
+     * applied to the particles at every MD step, hence the noise variance
+     * must scale with the MD time step, not with the LB time step.
      */
     auto constexpr variance_inv = 12.;
     auto const kT = lb.get_kT() * Utils::sqr(lb.get_lattice_speed());
     m_thermalized = (kT != 0.);
-    m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / lb.get_tau());
+    m_noise_pref_wo_gamma = std::sqrt(variance_inv * 2. * kT / time_step);
   }
 
   Utils::Vector3d get_noise_term(Particle const &p) const;

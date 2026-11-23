@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(exceptions) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   MPI_Init(&argc, &argv);
   int n_nodes;
 

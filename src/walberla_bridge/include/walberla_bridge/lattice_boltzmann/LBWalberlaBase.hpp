@@ -33,6 +33,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <memory>
 #include <optional>

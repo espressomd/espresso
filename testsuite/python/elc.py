@@ -126,6 +126,85 @@ class ELCTestCPU(ELCTest, ut.TestCase):
         with self.assertRaisesRegex(Exception, 'entered ELC gap region'):
             self.system.integrator.run(2)
 
+    def test_metallic_slit_pair_force(self):
+        """
+        Two charges between two ideal metallic walls. The forces are
+        compared against the closed-form image series. Both charges
+        are placed away from the mid-plane and separated laterally,
+        which is where the images of the other charge contribute to
+        the in-plane force.
+        """
+        system = self.system
+
+        SLIT = 1.5
+        GAP = 8.
+        BOX_L = 10.
+        PREFACTOR = 2.7
+
+        system.box_l = [BOX_L, BOX_L, SLIT + GAP]
+
+        def image_series_force(z1, z2, r, q1, q2, n_max=20000):
+            """
+            Force on charge ``q1`` at ``(0, 0, z1)`` exerted by charge ``q2``
+            at ``(r, 0, z2)`` and by the images of both charges.
+            """
+            n = np.arange(-n_max, n_max + 1)
+            # charge 2 and its images, seen from charge 1 at lateral distance r
+            charges = [np.full(n.shape, q2), np.full(n.shape, -q2)]
+            heights = [z2 + 2. * n * SLIT, -z2 + 2. * n * SLIT]
+            lateral = [np.full(n.shape, -r), np.full(n.shape, -r)]
+            # images of charge 1 itself (the n = 0 term is the charge itself)
+            m = n[n != 0]
+            charges += [np.full(m.shape, q1), np.full(n.shape, -q1)]
+            heights += [z1 + 2. * m * SLIT, -z1 + 2. * n * SLIT]
+            lateral += [np.zeros(m.shape), np.zeros(n.shape)]
+            charges = np.concatenate(charges)
+            lateral = np.concatenate(lateral)
+            normal = z1 - np.concatenate(heights)
+            dist_inv3 = (lateral**2 + normal**2)**-1.5
+            return PREFACTOR * q1 * np.array(
+                [np.sum(charges * lateral * dist_inv3), 0.,
+                 np.sum(charges * normal * dist_inv3)])
+
+        centre = np.array([BOX_L / 2., BOX_L / 2., 0.])
+        p1 = system.part.add(pos=centre + [0., 0., SLIT / 2.], q=1.)
+        p2 = system.part.add(pos=centre + [1., 0., SLIT / 2.], q=-1.)
+
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=PREFACTOR,
+            mesh=32,
+            cao=7,
+            accuracy=1e-7,
+            **self.p3m_params
+        )
+        elc = espressomd.electrostatics.ELC(
+            actor=p3m,
+            gap_size=GAP,
+            maxPWerror=1e-7,
+            delta_mid_top=-1,
+            delta_mid_bot=-1,
+            const_pot=True,
+            pot_diff=0,
+        )
+
+        system.electrostatics.solver = elc
+
+        for z1, z2, r in [(0.75, 0.75, 2.0), (0.6, 0.6, 2.0), (0.6, 0.6, 1.0),
+                          (0.9, 0.6, 1.2), (0.3, 0.3, 1.0), (1.2, 0.3, 1.5)]:
+            for q in [1., 2.]:
+                with self.subTest(z1=z1, z2=z2, r=r, q=q):
+                    p1.pos = centre + [0., 0., z1]
+                    p2.pos = centre + [r, 0., z2]
+                    p1.q = +q
+                    p2.q = -q
+                    system.integrator.run(0, recalc_forces=True)
+                    ref_f1 = image_series_force(z1, z2, +r, +q, -q)
+                    ref_f2 = image_series_force(z2, z1, -r, -q, +q)
+                    np.testing.assert_allclose(
+                        np.copy(p1.f), ref_f1, rtol=1e-3, atol=1e-6)
+                    np.testing.assert_allclose(
+                        np.copy(p2.f), ref_f2, rtol=1e-3, atol=1e-6)
+
     def test_elc_p3m_madelung(self):
         system = self.system
 

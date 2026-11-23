@@ -23,7 +23,6 @@
 #include "PidPairwiseDistancesObservable.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
-#include "particle_node.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
