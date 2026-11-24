@@ -1243,13 +1243,19 @@ class ParticleList(ScriptInterfaceHelper):
             p_list_dict["id"] = np.arange(first_id, first_id + n_parts)
 
         # Place the particles first, then add the bonds, since a bond
-        # may refer to a particle that comes later in the list
-        new_particles = []
+        # may refer to a particle that comes later in the list. Only the
+        # ids are kept: holding on to the particle handles interleaves
+        # their allocations with the particle storage on the heap, which
+        # degrades the memory locality of the particles for the rest of
+        # the simulation.
+        pending_bonds = []
         for i in range(n_parts):
             p_dict = {k: v[i] for k, v in p_list_dict.items()}
-            new_particles.append(self._create_new_particle(p_dict))
-        for p, bonds in new_particles:
-            self._add_bonds_to_new_particle(p, bonds)
+            _, bonds = self._create_new_particle(p_dict)
+            if bonds:
+                pending_bonds.append((int(p_dict["id"]), bonds))
+        for p_id, bonds in pending_bonds:
+            self._add_bonds_to_new_particle(self.by_id(p_id), bonds)
 
         # Return slice of added particles
         return self.by_ids(p_list_dict["id"])
