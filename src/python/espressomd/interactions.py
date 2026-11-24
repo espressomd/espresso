@@ -1584,9 +1584,32 @@ class BondCollection:
         self.system = system
         self.bond = bond
 
+    #: Maximal number of bonds sent to the MPI ranks in one call when
+    #: adding many bonds at once. Every rank receives the whole batch, so
+    #: the batch size bounds the temporary memory needed on each rank.
+    _batch_size = 1 << 16
+
     @staticmethod
     def _resolve_ids(particles):
         return [int(p.id if hasattr(p, "id") else p) for p in particles]
+
+    @staticmethod
+    def _is_batch(particles):
+        if isinstance(particles, np.ndarray):
+            return particles.ndim == 2
+        return len(particles) != 0 and isinstance(
+            particles[0], (list, tuple, np.ndarray))
+
+    @classmethod
+    def _resolve_batch(cls, particles):
+        if isinstance(particles, np.ndarray) and np.issubdtype(
+                particles.dtype, np.integer):
+            return particles.astype(int, copy=False)
+        rows = [cls._resolve_ids(row) for row in particles]
+        if len({len(row) for row in rows}) > 1:
+            raise ValueError(
+                "Every bond needs the same number of particles")
+        return np.array(rows, dtype=int).reshape((len(rows), -1))
 
     def add(self, particles):
         """
@@ -1594,12 +1617,30 @@ class BondCollection:
         is stored on the first particle, with the remaining particles as
         its partners.
 
+        Many bonds can be created at once by passing one row of particles
+        per bond, e.g. ``system.bonds[harmonic].add([(0, 1), (1, 2)])`` or
+        an integer array of shape ``(n_bonds, n_particles)``. This is much
+        faster than adding the bonds one by one, in particular on many MPI
+        ranks. The bonds are validated and created in batches of
+        :attr:`_batch_size` bonds: if a batch is rejected, the bonds of the
+        previous batches remain.
+
         Parameters
         ----------
         particles : array_like of :obj:`int` or :class:`~espressomd.particle_data.ParticleHandle`
-            Particles to bond together.
+            Particles to bond together, or a 2D array_like with one row of
+            particles per bond.
 
         """
+        if self._is_batch(particles):
+            ids = self._resolve_batch(particles)
+            n_particles = ids.shape[1]
+            for start in range(0, ids.shape[0], self._batch_size):
+                batch = ids[start:start + self._batch_size]
+                self.bond.call_method(
+                    "add_bonds", bond_id=self.bond._bond_id,
+                    part_ids=batch.ravel().tolist(), n_particles=n_particles)
+            return
         self.bond.call_method(
             "add_bond", bond_id=self.bond._bond_id,
             part_id=self._resolve_ids(particles))

@@ -1228,6 +1228,31 @@ class ParticleList(ScriptInterfaceHelper):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)
                 p.add_verified_bond(bond)
 
+    def _add_pending_bonds(self, pending_bonds):
+        """
+        Add the bonds of new particles in a single call, in the given order.
+        Every bond is encoded as ``[bond_id, n, owner, *partners]``.
+        """
+        # any particle handle can normalize the bonds
+        helper = self.by_id(pending_bonds[0][0])
+        encoded = []
+        for p_id, bonds in pending_bonds:
+            for bond in bonds:
+                if not len(bond):
+                    continue
+                bond = helper.normalize_and_check_bond_or_throw_exception(bond)
+                partners = bond[1:]
+                if p_id in partners:
+                    raise Exception(
+                        f"Bond partners {partners} include the particle {p_id} itself")
+                if len(set(partners)) != len(partners):
+                    raise Exception(
+                        f"Cannot add duplicate bond partners {partners} to particle {p_id}")
+                encoded += [bond[0]._bond_id, len(partners) + 1, p_id]
+                encoded += [int(pid) for pid in partners]
+        if encoded:
+            self.call_method("add_bonds", encoded=encoded)
+
     def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
         n_parts = len(p_list_dict["pos"])
@@ -1254,8 +1279,8 @@ class ParticleList(ScriptInterfaceHelper):
             _, bonds = self._create_new_particle(p_dict)
             if bonds:
                 pending_bonds.append((int(p_dict["id"]), bonds))
-        for p_id, bonds in pending_bonds:
-            self._add_bonds_to_new_particle(self.by_id(p_id), bonds)
+        if pending_bonds:
+            self._add_pending_bonds(pending_bonds)
 
         # Return slice of added particles
         return self.by_ids(p_list_dict["id"])

@@ -24,26 +24,34 @@
 #include "EspressoCoreGlobalConfig.hpp"
 #include "ParticleFactory.hpp"
 
-#include "BondStorage.hpp"
+#include "BondStore.hpp"
+#include "Particle.hpp"
 #include "bond_queries.hpp"
 #include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cell_system/CellStructureType.hpp"
+#include "communication.hpp"
 #include "particle_node.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
+
 #include <algorithm>
+#include <array>
+#include <cstddef>
+#include <functional>
 #include <vector>
 
 /**
  * @brief Unit tests for add_bond()/remove_bond() (bonds.cpp) and the bond
  * queries (bond_queries.hpp).
  *
- * The bookkeeping of the bond topology itself is covered by the
- * @ref BondStorage unit tests; the interaction with MPI by the
- * collision-detection, bond-breakage and particle-slice regression tests.
+ * The bookkeeping of the bonds of one particle is covered by the
+ * @ref BondStore unit tests; the interaction with MPI by the
+ * collision-detection, bond-breakage, particle-slice and distributed-bond
+ * regression tests.
  */
 
 struct GlobalConfig : public EspressoCoreGlobalConfig {
@@ -60,19 +68,24 @@ BOOST_TEST_GLOBAL_CONFIGURATION(GlobalConfig);
 BOOST_AUTO_TEST_SUITE(suite)
 
 namespace {
-auto const any_bond = [](BondStorage::Bond const &) { return true; };
+auto const any_bond = [](BondRecord const &, int) { return true; };
 
 /** @brief All bonds the particle @p pid participates in. */
 auto bonds_of(int pid) {
-  return ::get_bonds_of_particle(System::get_system(), pid, any_bond);
+  auto const pids = std::array<int, 1>{{pid}};
+  return ::gather_bonds_of_particles(System::get_system(), pids, any_bond);
 }
 
 /** @brief Sorted ids of the bonds a particle owns. */
 auto owned_bond_ids(int pid) {
+  auto const pids = std::array<int, 1>{{pid}};
   std::vector<int> bond_ids;
-  System::get_system().bond_storage->for_each_owned_bond(
-      pid,
-      [&](BondStorage::Bond const &bond) { bond_ids.push_back(bond.bond_id); });
+  for (auto const &[bond_id, ids] : ::gather_bonds_of_particles(
+           System::get_system(), pids, [](BondRecord const &bond, int p) {
+             return bond.owner_id() == p;
+           })) {
+    bond_ids.push_back(bond_id);
+  }
   std::ranges::sort(bond_ids);
   return bond_ids;
 }
@@ -80,11 +93,27 @@ auto owned_bond_ids(int pid) {
 /** @brief Sorted ids of the bonds a particle participates in. */
 auto all_bond_ids(int pid) {
   std::vector<int> bond_ids;
-  System::get_system().bond_storage->for_each_bond_with(
-      pid,
-      [&](BondStorage::Bond const &bond) { bond_ids.push_back(bond.bond_id); });
+  for (auto const &[bond_id, ids] : bonds_of(pid)) {
+    bond_ids.push_back(bond_id);
+  }
   std::ranges::sort(bond_ids);
   return bond_ids;
+}
+
+/** @brief Total number of bonds, counted on their owners. */
+std::size_t n_bonds() {
+  std::size_t n_local = 0u;
+  for (auto const &p : System::get_system().cell_structure->local_particles()) {
+    n_local +=
+        System::get_system().cell_structure->bond_store().owned(p.id()).size();
+  }
+  return boost::mpi::all_reduce(::comm_cart, n_local, std::plus<>());
+}
+
+/** @brief The particle, if it resides on this rank. */
+Particle const *local(int pid) {
+  auto const *p = System::get_system().cell_structure->get_local_particle(pid);
+  return (p != nullptr and not p->is_ghost()) ? p : nullptr;
 }
 
 struct RemoveAllParticles {
@@ -101,48 +130,62 @@ BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
     ::make_new_particle(pid, {1., 1., 1.});
   }
   auto &system = System::get_system();
-  auto const &bond_storage = *system.bond_storage;
-  BOOST_CHECK(bond_storage.empty());
+  BOOST_CHECK_EQUAL(n_bonds(), 0u);
 
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, angle_bond_id, {2, 1, 3});
-  BOOST_CHECK_EQUAL(bond_storage.size(), 2u);
+  BOOST_CHECK_EQUAL(n_bonds(), 2u);
   BOOST_CHECK(::is_bond_storage_consistent(system));
 
-  /* a bond is found from every participant, with the owner first */
+  /* every participant stores a copy, with the owner first */
   BOOST_CHECK(
       (bonds_of(1) == std::vector<BondTuple>{{pair_bond_id, {1, 2}},
                                              {angle_bond_id, {2, 1, 3}}}));
   BOOST_CHECK(
       (bonds_of(3) == std::vector<BondTuple>{{angle_bond_id, {2, 1, 3}}}));
+  if (auto const *p = local(3)) {
+    BOOST_CHECK_EQUAL(system.cell_structure->bond_store().view(p->id()).size(),
+                      1u);
+  }
 
-  /* a bond can be removed in exact order */
+  /* a bond can be removed in exact order, from all copies */
   BOOST_CHECK(::remove_bond(system, angle_bond_id, {2, 1, 3}));
   BOOST_CHECK(bonds_of(3).empty());
+  BOOST_CHECK((bonds_of(2) == std::vector<BondTuple>{{pair_bond_id, {1, 2}}}));
   BOOST_CHECK(::remove_bond(system, pair_bond_id, {1, 2}));
-  BOOST_CHECK(bond_storage.empty());
+  BOOST_CHECK_EQUAL(n_bonds(), 0u);
+  BOOST_CHECK(bonds_of(1).empty());
+  BOOST_CHECK(bonds_of(2).empty());
 
   /* removing a bond that does not exist is reported */
   BOOST_CHECK(not ::remove_bond(system, pair_bond_id, {1, 2}));
+  BOOST_CHECK(not ::remove_bond(system, pair_bond_id, std::vector<int>{}));
 
   /* the same bond added from both sides: each removal removes in
    * exact order */
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, pair_bond_id, {2, 1});
+  BOOST_CHECK(::is_bond_storage_consistent(system));
   BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
   BOOST_CHECK((bonds_of(2) == std::vector<BondTuple>{{pair_bond_id, {1, 2}}}));
   BOOST_CHECK(::remove_bond(system, pair_bond_id, {1, 2}));
-  BOOST_CHECK(bond_storage.empty());
+  BOOST_CHECK_EQUAL(n_bonds(), 0u);
+
+  /* a missing copy is detected */
+  ::add_bond(system, pair_bond_id, {1, 2});
+  if (local(2)) {
+    system.cell_structure->bond_store().erase(2);
+  }
+  BOOST_CHECK(not ::is_bond_storage_consistent(system));
 }
 
 BOOST_FIXTURE_TEST_CASE(bond_queries, RemoveAllParticles) {
   auto const pair_bond_id = 0;
   auto const angle_bond_id = 1;
-  for (int pid = 1; pid <= 3; ++pid) {
+  for (int pid = 1; pid <= 4; ++pid) {
     ::make_new_particle(pid, {1., 1., 1.});
   }
   auto &system = System::get_system();
-  auto const &bond_storage = *system.bond_storage;
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, angle_bond_id, {2, 1, 3});
 
@@ -159,33 +202,46 @@ BOOST_FIXTURE_TEST_CASE(bond_queries, RemoveAllParticles) {
   BOOST_CHECK((all_bond_ids(3) == std::vector<int>{angle_bond_id}));
   BOOST_CHECK(all_bond_ids(4).empty());
 
-  /* the partners of an owned bond are in creation order */
-  bond_storage.for_each_owned_bond(2, [&](BondStorage::Bond const &bond) {
-    BOOST_REQUIRE_EQUAL(bond.partner_ids().size(), 2u);
-    BOOST_CHECK_EQUAL(bond.partner_ids()[0], 1);
-    BOOST_CHECK_EQUAL(bond.partner_ids()[1], 3);
-  });
+  auto const *p1 = local(1);
+  auto const *p2 = local(2);
+  auto const *p3 = local(3);
+  auto const *p4 = local(4);
+  auto const &store = system.cell_structure->bond_store();
+  if (p1 and p2 and p3 and p4) {
+    /* the partners of an owned bond are in creation order */
+    for (auto const bond : store.owned(2)) {
+      BOOST_REQUIRE_EQUAL(bond.partner_ids().size(), 2u);
+      BOOST_CHECK_EQUAL(bond.partner_ids()[0], 1);
+      BOOST_CHECK_EQUAL(bond.partner_ids()[1], 3);
+    }
 
-  /* find_owned_bond_id() and find_bond_id_with() */
-  auto const is_angle = [=](int id) { return id == angle_bond_id; };
-  BOOST_CHECK(not find_owned_bond_id(bond_storage, 1, is_angle));
-  BOOST_CHECK(find_bond_id_with(bond_storage, 1, is_angle) == angle_bond_id);
-  BOOST_CHECK(find_owned_bond_id(bond_storage, 2, is_angle) == angle_bond_id);
-  BOOST_CHECK(not find_bond_id_with(bond_storage, 4, is_angle));
+    /* find_owned_bond_id() and find_bond_id_with() */
+    auto const is_angle = [=](int id) { return id == angle_bond_id; };
+    BOOST_CHECK(not find_owned_bond_id(store, *p1, is_angle));
+    BOOST_CHECK(find_bond_id_with(store, *p1, is_angle) == angle_bond_id);
+    BOOST_CHECK(find_owned_bond_id(store, *p2, is_angle) == angle_bond_id);
+    BOOST_CHECK(not find_bond_id_with(store, *p4, is_angle));
 
-  /* pair_bond_exists() finds a pair bond whichever particle owns it */
-  BOOST_CHECK(pair_bond_exists(bond_storage, 1, 2, pair_bond_id));
-  BOOST_CHECK(pair_bond_exists(bond_storage, 2, 1, pair_bond_id));
-  BOOST_CHECK(not pair_bond_exists(bond_storage, 1, 3, pair_bond_id));
-  BOOST_CHECK(not pair_bond_exists(bond_storage, 1, 1, pair_bond_id));
-  /* angle bonds are not pair bonds */
-  BOOST_CHECK(not pair_bond_exists(bond_storage, 1, 2, angle_bond_id));
-  BOOST_CHECK(not pair_bond_exists(bond_storage, 2, 3, angle_bond_id));
-  /* predicate overload */
-  BOOST_CHECK(
-      pair_bond_exists(bond_storage, 2, 1, [](int id) { return id >= 0; }));
-  BOOST_CHECK(
-      not pair_bond_exists(bond_storage, 1, 2, [](int) { return false; }));
+    /* pair_bond_exists() finds a pair bond whichever particle owns it */
+    BOOST_CHECK(pair_bond_exists(store, *p1, *p2, pair_bond_id));
+    BOOST_CHECK(pair_bond_exists(store, *p2, *p1, pair_bond_id));
+    BOOST_CHECK(not pair_bond_exists(store, *p1, *p3, pair_bond_id));
+    BOOST_CHECK(not pair_bond_exists(store, *p1, *p1, pair_bond_id));
+    /* angle bonds are not pair bonds */
+    BOOST_CHECK(not pair_bond_exists(store, *p1, *p2, angle_bond_id));
+    BOOST_CHECK(not pair_bond_exists(store, *p2, *p3, angle_bond_id));
+    /* predicate overload */
+    BOOST_CHECK(
+        pair_bond_exists(store, *p2, *p1, [](int id) { return id >= 0; }));
+    BOOST_CHECK(
+        not pair_bond_exists(store, *p1, *p2, [](int) { return false; }));
+
+    /* ghosts store no bonds: the bonds are read from the other particle */
+    auto ghost = *p1;
+    ghost.set_ghost(true);
+    BOOST_CHECK(pair_bond_exists(store, ghost, *p2, pair_bond_id));
+    BOOST_CHECK(pair_bond_exists(store, *p2, ghost, pair_bond_id));
+  }
 }
 
 BOOST_FIXTURE_TEST_CASE(particle_removal, RemoveAllParticles) {
@@ -195,30 +251,29 @@ BOOST_FIXTURE_TEST_CASE(particle_removal, RemoveAllParticles) {
     ::make_new_particle(pid, {1., 1., 1.});
   }
   auto &system = System::get_system();
-  auto const &bond_storage = *system.bond_storage;
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, angle_bond_id, {2, 1, 3});
   ::add_bond(system, pair_bond_id, {3, 4});
-  BOOST_CHECK_EQUAL(bond_storage.size(), 3u);
+  BOOST_CHECK_EQUAL(n_bonds(), 3u);
 
-  /* bonds of a particle, restricted to the ones it owns */
-  BOOST_CHECK(
-      (::get_bonds_of_particle(system, 3, [](BondStorage::Bond const &bond) {
-         return bond.owner_id() == 3;
-       }) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
+  /* bonds of particles, restricted to the ones they own */
+  auto const pids = std::array<int, 2>{{3, 4}};
+  BOOST_CHECK((::gather_bonds_of_particles(
+                   system, pids, [](BondRecord const &bond, int pid) {
+                     return bond.owner_id() == pid;
+                   }) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
 
   /* removing a particle removes all the bonds it participates in,
-   * whether it owns them or not */
+   * whether it owns them or not, from all copies */
   ::remove_particle(1);
-  BOOST_CHECK(bonds_of(1).empty());
   BOOST_CHECK(bonds_of(2).empty());
   BOOST_CHECK((bonds_of(3) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
-  BOOST_CHECK_EQUAL(bond_storage.size(), 1u);
+  BOOST_CHECK_EQUAL(n_bonds(), 1u);
   BOOST_CHECK(::is_bond_storage_consistent(system));
 
   /* removing all particles removes all bonds */
   system.cell_structure->remove_all_particles();
-  BOOST_CHECK(bond_storage.empty());
+  BOOST_CHECK_EQUAL(n_bonds(), 0u);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

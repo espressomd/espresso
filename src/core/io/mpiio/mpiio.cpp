@@ -50,22 +50,18 @@
 
 #include "mpiio.hpp"
 
-#include "BondStorage.hpp"
+#include "BondStore.hpp"
 #include "Particle.hpp"
-#include "bond_queries.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
-#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "communication.hpp"
 #include "errorhandling.hpp"
-#include "system/System.hpp"
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
-#include <boost/serialization/array.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <mpi.h>
 
@@ -75,8 +71,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
-#include <iterator>
-#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -192,47 +186,6 @@ static unsigned long mpi_calculate_file_offset(unsigned long n_items) {
 }
 
 /**
- * @brief Bonds owned by one particle, as stored in the bond file.
- *
- * For each bond, the ids of the partners are followed by the bond id,
- * stored as <tt>-(bond_id + 1)</tt>: a negative value ends a bond.
- * The archive holds the number of values, then the values.
- */
-struct OwnedBondsRecord {
-  std::vector<int> values;
-
-  void append(int bond_id, std::span<const int> partner_ids) {
-    assert(bond_id >= 0);
-    values.insert(values.end(), partner_ids.begin(), partner_ids.end());
-    values.push_back(-(bond_id + 1));
-  }
-
-  /**
-   * @brief Execute a kernel for every bond in the record.
-   * @param kernel Callable invoked as
-   *               <tt>kernel(int bond_id, std::span<const int> partners)</tt>.
-   */
-  template <typename Kernel> void for_each_bond(Kernel &&kernel) const {
-    auto first = values.begin();
-    for (auto it = values.begin(); it != values.end(); ++it) {
-      if (*it < 0) {
-        kernel(-(*it) - 1, std::span<const int>(first, it));
-        first = std::next(it);
-      }
-    }
-  }
-
-  template <class Archive> void serialize(Archive &ar, long int /* version */) {
-    auto size = values.size();
-    ar & size;
-    if (Archive::is_loading::value) {
-      values.resize(size);
-    }
-    ar &boost::serialization::make_array(values.data(), values.size());
-  }
-};
-
-/**
  * @brief Dump the fields and bond information.
  * To be called by the head node only.
  *
@@ -268,7 +221,8 @@ static void dump_info(std::string const &fn, unsigned fields,
 void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
                             BondedInteractionsMap const &bonded_ias,
                             ParticleRange const &particles,
-                            write_buffers &buffers) {
+                            write_buffers &buffers,
+                            BondStore const &bond_store) {
   auto const nlocalpart = static_cast<unsigned long>(particles.size());
   auto const offset = mpi_calculate_file_offset(nlocalpart);
   // keep buffers in order to avoid allocating them on every function call
@@ -337,15 +291,14 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
           io::back_inserter(bonds)};
       boost::archive::binary_oarchive bond_archiver{os};
 
-      // one bond list per particle, holding the bonds the particle owns
-      auto const &bond_storage = *System::get_system().bond_storage;
+      // one bond list per particle, holding every bond the particle
+      // participates in, so that reading restores the copies of all
+      // participants without communication
+      std::vector<int> block;
       for (auto const &p : particles) {
-        OwnedBondsRecord record;
-        bond_storage.for_each_owned_bond(
-            p.id(), [&](BondStorage::Bond const &b) {
-              record.append(b.bond_id, b.partner_ids());
-            });
-        bond_archiver << record;
+        block.clear();
+        bond_store.copy_to(p.id(), block);
+        bond_archiver << block;
       }
     }
 
@@ -550,7 +503,6 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
     }
   }
 
-  std::vector<BondTuple> bonds;
   if (fields & MPIIO_OUT_BND) {
     // 1.boff
     // 1 long int per process
@@ -570,29 +522,16 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
     boost::iostreams::stream<boost::iostreams::array_source> ss(src);
     boost::archive::binary_iarchive ia(ss);
 
-    for (auto const &p : particles) {
-      OwnedBondsRecord record;
-      ia >> record;
-      record.for_each_bond([&](int bond_id, std::span<const int> partner_ids) {
-        std::vector<int> particle_ids = {p.id()};
-        std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
-        bonds.emplace_back(bond_id, std::move(particle_ids));
-      });
+    // the bonds travel with the particles to their rank at the next resort
+    std::vector<int> block;
+    for (auto &p : particles) {
+      ia >> block;
+      cell_structure.bond_store().insert(p.id(), block);
     }
   }
 
   for (auto &p : particles) {
     cell_structure.add_particle(std::move(p));
-  }
-
-  if (fields & MPIIO_OUT_BND) {
-    // every rank only read the bonds owned by its particles, but bonds
-    // must be registered identically on all ranks
-    auto &system = System::get_system();
-    ::sync_bond_tuples(bonds, ::comm_cart);
-    for (auto const &[bond_id, particle_ids] : bonds) {
-      ::add_bond(system, bond_id, particle_ids);
-    }
   }
 }
 } // namespace Mpiio

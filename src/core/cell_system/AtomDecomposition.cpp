@@ -30,6 +30,7 @@
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives/all_to_all.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <cassert>
 #include <cstddef>
@@ -118,11 +119,16 @@ void AtomDecomposition::resort(bool global_flag,
 
   /* Sort displaced particles by the node they belong to. */
   std::vector<std::vector<Particle>> send_buf(m_comm.size());
+  // data of the particles kept outside of them, e.g. their bonds
+  std::vector<std::vector<int>> side_send(m_comm.size());
   for (auto it = local().particles().begin();
        it != local().particles().end();) {
     auto const target_node = id_to_rank(it->id());
     if (target_node != m_comm.rank()) {
       diff.emplace_back(RemovedParticle{it->id()});
+      if (m_migration) {
+        m_migration->pack(it->id(), side_send.at(target_node));
+      }
       send_buf.at(target_node).emplace_back(std::move(*it));
       it = local().particles().erase(it);
     } else {
@@ -133,6 +139,13 @@ void AtomDecomposition::resort(bool global_flag,
   /* Exchange particles */
   std::vector<std::vector<Particle>> recv_buf(m_comm.size());
   boost::mpi::all_to_all(m_comm, send_buf, recv_buf);
+  if (m_migration) {
+    std::vector<std::vector<int>> side_recv(m_comm.size());
+    boost::mpi::all_to_all(m_comm, side_send, side_recv);
+    for (std::size_t rank = 0u; rank < recv_buf.size(); ++rank) {
+      unpack_migration(recv_buf[rank], side_recv[rank]);
+    }
+  }
 
   diff.emplace_back(ModifiedList{local().particles()});
 

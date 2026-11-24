@@ -92,11 +92,12 @@ class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
       std::unordered_map<int, std::shared_ptr<Bonded_IA_Parameters>>;
 
   /**
-   * @brief Bond topology of the system this container is bound to.
-   * Cached by @ref set_bond_storage(), since @ref pair_bond_exists_between()
-   * is called from pair kernels, where locking the system is too costly.
+   * @brief Bonds of the local particles of the system this container is
+   * bound to. Cached by @ref set_bond_store(), since
+   * @ref pair_bond_exists_between() is called from pair kernels, where
+   * locking the system is too costly.
    */
-  std::shared_ptr<BondStorage const> m_bond_storage;
+  BondStore const *m_bond_store = nullptr;
 
 public:
   using key_type = container_type::key_type;
@@ -196,8 +197,9 @@ public:
   double maximal_cutoff() const;
 
   /**
-   * @brief Check whether a pair bond of a given type connects two particles,
-   * even on ghost particles.
+   * @brief Check whether a pair bond of a given type connects two particles.
+   *
+   * The bonds are read from the particle that is not a ghost.
    *
    * @param p1     first particle
    * @param p2     second particle
@@ -206,19 +208,18 @@ public:
    */
   template <typename BondType>
   bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
-    assert(m_bond_storage);
-    return ::pair_bond_exists(
-        *m_bond_storage, p1.id(), p2.id(), [this](int bond_id) {
-          return std::holds_alternative<BondType>(*at(bond_id));
-        });
+    assert(m_bond_store);
+    return ::pair_bond_exists(*m_bond_store, p1, p2, [this](int bond_id) {
+      return std::holds_alternative<BondType>(*at(bond_id));
+    });
   }
 
   /**
-   * @brief Set the bond topology queried by @ref pair_bond_exists_between.
+   * @brief Set the bonds queried by @ref pair_bond_exists_between.
    * Must be called when attaching the container to a system.
    */
-  void set_bond_storage(std::shared_ptr<BondStorage const> bond_storage) {
-    m_bond_storage = std::move(bond_storage);
+  void set_bond_store(BondStore const *bond_store) {
+    m_bond_store = bond_store;
   }
 
   void on_ia_change();

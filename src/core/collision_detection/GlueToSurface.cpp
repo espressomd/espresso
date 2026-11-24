@@ -211,8 +211,8 @@ void GlueToSurface::handle_collisions(
   } // Loop over all collisions in the queue
 
   // Create the bonds on all ranks: the bonds recorded locally are gathered
-  // and broadcast, so that add_bond() modifies the global bond storage
-  // identically on every rank.
+  // and broadcast, so that add_bond() stores a copy in every participant,
+  // wherever it resides.
   if (not global_collision_queue.empty()) {
     ::sync_bond_tuples(new_bonds, ::comm_cart);
     for (auto const &[bond_id, particle_ids] : new_bonds) {

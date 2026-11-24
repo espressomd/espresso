@@ -85,11 +85,11 @@ inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
  * @brief Bind the centers of the colliding particles.
  *
  * The local queues are gathered into the global collision queue, because
- * the global bond storage must be modified identically on every rank, while
- * a collision across a rank boundary may be queued on only one of the ranks,
- * or on both. Each pair is ordered as (smaller id, larger id) and duplicates
- * are removed, so that exactly one bond is created per colliding pair,
- * owned by the particle with the smaller id.
+ * every participant of a new bond must store a copy of it, wherever it
+ * resides, while a collision across a rank boundary may be queued on only
+ * one of the ranks, or on both. Each pair is ordered as (smaller id, larger id)
+ * and duplicates are removed, so that exactly one bond is created per colliding
+ * pair, owned by the particle with the smaller id.
  *
  * The bond is also registered in the flat bond lists of the rank where its
  * owner is a non-ghost particle, which avoids rebuilding these lists. This

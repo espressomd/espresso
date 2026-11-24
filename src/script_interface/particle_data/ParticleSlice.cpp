@@ -65,17 +65,14 @@ static void set_particles_bonds(
   // Remove the bonds owned by every particle of the slice before adding
   // any new bond, so that a new bond between two particles of the slice is
   // not removed again when its partner is processed. Bonds owned by
-  // particles outside the slice are left untouched. The bonds are read
-  // from the global bond topology, so that ::remove_bond() is called
-  // identically on every rank.
-  for (auto const pid : pids) {
-    auto const owned_bonds = ::get_bonds_of_particle(
-        system, pid, [pid](BondStorage::Bond const &bond) {
-          return bond.owner_id() == pid;
-        });
-    for (auto const &[bond_id, ids] : owned_bonds) {
-      ::remove_bond(system, bond_id, ids);
-    }
+  // particles outside the slice are left untouched. The ranks of the
+  // particles share their owned bonds with all ranks, so that
+  // ::remove_bond() also removes the copies held by the partners.
+  auto const owned_bonds = ::gather_bonds_of_particles(
+      system, pids,
+      [](BondRecord const &bond, int pid) { return bond.owner_id() == pid; });
+  for (auto const &[bond_id, ids] : owned_bonds) {
+    ::remove_bond(system, bond_id, ids);
   }
   for (std::size_t i = 0; i < pids.size(); ++i) {
     for (std::size_t j = 0; j < all_bonds_ids[i].size(); ++j) {

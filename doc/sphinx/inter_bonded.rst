@@ -28,10 +28,15 @@ is provided in subsection :ref:`FENE bond`) between them using::
     system.bonds[fene].add((p1, p2))
 
 Note that the ``fene`` object specifies the type of bond and its parameters,
-while the information of the bond between ``p1`` and its bonded partners
-is stored on ``p1``. This means that to remove a bond, one has to remember
-on which particle the bond was added. You can find more
-information regarding particle properties in :ref:`Setting up particles`.
+while the first particle ``p1`` owns the bond: the bond is evaluated on the
+MPI rank where ``p1`` resides, and the bond is listed in ``p1.bonds``.
+Each MPI rank stores a copy of the bond for every one of its particles
+that participates in it, and the copies are sent along when a particle
+moves to another rank, so that the memory needed for the bonds is
+distributed over the ranks like the particles themselves.
+To remove a bond, one has to remember which particle owns it.
+You can find more information regarding particle properties in
+:ref:`Setting up particles`.
 
 To delete the FENE bond between particles ``p1`` and ``p2``::
 
@@ -42,6 +47,17 @@ used to setup bonded interactions. For example, to create a bond between the
 particles with the ids 12 and 43::
 
     system.bonds[fene].add((12, 43))
+
+Many bonds of the same type are added at once by passing one row of
+particles per bond, either as a list of tuples or as an integer array of
+shape ``(n_bonds, n_particles)``::
+
+    chain = np.arange(1000)
+    system.bonds[fene].add(np.column_stack((chain[:-1], chain[1:])))
+
+This is much faster than adding the bonds one by one, in particular when
+running on many MPI ranks, since the bonds are validated and created with
+a fixed number of collective operations per batch of bonds.
 
 .. _Distance-dependent bonds:
 

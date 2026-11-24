@@ -27,6 +27,7 @@
 #include "script_interface/interactions/BondedInteractions.hpp"
 #include "script_interface/system/System.hpp"
 
+#include "core/BondStore.hpp"
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
 #include "core/bond_queries.hpp"
@@ -43,6 +44,7 @@
 #include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/reduce_optional.hpp>
 
 #include <boost/format.hpp>
@@ -51,6 +53,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -213,15 +216,15 @@ void ParticleHandle::set_exclusions(Variant const &value) {
  * @brief Delete the bonds owned by this particle.
  *
  * Bonds this particle participates in but that are owned by other
- * particles are left untouched. The owned bonds are read from the global
- * bond topology, so that @ref ::remove_bond() is called identically on
- * all ranks.
+ * particles are left untouched. The rank of the particle shares its owned
+ * bonds with all ranks, so that @ref ::remove_bond() also removes the
+ * copies held by the partners. Collective.
  */
 void ParticleHandle::delete_owned_bonds() const {
-  auto const owned_bonds = ::get_bonds_of_particle(
-      *get_system(), m_pid, [pid = m_pid](BondStorage::Bond const &bond) {
-        return bond.owner_id() == pid;
-      });
+  auto const pids = std::array<int, 1>{{m_pid}};
+  auto const owned_bonds = ::gather_bonds_of_particles(
+      *get_system(), pids,
+      [](BondRecord const &bond, int pid) { return bond.owner_id() == pid; });
   for (auto const &[bond_id, ids] : owned_bonds) {
     ::remove_bond(*get_system(), bond_id, ids);
   }
@@ -627,8 +630,8 @@ Variant ParticleHandle::do_call_method(std::string const &name,
         std::ranges::copy(bonds_partner_ids[i],
                           std::back_inserter(particle_ids));
         ::add_bond(*get_system(), bonds_ids[i], particle_ids);
-        get_system()->on_particle_change();
       }
+      get_system()->on_particle_change();
     }
 #ifdef ESPRESSO_EXCLUSIONS
     // set exclusions
@@ -645,21 +648,33 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     return get_bonded_ias()->call_method("get_bond", params);
   }
   if (name == "get_bonds_view") {
+    // The bonds reside on the rank of the particle: every rank contributes
+    // the bonds it knows, and the head node gathers them. Only the bonds
+    // this particle owns are exposed to Python.
+    auto const &cell_structure = get_cell_structure()->get_cell_structure();
+    std::vector<int> local_flat;
+    auto const *p = cell_structure.get_local_particle(m_pid);
+    if (p != nullptr and not p->is_ghost()) {
+      for (auto const bond : cell_structure.bond_store().owned(m_pid)) {
+        local_flat.push_back(static_cast<int>(bond.partner_ids().size()));
+        local_flat.push_back(bond.bond_id());
+        std::ranges::copy(bond.partner_ids(), std::back_inserter(local_flat));
+      }
+    }
+    Utils::Mpi::gather_buffer(local_flat, context()->get_comm());
     if (not context()->is_head_node()) {
       return {};
     }
-    auto const &bond_storage = *get_system()->bond_storage;
     std::vector<std::vector<Variant>> bonds_flat;
-    // Only the bonds this particle owns are exposed to Python.
-    bond_storage.for_each_owned_bond(
-        m_pid, [&](BondStorage::Bond const &bond_view) {
-          std::vector<Variant> bond_flat;
-          bond_flat.emplace_back(bond_view.bond_id);
-          for (auto const pid : bond_view.partner_ids()) {
-            bond_flat.emplace_back(pid);
-          }
-          bonds_flat.emplace_back(std::move(bond_flat));
-        });
+    for (std::size_t i = 0u; i < local_flat.size();) {
+      auto const n_partners = static_cast<std::size_t>(local_flat[i]);
+      std::vector<Variant> bond_flat;
+      for (std::size_t j = 0u; j <= n_partners; ++j) {
+        bond_flat.emplace_back(local_flat[i + 1u + j]);
+      }
+      bonds_flat.emplace_back(std::move(bond_flat));
+      i += 2u + n_partners;
+    }
     return make_vector_of_variants(bonds_flat);
   }
   if (name == "add_bond") {

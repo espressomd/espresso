@@ -159,24 +159,21 @@ public:
   }
   void operator()(DeleteAllBonds const &d) const {
     // Remove every pair bond (any type, every occurrence) between the two
-    // particles, owned by either one. Read from the global bond storage so
-    // that all ranks remove the same bonds. Collect first: the storage must
-    // not be modified while iterating over it.
-    std::vector<BondTuple> bonds;
-    auto const collect = [&](int owner_id, int partner_id) {
-      system.bond_storage->for_each_owned_bond(
-          owner_id, [&](BondStorage::Bond const &bond) {
-            if (bond.particle_ids.size() == 2u and
-                bond.particle_ids[1] == partner_id) {
-              bonds.emplace_back(bond.bond_id,
-                                 std::vector<int>{owner_id, partner_id});
-            }
-          });
+    // particles, owned by either one, from the copies held by those of the
+    // two particles that reside on this rank. Executed identically on all
+    // ranks, so that every copy is removed.
+    auto const id1 = d.particle_id_1;
+    auto const id2 = d.particle_id_2;
+    auto const connects = [id1, id2](BondRecord const &bond) {
+      auto const ids = bond.particle_ids();
+      return ids.size() == 2u and ((ids[0] == id1 and ids[1] == id2) or
+                                   (ids[0] == id2 and ids[1] == id1));
     };
-    collect(d.particle_id_1, d.particle_id_2);
-    collect(d.particle_id_2, d.particle_id_1);
-    for (auto const &[bond_id, ids] : bonds) {
-      ::remove_bond(system, bond_id, ids);
+    for (auto const pid : {id1, id2}) {
+      auto *p = system.cell_structure->get_local_particle(pid);
+      if (p != nullptr and not p->is_ghost()) {
+        system.cell_structure->bond_store().remove_if(pid, connects);
+      }
     }
   }
 };
@@ -227,9 +224,9 @@ void BondBreakage::process_queue_impl(System::System &system) {
   }
 
   // Some actions can only be constructed on the ranks where the involved
-  // particles are known, but bonds must be removed identically on all
-  // ranks: execute the actions found on any rank, on every rank and in the
-  // same order.
+  // particles are known, but the bond copies of all participants must be
+  // removed, wherever they reside: execute the actions found on any rank,
+  // on every rank and in the same order.
   std::vector<BondTuple> encoded_actions;
   for (auto const &a : local_actions) {
     encoded_actions.emplace_back(std::visit(encode_action{}, a));

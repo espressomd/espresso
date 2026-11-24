@@ -197,16 +197,16 @@ update_cabana_state(CellStructure &cell_structure,
     // before the sweep repopulates it (read O(1) at the dispatch gate).
     aosoa.reset_any_exclusion();
 #endif
-    auto const &bond_storage = cell_structure.get_bond_storage();
     kokkos_parallel_range_for<execution_space>(
         "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa, &id_to_index, &cell_structure,
-         &bond_storage](int const index) {
+        [&unique_particles, &aosoa, &id_to_index,
+         &cell_structure](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
           if (not p.is_ghost()) {
-            cell_structure.append_owned_bonds(p, bond_storage);
+            cell_structure.append_owned_bonds(static_cast<std::size_t>(index),
+                                              p);
           }
         });
     Kokkos::fence();

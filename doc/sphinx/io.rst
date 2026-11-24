@@ -356,6 +356,10 @@ to the following files in folder :file:`/tmp`:
 - :file:`mydata.bond`
 
 Depending on the chosen output, not all of these files might be created.
+The bond file stores every bond once for each particle participating in it,
+so that each MPI rank can restore the bonds of its particles without
+communication. Bond files written by earlier versions of |es| use a
+different format and cannot be read.
 To read these in again, simply call :meth:`espressomd.io.mpiio.Mpiio.read`.
 It has the same signature as :meth:`espressomd.io.mpiio.Mpiio.write`.
 When writing files, make sure the prefix hasn't been used before

@@ -19,12 +19,27 @@
 
 #pragma once
 
-#include "BondStorage.hpp"
+/**
+ * @file
+ * Mutations of the bond topology.
+ *
+ * Every rank keeps a full copy of each bond one of its local particles
+ * participates in (@ref BondStore), separate from the particles, so a bond
+ * is known on every MPI rank where one of its participants resides, and
+ * nowhere else. The copies are shipped along with the particles when they
+ * migrate between ranks. Mutations are therefore collective calls in which
+ * every rank applies the part that concerns its local particles; no rank
+ * holds the complete topology.
+ */
+
+#include "BondStore.hpp"
 #include "bond_queries.hpp"
 #include "system/System.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
+#include <cstddef>
+#include <functional>
 #include <span>
 #include <utility>
 #include <vector>
@@ -35,28 +50,31 @@ using BondTuple = std::pair<int, std::vector<int>>;
 /**
  * @brief Add a bond between particles.
  *
- * Must be called on all MPI ranks, with the same arguments and in the same
- * order relative to other bond mutations, since it registers the bond in
- * the global bond topology (@ref System::System::bond_storage).
+ * Must be called on all MPI ranks with the same arguments. Every rank
+ * stores the bond in those of its local particles that participate in it.
+ * No communication takes place.
  *
  * The first particle owns the bond: the bond is evaluated on the MPI rank
- * where that particle resides. The particles need not be known on the
- * calling rank, but bonds given by the user should be validated with
- * @ref check_particles_exist() first.
+ * where that particle resides. Bonds given by the user should be validated
+ * with @ref check_bond_can_be_added() first.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
  */
 void add_bond(System::System &system, int bond_id,
-              std::vector<int> const &particle_ids);
+              std::span<const int> particle_ids);
+
+/** @overload */
+inline void add_bond(System::System &system, int bond_id,
+                     std::vector<int> const &particle_ids) {
+  add_bond(system, bond_id, std::span<const int>(particle_ids));
+}
 
 /**
  * @brief Check that particles exist, e.g. before bonding them.
  *
  * Collective over all MPI ranks, since a rank only knows the particles in
- * its own domain. @ref add_bond() does not carry out this check itself: it
- * is also called from the integration loop, with particles that are known
- * to exist.
+ * its own domain.
  *
  * @param system        The system.
  * @param particle_ids  Ids of the particles to look for.
@@ -74,7 +92,7 @@ void check_particles_exist(System::System const &system,
  * (@p particle_ids[0]), all particles must exist, and the owner must not
  * own the same bond yet, with the same partners in the same order.
  *
- * Collective over all MPI ranks, see @ref check_particles_exist().
+ * Collective over all MPI ranks.
  *
  * @throw std::invalid_argument on all ranks, if the bond is malformed.
  * @throw std::runtime_error on all ranks, if a particle does not exist or
@@ -84,10 +102,65 @@ void check_bond_can_be_added(System::System const &system, int bond_id,
                              std::span<const int> particle_ids);
 
 /**
+ * @brief Check that bonds can be added, e.g. before a user adds them.
+ *
+ * Same checks as @ref check_bond_can_be_added() for every bond, plus no
+ * bond may appear twice in the batch. Uses a fixed number of collectives,
+ * independent of the number of bonds.
+ *
+ * @param system        The system.
+ * @param bond_id       Key of the bonded interaction.
+ * @param particle_ids  Participants of all bonds, one bond after the other,
+ *                      each with the owner first.
+ * @param n_particles   Number of participants per bond.
+ * @throw std::invalid_argument on all ranks, if a bond is malformed.
+ * @throw std::runtime_error on all ranks, if a particle does not exist or
+ *        a bond already exists.
+ */
+void check_bonds_can_be_added(System::System const &system, int bond_id,
+                              std::span<const int> particle_ids,
+                              std::size_t n_particles);
+
+/**
+ * @brief Add bonds of the same bonded interaction between particles.
+ *
+ * Equivalent to calling @ref add_bond() for every bond. Must be called on
+ * all MPI ranks with the same arguments; no communication takes place.
+ *
+ * @param system        The system.
+ * @param bond_id       Key of the bonded interaction.
+ * @param particle_ids  Participants of all bonds, see
+ *                      @ref check_bonds_can_be_added().
+ * @param n_particles   Number of participants per bond.
+ */
+void add_bonds(System::System &system, int bond_id,
+               std::span<const int> particle_ids, std::size_t n_particles);
+
+/**
+ * @brief Add bonds of any bonded interactions between existing particles.
+ *
+ * The bonds are encoded one after the other as
+ * <tt>[bond_id, n, id_0, ..., id_{n-1}]</tt> and added in this order, as
+ * with @ref add_bond(). Only the existence of the particles is checked,
+ * with a single collective. Must be called on all MPI ranks with the same
+ * arguments.
+ *
+ * The caller is responsible for calling
+ * @ref System::System::on_particle_change().
+ *
+ * @throw std::invalid_argument on all ranks, if the encoding is malformed.
+ * @throw std::runtime_error on all ranks, if a particle does not exist;
+ *        no bond is added then.
+ */
+void add_encoded_bonds(System::System &system, std::span<const int> encoded);
+
+/**
  * @brief Check that a bond can be removed, e.g. before a user removes it.
  *
  * The bond must be owned by @p particle_ids[0], with the remaining
  * particles as its partners, in this order.
+ *
+ * Collective over all MPI ranks.
  *
  * @throw std::invalid_argument on all ranks, if @p particle_ids is empty.
  * @throw std::runtime_error on all ranks, if the bond does not exist.
@@ -98,20 +171,25 @@ void check_bond_can_be_removed(System::System const &system, int bond_id,
 /**
  * @brief Remove a bond between particles.
  *
- * Must be called on all MPI ranks, with the same arguments and in the same
- * order relative to other bond mutations, since it removes the bond from
- * the global bond topology (@ref System::System::bond_storage).
- *
- * Removes one bond matching @p bond_id that is owned by @p particle_ids[0]
- * and whose partners are exactly the remaining ids, in the given order.
+ * Must be called on all MPI ranks with the same arguments. Every rank
+ * removes one bond matching @p bond_id and exactly @p particle_ids, in the
+ * given order, from those of its local particles that participate in it.
+ * No communication takes place.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
  *
- * @return whether a bond was removed.
+ * @return whether the bond was removed from the owner, which is only
+ *         known on the rank where the owner resides.
  */
 bool remove_bond(System::System &system, int bond_id,
-                 std::vector<int> const &particle_ids);
+                 std::span<const int> particle_ids);
+
+/** @overload */
+inline bool remove_bond(System::System &system, int bond_id,
+                        std::vector<int> const &particle_ids) {
+  return remove_bond(system, bond_id, std::span<const int>(particle_ids));
+}
 
 /**
  * @brief Combine bond tuples collected locally on each rank into the same
@@ -127,35 +205,53 @@ void sync_bond_tuples(std::vector<BondTuple> &tuples,
                       boost::mpi::communicator const &comm);
 
 /**
- * @brief Bonds of the global bond topology a particle participates in.
+ * @brief Collect bonds of particles, identically on all MPI ranks.
  *
- * Identical on all MPI ranks.
+ * Each rank collects the bonds of those particles in @p pids that reside
+ * on it, then the lists are combined (see @ref sync_bond_tuples()).
+ * Collective over all MPI ranks.
  *
  * @param system  The system.
- * @param pid     Particle id.
- * @param pred    Callable <tt>bool(BondStorage::Bond const &)</tt> selecting
- *                the bonds of interest.
+ * @param pids    Particle ids.
+ * @param pred    Callable <tt>bool(BondRecord const &, int pid)</tt>
+ *                selecting the bonds of interest of particle @c pid.
+ *                A bond is collected once per particle that selects it.
  * @return Tuples suitable for @ref remove_bond().
  */
-template <typename Pred>
-std::vector<BondTuple> get_bonds_of_particle(System::System const &system,
-                                             int pid, Pred &&pred) {
-  std::vector<BondTuple> bonds;
-  system.bond_storage->for_each_bond_with(
-      pid, [&](BondStorage::Bond const &bond) {
-        if (pred(bond)) {
-          bonds.emplace_back(bond.bond_id,
-                             std::vector<int>(bond.particle_ids.begin(),
-                                              bond.particle_ids.end()));
-        }
-      });
-  return bonds;
-}
+std::vector<BondTuple> gather_bonds_of_particles(
+    System::System const &system, std::span<const int> pids,
+    std::function<bool(BondRecord const &, int)> const &pred);
 
 /**
- * @brief Check that the global bond topology is identical on all MPI ranks.
+ * @brief Fetch the bonds owned by particles from the ranks where they
+ * reside, with a single collective, into a cache on the head node.
  *
- * Collective over all MPI ranks, with a cost proportional to the total
- * number of bonds; meant for tests and additional checks.
+ * Head node only, for code that runs on the head node alone, e.g. the
+ * analysis of particle copies fetched with @ref get_particle_data(). The
+ * cache is cleared by @ref invalidate_bond_fetch_cache(), which is called
+ * whenever particles change.
+ */
+void prefetch_owned_bonds(std::vector<int> const &pids);
+
+/**
+ * @brief Bonds owned by a particle, fetched from the rank where it resides.
+ *
+ * Head node only, see @ref prefetch_owned_bonds(). The reference is valid
+ * until the next fetch or invalidation.
+ */
+std::vector<BondTuple> const &get_owned_bonds(int pid);
+
+/** @brief Clear the cache of @ref get_owned_bonds(). */
+void invalidate_bond_fetch_cache();
+
+/**
+ * @brief Check that the bond copies are consistent.
+ *
+ * Every bond must be stored by each of its distinct participants, the same
+ * number of times, and by no other particle. Collective over all MPI
+ * ranks, with a cost proportional to the total number of bonds; meant for
+ * tests and additional checks.
+ *
+ * @return the result, on all ranks.
  */
 bool is_bond_storage_consistent(System::System const &system);

@@ -127,6 +127,25 @@ public:
       system.on_particle_change();
       return {};
     }
+    // Create many instances of this bond at once: one bond per group of
+    // n_particles consecutive ids, with a fixed number of collectives.
+    if (name == "add_bonds") {
+      auto const bond_id = get_value<int>(params, "bond_id");
+      auto const particle_ids = get_value<std::vector<int>>(params, "part_ids");
+      auto const n_particles = get_value<int>(params, "n_particles");
+      auto &system = ::System::get_system();
+      context()->parallel_try_catch([&]() {
+        if (n_particles <= 0) {
+          throw std::invalid_argument("'n_particles' must be positive");
+        }
+        ::check_bonds_can_be_added(system, bond_id, particle_ids,
+                                   static_cast<std::size_t>(n_particles));
+      });
+      ::add_bonds(system, bond_id, particle_ids,
+                  static_cast<std::size_t>(n_particles));
+      system.on_particle_change();
+      return {};
+    }
     if (name == "remove_bond") {
       auto const bond_id = get_value<int>(params, "bond_id");
       auto const particle_ids = get_value<std::vector<int>>(params, "part_id");

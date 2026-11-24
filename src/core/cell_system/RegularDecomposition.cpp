@@ -40,6 +40,7 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/request.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -137,6 +138,10 @@ void RegularDecomposition::exchange_neighbors(
     ParticleList &pl, std::vector<ParticleChange> &modified_cells) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
   static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+  // data of the particles kept outside of them, e.g. their bonds, sent
+  // in a second message in the order of the particles
+  static std::vector<int> side_send_l, side_send_r, side_recv_l, side_recv_r;
+  auto constexpr side_tag = 1;
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
@@ -147,9 +152,15 @@ void RegularDecomposition::exchange_neighbors(
     }
     if (Utils::Mpi::cart_get<3>(m_comm).dims[dir] == 2) {
       move_left_or_right(pl, send_buf_l, send_buf_l, dir);
+      pack_migration(send_buf_l, side_send_l);
 
       Utils::Mpi::sendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
                            node_neighbors[2 * dir], 0, recv_buf_l);
+      if (m_migration) {
+        Utils::Mpi::sendrecv(m_comm, node_neighbors[2 * dir], side_tag,
+                             side_send_l, node_neighbors[2 * dir], side_tag,
+                             side_recv_l);
+      }
 
       send_buf_l.clear();
     } else {
@@ -157,6 +168,8 @@ void RegularDecomposition::exchange_neighbors(
       using Utils::Mpi::isendrecv;
 
       move_left_or_right(pl, send_buf_l, send_buf_r, dir);
+      pack_migration(send_buf_l, side_send_l);
+      pack_migration(send_buf_r, side_send_r);
 
       auto req_l = isendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
                              node_neighbors[2 * dir], 0, recv_buf_l);
@@ -165,11 +178,26 @@ void RegularDecomposition::exchange_neighbors(
 
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
+      if (m_migration) {
+        auto side_l =
+            isendrecv(m_comm, node_neighbors[2 * dir], side_tag, side_send_l,
+                      node_neighbors[2 * dir], side_tag, side_recv_l);
+        auto side_r = isendrecv(m_comm, node_neighbors[2 * dir + 1], side_tag,
+                                side_send_r, node_neighbors[2 * dir + 1],
+                                side_tag, side_recv_r);
+        std::array<request, 4> side_reqs{
+            {side_l[0], side_l[1], side_r[0], side_r[1]}};
+        boost::mpi::wait_all(side_reqs.begin(), side_reqs.end());
+      }
 
       send_buf_l.clear();
       send_buf_r.clear();
     }
 
+    unpack_migration(recv_buf_l, side_recv_l);
+    if (Utils::Mpi::cart_get<3>(m_comm).dims[dir] != 2) {
+      unpack_migration(recv_buf_r, side_recv_r);
+    }
     move_if_local(recv_buf_l, pl, modified_cells);
     move_if_local(recv_buf_r, pl, modified_cells);
   }

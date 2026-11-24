@@ -94,6 +94,13 @@ public:
 
   void resort(bool global, std::vector<ParticleChange> &diff) override;
 
+  /** @brief Particles change rank in the child decompositions only. */
+  void set_migration(ParticleMigration *migration) override {
+    ParticleDecomposition::set_migration(migration);
+    m_regular_decomposition.set_migration(migration);
+    m_n_square.set_migration(migration);
+  }
+
   auto get_cutoff_regular() const { return m_cutoff_regular; }
 
   GhostComm::HaloPlan const *halo_plan() const override { return &m_halo_plan; }

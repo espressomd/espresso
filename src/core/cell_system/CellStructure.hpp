@@ -23,7 +23,7 @@
 
 #include "cell_system/ParticleDecomposition.hpp"
 
-#include "BondStorage.hpp"
+#include "BondStore.hpp"
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
@@ -231,6 +231,19 @@ private:
   bool m_virial_replicas_dirty = false;
 #endif
   std::unique_ptr<LocalBondState> m_bond_state;
+  /** @brief Bonds of the particles residing on this rank. */
+  BondStore m_bond_store;
+  /** @brief Ships the bonds of particles moving to another rank. */
+  struct BondMigration final : public ParticleMigration {
+    BondStore &store;
+    explicit BondMigration(BondStore &store) : store{store} {}
+    void pack(int pid, std::vector<int> &buffer) override {
+      store.extract(pid, buffer);
+    }
+    std::span<const int> unpack(int pid, std::span<const int> buffer) override {
+      return store.insert(pid, buffer);
+    }
+  } m_bond_migration{m_bond_store};
   std::unique_ptr<ListType> m_verlet_list_cabana;
   /**
    * @brief Persistent per-neighbor buffer pool for ghost exchanges.
@@ -271,6 +284,9 @@ private:
 
 public:
   CellStructure(BoxGeometry const &box);
+  // the bond migration refers to the bond store of this object
+  CellStructure(CellStructure const &) = delete;
+  CellStructure &operator=(CellStructure const &) = delete;
   virtual ~CellStructure();
 
   bool use_verlet_list = true;
@@ -764,7 +780,7 @@ public:
 private:
   /**
    * @brief Execute kernel for every bond owned by a particle, reading the
-   * bonds from the global bond topology.
+   * bonds from the bond copies the particle stores.
    * @tparam Handler Callable, which can be invoked with
    *                 (Particle, int, std::span<Particle *>),
    *                 returning a bool.
@@ -774,27 +790,26 @@ private:
    *                partners as arguments. Its return value
    *                should indicate if the bond was broken.
    */
-  void handle_owned_bonds(Particle &p, BondStorage const &bond_storage,
-                          auto const &handler) {
+  void handle_owned_bonds(Particle &p, auto const &handler) {
     // Owned bonds only: they carry the partner order the bond was created
     // with (e.g. the vertex-first order angle bonds rely on), and every
     // bond is processed exactly once.
-    bond_storage.for_each_owned_bond(p.id(), [&](auto const &bond) {
+    for (auto const bond : m_bond_store.owned(p.id())) {
       auto const partner_ids = bond.partner_ids();
       if (partner_ids.empty()) {
-        return; // bonds without partners are not evaluated
+        continue; // bonds without partners are not evaluated
       }
       auto partners = resolve_bond_partners(partner_ids);
       if (not partners) {
         bond_resolution_error(partner_ids);
-        return;
+        continue;
       }
       auto const partners_span = std::span(partners->data(), partners->size());
-      auto const bond_broken = handler(p, bond.bond_id, partners_span);
+      auto const bond_broken = handler(p, bond.bond_id(), partners_span);
       if (bond_broken) {
         bond_broken_error(p.id(), partner_ids);
       }
-    });
+    }
   }
 
   /**
@@ -842,6 +857,7 @@ private:
            "set_particle_decomposition: ghost force reduction is still in "
            "flight — call ghosts_reduce_forces_finish() first");
     clear_particle_index();
+    decomposition->set_migration(&m_bond_migration);
 
     /* Swap in new cell system */
     std::swap(m_decomposition, decomposition);
@@ -956,18 +972,19 @@ public:
     return m_rebuild_verlet_list_cabana;
   }
 
-  /** @brief The global bond topology of the system. */
-  BondStorage const &get_bond_storage() const;
-
   /**
    * @brief Append the bonds owned by a particle to the flat bond lists
    * (@ref LocalBondState), as particle ids. Safe to call concurrently.
    * Bonds whose partners are not known on this rank are reported and not
    * stored.
-   * @param p             Particle residing on this rank.
-   * @param bond_storage  Global bond topology.
+   * @param index  Position of the particle in the unique particles.
+   * @param p      Particle residing on this rank.
    */
-  void append_owned_bonds(Particle const &p, BondStorage const &bond_storage);
+  void append_owned_bonds(std::size_t index, Particle const &p);
+
+  /** @brief Bonds of the particles residing on this rank. */
+  BondStore &bond_store() { return m_bond_store; }
+  BondStore const &bond_store() const { return m_bond_store; }
 
   /**
    * @brief Reset local properties of the Verlet list.
@@ -1071,7 +1088,8 @@ public:
    *
    * Visits every bond with one to three partners exactly once, on the MPI
    * rank that owns its first particle. The bonds are read from the flat
-   * bond lists when these are valid, and from the bond storage otherwise;
+   * bond lists when these are valid, and from the bonds stored in the
+   * particles otherwise;
    * the order in which bonds are visited is unspecified.
    *
    * @param bond_kernel Kernel to apply, invoked with
@@ -1086,9 +1104,8 @@ public:
       handle_bond_list(bs.angles, bond_kernel);
       handle_bond_list(bs.dihedrals, bond_kernel);
     } else {
-      auto const &bond_storage = get_bond_storage();
       for (auto &p : local_particles()) {
-        handle_owned_bonds(p, bond_storage, bond_kernel);
+        handle_owned_bonds(p, bond_kernel);
       }
     }
   }
