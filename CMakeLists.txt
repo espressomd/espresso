@@ -288,8 +288,15 @@ if(ESPRESSO_BUILD_WITH_HIP)
   # within tolerance (clang for HIP defaults to -ffp-contract=fast)
   string(APPEND CMAKE_HIP_FLAGS " -ffp-contract=on")
   set(CMAKE_HIP_STANDARD ${ESPRESSO_MINIMAL_CUDA_STANDARD})
+  # the ROCm libraries directory is an implicit HIP link directory, which CMake
+  # leaves out of the runtime path of executables that link the HIP runtime or
+  # rocFFT indirectly (e.g. through a static heFFTe)
   macro(espresso_add_cuda_rpaths)
-
+    set(TARGET_NAME ${ARGV0})
+    set_property(TARGET ${TARGET_NAME} APPEND
+                 PROPERTY BUILD_RPATH "$<TARGET_FILE_DIR:hip::amdhip64>")
+    set_property(TARGET ${TARGET_NAME} APPEND
+                 PROPERTY INSTALL_RPATH "$<TARGET_FILE_DIR:hip::amdhip64>")
   endmacro()
 elseif(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
@@ -754,7 +761,9 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     )
     # cmake-format: on
     set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
-    if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP)
+    if(ESPRESSO_BUILD_WITH_HIP)
+      set(Heffte_ENABLE_ROCM ON CACHE BOOL "")
+    elseif(ESPRESSO_BUILD_WITH_CUDA)
       set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
     endif()
     set(Heffte_ENABLE_DOXYGEN OFF CACHE BOOL "")

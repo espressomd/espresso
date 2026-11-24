@@ -48,7 +48,7 @@ namespace walberla {
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
                         double permittivity, bool single_precision) {
-#if not defined(WALBERLA_BUILD_WITH_CUDA)
+#if not defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   throw std::runtime_error("waLBerla was compiled without CUDA support");
 #elif not defined(WALBERLA_BUILD_WITH_FFT) and not defined(HAS_HEFFTE)
   throw std::runtime_error("software was compiled without FFT support");

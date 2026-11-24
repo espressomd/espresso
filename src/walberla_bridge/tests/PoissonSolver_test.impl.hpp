@@ -241,8 +241,9 @@ BOOST_AUTO_TEST_SUITE(suite_cuda, *boost::unit_test::precondition(has_gpu))
 using test_types = boost::mpl::list<float, double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(ek_poisson_solver_fft_cuda, FT, test_types) {
-#if defined(HAS_HEFFTE) and defined(WALBERLA_BUILD_WITH_CUDA) and              \
-    defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if defined(HAS_HEFFTE) and defined(WALBERLA_BUILD_WITH_GPU_SUPPORT) and       \
+    (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
   Fixture<FT, lbmpy::Arch::GPU>().runTest();
 #endif
 }
