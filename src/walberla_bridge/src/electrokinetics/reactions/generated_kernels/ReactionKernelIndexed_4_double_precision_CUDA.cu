@@ -41,8 +41,8 @@ namespace pystencils {
 #pragma diag_suppress 177 // unused variable
 #endif                    // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
 #pragma clang diagnostic push
@@ -52,8 +52,8 @@ namespace pystencils {
 #define RESTRICT __restrict__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-variable"
-#endif // defined(__CUDA_ARCH__)
-#endif // defined(__CUDA__)
+#endif // defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
+#endif // defined(__CUDA__) or defined(__HIP__)
 #elif defined(__GNUC__) or defined(__GNUG__)
 #define RESTRICT __restrict__
 #pragma GCC diagnostic push
@@ -101,15 +101,15 @@ static FUNC_PREFIX __launch_bounds__(256) void reactionkernelindexed_4_double_pr
 #pragma pop
 #endif // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 #pragma clang diagnostic pop
 #else
 // clang compiling CUDA code in host mode
 #pragma clang diagnostic pop
-#endif // defined(__CUDA_ARCH__)
-#endif // defined(__CUDA__)
+#endif // defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
+#endif // defined(__CUDA__) or defined(__HIP__)
 #elif defined(__GNUC__) or defined(__GNUG__)
 #pragma GCC diagnostic pop
 #endif

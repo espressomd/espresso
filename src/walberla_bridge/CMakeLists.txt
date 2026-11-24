@@ -159,14 +159,23 @@ function(espresso_set_walberla_codegen_kernel_source_properties source_file)
   set_source_files_properties(
     ${source_file} TARGET_DIRECTORY espresso_walberla_codegen
     PROPERTIES COMPILE_OPTIONS "${SRC_COMPILE_OPTIONS}")
+  if(source_file MATCHES "\\.cu$")
+    espresso_set_walberla_gpu_source_language(${source_file})
+  endif()
 endfunction()
 
 # In a HIP build, CMake assigns no language to .cu files: compile the GPU
-# sources as C++ when waLBerla has no GPU backend, where they only throw.
+# sources as HIP when waLBerla has its HIP backend, otherwise as C++, where the
+# GPU factories only throw.
 function(espresso_set_walberla_gpu_source_language)
   if(ESPRESSO_BUILD_WITH_HIP)
+    if(WALBERLA_BUILD_WITH_HIP)
+      set(GPU_SOURCE_LANGUAGE HIP)
+    else()
+      set(GPU_SOURCE_LANGUAGE CXX)
+    endif()
     set_source_files_properties(${ARGV} TARGET_DIRECTORY espresso_walberla
-                                PROPERTIES LANGUAGE CXX)
+                                PROPERTIES LANGUAGE ${GPU_SOURCE_LANGUAGE})
   endif()
 endfunction()
 

@@ -30,7 +30,8 @@
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
 #include <waLBerlaDefinitions.h>
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
 #include <gpu/AddGPUFieldToStorage.h>
 #include <gpu/communication/MemcpyPackInfo.h>
 #include <gpu/communication/UniformGPUScheme.h>
@@ -41,7 +42,8 @@
 #include "../utils/boundary.hpp"
 #include "../utils/types_conversion.hpp"
 #include "ek_kernels.hpp"
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
 #include "ek_kernels.cuh"
 #endif
 
@@ -72,7 +74,7 @@ namespace walberla {
 template <std::size_t FluxCount = 13, typename FloatType = double,
           lbmpy::Arch Architecture = lbmpy::Arch::CPU>
 class EKinWalberlaImpl : public EKinWalberlaBase {
-#if not defined(WALBERLA_BUILD_WITH_CUDA)
+#if not defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   static_assert(Architecture != lbmpy::Arch::GPU,
                 "waLBerla was compiled without CUDA support");
 #endif
@@ -133,7 +135,8 @@ protected:
         blockforest::communication::UniformBufferedScheme<Stencil>;
   };
   using FlagField = walberla::FlagField<walberla::uint8_t>;
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
   private:
     static auto constexpr AT = lbmpy::Arch::GPU;
@@ -245,7 +248,8 @@ protected:
   auto add_to_storage(std::string const tag, FloatType value) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       auto field_id = gpu::addGPUFieldToStorage<GPUField>(
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);

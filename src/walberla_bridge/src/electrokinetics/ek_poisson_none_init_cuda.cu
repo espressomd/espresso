@@ -44,7 +44,7 @@ namespace walberla {
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_none_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
                          bool single_precision) {
-#if not defined(WALBERLA_BUILD_WITH_CUDA)
+#if not defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   throw std::runtime_error("waLBerla was compiled without CUDA support");
 #else
   if (single_precision) {

@@ -42,6 +42,10 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_sources(espresso_walberla PRIVATE ek_poisson_fft_init.cpp)
   if(ESPRESSO_BUILD_WITH_CUDA)
     target_sources(espresso_walberla PRIVATE ek_poisson_fft_init_cuda.cu)
-    espresso_set_walberla_gpu_source_language(ek_poisson_fft_init_cuda.cu)
+    if(ESPRESSO_BUILD_WITH_HIP)
+      # the GPU FFT Poisson solver is not available with HIP yet
+      set_source_files_properties(ek_poisson_fft_init_cuda.cu TARGET_DIRECTORY
+                                  espresso_walberla PROPERTIES LANGUAGE CXX)
+    endif()
   endif()
 endif()

@@ -301,9 +301,11 @@ AMD GPU acceleration
 """"""""""""""""""""
 
 On AMD GPUs, the electrostatics and magnetostatics GPU algorithms
-(|p3m| and dipolar direct summation) can be compiled with HIP from a ROCm
-installation that provides hipFFT and rocThrust. The lattice-Boltzmann
-and electrokinetics solvers of such a build run on the CPU only:
+(|p3m| and dipolar direct summation) and the GPU lattice-Boltzmann and
+electrokinetics solvers can be compiled with HIP from a ROCm installation
+that provides hipFFT and rocThrust. waLBerla is then built with its HIP
+backend. The FFT Poisson solver of the electrokinetics is not yet
+available on AMD GPUs:
 
 .. code-block:: bash
 

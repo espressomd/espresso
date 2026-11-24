@@ -23,6 +23,12 @@
 
 #if defined(__CUDACC__)
 #include <cufft.h>
+#elif defined(__HIPCC__)
+#include <hipfft/hipfft.h>
+using cufftReal = hipfftReal;
+using cufftDoubleReal = hipfftDoubleReal;
+using cufftComplex = hipfftComplex;
+using cufftDoubleComplex = hipfftDoubleComplex;
 #endif
 
 #include <cmath>
@@ -43,8 +49,17 @@ FloatType greens_function(int x, int y, int z, auto const &dim) {
          static_cast<FloatType>(dim[0] * dim[1] * dim[2]);
 }
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 // LCOV_EXCL_START
+// HIP built-in index variables do not convert to uint3
+__forceinline__ __device__ uint3 block_index() {
+  return make_uint3(blockIdx.x, blockIdx.y, blockIdx.z);
+}
+
+__forceinline__ __device__ uint3 thread_index() {
+  return make_uint3(threadIdx.x, threadIdx.y, threadIdx.z);
+}
+
 template <typename FloatType>
 __global__ void
 create_greens_function(gpu::FieldAccessor<FloatType> greens_function, int x_min,
@@ -52,9 +67,11 @@ create_greens_function(gpu::FieldAccessor<FloatType> greens_function, int x_min,
                        int global_dim_x, int global_dim_y, int global_dim_z) {
   using RealType = std::conditional_t<std::is_same_v<FloatType, float>,
                                       cufftReal, cufftDoubleReal>;
-  greens_function.set(blockIdx, threadIdx);
-  unsigned int index =
-      greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);
+  greens_function.set(block_index(), thread_index());
+  unsigned int index = greens_function.getLinearIndex(
+      block_index(), thread_index(),
+      make_uint3(gridDim.x, gridDim.y, gridDim.z),
+      make_uint3(blockDim.x, blockDim.y, blockDim.z));
   unsigned int local_dim[3] = {static_cast<unsigned int>(x_max - x_min),
                                static_cast<unsigned int>(y_max - y_min),
                                static_cast<unsigned int>(z_max - z_min)};
@@ -86,8 +103,8 @@ template <typename FloatType, typename ComplexType>
 __global__ void
 multiply_by_greens_function(gpu::FieldAccessor<ComplexType> potential,
                             gpu::FieldAccessor<FloatType> greens_function) {
-  potential.set(blockIdx, threadIdx);
-  greens_function.set(blockIdx, threadIdx);
+  potential.set(block_index(), thread_index());
+  greens_function.set(block_index(), thread_index());
   if (potential.isValidPosition() && greens_function.isValidPosition()) {
     potential.get(0u) =
         ComplexType(potential.get(0u).x * greens_function.get(0u),
@@ -99,8 +116,8 @@ template <typename FloatType>
 __global__ void add_fields_with_factor(gpu::FieldAccessor<FloatType> field_out,
                                        gpu::FieldAccessor<FloatType> field_add,
                                        FloatType const factor) {
-  field_out.set(blockIdx, threadIdx);
-  field_add.set(blockIdx, threadIdx);
+  field_out.set(block_index(), thread_index());
+  field_add.set(block_index(), thread_index());
   if (field_out.isValidPosition() && field_add.isValidPosition()) {
     field_out.get(0u) += field_add.get(0u) * factor;
   }
@@ -109,8 +126,8 @@ __global__ void add_fields_with_factor(gpu::FieldAccessor<FloatType> field_out,
 template <typename FloatType>
 __global__ void move_field(gpu::FieldAccessor<FloatType> dest_field,
                            gpu::FieldAccessor<FloatType> src_field) {
-  dest_field.set(blockIdx, threadIdx);
-  src_field.set(blockIdx, threadIdx);
+  dest_field.set(block_index(), thread_index());
+  src_field.set(block_index(), thread_index());
   if (dest_field.isValidPosition() && src_field.isValidPosition()) {
     dest_field.get(0u) = src_field.get(0u);
     src_field.get(0u) = FloatType{0};

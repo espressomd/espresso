@@ -18,7 +18,7 @@
 #
 
 set(backends ".cpp")
-if(WALBERLA_BUILD_WITH_CUDA)
+if(WALBERLA_BUILD_WITH_CUDA OR WALBERLA_BUILD_WITH_HIP)
   list(APPEND backends "CUDA.cu")
 endif()
 
@@ -44,7 +44,7 @@ endif()
 configure_codegen_kernel(StreamCollideSweepLeesEdwards)
 configure_codegen_kernel(StreamCollideSweepThermalized)
 
-if(WALBERLA_BUILD_WITH_CUDA)
+if(WALBERLA_BUILD_WITH_CUDA OR WALBERLA_BUILD_WITH_HIP)
   foreach(precision Single Double)
     set(source_file FieldAccessors${precision}PrecisionCUDA.cu)
     target_sources(espresso_walberla_codegen PRIVATE ${source_file})

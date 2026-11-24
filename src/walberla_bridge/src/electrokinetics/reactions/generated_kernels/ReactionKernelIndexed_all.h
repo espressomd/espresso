@@ -40,7 +40,8 @@
 #include "ReactionKernelIndexed_5_double_precision.h"
 #include "ReactionKernelIndexed_5_single_precision.h"
 
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
 
 #include "ReactionKernelIndexed_1_double_precision_CUDA.h"
 #include "ReactionKernelIndexed_1_single_precision_CUDA.h"
@@ -182,7 +183,8 @@ auto get_kernel(const std::vector<std::shared_ptr<Reactant>> &reactants,
   return get_kernel_impl<float>(reactants, args...);
 }
 
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
 
 template <typename FloatType = double, std::size_t N = 1>
 struct KernelTraitGPU {

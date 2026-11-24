@@ -1138,7 +1138,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
     set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
     set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-    if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP)
+    if(ESPRESSO_BUILD_WITH_HIP)
+      set(WALBERLA_BUILD_WITH_HIP "on" CACHE BOOL "")
+    elseif(ESPRESSO_BUILD_WITH_CUDA)
       set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
       if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
         if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
@@ -1186,7 +1188,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
               walberla::blockforest walberla::communication walberla::field
               walberla::stencil walberla::vtk
               $<$<BOOL:${WALBERLA_BUILD_WITH_FFTW}>:walberla::fft>
-              $<$<BOOL:${WALBERLA_BUILD_WITH_CUDA}>:walberla::gpu>)
+              $<$<BOOL:${WALBERLA_BUILD_WITH_CUDA}>:walberla::gpu>
+              $<$<BOOL:${WALBERLA_BUILD_WITH_HIP}>:walberla::gpu>)
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(

@@ -36,7 +36,8 @@
 #include <stencil/D3Q19.h>
 #include <stencil/D3Q27.h>
 #include <waLBerlaDefinitions.h>
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
 #include <gpu/AddGPUFieldToStorage.h>
 #endif
 
@@ -48,7 +49,8 @@
 #include "ResetForce.hpp"
 #include "lb_fields.hpp"
 #include "lb_kernels.hpp"
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
 #include "lb_fields.cuh"
 #include "lb_kernels.cuh"
 #endif
@@ -85,7 +87,7 @@ namespace walberla {
 /** @brief Class that runs and controls the LB on waLBerla. */
 template <typename FloatType, lbmpy::Arch Architecture>
 class LBWalberlaImpl : public LBWalberlaBase {
-#if not defined(WALBERLA_BUILD_WITH_CUDA)
+#if not defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   static_assert(Architecture != lbmpy::Arch::GPU,
                 "waLBerla was compiled without CUDA support");
 #endif
@@ -116,7 +118,8 @@ public:
   using PdfField = FieldTrait<FloatType, Stencil, Architecture>::PdfField;
   using VectorField = FieldTrait<FloatType, Stencil, Architecture>::VectorField;
   using FlagField = BoundaryModel::FlagField;
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   using GPUField = gpu::GPUField<FloatType>;
 #endif
 
@@ -855,7 +858,8 @@ protected:
   template <typename Field> auto add_to_storage(std::string const tag) {
     auto const &blocks = m_lattice->get_blocks();
     auto const n_ghost_layers = m_lattice->get_ghost_layers();
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       auto field_id = gpu::addGPUFieldToStorage<GPUField>(
           blocks, tag, Field::F_SIZE, field::fzyx, n_ghost_layers);

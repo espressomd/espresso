@@ -47,8 +47,8 @@
 #if defined(__NVCC__)
 #define RESTRICT __restrict__
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
 #else
@@ -64,8 +64,18 @@
 #define RESTRICT
 #endif
 
+/** @brief Block index as @c uint3 (HIP built-ins do not convert). */
+static __forceinline__ __device__ uint3 block_index() {
+  return make_uint3(blockIdx.x, blockIdx.y, blockIdx.z);
+}
+
+/** @brief Thread index as @c uint3 (HIP built-ins do not convert). */
+static __forceinline__ __device__ uint3 thread_index() {
+  return make_uint3(threadIdx.x, threadIdx.y, threadIdx.z);
+}
+
 /** @brief Get linear index of flattened data with original layout @c fzyx. */
-static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset) {
+static __forceinline__ __device__ uint getLinearIndex(uint fOffset) {
   auto const x = threadIdx.x;
   auto const y = blockIdx.x;
   auto const z = blockIdx.y;
@@ -88,8 +98,8 @@ namespace Scalar {
 __global__ void kernel_get(
     gpu::FieldAccessor<double> scalar_field,
     double *out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-  scalar_field.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(1u);
+  scalar_field.set(block_index(), thread_index());
   out += offset;
   if (scalar_field.isValidPosition()) {
     out[0u] = scalar_field.get(0u);
@@ -99,8 +109,8 @@ __global__ void kernel_get(
 __global__ void kernel_set(
     gpu::FieldAccessor<double> scalar_field,
     double const *RESTRICT in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-  scalar_field.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(1u);
+  scalar_field.set(block_index(), thread_index());
   in += offset;
   if (scalar_field.isValidPosition()) {
     scalar_field.get(0u) = in[0u];
@@ -110,7 +120,7 @@ __global__ void kernel_set(
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<double> scalar_field,
     double const in) {
-  scalar_field.set(blockIdx, threadIdx);
+  scalar_field.set(block_index(), thread_index());
   if (scalar_field.isValidPosition()) {
     scalar_field.get(0u) = in;
   }
@@ -119,8 +129,8 @@ __global__ void kernel_broadcast(
 __global__ void kernel_add(
     gpu::FieldAccessor<double> scalar_field,
     double const *RESTRICT in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-  scalar_field.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(1u);
+  scalar_field.set(block_index(), thread_index());
   in += offset;
   if (scalar_field.isValidPosition()) {
     scalar_field.get(0u) += in[0u];
@@ -130,7 +140,7 @@ __global__ void kernel_add(
 __global__ void kernel_broadcast_add(
     gpu::FieldAccessor<double> scalar_field,
     double const in) {
-  scalar_field.set(blockIdx, threadIdx);
+  scalar_field.set(block_index(), thread_index());
   if (scalar_field.isValidPosition()) {
     scalar_field.get(0u) += in;
   }
@@ -226,8 +236,8 @@ namespace Vector {
 __global__ void kernel_get(
     gpu::FieldAccessor<double> vec,
     double *u_out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  vec.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  vec.set(block_index(), thread_index());
   u_out += offset;
   if (vec.isValidPosition()) {
     u_out[0u] = vec.get(0u);
@@ -239,8 +249,8 @@ __global__ void kernel_get(
 __global__ void kernel_set(
     gpu::FieldAccessor<double> vec,
     double const *RESTRICT u_in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  vec.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  vec.set(block_index(), thread_index());
   u_in += offset;
   if (vec.isValidPosition()) {
     vec.get(0u) = u_in[0u];
@@ -252,7 +262,7 @@ __global__ void kernel_set(
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<double> vec,
     double const *RESTRICT u_in) {
-  vec.set(blockIdx, threadIdx);
+  vec.set(block_index(), thread_index());
   if (vec.isValidPosition()) {
     vec.get(0u) = u_in[0u];
     vec.get(1u) = u_in[1u];
@@ -263,8 +273,8 @@ __global__ void kernel_broadcast(
 __global__ void kernel_add(
     gpu::FieldAccessor<double> vec,
     double const *RESTRICT u_in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  vec.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  vec.set(block_index(), thread_index());
   u_in += offset;
   if (vec.isValidPosition()) {
     vec.get(0u) += u_in[0u];
@@ -276,7 +286,7 @@ __global__ void kernel_add(
 __global__ void kernel_broadcast_add(
     gpu::FieldAccessor<double> vec,
     double const *RESTRICT u_in) {
-  vec.set(blockIdx, threadIdx);
+  vec.set(block_index(), thread_index());
   if (vec.isValidPosition()) {
     vec.get(0u) += u_in[0u];
     vec.get(1u) += u_in[1u];
@@ -382,8 +392,8 @@ namespace Flux {
 __global__ void kernel_get(
     gpu::FieldAccessor<double> flux_field,
     double *j_out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 13u);
-  flux_field.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(13u);
+  flux_field.set(block_index(), thread_index());
   j_out += offset;
   if (flux_field.isValidPosition()) {
     j_out[0u] = flux_field.get(0u);
@@ -405,7 +415,7 @@ __global__ void kernel_get(
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<double> flux_field,
     double const *RESTRICT j_in) {
-  flux_field.set(blockIdx, threadIdx);
+  flux_field.set(block_index(), thread_index());
   if (flux_field.isValidPosition()) {
     flux_field.get(0u) = j_in[0u];
     flux_field.get(1u) = j_in[1u];
@@ -426,8 +436,8 @@ __global__ void kernel_broadcast(
 __global__ void kernel_get_vector(
     gpu::FieldAccessor<double> flux_field,
     double *j_out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  flux_field.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  flux_field.set(block_index(), thread_index());
   j_out += offset;
   if (flux_field.isValidPosition()) {
     j_out[0u] = double(0.0);

@@ -31,7 +31,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include "../src/lattice_boltzmann/LBWalberlaImpl.hpp"
-#if defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
 #include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsDoublePrecisionCUDA.cuh"
 #include "../src/lattice_boltzmann/generated_kernels/FieldAccessorsSinglePrecisionCUDA.cuh"
 #else
@@ -50,8 +51,9 @@
 
 #include <mpi.h>
 
-#if defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
-#include <cuda.h>
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#include <gpu/GPUWrapper.h>
 #endif
 
 #include <algorithm>
@@ -71,14 +73,15 @@
 
 static Utils::Vector3i mpi_shape;
 
-#if defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_device = false;
   int n_devices = 0;
-  cudaGetDeviceCount(&n_devices);
+  gpuGetDeviceCount(&n_devices);
   if (n_devices > 0) {
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0);
+    gpuDeviceProp prop;
+    gpuGetDeviceProperties(&prop, 0);
     if (prop.major >= 3) {
       has_compatible_device = true;
     }
@@ -350,7 +353,8 @@ template <typename FT, lbmpy::Arch Architecture> struct Fixture {
   }
 };
 
-#if defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
 BOOST_AUTO_TEST_SUITE(suite, *boost::unit_test::precondition(has_gpu))
 #else
 BOOST_AUTO_TEST_SUITE(suite)
@@ -373,7 +377,8 @@ BOOST_AUTO_TEST_CASE(test_custom_predicate) {
 using test_types = boost::mpl::list<float, double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(macroscopic_accessors, FT, test_types) {
-#if defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
   Fixture<FT, lbmpy::Arch::GPU>().runTest();
 #else
   Fixture<FT, lbmpy::Arch::CPU>().runTest();

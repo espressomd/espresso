@@ -53,7 +53,7 @@
 std::shared_ptr<LBWalberlaBase>
 new_lb_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double viscosity, double density, bool single_precision) {
-#if not defined(WALBERLA_BUILD_WITH_CUDA)
+#if not defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   throw std::runtime_error("waLBerla was compiled without CUDA support");
 #else
   if (single_precision) {
@@ -66,7 +66,7 @@ new_lb_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
 }
 
 void set_device_id_per_rank() {
-#if not defined(WALBERLA_BUILD_WITH_CUDA)
+#if not defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   throw std::runtime_error("waLBerla was compiled without CUDA support");
 #else
   walberla::gpu::selectDeviceBasedOnMpiRank();

@@ -51,6 +51,15 @@ function(ESPRESSO_ADD_TEST)
     PROPERTIES COMPILE_OPTIONS $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 endfunction()
 
+if(WALBERLA_BUILD_WITH_HIP)
+  set(ESPRESSO_WALBERLA_GPU_TEST_RUNTIME hip::host)
+  set_source_files_properties(
+    PoissonSolver_test_cuda.cu LBWalberlaImpl_field_accessors_tests_cuda.cu
+    PROPERTIES LANGUAGE HIP)
+else()
+  set(ESPRESSO_WALBERLA_GPU_TEST_RUNTIME CUDA::cudart)
+endif()
+
 espresso_add_test(SRC ResourceManager_test.cpp)
 espresso_add_test(SRC lb_kernels_unit_tests.cpp)
 espresso_add_test(SRC ek_kernels_unit_tests.cpp)
@@ -67,9 +76,10 @@ espresso_add_test(SRC EKinWalberlaImpl_unit_tests.cpp DEPENDS Boost::mpi
 espresso_add_test(
   SRC PoissonSolver_test.cpp DEPENDS Boost::mpi
   $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> NUM_PROC 2)
-if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA AND (WALBERLA_BUILD_WITH_CUDA
+                                 OR WALBERLA_BUILD_WITH_HIP))
   espresso_add_test(SRC PoissonSolver_test_cuda.cu DEPENDS Boost::mpi
-                    CUDA::cudart)
+                    ${ESPRESSO_WALBERLA_GPU_TEST_RUNTIME})
   target_compile_definitions(PoissonSolver_test_cuda
                              PRIVATE ESPRESSO_TEST_BUILD_FOR_GPU)
 endif()
@@ -80,9 +90,10 @@ endif()
 
 espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests.cpp DEPENDS
                   Boost::mpi)
-if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA AND (WALBERLA_BUILD_WITH_CUDA
+                                 OR WALBERLA_BUILD_WITH_HIP))
   espresso_add_test(SRC LBWalberlaImpl_field_accessors_tests_cuda.cu DEPENDS
-                    Boost::mpi CUDA::cudart)
+                    Boost::mpi ${ESPRESSO_WALBERLA_GPU_TEST_RUNTIME})
   target_compile_definitions(LBWalberlaImpl_field_accessors_tests_cuda
                              PRIVATE ESPRESSO_TEST_BUILD_FOR_GPU)
 endif()

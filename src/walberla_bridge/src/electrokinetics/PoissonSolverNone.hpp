@@ -27,7 +27,7 @@
 
 #include "generated_kernels/EK_FieldAccessors_double_precision.h"
 #include "generated_kernels/EK_FieldAccessors_single_precision.h"
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 #include "generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
 #include "generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 #endif
@@ -41,7 +41,7 @@
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
 #include <waLBerlaDefinitions.h>
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 #include <gpu/AddGPUFieldToStorage.h>
 #include <gpu/FieldAccessor.h>
 #include <gpu/FieldIndexing.h>
@@ -92,7 +92,7 @@ protected:
     using PotentialField = field::GhostLayerField<FT, 1u>;
   };
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
   template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
     using PotentialField = gpu::GPUField<FT>;
   };
@@ -109,7 +109,7 @@ public:
   explicit PoissonSolverNone(std::shared_ptr<LatticeWalberla> lattice)
       : PoissonSolver(std::move(lattice), 0.0) {
     auto blocks = get_lattice().get_blocks();
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
           blocks, "potential field", 1u, field::fzyx,
