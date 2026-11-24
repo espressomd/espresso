@@ -361,6 +361,35 @@ private:
       (*m_boundary)(&block);
   }
 
+  /**
+   * @brief Run the boundary sweep, but keep the PDFs of the local domain.
+   * The boundary sweep writes the PDFs that fluid cells pull from
+   * neighboring boundary cells. When the boundary cell is in the ghost
+   * layer, the ghost communication cannot provide these PDFs, because the
+   * boundary sweep never writes them into the periodic image of that cell.
+   * The PDFs of the local domain are restored afterwards, because they
+   * need not stem from an LB step: e.g. a checkpoint can contain PDFs that
+   * the user set on boundary nodes, which the boundary sweep would
+   * overwrite. This temporarily stores a copy of all local PDFs.
+   */
+  void integrate_boundaries_in_ghost_layer(
+      std::shared_ptr<BlockStorage> const &blocks) {
+    std::vector<std::vector<FloatType>> local_pdfs;
+    for (auto &block : *blocks) {
+      auto const *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+      local_pdfs.emplace_back(
+          lbm::accessor::Population::get(pdf_field, pdf_field->xyzSize()));
+    }
+    integrate_boundaries(blocks);
+    auto local_pdfs_it = local_pdfs.cbegin();
+    for (auto &block : *blocks) {
+      auto *pdf_field = block.template getData<PdfField>(m_pdf_field_id);
+      lbm::accessor::Population::set(pdf_field, *local_pdfs_it,
+                                     pdf_field->xyzSize());
+      ++local_pdfs_it;
+    }
+  }
+
   void integrate_update_velocities_from_pdf(
       std::shared_ptr<BlockStorage> const &blocks) {
     for (auto &block : *blocks)
@@ -486,6 +515,25 @@ public:
       m_boundary_communicator->communicate();
       m_pending_ghost_comm.reset(GhostComm::UBB);
     }
+  }
+
+  /**
+   * @brief Recompute the fields that the LB step derives from the PDFs.
+   * Runs the boundary sweep and the velocity update sweep on the current
+   * PDFs, like the final stage of @ref integrate_pull_scheme, and
+   * communicates the ghost layers. The boundary sweep also restores the
+   * boundary forces.
+   */
+  void update_derived_fields() override {
+    assert(m_mpi_cart_comm_observer.is_valid());
+    auto const &blocks = get_lattice().get_blocks();
+    ghost_communication();
+    if (m_has_boundaries) {
+      integrate_boundaries_in_ghost_layer(blocks);
+    }
+    integrate_update_velocities_from_pdf(blocks);
+    m_pending_ghost_comm.set(GhostComm::VEL);
+    ghost_communication_vel();
   }
 
   /** @brief Communicate all fields at once using the D3Q27 stencil. */
