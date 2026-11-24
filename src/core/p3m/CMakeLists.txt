@@ -43,7 +43,7 @@ if(ESPRESSO_BUILD_WITH_FFTW)
             MPI::MPI_CXX
             Heffte::Heffte
             OpenMP::OpenMP_CXX
-            $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+            ${ESPRESSO_OPENMP_CUDA}
             Kokkos::kokkos
             Cabana::Core)
   set_target_properties(espresso_p3m PROPERTIES POSITION_INDEPENDENT_CODE ON)

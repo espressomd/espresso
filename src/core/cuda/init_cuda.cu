@@ -20,9 +20,6 @@
 #include "init.hpp"
 #include "utils.cuh"
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-
 #include <cstring>
 #include <memory>
 #include <string>

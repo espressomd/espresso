@@ -18,6 +18,8 @@
  */
 #include "CudaHostAllocator.hpp"
 
+#include "cuda/cuda_to_hip.h"
+
 #include <cstddef>
 #include <new>
 

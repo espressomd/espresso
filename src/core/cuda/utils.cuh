@@ -19,14 +19,13 @@
 
 #pragma once
 
-#if !defined(__CUDACC__)
+#if !defined(__CUDACC__) && !defined(__HIPCC__)
 #error "Do not include CUDA headers in normal C++-code!!!"
 #endif
 
 #include "utils.hpp"
 
-#include <cuda.h>
-#include <cuda_runtime.h>
+#include "cuda/cuda_to_hip.h"
 
 #include <string>
 

@@ -28,8 +28,6 @@
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
 
-#include <cuda.h>
-
 #if defined(OMPI_MPI_H) || defined(_MPI_H)
 #error CU-file includes mpi.h! This should not happen!
 #endif
