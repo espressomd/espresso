@@ -36,7 +36,7 @@ function(ESPRESSO_ADD_TEST)
     ${TEST_DEPENDS}
     $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
     $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+    ${ESPRESSO_OPENMP_CUDA}
     OpenMP::OpenMP_CXX
     espresso::walberla
     espresso::walberla_deps

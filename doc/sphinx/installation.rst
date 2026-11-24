@@ -302,15 +302,12 @@ AMD GPU acceleration
 
 On AMD GPUs, the electrostatics and magnetostatics GPU algorithms
 (|p3m| and dipolar direct summation) can be compiled with HIP from a ROCm
-installation that provides hipFFT and rocThrust. The GPU lattice-Boltzmann
-and electrokinetics solvers are not available on AMD GPUs, so waLBerla
-must be disabled, which also removes the CPU lattice-Boltzmann and
-electrokinetics solvers from this build:
+installation that provides hipFFT and rocThrust. The lattice-Boltzmann
+and electrokinetics solvers of such a build run on the CPU only:
 
 .. code-block:: bash
 
     cmake .. -D ESPRESSO_BUILD_WITH_HIP=ON \
-      -D ESPRESSO_BUILD_WITH_WALBERLA=OFF \
       -D CMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ \
       -D CMAKE_PREFIX_PATH=/opt/rocm
 

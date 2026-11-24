@@ -83,6 +83,10 @@ function(espresso_configure_walberla_target)
   endif()
 endfunction()
 
+if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP)
+  set(ESPRESSO_OPENMP_CUDA OpenMP::OpenMP_CUDA)
+endif()
+
 add_library(espresso_walberla_compiler_flags INTERFACE)
 add_library(espresso::walberla::compiler_flags ALIAS
             espresso_walberla_compiler_flags)
@@ -126,23 +130,20 @@ espresso_configure_walberla_target(espresso_walberla)
 espresso_configure_walberla_target(espresso_walberla_codegen)
 
 target_link_libraries(
-  espresso_walberla
-  PUBLIC MPI::MPI_CXX espresso::utils
+  espresso_walberla PUBLIC MPI::MPI_CXX espresso::utils
   PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
           espresso::walberla_codegen
           $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
-          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
-          OpenMP::OpenMP_CXX)
+          ${ESPRESSO_OPENMP_CUDA} OpenMP::OpenMP_CXX)
 target_link_libraries(
   espresso_walberla_codegen
   PRIVATE espresso::compiler_flags espresso::walberla::compiler_flags
           espresso::walberla_codegen::compiler_flags
           $<$<BOOL:${Kokkos_ENABLE_CUDA}>:Kokkos::kokkos>
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA_AVX}>:espresso::avx_flags>
-          $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
-          OpenMP::OpenMP_CXX)
+          ${ESPRESSO_OPENMP_CUDA} OpenMP::OpenMP_CXX)
 
 function(espresso_set_walberla_codegen_kernel_source_properties source_file)
   list(
@@ -158,6 +159,15 @@ function(espresso_set_walberla_codegen_kernel_source_properties source_file)
   set_source_files_properties(
     ${source_file} TARGET_DIRECTORY espresso_walberla_codegen
     PROPERTIES COMPILE_OPTIONS "${SRC_COMPILE_OPTIONS}")
+endfunction()
+
+# In a HIP build, CMake assigns no language to .cu files: compile the GPU
+# sources as C++ when waLBerla has no GPU backend, where they only throw.
+function(espresso_set_walberla_gpu_source_language)
+  if(ESPRESSO_BUILD_WITH_HIP)
+    set_source_files_properties(${ARGV} TARGET_DIRECTORY espresso_walberla
+                                PROPERTIES LANGUAGE CXX)
+  endif()
 endfunction()
 
 if(WALBERLA_BUILD_WITH_CUDA)

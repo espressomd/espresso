@@ -280,12 +280,6 @@ endblock()
 set(ESPRESSO_XCOMPILER "")
 set(ESPRESSO_PTXAS "")
 if(ESPRESSO_BUILD_WITH_HIP)
-  if(ESPRESSO_BUILD_WITH_WALBERLA)
-    message(
-      FATAL_ERROR
-        "ESPRESSO_BUILD_WITH_HIP requires ESPRESSO_BUILD_WITH_WALBERLA=OFF, "
-        "because the waLBerla GPU kernels cannot be compiled with HIP")
-  endif()
   # enable_language(HIP) honors an explicit -DCMAKE_HIP_ARCHITECTURES, otherwise
   # auto-detects the host GPU(s), and errors on a no-GPU build host.
   enable_language(HIP)
@@ -1144,7 +1138,7 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
     set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
     set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-    if(ESPRESSO_BUILD_WITH_CUDA)
+    if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP)
       set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
       if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
         if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
