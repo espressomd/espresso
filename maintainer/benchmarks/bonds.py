@@ -35,6 +35,10 @@ without it, a bonded-only system (``--no-wca``) has an undefined
 interaction range, a coarse cell grid and a neighbor list construction
 that scales quadratically with the number of particles.
 
+The resident memory of every MPI rank is reported before and after the
+bonds are created (``rss_before_bonds_mb``, ``rss_after_bonds_mb``), read
+from ``/proc``, which only works when all ranks run on the same Linux node.
+
 The script works with both bond APIs (``system.bonds[bond].add()`` and the
 older ``ParticleHandle.add_bond()``), so that it can be run unchanged on
 older builds for comparison. The results are printed as a JSON line
@@ -49,6 +53,7 @@ Example::
 
 import argparse
 import json
+import os
 import time
 import warnings
 import numpy as np
@@ -72,6 +77,9 @@ parser.add_argument("--churn_steps", type=int, default=10,
                     "round (default: 10)")
 parser.add_argument("--no-wca", dest="wca", action="store_false",
                     help="do not add WCA interactions (bonded forces only)")
+parser.add_argument("--bulk", action="store_true",
+                    help="create the bonds with one bulk call per bond type, "
+                    "if the bond API supports it")
 args = parser.parse_args()
 
 if args.wca:
@@ -146,6 +154,32 @@ def remove_bond(bond, ids):
         system.part.by_id(ids[0]).delete_bond((bond, *ids[1:]))
 
 
+def rss_per_rank_mb():
+    """Resident memory of this process and its sibling MPI ranks."""
+    def rss(pid):
+        try:
+            with open(f"/proc/{pid}/status") as f:
+                for line in f:
+                    if line.startswith("VmRSS:"):
+                        return int(line.split()[1]) / 1024.
+        except OSError:
+            pass
+        return None
+
+    pids = [os.getpid()]
+    if res_n_ranks > 1:
+        ppid = os.getppid()
+        exe = os.path.realpath(f"/proc/{os.getpid()}/exe")
+        try:
+            with open(f"/proc/{ppid}/task/{ppid}/children") as f:
+                children = [int(x) for x in f.read().split()]
+        except OSError:
+            children = []
+        pids = [pid for pid in children
+                if os.path.realpath(f"/proc/{pid}/exe") == exe]
+    return [x for x in map(rss, pids) if x is not None]
+
+
 def timed(fn):
     tick = time.perf_counter()
     fn()
@@ -161,14 +195,26 @@ for i in chains:
 for i in chains:
     all_bonds += [(dihedral, tuple(i[m:m + 4])) for m in range(n - 3)]
 
+res_n_ranks = system.cell_system.get_state()["n_nodes"]
 res = {"bond_api": "system.bonds" if NEW_API else "ParticleHandle",
        "n_ranks": system.cell_system.get_state()["n_nodes"],
        "n_part": len(positions), "n_bonds": len(all_bonds),
        "wca": args.wca}
 
 # bond creation
-res["create_all"] = timed(
-    lambda: [add_bond(b, ids) for b, ids in all_bonds])
+system.integrator.run(0)
+res["rss_before_bonds_mb"] = rss_per_rank_mb()
+if args.bulk and NEW_API and hasattr(system.bonds[harmonic], "_is_batch"):
+    def add_all_bulk():
+        for bond in (harmonic, angle, dihedral):
+            rows = [ids for b, ids in all_bonds if b is bond]
+            system.bonds[bond].add(np.array(rows))
+    res["create_all"] = timed(add_all_bulk)
+else:
+    res["create_all"] = timed(
+        lambda: [add_bond(b, ids) for b, ids in all_bonds])
+system.integrator.run(0)
+res["rss_after_bonds_mb"] = rss_per_rank_mb()
 
 if args.wca:
     system.non_bonded_inter[0, 0].wca.set_params(epsilon=1., sigma=0.8)
