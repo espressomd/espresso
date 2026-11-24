@@ -177,6 +177,11 @@ update_cabana_state(CellStructure &cell_structure,
 #ifdef ESPRESSO_CALIPER
   ESPRESSO_CALI_MARK_FUNCTION;
 #endif
+  auto const rebuild_vl = (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
+                           cell_structure.use_verlet_list);
+  if (rebuild_vl) {
+    cell_structure.require_verlet_list_cabana();
+  }
   auto const rebuild = cell_structure.prepare_verlet_list_cabana(pair_cutoff);
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto const n_part = unique_particles.size();
@@ -257,8 +262,6 @@ update_cabana_state(CellStructure &cell_structure,
     // ===================================================
     // Get Verlet pairs and fill Verlet list
     // ===================================================
-    bool rebuild_vl = (integ_switch != INTEG_METHOD_STEEPEST_DESCENT and
-                       cell_structure.use_verlet_list);
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_BEGIN("Verlet list creation");
 #endif

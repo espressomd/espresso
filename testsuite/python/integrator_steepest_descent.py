@@ -158,6 +158,26 @@ class IntegratorSteepestDescent(ut.TestCase):
                 f_max=0, gamma=1, max_displacement=0.01)
             self.system.integrator.run(steps=-1)
 
+    def test_switch_to_verlet_list_integrator(self):
+        # steepest descent doesn't fill the Verlet list; switching to an
+        # integrator that uses it must not reuse the unfilled list
+        system = self.system
+        partcls = system.part.add(
+            pos=np.random.random((self.n_part, 3)) * system.box_l)
+        system.integrator.set_steepest_descent(
+            f_max=0, gamma=0.1, max_displacement=0.01)
+        system.integrator.run(20)
+        system.integrator.set_vv()
+        system.integrator.run(0, recalc_forces=True)
+        forces_verlet_list = np.copy(partcls.f)
+        system.cell_system.use_verlet_lists = False
+        system.integrator.run(0, recalc_forces=True)
+        forces_link_cell = np.copy(partcls.f)
+        system.cell_system.use_verlet_lists = True
+        self.assertGreater(np.max(np.abs(forces_link_cell)), 0.)
+        np.testing.assert_allclose(
+            forces_verlet_list, forces_link_cell, rtol=0., atol=1e-10)
+
     def test_integrator_recovery(self):
         # the system is still in a valid state after a failure
         system = self.system
