@@ -1059,6 +1059,8 @@ if(ESPRESSO_BUILD_TESTS)
                                  "Maximal number of MPI ranks to use per test")
   set(ESPRESSO_TEST_NT "4"
       CACHE STRING "Maximal number of OpenMP threads to use per test")
+  cmake_host_system_information(RESULT ESPRESSO_HOST_NUM_CORES
+                                QUERY NUMBER_OF_LOGICAL_CORES)
   add_library(espresso_tests_compiler_flags INTERFACE)
   add_library(espresso::tests::compiler_flags ALIAS
               espresso_tests_compiler_flags)

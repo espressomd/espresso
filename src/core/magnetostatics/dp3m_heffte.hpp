@@ -250,16 +250,18 @@ private:
       std::ranges::fill(rs_mesh_field, FloatType{0});
     }
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-    for (auto dir : {0u, 1u, 2u}) {
-      dp3m.heffte.rs_dipole_density[dir].resize(dp3m.local_mesh.size);
-      std::ranges::fill(dp3m.heffte.rs_dipole_density[dir], FloatType{0});
+    if (dp3m.heffte.fft != nullptr) {
+      for (auto dir : {0u, 1u, 2u}) {
+        dp3m.heffte.rs_dipole_density[dir].resize(dp3m.local_mesh.size);
+        std::ranges::fill(dp3m.heffte.rs_dipole_density[dir], FloatType{0});
+      }
+      auto const buf_size =
+          static_cast<std::size_t>(Utils::product(dp3m.local_mesh.dim_no_halo));
+      Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_field_no_halo_kokkos,
+                      buf_size);
+      Kokkos::realloc(Kokkos::WithoutInitializing,
+                      dp3m.rs_field_no_halo_reorder_kokkos, buf_size);
     }
-    auto const buf_size =
-        static_cast<std::size_t>(Utils::product(dp3m.local_mesh.dim_no_halo));
-    Kokkos::realloc(Kokkos::WithoutInitializing, dp3m.rs_field_no_halo_kokkos,
-                    buf_size);
-    Kokkos::realloc(Kokkos::WithoutInitializing,
-                    dp3m.rs_field_no_halo_reorder_kokkos, buf_size);
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   }
 

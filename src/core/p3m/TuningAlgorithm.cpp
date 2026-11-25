@@ -53,6 +53,8 @@ static auto constexpr P3M_TUNE_ELC_GAP_SIZE = 2.;
 static auto constexpr P3M_TUNE_ACCURACY_TOO_LARGE = 3.;
 /** conflict with FFT domain decomposition */
 static auto constexpr P3M_TUNE_FFT_MESH_SIZE = 4.;
+/** conflict with FFT SIMD alignment */
+static auto constexpr P3M_TUNE_FFT_SIMD_ALIGN = 5.;
 /**@}*/
 
 /** @brief Precision threshold for a non-zero real-space cutoff. */
@@ -190,7 +192,13 @@ double TuningAlgorithm::get_mc_time(Utils::Vector3i const &mesh, int cao,
   }
 
   commit(mesh, cao, r_cut_iL, tuned_alpha_L);
-  on_solver_change();
+  try {
+    on_solver_change();
+  } catch (p3m_tuning_exception const &err) {
+    m_logger->log_skip(err.what(), mesh[0], cao, r_cut_iL_max, tuned_alpha_L,
+                       tuned_accuracy, rs_err, ks_err);
+    return -P3M_TUNE_FFT_SIMD_ALIGN;
+  }
   if (report_veto(fft_decomposition_veto(mesh))) {
     return -P3M_TUNE_FFT_MESH_SIZE;
   }

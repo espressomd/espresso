@@ -24,6 +24,9 @@ import espressomd.electrostatics
 import benchmarks
 import numpy as np
 import argparse
+if espressomd.has_features(["CALIPER"]):
+    import espressomd.profiler
+    cali = espressomd.profiler.Caliper()
 
 DEFAULT_PARTICLES_PER_CORE = 1000
 INITIAL_SKIN = 0.5
@@ -137,8 +140,10 @@ def make_p3m(args, mesh_min):
     (skipping tuning, e.g. in the benchmark smoke tests), otherwise tune.
     """
     if p3m_params is not None:
-        return espressomd.electrostatics.P3M(**p3m_params)
-    return espressomd.electrostatics.P3M(**p3m_tune_kwargs(args, mesh_min))
+        params = p3m_params.copy()
+    else:
+        params = p3m_tune_kwargs(args, mesh_min)
+    return espressomd.electrostatics.P3M(**params)
 
 
 def fixed_p3m_kwargs(p3m, args):
@@ -313,7 +318,11 @@ def run_from_state(system, args):
 
 
 def time_and_report(system, args, measurement_steps, n_iterations):
+    if espressomd.has_features(["CALIPER"]):
+        cali.begin_section(label="benchmark")
     timings = benchmarks.get_timings(system, measurement_steps, n_iterations)
+    if espressomd.has_features(["CALIPER"]):
+        cali.end_section(label="benchmark")
     avg, ci = benchmarks.get_average_time(timings)
     print(f"average: {avg:.3e} +/- {ci:.3e} (95% C.I.)")
     n_proc = system.cell_system.get_state()["n_nodes"]

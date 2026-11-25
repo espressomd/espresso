@@ -266,6 +266,41 @@ class Test(ut.TestCase):
         self.assertIsNone(self.system.electrostatics.solver)
         self.system.periodicity = [True, True, True]
 
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] <= 2,
+               "Skipping test: only runs for n_nodes <= 2")
+    def test_elc_p3m_simd_exceptions(self):
+        import espressomd.electrostatics
+        self.system.time_step = 0.01
+        P3M = espressomd.electrostatics.P3M
+        ELC = espressomd.electrostatics.ELC
+
+        class OddP3M(P3M):
+            def validate_params(self, params):
+                pass
+        p3m_bad_mem = dict(prefactor=2., accuracy=0.1, r_cut=1.92, cao=7,
+                           mesh=[17, 17, 17], single_precision=True)
+        p3m_misaligned = OddP3M(gpu=False, tune=False, alpha=1., **p3m_bad_mem)
+        elc_misaligned = ELC(gap_size=2., maxPWerror=1., actor=p3m_misaligned)
+        with self.assertRaisesRegex(RuntimeError, "cannot align memory for SIMD"):
+            self.system.electrostatics.solver = p3m_misaligned
+        with self.assertRaisesRegex(RuntimeError, "cannot align memory for SIMD"):
+            self.system.electrostatics.solver = elc_misaligned
+        p3m_misaligned = OddP3M(gpu=False, **p3m_bad_mem)
+        elc_misaligned = ELC(gap_size=2., maxPWerror=1., actor=p3m_misaligned)
+        with self.assertRaisesRegex(RuntimeError, "failed to reach requested accuracy"):
+            self.system.electrostatics.solver = p3m_misaligned
+        with self.assertRaisesRegex(RuntimeError, "failed to reach requested accuracy"):
+            self.system.electrostatics.solver = elc_misaligned
+        if espressomd.has_features("CUDA") and espressomd.gpu_available():
+            # P3M on GPU uses the P3M on CPU energy kernel; the CPU buffers are
+            # not memory aligned and can segfault when FFTW uses SIMD codelets
+            p3m_unsafe = OddP3M(gpu=True, **p3m_bad_mem)
+            elc_unsafe = ELC(gap_size=2., maxPWerror=1., actor=p3m_unsafe)
+            with self.assertRaisesRegex(RuntimeError, "cannot align memory for SIMD"):
+                self.system.electrostatics.solver = p3m_unsafe
+            with self.assertRaisesRegex(RuntimeError, "cannot align memory for SIMD"):
+                self.system.electrostatics.solver = elc_unsafe
+
 
 if __name__ == "__main__":
     ut.main()
