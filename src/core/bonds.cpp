@@ -39,6 +39,7 @@
 #include <cstddef>
 #include <functional>
 #include <map>
+#include <optional>
 #include <span>
 #include <stdexcept>
 #include <string>
@@ -306,6 +307,25 @@ void check_bond_can_be_removed(System::System const &system, int bond_id,
         "Bond " + std::to_string(bond_id) + " with partners " +
         format_ids(particle_ids.subspan(1u)) + " doesn't exist on particle " +
         std::to_string(particle_ids[0]));
+  }
+}
+
+void check_bonded_interaction_unused(System::System const &system,
+                                     std::optional<int> bond_id) {
+  auto const rows = system.cell_structure->bond_table().rows();
+  auto const used_here = std::ranges::any_of(rows, [&](BondRow const &row) {
+    return not row.is_free() and (not bond_id or row.bond_id == *bond_id);
+  });
+  auto const used =
+      boost::mpi::all_reduce(::comm_cart, used_here, std::logical_or<>());
+  if (used) {
+    throw std::runtime_error(
+        bond_id
+            ? "Cannot delete bonded interaction " + std::to_string(*bond_id) +
+                  ": bonds between particles use it, remove them first"
+            : std::string("Cannot delete the bonded interactions: bonds "
+                          "between particles use them, remove them "
+                          "first"));
   }
 }
 

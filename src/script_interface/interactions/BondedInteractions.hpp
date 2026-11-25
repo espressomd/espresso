@@ -22,6 +22,7 @@
 #include "BondedInteraction.hpp"
 
 #include "core/bonded_interactions/bonded_interaction_data.hpp"
+#include "core/bonds.hpp"
 
 #include "script_interface/ObjectMap.hpp"
 #include "script_interface/ScriptInterface.hpp"
@@ -30,6 +31,7 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -120,6 +122,18 @@ public:
                                 " is not yet defined.");
       }
       return {elements().at(bond_id)};
+    }
+
+    // Bonds refer to their bonded interaction by its key: it can only be
+    // deleted when no bond uses it any longer. Not checked in
+    // erase_in_core(), which also runs on destruction.
+    if (name == "erase" or name == "clear") {
+      std::optional<int> bond_id;
+      if (name == "erase") {
+        bond_id = get_key(params.at("key"));
+      }
+      context()->parallel_try_catch(
+          [&]() { ::check_bonded_interaction_unused(get_system(), bond_id); });
     }
 
     if (name == "get_zero_based_type") {

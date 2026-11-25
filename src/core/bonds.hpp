@@ -40,6 +40,7 @@
 
 #include <cstddef>
 #include <functional>
+#include <optional>
 #include <span>
 #include <utility>
 #include <vector>
@@ -190,6 +191,21 @@ inline bool remove_bond(System::System &system, int bond_id,
                         std::vector<int> const &particle_ids) {
   return remove_bond(system, bond_id, std::span<const int>(particle_ids));
 }
+
+/**
+ * @brief Check that no bond uses a bonded interaction, e.g. before the
+ * bonded interaction is deleted.
+ *
+ * Collective over all MPI ranks.
+ *
+ * @param system   The system.
+ * @param bond_id  Key of the bonded interaction, or nothing to check that
+ *                 there are no bonds at all.
+ * @throw std::runtime_error on all ranks, if a bond uses the bonded
+ *        interaction.
+ */
+void check_bonded_interaction_unused(System::System const &system,
+                                     std::optional<int> bond_id);
 
 /**
  * @brief Combine bond tuples collected locally on each rank into the same

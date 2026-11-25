@@ -38,6 +38,35 @@ class BondedInteractions(ut.TestCase):
         self.system.part.clear()
         self.system.bonded_inter.clear()
 
+    def test_delete_bonded_interaction_in_use(self):
+        system = self.system
+        harm_used = espressomd.interactions.HarmonicBond(k=1., r_0=1.)
+        harm_unused = espressomd.interactions.HarmonicBond(k=2., r_0=1.)
+        system.bonded_inter.add(harm_used)
+        system.bonded_inter.add(harm_unused)
+        key_used = harm_used._bond_id
+        system.bonds[harm_used].add((0, 1))
+        # a bonded interaction used by a bond cannot be deleted
+        err_msg = f"Cannot delete bonded interaction {key_used}: bonds"
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            system.bonded_inter.remove(key_used)
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            del system.bonded_inter[key_used]
+        with self.assertRaisesRegex(RuntimeError,
+                                    "Cannot delete the bonded interactions"):
+            system.bonded_inter.clear()
+        # nothing was deleted, and the bonds can still be evaluated
+        self.assertEqual(len(system.bonded_inter), 2)
+        self.assertEqual(len(system.part.by_id(0).bonds), 1)
+        self.assertGreater(system.analysis.energy()["bonded"], 0.)
+        # unused bonded interactions can be deleted
+        system.bonded_inter.remove(harm_unused._bond_id)
+        self.assertEqual(len(system.bonded_inter), 1)
+        # once its bonds are removed, so can the used one
+        system.bonds[harm_used].remove((0, 1))
+        system.bonded_inter.remove(key_used)
+        self.assertEqual(len(system.bonded_inter), 0)
+
     def bondsMatch(self, inType, outBond, inParams, outParams, msg_long):
         """Check, if the bond type set and gotten back as well as the bond
         parameters set and gotten back match. Only check keys present in
