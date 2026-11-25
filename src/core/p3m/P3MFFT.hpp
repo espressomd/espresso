@@ -20,6 +20,7 @@
 #pragma once
 
 #include "p3m/P3MFFTBackend.hpp"
+#include "p3m/common.hpp"
 
 #include "communication.hpp"
 #include "fft/vector.hpp"
@@ -29,19 +30,22 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
+#include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/operations.hpp>
 
 #include <heffte.h>
 #include <heffte_backends.h>
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
+#include <functional>
 #include <initializer_list>
+#include <limits>
 #include <memory>
-
-#if defined(__CUDACC__)
-#include "cuda/utils.cuh"
-#endif
+#include <type_traits>
+#include <vector>
 
 /**
  * @brief FFT manager.
@@ -74,12 +78,63 @@ private:
   /* FFT backend */
   std::unique_ptr<FFT3D> fft3d;
   std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
+  /* batched transform size */
+  unsigned m_batch_size = 0u;
+  /* whether a batched transform is both possible and faster */
+  bool use_batched_fft = false;
 
   template <typename T, std::size_t N>
   static auto to_array(Utils::Vector<T, N> const &vec) {
     std::array<T, N> res{};
     std::ranges::copy(vec, res.begin());
     return res;
+  }
+
+  /**
+   * @brief Time the FFTs of one P3M time step on scratch buffers.
+   *
+   * One forward transform followed by @p n_fields backward transforms,
+   * either as separate calls or as one batched call. The first step is
+   * not timed: FFTW creates its plans on first use. This is a collective
+   * operation that returns the mean time per step of the slowest rank,
+   * hence all ranks get the same value.
+   */
+  static double time_fft_step(FFT3D const &fft,
+                              boost::mpi::communicator const &comm, unsigned n,
+                              bool batched, unsigned n_steps) {
+    using RSpaceType =
+        std::conditional_t<FFTConfig::use_r2c, FloatType, OutputType>;
+    auto const rs_size = static_cast<std::size_t>(fft.size_inbox());
+    auto const ks_size = static_cast<std::size_t>(fft.size_outbox());
+    auto const ws_size = static_cast<std::size_t>(fft.size_workspace());
+    // scratch buffers with batched size
+    buffer_container<RSpaceType> rs_buffer(n * rs_size);
+    buffer_container<OutputType> ks_buffer(n * ks_size);
+    // scratch workspace with normal buffer size if no batching was requested
+    buffer_container<OutputType> workspace((batched ? n : 1u) * ws_size);
+    auto const step = [&]() {
+      fft.forward(rs_buffer.data(), ks_buffer.data(), workspace.data());
+      if (batched) {
+        fft.backward(n, ks_buffer.data(), rs_buffer.data(), workspace.data());
+      } else {
+        for (std::size_t i = 0u; i < n; ++i) {
+          fft.backward(ks_buffer.data() + i * ks_size,
+                       rs_buffer.data() + i * rs_size, workspace.data());
+        }
+      }
+    };
+    step(); // warm-up: FFTW plans are created on first use
+    comm.barrier();
+    if (n_steps == 0u) {
+      return 0.;
+    }
+    auto const tick = MPI_Wtime();
+    for (auto i = 0u; i < n_steps; ++i) {
+      step();
+    }
+    auto const tock = MPI_Wtime();
+    auto const time = (tock - tick) / static_cast<double>(n_steps);
+    return boost::mpi::all_reduce(comm, time, boost::mpi::maximum<double>());
   }
 
 public:
@@ -91,7 +146,7 @@ public:
          Utils::Vector3i const &global_mesh,
          Utils::Vector3i const &rs_local_ld_index,
          Utils::Vector3i const &rs_local_ur_index,
-         Utils::Vector3i const &node_grid) {
+         Utils::Vector3i const &node_grid, unsigned n_fields = 1u) {
     auto constexpr row_major_order = std::array<int, 3>{2, 1, 0};
     auto constexpr col_major_order = std::array<int, 3>{0, 1, 2};
     auto constexpr in_box_order =
@@ -115,9 +170,12 @@ public:
         break;
       }
     }
-    // use optimal output box decomposition based on prime factors
+    m_batch_size = n_fields;
+    auto const this_rank = comm.rank();
+    // initial output boxes based on prime factors; on CPU with several ranks
+    // they only seed the plan and are replaced by its last pencil/slab stage
     auto out_boxes = heffte::split_world(global_out_box, to_array(best_grid));
-    out_box = std::make_unique<Box>(out_boxes[comm.rank()]);
+    out_box = std::make_unique<Box>(out_boxes[this_rank]);
 
     in_box = std::make_unique<Box>(
         to_array(rs_local_ld_index),
@@ -140,15 +198,152 @@ public:
     options.algorithm = heffte::reshape_algorithm::p2p_plined;
 
     // in the intermediate steps, the data can be shapes as either 2-D slabs or
-    // 1-D pencils for sufficiently large problem, it is expected that the
+    // 1-D pencils; for sufficiently large problem, it is expected that the
     // pencil decomposition is better but for smaller problems, the slabs may
     // perform better (depending on hardware and backend)
     options.use_pencils = true;
-#if defined(__CUDACC__)
+
+    auto const make_fft3d = [&](Box const &output_box,
+                                heffte::plan_options const &opts) {
+      if constexpr (FFTConfig::use_r2c) {
+        auto constexpr r2c_dir = static_cast<int>(FFTConfig::r2c_dir);
+        return std::make_unique<FFT3D>(gpu_stream, *in_box, output_box, r2c_dir,
+                                       comm, opts);
+      } else {
+        return std::make_unique<FFT3D>(gpu_stream, *in_box, output_box, comm,
+                                       opts);
+      }
+    };
+    auto const make_plan = [&](heffte::ioboxes<int> const &boxes,
+                               bool use_pencils) {
+      auto opts = options;
+      opts.use_pencils = use_pencils;
+      auto constexpr r2c_dir = static_cast<int>(FFTConfig::r2c_dir);
+      return heffte::plan_operations(
+          boxes, FFTConfig::use_r2c ? r2c_dir : -1,
+          heffte::set_options<backend, FFTConfig::use_r2c>(opts), this_rank);
+    };
+    struct Candidate { // LCOV_EXCL_LINE
+      std::vector<Box> out_boxes;
+      unsigned int n_mpi_reshapes;
+      bool valid;
+    };
+    auto const is_empty = [](Box const &box) { return box.empty(); };
+    auto const make_candidate = [&](heffte::ioboxes<int> const &seed,
+                                    bool use_pencils) {
+      auto const seed_plan = make_plan(seed, use_pencils);
+      auto boxes = heffte::ioboxes<int>{seed.in, {}};
+      for (auto const &box : seed_plan.out_shape[2]) {
+        boxes.out.emplace_back(box.low, box.high, out_box_order);
+      }
+      auto const plan = make_plan(boxes, use_pencils);
+      auto n_mpi_reshapes = 0u;
+      auto valid = true;
+      for (auto stage : {0u, 1u, 2u, 3u}) {
+        if (not heffte::match(plan.in_shape[stage], plan.out_shape[stage])) {
+          ++n_mpi_reshapes;
+        }
+        valid &= std::ranges::none_of(plan.out_shape[stage], is_empty);
+      }
+      return Candidate{std::move(boxes.out), n_mpi_reshapes, valid};
+    };
+    // use the last FFT stage of a heFFTe plan for the input boxes as output
+    // boxes: the final reshape of each forward transform (and the first one
+    // of each backward transform) then becomes a local operation. This costs
+    // extra planning steps and one MPI_Allgather of the boxes per FFT
+    // construction. Pencils are the default; slabs need fewer MPI reshapes
+    // unless the input boxes already are slabs, but each slab reshape is an
+    // all-to-all with many more messages, so slabs are only kept when they
+    // are measured to be faster.
+    // The backward transforms of several fields can be batched, resulting in a
+    // single MPI exchange per MPI reshape instead of @c n_fields exchanges,
+    // but messages are @c n_fields times larger. Whether this pays off
+    // depends on the MPI transport (e.g. larger messages can switch from the
+    // eager to the rendezvous protocol), so this is measured as well, jointly
+    // with the decomposition.
+    if constexpr (Architecture == Arch::CPU) {
+      auto const seed = heffte::mpi::gather_boxes(*in_box, *out_box, comm);
+      auto const pencils = make_candidate(seed, true);
+      auto const slabs = make_candidate(seed, false);
+      struct Layout {
+        std::unique_ptr<FFT3D> fft;
+        Box box;
+        bool use_pencils;
+        bool batchable;
+        bool simd_veto;
+      };
+      auto const make_layout = [&](Box const &obox, bool pencils) -> Layout {
+        auto opts = options;
+        opts.use_pencils = pencils;
+        auto fft = make_fft3d(obox, opts);
+        auto const is_local_buffer_even = obox.count() % 2ll == 0ll;
+        auto const batchable =
+            (n_fields > 1u) and
+            boost::mpi::all_reduce(comm, is_local_buffer_even,
+                                   std::logical_and<bool>());
+        auto const local_simd_veto =
+            std::is_same_v<FloatType, float> and
+            (not is_local_buffer_even or fft->size_comm_buffers() % 2u == 1u);
+        auto const simd_veto = boost::mpi::all_reduce(comm, local_simd_veto,
+                                                      std::logical_or<bool>());
+        return {std::move(fft), obox, pencils, batchable, simd_veto};
+      };
+      std::vector<Layout> layouts;
+      layouts.reserve(2u);
+      layouts.emplace_back(make_layout(pencils.out_boxes[this_rank], true));
+      // slab decomposition only works with column-major data in C2C 2D FFT
+      // https://github.com/icl-utk-edu/heffte/issues/93
+      if ((FFTConfig::use_r2c or
+           (FFTConfig::r_space_order == Utils::MemoryOrder::COLUMN_MAJOR and
+            FFTConfig::k_space_order == Utils::MemoryOrder::COLUMN_MAJOR)) and
+          slabs.valid and slabs.n_mpi_reshapes < pencils.n_mpi_reshapes) {
+        layouts.emplace_back(make_layout(slabs.out_boxes[this_rank], false));
+      }
+      auto *best_layout = &layouts.front();
+      auto best_batched = false;
+      if (layouts.size() >= 2ul or layouts[0].batchable) {
+        auto constexpr n_rounds = 3u;
+        auto constexpr n_steps = 5u;
+        auto best_time = std::numeric_limits<double>::max();
+        for (auto &layout : layouts) {
+          if (layout.simd_veto) {
+            // skip candidates with memory alignment issues
+            continue;
+          }
+          auto const batch_modes = layout.batchable
+                                       ? std::vector<bool>{false, true}
+                                       : std::vector<bool>{false};
+          for (bool const batched : batch_modes) {
+            auto min_time = std::numeric_limits<double>::max();
+            for (auto round = 0u; round < n_rounds; ++round) {
+              auto cur_time =
+                  time_fft_step(*layout.fft, comm, n_fields, batched, n_steps);
+              if (batched) {
+                // batched FFT runtimes are skewed by the MPI barrier;
+                // account for MPI load imbalance with a small penalty
+                cur_time *= (comm.size() > 4) ? 1.25 : 1.1;
+              }
+              min_time = std::min(min_time, cur_time);
+            }
+            if (min_time < best_time) {
+              best_time = min_time;
+              best_layout = &layout;
+              best_batched = batched;
+            }
+          }
+        }
+      }
+      if (best_layout->simd_veto) {
+        throw p3m_tuning_exception("cannot align memory for SIMD");
+      }
+      options.use_pencils = best_layout->use_pencils;
+      out_box = std::make_unique<Box>(best_layout->box);
+      fft3d = std::move(best_layout->fft);
+      use_batched_fft = best_batched;
+    }
     if constexpr (Architecture == Arch::CUDA) {
       options.use_gpu_aware = ::communication_environment->is_mpi_gpu_aware();
     }
-#endif
 #ifdef ESPRESSO_FPE
     // cuFFT builds device kernels using CUDA-JIT
     // (https://docs.nvidia.com/cuda/archive/13.1.1/cufft/#plan-initialization-time)
@@ -159,14 +354,13 @@ public:
                                 : nullptr;
 #endif
 
-    if constexpr (FFTConfig::use_r2c) {
-      fft3d = std::make_unique<FFT3D>(gpu_stream, *in_box, *out_box,
-                                      FFTConfig::r2c_dir, comm, options);
-    } else {
-      fft3d =
-          std::make_unique<FFT3D>(gpu_stream, *in_box, *out_box, comm, options);
+    if (not fft3d) {
+      fft3d = make_fft3d(*out_box, options);
+      // warm-up: FFTW plans are created on first use
+      time_fft_step(*fft3d, comm, 1, false, 0u);
     }
-    m_workspace = decltype(m_workspace)(fft3d->size_workspace());
+    m_workspace = decltype(m_workspace)((use_batched_fft ? n_fields : 1u) *
+                                        fft3d->size_workspace());
     // MPI communicator is needed to destroy the FFT plans
     m_mpi_env_lock = ::communication_environment->get_mpi_env();
   }
@@ -190,6 +384,23 @@ public:
   void backward(auto &&in, auto &&out) {
     fft3d->backward(in, out, m_workspace.data());
   }
+  /**
+   * Backward transform of @p n fields stored back to back, batched
+   * or one by one, whichever was measured to be faster.
+   */
+  void backward_batch(unsigned const n, auto *const in, auto *const out) {
+    if (use_batched_fft) {
+      assert(n <= m_batch_size);
+      fft3d->backward(static_cast<int>(n), in, out, m_workspace.data());
+    } else {
+      auto const ks_size = fft3d->size_outbox();
+      auto const rs_size = fft3d->size_inbox();
+      for (auto i = 0u; i < n; ++i) {
+        fft3d->backward(in + i * ks_size, out + i * rs_size,
+                        m_workspace.data());
+      }
+    }
+  }
 };
 
 /**
@@ -209,9 +420,9 @@ struct P3MFFTHeffte final : public P3MFFTBackend<FloatType, FFTConfig> {
                Utils::Vector3i const &global_mesh,
                Utils::Vector3i const &rs_local_ld_index,
                Utils::Vector3i const &rs_local_ur_index,
-               Utils::Vector3i const &node_grid)
+               Utils::Vector3i const &node_grid, unsigned n_fields = 1)
       : m_impl(nullptr, comm, global_mesh, rs_local_ld_index, rs_local_ur_index,
-               node_grid),
+               node_grid, n_fields),
         m_input(static_cast<std::size_t>(Utils::product(rs_local_size()))) {}
 
   Utils::Vector3i ks_local_ld_index() const override {
@@ -234,6 +445,10 @@ struct P3MFFTHeffte final : public P3MFFTBackend<FloatType, FFTConfig> {
     // heFFTe preserves the input; the non-const parameter is the interface's
     // contract for backends that cannot (see P3MFFTBackend::backward).
     m_impl.backward(in, out);
+  }
+  void backward_batch(unsigned const n, ComplexType *const in,
+                      RSpaceScalar *const out) override {
+    m_impl.backward_batch(n, in, out);
   }
 
 private:

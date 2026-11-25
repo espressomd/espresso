@@ -26,6 +26,7 @@
 
 #include "fft/fft.hpp"
 #include "fft/vector.hpp"
+#include "p3m/common.hpp"
 #include "p3m/for_each_3d.hpp"
 #include "p3m/packing.hpp"
 
@@ -39,6 +40,7 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
@@ -164,6 +166,11 @@ BOOST_AUTO_TEST_CASE(fft_exceptions) {
   fft::allocator<float> allocator{};
   BOOST_CHECK_EQUAL(allocator.allocate(0ul), nullptr);
   BOOST_CHECK_THROW(allocator.allocate(bad_size), std::bad_array_new_length);
+  // tuning exceptions shouldn't be caught by visit_try_catch
+  static_assert(std::is_base_of_v<std::exception, p3m_tuning_exception>);
+  static_assert(!std::is_base_of_v<std::runtime_error, p3m_tuning_exception>);
+  auto const simd_tuning_exception = p3m_tuning_exception("SIMD");
+  BOOST_CHECK_EQUAL(simd_tuning_exception.what(), "SIMD");
 }
 
 BOOST_AUTO_TEST_CASE(fft_plan_without_mpi) {

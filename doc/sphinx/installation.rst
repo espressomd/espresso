@@ -983,6 +983,8 @@ and |es| is built with ``-D CMAKE_CXX_FLAGS="-march=native"``.
 The x86 version of FFTW packaged on Ubuntu 26.04 only has SSE2 and AVX kernels.
 To check which SIMD features FFTW was built against, use this command:
 ``nm -D /usr/lib/*-linux-gnu/libfftw3.so.3 | grep -oE '_(sse|avx|sve|neon)[a-z0-9_]*' | sort -u``.
+The P3M on GPU uses the CPU energy kernel with unaligned memory buffers;
+for a GPU build of |es|, use a FFTW version built without SIMD kernels.
 
 Cluster users and HPC developers may be interested in manually editing the
 ``espresso_compiler_flags`` target in the top-level ``CMakeLists.txt`` file for
