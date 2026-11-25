@@ -26,6 +26,8 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
+#include <limits>
 #include <optional>
 #include <ranges>
 #include <span>
@@ -70,14 +72,26 @@ struct BondRow {
   int bond_id = -1;
   /** @brief Number of participants. */
   std::uint16_t n = 0u;
-  /** @brief Number of participants residing on this rank. */
-  std::uint16_t n_local = 0u;
+  /** @brief Bit @c i is set if participant @c i resides on this rank. */
+  std::uint16_t local_mask = 0u;
   /** @brief Participants in creation order, owner first. */
   std::array<int, 4> ids{};
 
   bool is_free() const { return bond_id < 0; }
   std::span<const int> particle_ids() const { return {ids.data(), n}; }
   BondRecord record() const { return {bond_id, particle_ids()}; }
+  /** @brief Bits of the positions at which a particle participates. */
+  std::uint16_t mask_of(int pid) const {
+    std::uint16_t mask = 0u;
+    for (std::size_t i = 0u; i < n; ++i) {
+      if (ids[i] == pid) {
+        mask = static_cast<std::uint16_t>(mask | (1u << i));
+      }
+    }
+    return mask;
+  }
+  /** @brief Whether a participant resides on this rank. */
+  bool is_local(int pid) const { return (local_mask & mask_of(pid)) != 0u; }
 };
 
 /**
@@ -96,7 +110,11 @@ struct BondRow {
  *
  * The rows are scanned linearly to build the flat bond lists of the force
  * kernels (@ref rows()). An index from every local particle to the rows it
- * participates in serves the per-particle queries.
+ * participates in serves the per-particle queries. A second index lists,
+ * for every participant residing on another rank, the rows it appears in,
+ * so that all bonds of a particle can be removed on every rank without
+ * communication (@ref remove_bonds_of()). Only bonds across rank
+ * boundaries have entries in that second index.
  */
 class BondTable {
 public:
@@ -106,11 +124,17 @@ public:
   static constexpr std::size_t packed_row_size = 2u + max_particles;
 
 private:
+  using Index = boost::unordered_flat_map<int, std::vector<std::uint32_t>>;
+
   std::vector<BondRow> m_rows;
   /** @brief Free rows, reused by new bonds. */
   std::vector<std::uint32_t> m_free;
-  /** @brief For every local particle, the rows it participates in. */
-  boost::unordered_flat_map<int, std::vector<std::uint32_t>> m_rows_of;
+  /** @brief For every local particle, the rows it participates in, in the
+   *  order it became a local participant of them. */
+  Index m_rows_of;
+  /** @brief For every particle residing on another rank, the rows it
+   *  participates in. */
+  Index m_remote_rows_of;
 
   inline static std::vector<std::uint32_t> const no_rows{};
 
@@ -119,40 +143,70 @@ private:
     return (it == m_rows_of.end()) ? no_rows : it->second;
   }
 
-  /** @brief Find the row of a bond among the rows of a local particle. */
-  std::optional<std::uint32_t> find_in(int pid, int bond_id,
-                                       std::span<const int> ids) const {
-    for (auto const row : rows_of(pid)) {
-      if (m_rows[row].record().matches(bond_id, ids)) {
-        return row;
+  /** @brief Call @p f once for every distinct participant of a row. */
+  template <typename F> void for_each_distinct(BondRow const &r, F &&f) const {
+    for (std::size_t i = 0u; i < r.n; ++i) {
+      if (std::find(r.ids.begin(), r.ids.begin() + i, r.ids[i]) ==
+          r.ids.begin() + i) {
+        f(r.ids[i]);
+      }
+    }
+  }
+
+  static void push(Index &index, int pid, std::uint32_t row) {
+    index[pid].push_back(row);
+  }
+
+  static void pop(Index &index, int pid, std::uint32_t row) {
+    auto const it = index.find(pid);
+    if (it == index.end()) {
+      return;
+    }
+    auto &rows = it->second;
+    // recently added rows are the most likely to be removed
+    auto const pos = std::find(rows.rbegin(), rows.rend(), row);
+    if (pos == rows.rend()) {
+      return;
+    }
+    rows.erase(std::next(pos).base());
+    if (rows.empty()) {
+      index.erase(it);
+    }
+  }
+
+  /** @brief Find the row of a bond among the rows of its participants. */
+  std::optional<std::uint32_t> find(int bond_id,
+                                    std::span<const int> ids) const {
+    // every participant of a stored bond lists it in exactly one of the two
+    // indices: search the participant with the fewest rows
+    auto const &remote_rows_of = [this](int pid) -> auto const & {
+      auto const it = m_remote_rows_of.find(pid);
+      return (it == m_remote_rows_of.end()) ? no_rows : it->second;
+    };
+    if (ids.empty()) {
+      return std::nullopt;
+    }
+    auto best = ids[0];
+    auto best_size = std::numeric_limits<std::size_t>::max();
+    for (auto const pid : ids) {
+      auto const size = rows_of(pid).size() + remote_rows_of(pid).size();
+      if (size < best_size) {
+        best = pid;
+        best_size = size;
+      }
+    }
+    for (auto const *rows : {&rows_of(best), &remote_rows_of(best)}) {
+      for (auto const row : *rows) {
+        if (m_rows[row].record().matches(bond_id, ids)) {
+          return row;
+        }
       }
     }
     return std::nullopt;
   }
 
-  /**
-   * @brief Find the row of a bond among the rows of its local
-   * participants, except @p skip_pid.
-   */
-  std::optional<std::uint32_t> find(int bond_id, std::span<const int> ids,
-                                    int skip_pid = -1) const {
-    // every local participant lists the bond: search the shortest list
-    std::optional<int> best;
-    std::size_t best_size = 0u;
-    for (auto const pid : ids) {
-      if (pid == skip_pid) {
-        continue;
-      }
-      auto const it = m_rows_of.find(pid);
-      if (it != m_rows_of.end() and
-          (not best or it->second.size() < best_size)) {
-        best = pid;
-        best_size = it->second.size();
-      }
-    }
-    return best ? find_in(*best, bond_id, ids) : std::nullopt;
-  }
-
+  /** @brief Store a bond whose participants all reside on other ranks;
+   *  see @ref set_local(). */
   std::uint32_t new_row(int bond_id, std::span<const int> ids) {
     assert(bond_id >= 0);
     assert(not ids.empty() and ids.size() <= max_particles);
@@ -167,49 +221,51 @@ private:
     auto &r = m_rows[row];
     r.bond_id = bond_id;
     r.n = static_cast<std::uint16_t>(ids.size());
-    r.n_local = 0u;
+    r.local_mask = 0u;
     r.ids = {};
     std::ranges::copy(ids, r.ids.begin());
+    for_each_distinct(r, [&](int pid) { push(m_remote_rows_of, pid, row); });
     return row;
   }
 
-  void link(int pid, std::uint32_t row) {
-    m_rows_of[pid].push_back(row);
-    ++m_rows[row].n_local;
+  /** @brief Mark a participant of a row as residing on this rank. */
+  void set_local(int pid, std::uint32_t row) {
+    auto &r = m_rows[row];
+    auto const mask = r.mask_of(pid);
+    if (mask == 0u or (r.local_mask & mask) != 0u) {
+      return; // not a participant, or already local
+    }
+    r.local_mask = static_cast<std::uint16_t>(r.local_mask | mask);
+    pop(m_remote_rows_of, pid, row);
+    push(m_rows_of, pid, row);
   }
 
-  /** @brief Remove a local particle from a row; free the row when no
-   *  participant remains on this rank. */
-  void unlink(int pid, std::uint32_t row) {
-    auto const it = m_rows_of.find(pid);
-    if (it == m_rows_of.end()) {
-      return;
+  /** @brief Mark a participant of a row as residing on another rank; free
+   *  the row when no participant remains on this rank. */
+  void clear_local(int pid, std::uint32_t row) {
+    auto &r = m_rows[row];
+    auto const mask = r.mask_of(pid);
+    if ((r.local_mask & mask) == 0u) {
+      return; // the particle is not a local participant of this row
     }
-    auto &rows = it->second;
-    auto const pos = std::ranges::find(rows, row);
-    if (pos == rows.end()) {
-      return; // the particle does not list this row
-    }
-    rows.erase(pos);
-    if (rows.empty()) {
-      m_rows_of.erase(it);
-    }
-    if (--m_rows[row].n_local == 0u) {
-      m_rows[row].bond_id = -1;
-      m_free.push_back(row);
+    r.local_mask = static_cast<std::uint16_t>(r.local_mask & ~mask);
+    pop(m_rows_of, pid, row);
+    if (r.local_mask == 0u) {
+      free_row(row);
+    } else {
+      push(m_remote_rows_of, pid, row);
     }
   }
 
-  /** @brief Remove a row from all its local participants. */
-  void drop(std::uint32_t row) {
-    auto const ids = m_rows[row].ids;
-    auto const n = m_rows[row].n;
-    for (std::size_t i = 0u; i < n; ++i) {
-      // a particle listed twice in a bond is linked once
-      if (std::find(ids.begin(), ids.begin() + i, ids[i]) == ids.begin() + i) {
-        unlink(ids[i], row);
-      }
-    }
+  /** @brief Remove a row from the indices of all its participants. */
+  void free_row(std::uint32_t row) {
+    auto &r = m_rows[row];
+    for_each_distinct(r, [&](int pid) {
+      pop(r.is_local(pid) ? m_rows_of : m_remote_rows_of, pid, row);
+    });
+    r.bond_id = -1;
+    r.local_mask = 0u;
+    m_free.push_back(row);
   }
 
 public:
@@ -246,6 +302,7 @@ public:
     m_rows.clear();
     m_free.clear();
     m_rows_of.clear();
+    m_remote_rows_of.clear();
   }
 
   /** @brief Whether most rows are free, see @ref compact(). */
@@ -266,9 +323,11 @@ public:
     m_rows.resize(n_live);
     m_rows.shrink_to_fit();
     m_free.clear();
-    for (auto &[pid, rows] : m_rows_of) {
-      for (auto &row : rows) {
-        row = new_index[row];
+    for (auto *index : {&m_rows_of, &m_remote_rows_of}) {
+      for (auto &[pid, rows] : *index) {
+        for (auto &row : rows) {
+          row = new_index[row];
+        }
       }
     }
   }
@@ -289,7 +348,7 @@ public:
     }
     auto const row = new_row(bond_id, ids);
     for (auto const pid : local_pids) {
-      link(pid, row);
+      set_local(pid, row);
     }
   }
 
@@ -301,7 +360,7 @@ public:
   bool remove(int bond_id, std::span<const int> ids) {
     auto const row = find(bond_id, ids);
     if (row) {
-      drop(*row);
+      free_row(*row);
     }
     return row.has_value();
   }
@@ -320,9 +379,27 @@ public:
       }
     }
     for (auto const row : selected) {
-      drop(row);
+      free_row(row);
     }
     return selected.size();
+  }
+
+  /**
+   * @brief Remove every bond a particle participates in, whether it resides
+   * on this rank or not. Calling this on all ranks removes the bonds of the
+   * particle everywhere, without communication.
+   * @return number of removed bonds.
+   */
+  std::size_t remove_bonds_of(int pid) {
+    std::vector<std::uint32_t> rows = rows_of(pid);
+    if (auto const it = m_remote_rows_of.find(pid);
+        it != m_remote_rows_of.end()) {
+      rows.insert(rows.end(), it->second.begin(), it->second.end());
+    }
+    for (auto const row : rows) {
+      free_row(row);
+    }
+    return rows.size();
   }
 
   /** @brief Forget a particle that no longer resides on this rank. The
@@ -330,7 +407,7 @@ public:
   void erase(int pid) {
     auto const rows = rows_of(pid);
     for (auto const row : rows) {
-      unlink(pid, row);
+      clear_local(pid, row);
     }
   }
 
@@ -384,13 +461,10 @@ public:
       }
       auto const ids = buffer.subspan(2u, static_cast<std::size_t>(buffer[1]));
       buffer = buffer.subspan(packed_row_size);
-      if (find_in(pid, bond_id, ids)) {
-        continue; // the particle had not left
-      }
-      // the particle is not listed for all its bonds yet: search the
-      // bond among the other local participants
-      auto const row = find(bond_id, ids, pid);
-      link(pid, row ? *row : new_row(bond_id, ids));
+      // the bond is stored already if the particle had not left, or if a
+      // partner resides on this rank
+      auto const row = find(bond_id, ids);
+      set_local(pid, row ? *row : new_row(bond_id, ids));
     }
     return buffer;
   }

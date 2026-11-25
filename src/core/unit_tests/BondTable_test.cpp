@@ -105,7 +105,8 @@ BOOST_AUTO_TEST_CASE(one_row_per_bond) {
   auto const &row = table.rows()[0];
   BOOST_CHECK_EQUAL(row.bond_id, 0);
   BOOST_CHECK_EQUAL(row.n, 2u);
-  BOOST_CHECK_EQUAL(row.n_local, 2u);
+  BOOST_CHECK_EQUAL(row.local_mask, 0b11u);
+  BOOST_CHECK(row.is_local(1) and row.is_local(2));
   BOOST_CHECK_EQUAL(row.record().owner_id(), 1);
   BOOST_CHECK_EQUAL(row.record().partner_ids()[0], 2);
 
@@ -167,6 +168,48 @@ BOOST_AUTO_TEST_CASE(remove_if_and_erase) {
   BOOST_CHECK(table.view(1).empty());
   BOOST_CHECK((as_tuples(table.view(2)) == std::vector<Tuple>{{0, {1, 2}}}));
   BOOST_CHECK_EQUAL(table.size(), 1u);
+}
+
+BOOST_AUTO_TEST_CASE(remove_bonds_of) {
+  /* particles 1, 2, 3 reside here, 4 and 5 do not */
+  BondTable table;
+  add(table, 0, {1, 2}, {1, 2});
+  add(table, 0, {4, 1}, {1});
+  add(table, 1, {2, 4, 3}, {2, 3});
+  add(table, 0, {3, 5}, {3});
+  BOOST_CHECK(not table.rows()[1].is_local(4));
+
+  /* the bonds of a particle residing elsewhere are found too */
+  BOOST_CHECK_EQUAL(table.remove_bonds_of(4), 2u);
+  BOOST_CHECK((as_tuples(table.view(1)) == std::vector<Tuple>{{0, {1, 2}}}));
+  BOOST_CHECK((as_tuples(table.view(3)) == std::vector<Tuple>{{0, {3, 5}}}));
+  BOOST_CHECK_EQUAL(table.remove_bonds_of(4), 0u);
+  BOOST_CHECK_EQUAL(table.size(), 2u);
+
+  /* the bonds of a local particle */
+  BOOST_CHECK_EQUAL(table.remove_bonds_of(2), 1u);
+  BOOST_CHECK(table.view(1).empty());
+  BOOST_CHECK_EQUAL(table.size(), 1u);
+
+  /* a particle that left this rank is still known to its local partners */
+  table.erase(3);
+  BOOST_CHECK(table.empty());
+  add(table, 0, {6, 7}, {6, 7});
+  table.erase(7);
+  BOOST_CHECK_EQUAL(table.size(), 1u);
+  BOOST_CHECK_EQUAL(table.remove_bonds_of(7), 1u);
+  BOOST_CHECK(table.empty());
+  BOOST_CHECK_EQUAL(table.n_particles(), 0u);
+
+  /* a particle that comes back is a local participant again */
+  add(table, 0, {6, 7}, {6});
+  std::vector<int> buffer{1, 0, 2, 6, 7, 0, 0};
+  table.insert(7, buffer);
+  BOOST_CHECK_EQUAL(table.size(), 1u);
+  BOOST_CHECK_EQUAL(table.n_particles(), 2u);
+  BOOST_CHECK((as_tuples(table.view(7)) == std::vector<Tuple>{{0, {6, 7}}}));
+  BOOST_CHECK_EQUAL(table.remove_bonds_of(6), 1u);
+  BOOST_CHECK(table.view(7).empty());
 }
 
 BOOST_AUTO_TEST_CASE(extract_and_insert) {

@@ -31,8 +31,6 @@
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "aosoa_pack.hpp"
-#include "bond_queries.hpp"
-#include "bonds.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
 #include "ghosts.hpp"
@@ -445,17 +443,10 @@ void CellStructure::check_particle_sorting() const {
 }
 
 void CellStructure::remove_particle(int id) {
-  // The particle stores every bond it participates in. Its rank shares
-  // them with all ranks, so that the copies held by the other participants
-  // are removed wherever they reside.
-  auto &system = get_system();
-  auto const pids = std::array<int, 1>{{id}};
-  auto const bonds_to_remove = ::gather_bonds_of_particles(
-      system, pids, [](BondRecord const &, int) { return true; });
-  for (auto const &[bond_id, ids] : bonds_to_remove) {
-    ::remove_bond(system, bond_id, ids);
-  }
-  m_bond_table.erase(id);
+  // Every rank that stores a bond of the particle knows that the particle
+  // takes part in it, whether the particle resides here or not: the bonds
+  // are removed on all ranks without communication.
+  m_bond_table.remove_bonds_of(id);
 
   // Locate the particle via the index instead of scanning all local
   // particles. Real particles take precedence over ghosts in the index
