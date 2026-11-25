@@ -33,6 +33,7 @@
 #include "aosoa_pack.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "ghosts/HaloExchange.hpp"
 #include "integrators/Propagation.hpp"
