@@ -217,8 +217,8 @@ void ParticleHandle::set_exclusions(Variant const &value) {
  *
  * Bonds this particle participates in but that are owned by other
  * particles are left untouched. The rank of the particle shares its owned
- * bonds with all ranks, so that @ref ::remove_bond() also removes the
- * copies held by the partners. Collective.
+ * bonds with all ranks, so that @ref ::remove_bond() also removes them on
+ * the ranks of the partners. Collective.
  */
 void ParticleHandle::delete_owned_bonds() const {
   auto const pids = std::array<int, 1>{{m_pid}};

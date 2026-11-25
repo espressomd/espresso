@@ -103,14 +103,9 @@ void add_bond(System::System &system, int bond_id,
       bond_id, particle_ids, local_participants(system, particle_ids));
 }
 
-bool remove_bond(System::System &system, int bond_id,
+void remove_bond(System::System &system, int bond_id,
                  std::span<const int> particle_ids) {
-  if (particle_ids.empty()) {
-    return false;
-  }
-  auto const removed =
-      system.cell_structure->bond_table().remove(bond_id, particle_ids);
-  return removed and local_particle(system, particle_ids[0]) != nullptr;
+  system.cell_structure->bond_table().remove(bond_id, particle_ids);
 }
 
 void check_particles_exist(System::System const &system,
@@ -414,27 +409,27 @@ std::vector<BondTuple> const &get_owned_bonds(int pid) {
 void invalidate_bond_fetch_cache() { bond_fetch_cache.clear(); }
 
 bool is_bond_storage_consistent(System::System const &system) {
-  // every stored copy, with the id of the particle that holds it
-  std::vector<std::pair<BondTuple, int>> copies;
+  // every bond, once per local particle that lists it
+  std::vector<std::pair<BondTuple, int>> listings;
   for (auto const &p : system.cell_structure->local_particles()) {
     for (auto const bond : system.cell_structure->bond_table().view(p.id())) {
       auto const ids = bond.particle_ids();
-      copies.emplace_back(
+      listings.emplace_back(
           BondTuple{bond.bond_id(), std::vector<int>(ids.begin(), ids.end())},
           p.id());
     }
   }
-  Utils::Mpi::gather_buffer(copies, ::comm_cart);
+  Utils::Mpi::gather_buffer(listings, ::comm_cart);
   auto consistent = true;
   if (::comm_cart.rank() == 0) {
-    // for every bond, the number of copies held by each particle
+    // for every bond, the number of times each particle lists it
     std::map<BondTuple, std::map<int, int>> holders;
-    for (auto const &[bond, holder] : copies) {
+    for (auto const &[bond, holder] : listings) {
       ++holders[bond][holder];
     }
     for (auto const &[bond, counts] : holders) {
       auto const &ids = bond.second;
-      // each distinct participant holds the same number of copies
+      // each distinct participant lists it the same number of times
       std::map<int, int> expected;
       for (auto const pid : ids) {
         expected[pid] = counts.begin()->second;

@@ -780,7 +780,7 @@ public:
 private:
   /**
    * @brief Execute kernel for every bond owned by a particle, reading the
-   * bonds from the bond copies the particle stores.
+   * bonds from the bond table.
    * @tparam Handler Callable, which can be invoked with
    *                 (Particle, int, std::span<Particle *>),
    *                 returning a bool.

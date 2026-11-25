@@ -292,8 +292,8 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
       boost::archive::binary_oarchive bond_archiver{os};
 
       // one bond list per particle, holding every bond the particle
-      // participates in, so that reading restores the copies of all
-      // participants without communication
+      // participates in, so that reading stores each bond on the ranks of
+      // all its participants without communication
       std::vector<int> block;
       for (auto const &p : particles) {
         block.clear();

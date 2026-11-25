@@ -67,7 +67,7 @@ static void set_particles_bonds(
   // not removed again when its partner is processed. Bonds owned by
   // particles outside the slice are left untouched. The ranks of the
   // particles share their owned bonds with all ranks, so that
-  // ::remove_bond() also removes the copies held by the partners.
+  // ::remove_bond() also removes them on the ranks of the partners.
   auto const owned_bonds = ::gather_bonds_of_particles(
       system, pids,
       [](BondRecord const &bond, int pid) { return bond.owner_id() == pid; });

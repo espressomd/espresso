@@ -159,9 +159,9 @@ public:
   }
   void operator()(DeleteAllBonds const &d) const {
     // Remove every pair bond (any type, every occurrence) between the two
-    // particles, owned by either one, from the copies held by those of the
-    // two particles that reside on this rank. Executed identically on all
-    // ranks, so that every copy is removed.
+    // particles, owned by either one, from the bond table of this rank, if
+    // one of the two particles resides here. Executed identically on all
+    // ranks, so that the bonds are removed on every rank that stores them.
     auto const id1 = d.particle_id_1;
     auto const id2 = d.particle_id_2;
     auto const connects = [id1, id2](BondRecord const &bond) {
@@ -224,9 +224,9 @@ void BondBreakage::process_queue_impl(System::System &system) {
   }
 
   // Some actions can only be constructed on the ranks where the involved
-  // particles are known, but the bond copies of all participants must be
-  // removed, wherever they reside: execute the actions found on any rank,
-  // on every rank and in the same order.
+  // particles are known, but the bonds must be removed on every rank where
+  // a participant resides: execute the actions found on any rank, on every
+  // rank and in the same order.
   std::vector<BondTuple> encoded_actions;
   for (auto const &a : local_actions) {
     encoded_actions.emplace_back(std::visit(encode_action{}, a));

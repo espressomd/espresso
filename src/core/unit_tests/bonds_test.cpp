@@ -139,7 +139,7 @@ BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
   BOOST_CHECK_EQUAL(n_bonds(), 2u);
   BOOST_CHECK(::is_bond_storage_consistent(system));
 
-  /* every participant stores a copy, with the owner first */
+  /* every participant lists the bond, with the owner first */
   BOOST_CHECK(
       (bonds_of(1) == std::vector<BondTuple>{{pair_bond_id, {1, 2}},
                                              {angle_bond_id, {2, 1, 3}}}));
@@ -150,30 +150,37 @@ BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
                       1u);
   }
 
-  /* a bond can be removed in exact order, from all copies */
-  BOOST_CHECK(::remove_bond(system, angle_bond_id, {2, 1, 3}));
+  /* a bond can be removed in exact order, for all participants */
+  ::remove_bond(system, angle_bond_id, {2, 1, 3});
+  BOOST_CHECK_EQUAL(n_bonds(), 1u);
   BOOST_CHECK(bonds_of(3).empty());
   BOOST_CHECK((bonds_of(2) == std::vector<BondTuple>{{pair_bond_id, {1, 2}}}));
-  BOOST_CHECK(::remove_bond(system, pair_bond_id, {1, 2}));
+  ::remove_bond(system, pair_bond_id, {1, 2});
   BOOST_CHECK_EQUAL(n_bonds(), 0u);
   BOOST_CHECK(bonds_of(1).empty());
   BOOST_CHECK(bonds_of(2).empty());
 
-  /* removing a bond that does not exist is reported */
-  BOOST_CHECK(not ::remove_bond(system, pair_bond_id, {1, 2}));
-  BOOST_CHECK(not ::remove_bond(system, pair_bond_id, std::vector<int>{}));
+  /* removing a bond that does not exist does nothing */
+  ::add_bond(system, angle_bond_id, {2, 1, 3});
+  ::remove_bond(system, pair_bond_id, {1, 2});
+  ::remove_bond(system, angle_bond_id, {2, 3, 1});
+  ::remove_bond(system, pair_bond_id, std::vector<int>{});
+  BOOST_CHECK_EQUAL(n_bonds(), 1u);
+  ::remove_bond(system, angle_bond_id, {2, 1, 3});
+  BOOST_CHECK_EQUAL(n_bonds(), 0u);
 
   /* the same bond added from both sides: each removal removes in
    * exact order */
   ::add_bond(system, pair_bond_id, {1, 2});
   ::add_bond(system, pair_bond_id, {2, 1});
   BOOST_CHECK(::is_bond_storage_consistent(system));
-  BOOST_CHECK(::remove_bond(system, pair_bond_id, {2, 1}));
+  BOOST_CHECK_EQUAL(n_bonds(), 2u);
+  ::remove_bond(system, pair_bond_id, {2, 1});
   BOOST_CHECK((bonds_of(2) == std::vector<BondTuple>{{pair_bond_id, {1, 2}}}));
-  BOOST_CHECK(::remove_bond(system, pair_bond_id, {1, 2}));
+  ::remove_bond(system, pair_bond_id, {1, 2});
   BOOST_CHECK_EQUAL(n_bonds(), 0u);
 
-  /* a missing copy is detected */
+  /* a participant that no longer lists the bond is detected */
   ::add_bond(system, pair_bond_id, {1, 2});
   if (local(2)) {
     system.cell_structure->bond_table().erase(2);
@@ -266,7 +273,7 @@ BOOST_FIXTURE_TEST_CASE(particle_removal, RemoveAllParticles) {
                    }) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));
 
   /* removing a particle removes all the bonds it participates in,
-   * whether it owns them or not, from all copies */
+   * whether it owns them or not, on every rank */
   ::remove_particle(1);
   BOOST_CHECK(bonds_of(2).empty());
   BOOST_CHECK((bonds_of(3) == std::vector<BondTuple>{{pair_bond_id, {3, 4}}}));

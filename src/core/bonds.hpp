@@ -23,13 +23,13 @@
  * @file
  * Mutations of the bond topology.
  *
- * Every rank keeps a full copy of each bond one of its local particles
- * participates in (@ref BondTable), separate from the particles, so a bond
- * is known on every MPI rank where one of its participants resides, and
- * nowhere else. The copies are shipped along with the particles when they
- * migrate between ranks. Mutations are therefore collective calls in which
- * every rank applies the part that concerns its local particles; no rank
- * holds the complete topology.
+ * Every rank stores each bond one of its local particles participates in
+ * once, in its @ref BondTable, separate from the particles. A bond is
+ * therefore known on every MPI rank where one of its participants resides,
+ * and nowhere else. The bonds are shipped along with the particles when
+ * they migrate between ranks. Mutations are therefore collective calls in
+ * which every rank applies the part that concerns its local particles; no
+ * rank holds the complete topology.
  */
 
 #include "BondTable.hpp"
@@ -52,8 +52,8 @@ using BondTuple = std::pair<int, std::vector<int>>;
  * @brief Add a bond between particles.
  *
  * Must be called on all MPI ranks with the same arguments. Every rank
- * stores the bond in those of its local particles that participate in it.
- * No communication takes place.
+ * where a participant resides stores the bond. No communication takes
+ * place.
  *
  * The first particle owns the bond: the bond is evaluated on the MPI rank
  * where that particle resides. Bonds given by the user should be validated
@@ -173,23 +173,21 @@ void check_bond_can_be_removed(System::System const &system, int bond_id,
  * @brief Remove a bond between particles.
  *
  * Must be called on all MPI ranks with the same arguments. Every rank
- * removes one bond matching @p bond_id and exactly @p particle_ids, in the
- * given order, from those of its local particles that participate in it.
- * No communication takes place.
+ * removes the bond matching @p bond_id and exactly @p particle_ids, in the
+ * given order, if it stores it. Nothing happens if the bond does not
+ * exist; bonds given by the user should be validated with
+ * @ref check_bond_can_be_removed() first. No communication takes place.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
- *
- * @return whether the bond was removed from the owner, which is only
- *         known on the rank where the owner resides.
  */
-bool remove_bond(System::System &system, int bond_id,
+void remove_bond(System::System &system, int bond_id,
                  std::span<const int> particle_ids);
 
 /** @overload */
-inline bool remove_bond(System::System &system, int bond_id,
+inline void remove_bond(System::System &system, int bond_id,
                         std::vector<int> const &particle_ids) {
-  return remove_bond(system, bond_id, std::span<const int>(particle_ids));
+  remove_bond(system, bond_id, std::span<const int>(particle_ids));
 }
 
 /**
@@ -261,10 +259,11 @@ std::vector<BondTuple> const &get_owned_bonds(int pid);
 void invalidate_bond_fetch_cache();
 
 /**
- * @brief Check that the bond copies are consistent.
+ * @brief Check that the bonds are listed consistently.
  *
- * Every bond must be stored by each of its distinct participants, the same
- * number of times, and by no other particle. Collective over all MPI
+ * Every bond must be listed by each of its distinct participants, as seen
+ * from the rank where the participant resides, the same number of times,
+ * and by no other particle. Collective over all MPI
  * ranks, with a cost proportional to the total number of bonds; meant for
  * tests and additional checks.
  *
