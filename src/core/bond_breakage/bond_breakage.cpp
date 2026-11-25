@@ -33,6 +33,8 @@
 
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
+#include <boost/serialization/std_variant.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <cassert>
 #include <memory>
@@ -51,10 +53,6 @@ using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
 // Set of actions
 using ActionSet = std::unordered_set<Action>;
 
-/** @brief Tag of an action type when encoded, see @ref encode_action. */
-template <typename T>
-constexpr int tag_of = static_cast<int>(Action(std::in_place_type<T>).index());
-
 /** Add a particle+bond combination to the breakage queue */
 void BondBreakage::queue_breakage(int particle_id,
                                   BondPartners const &bond_partners,
@@ -65,14 +63,15 @@ void BondBreakage::queue_breakage(int particle_id,
   }
 }
 
-/** @brief Gathers combined queue from all mpi ranks */
-static auto gather_global_queue(Queue const &local_queue) {
-  Queue res = local_queue;
+/** @brief Combine the elements collected on all MPI ranks, in rank order,
+ *  into the same vector on every rank. */
+template <typename T>
+static std::vector<T> gather_on_all_ranks(std::vector<T> elements) {
   if (comm_cart.size() > 1) {
-    Utils::Mpi::gather_buffer(res, comm_cart);
-    boost::mpi::broadcast(comm_cart, res, 0);
+    Utils::Mpi::gather_buffer(elements, comm_cart);
+    boost::mpi::broadcast(comm_cart, elements, 0);
   }
-  return res;
+  return elements;
 }
 
 /** @brief Constructs the actions to take for a breakage queue entry */
@@ -178,36 +177,8 @@ public:
   }
 };
 
-/** @brief Encode an action for communication, see @ref decode_action. */
-struct encode_action {
-  BondTuple operator()(DeleteBond const &d) const {
-    return {tag_of<DeleteBond>,
-            {d.particle_id, d.bond_partner_id, d.bond_type}};
-  }
-  BondTuple operator()(DeleteAngleBond const &d) const {
-    return {tag_of<DeleteAngleBond>,
-            {d.particle_id, d.bond_partner_id[0], d.bond_partner_id[1],
-             d.bond_type}};
-  }
-  BondTuple operator()(DeleteAllBonds const &d) const {
-    return {tag_of<DeleteAllBonds>, {d.particle_id_1, d.particle_id_2}};
-  }
-};
-
-static Action decode_action(BondTuple const &encoded) {
-  auto const &[kind, v] = encoded;
-  if (kind == tag_of<DeleteBond>) {
-    return DeleteBond{v[0], v[1], v[2]};
-  }
-  if (kind == tag_of<DeleteAngleBond>) {
-    return DeleteAngleBond{v[0], {{v[1], v[2]}}, v[3]};
-  }
-  assert(kind == tag_of<DeleteAllBonds>);
-  return DeleteAllBonds{v[0], v[1]};
-}
-
 void BondBreakage::process_queue_impl(System::System &system) {
-  auto global_queue = gather_global_queue(m_queue);
+  auto const global_queue = gather_on_all_ranks(m_queue);
   auto &cell_structure = *system.cell_structure;
 
   if (global_queue.empty()) {
@@ -227,14 +198,10 @@ void BondBreakage::process_queue_impl(System::System &system) {
   // particles are known, but the bonds must be removed on every rank where
   // a participant resides: execute the actions found on any rank, on every
   // rank and in the same order.
-  std::vector<BondTuple> encoded_actions;
-  for (auto const &a : local_actions) {
-    encoded_actions.emplace_back(std::visit(encode_action{}, a));
-  }
-  ::sync_bond_tuples(encoded_actions, ::comm_cart);
+  auto const actions = gather_on_all_ranks(
+      std::vector<Action>(local_actions.begin(), local_actions.end()));
   ActionSet executed = {};
-  for (auto const &encoded : encoded_actions) {
-    auto const action = decode_action(encoded);
+  for (auto const &action : actions) {
     if (executed.insert(action).second) {
       std::visit(execute(system), action);
     }
