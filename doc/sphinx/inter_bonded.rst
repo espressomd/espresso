@@ -27,20 +27,28 @@ is provided in subsection :ref:`FENE bond`) between them using::
     system.bonded_inter.add(fene)
     system.bonds[fene].add((p1, p2))
 
-Note that the ``fene`` object specifies the type of bond and its parameters,
-while the first particle ``p1`` owns the bond: the bond is evaluated on the
-MPI rank where ``p1`` resides, and the bond is listed in ``p1.bonds``.
-Each MPI rank stores a copy of the bond for every one of its particles
-that participates in it, and the copies are sent along when a particle
-moves to another rank, so that the memory needed for the bonds is
-distributed over the ranks like the particles themselves.
-To remove a bond, one has to remember which particle owns it.
+Note that the ``fene`` object specifies the type of bond and its parameters.
+A bond is identified by its bonded interaction and by its particles in the
+order they were given: ``(p1, p2)`` and ``(p2, p1)`` are two different bonds.
+The first particle ``p1`` determines where the bond is evaluated, namely on
+the MPI rank where ``p1`` resides, and the bond is listed in ``p1.bonds``
+but not in ``p2.bonds``.
+The bond information is not stored in the particles: each MPI rank stores
+every bond that one of its particles participates in, once, and the bonds
+are sent along when a particle moves to another rank, so that the memory
+needed for the bonds is distributed over the ranks like the particles
+themselves.
+To remove a bond, its particles have to be given in the same order as when
+the bond was added.
 You can find more information regarding particle properties in
 :ref:`Setting up particles`.
 
 To delete the FENE bond between particles ``p1`` and ``p2``::
 
     system.bonds[fene].remove((p1, p2))
+
+A bonded interaction cannot be deleted from ``system.bonded_inter`` while
+bonds between particles still use it; these bonds have to be removed first.
 
 Note that alternatively to particle handles, the particle's ids can be
 used to setup bonded interactions. For example, to create a bond between the

@@ -493,9 +493,12 @@ class ParticleHandle(ScriptInterfaceHelper):
     @property
     def bonds(self):
         """
-        The bonds owned by this particle. Note that a bond is only listed
-        for the particle it was created on (its first argument), not for
-        its partner particles. You need to define a bonded interaction.
+        The bonds whose first particle is this particle. A bond is listed
+        only for the first of the particles it was created with, e.g. a bond
+        created with ``system.bonds[bond].add((p1, p2))`` is listed for
+        ``p1`` but not for ``p2``. The bond information is not stored in the
+        particle: it is looked up in the bonds of the system. You need to
+        define a bonded interaction.
 
         A bond tuple is specified as a bond identifier associated with
         a particle ``(bond_ID, (*part_ID,))``. A single particle may contain
