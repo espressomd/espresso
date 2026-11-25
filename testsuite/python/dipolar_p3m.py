@@ -142,6 +142,19 @@ class MagnetostaticsP3M(ut.TestCase):
 
             self.system.magnetostatics.clear()
 
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 2,
+               "Skipping test: only runs for n_nodes == 2")
+    def test_simd_exclusion_path(self):
+        # should fall back to legacy FFT backend without heFFTe cross-checks
+        # (there is no SIMD memory alignment for a single-precision odd mesh)
+        self.system.part.add(
+            pos=[(4.0, 2.0, 2.0), (6.0, 2.0, 2.0)],
+            dip=[(1.3, 2.1, -6.0), (7.3, 6.1, -4.0)])
+        dp3m = espressomd.magnetostatics.DipolarP3M(
+            prefactor=1.1, accuracy=1e-6, mesh=[49, 49, 49],
+            cao=7, r_cut=4.74, tune=True, single_precision=True)
+        self.system.magnetostatics.solver = dp3m
+
 
 if __name__ == "__main__":
     ut.main()

@@ -22,7 +22,6 @@
 #include <utils/Vector.hpp>
 
 #include <complex>
-#include <type_traits>
 
 /**
  * @brief Abstract interface for the P3M reciprocal-space FFT.
@@ -69,4 +68,15 @@ template <typename FloatType, class FFTConfig> struct P3MFFTBackend {
    *  Callers must recompute the k-space input before reading it again.
    */
   virtual void backward(ComplexType *in, RSpaceScalar *out) = 0;
+  /** @brief Backward transform of @p n fields stored back to back in @p in
+   *  (k-space size each) and @p out (real-space size each). Backends that
+   *  have a faster batched transform override this default loop.
+   */
+  virtual void backward_batch(unsigned n, ComplexType *in, RSpaceScalar *out) {
+    auto const ks_size = Utils::product(ks_local_size());
+    auto const rs_size = Utils::product(rs_local_size());
+    for (auto i = 0u; i < n; ++i) {
+      backward(in + i * ks_size, out + i * rs_size);
+    }
+  }
 };

@@ -1108,7 +1108,8 @@ template <ChargeProtocol protocol>
 void charge_assign(elc_data const &elc, CoulombP3M &solver, auto const &cs) {
 
   solver.prepare_fft_mesh(protocol == ChargeProtocol::BOTH or
-                          protocol == ChargeProtocol::IMAGE);
+                              protocol == ChargeProtocol::IMAGE,
+                          true);
 
   // multi-threading -> cache sizes must be equal to the number of particles
   auto constexpr include_neutral_particles = true;
