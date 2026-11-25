@@ -93,7 +93,7 @@ Variant H5md::do_call_method(std::string const &name, VariantMap const &) {
     auto const time_step = system.get_time_step();
     auto const n_steps = static_cast<int>(std::round(sim_time / time_step));
     m_h5md->write(particles, sim_time, n_steps, *system.box_geo,
-                  system.cell_structure->bond_store());
+                  system.cell_structure->bond_table());
   } else if (name == "flush") {
     sanity_check_is_file_closed(name);
     m_h5md->flush();

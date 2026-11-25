@@ -82,7 +82,7 @@ System::System(Private) {
 #endif
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
-  bonded_ias->set_bond_store(&cell_structure->bond_store());
+  bonded_ias->set_bond_table(&cell_structure->bond_table());
   thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();

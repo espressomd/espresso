@@ -19,7 +19,7 @@
 
 #include "bonds.hpp"
 
-#include "BondStore.hpp"
+#include "BondTable.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -56,19 +56,17 @@ Particle *local_particle(System::System const &system, int pid) {
   return (p != nullptr and not p->is_ghost()) ? p : nullptr;
 }
 
-/** @brief Execute a kernel for every distinct local participant. */
-template <typename Kernel>
-void for_each_local_participant(System::System const &system,
-                                std::span<const int> particle_ids,
-                                Kernel &&kernel) {
+/** @brief The distinct participants of a bond residing on this rank. */
+std::vector<int> local_participants(System::System const &system,
+                                    std::span<const int> particle_ids) {
+  std::vector<int> pids;
   for (auto it = particle_ids.begin(); it != particle_ids.end(); ++it) {
-    if (std::find(particle_ids.begin(), it, *it) != it) {
-      continue; // a particle listed twice stores the bond once
-    }
-    if (auto *p = local_particle(system, *it)) {
-      kernel(*p);
+    if (std::find(particle_ids.begin(), it, *it) == it and
+        local_particle(system, *it) != nullptr) {
+      pids.push_back(*it);
     }
   }
+  return pids;
 }
 
 std::string format_ids(std::span<const int> ids) {
@@ -85,10 +83,9 @@ std::string format_ids(std::span<const int> ids) {
  */
 bool owns_bond(System::System const &system, int bond_id,
                std::span<const int> particle_ids) {
-  auto const *owner = local_particle(system, particle_ids[0]);
   auto const local =
-      owner != nullptr and system.cell_structure->bond_store().contains(
-                               owner->id(), bond_id, particle_ids);
+      local_particle(system, particle_ids[0]) != nullptr and
+      system.cell_structure->bond_table().contains(bond_id, particle_ids);
   return boost::mpi::all_reduce(::comm_cart, local, std::logical_or<>());
 }
 
@@ -101,25 +98,18 @@ void check_not_empty(std::span<const int> particle_ids) {
 
 void add_bond(System::System &system, int bond_id,
               std::span<const int> particle_ids) {
-  for_each_local_participant(system, particle_ids, [&](Particle &p) {
-    system.cell_structure->bond_store().add(p.id(), bond_id, particle_ids);
-  });
+  system.cell_structure->bond_table().add(
+      bond_id, particle_ids, local_participants(system, particle_ids));
 }
 
 bool remove_bond(System::System &system, int bond_id,
                  std::span<const int> particle_ids) {
-  auto removed_from_owner = false;
   if (particle_ids.empty()) {
-    return removed_from_owner;
+    return false;
   }
-  for_each_local_participant(system, particle_ids, [&](Particle &p) {
-    auto const removed = system.cell_structure->bond_store().remove(
-        p.id(), bond_id, particle_ids);
-    if (p.id() == particle_ids[0]) {
-      removed_from_owner = removed;
-    }
-  });
-  return removed_from_owner;
+  auto const removed =
+      system.cell_structure->bond_table().remove(bond_id, particle_ids);
+  return removed and local_particle(system, particle_ids[0]) != nullptr;
 }
 
 void check_particles_exist(System::System const &system,
@@ -230,9 +220,8 @@ void check_bonds_can_be_added(System::System const &system, int bond_id,
   auto first_existing = n_bonds;
   for (std::size_t i = 0u; i < n_bonds; ++i) {
     auto const ids = bond(i);
-    auto const *owner = local_particle(system, ids[0]);
-    if (owner != nullptr and system.cell_structure->bond_store().contains(
-                                 owner->id(), bond_id, ids)) {
+    if (local_particle(system, ids[0]) != nullptr and
+        system.cell_structure->bond_table().contains(bond_id, ids)) {
       first_existing = i;
       break;
     }
@@ -251,7 +240,7 @@ void add_encoded_bonds(System::System &system, std::span<const int> encoded) {
   std::vector<int> unique_ids;
   for (std::size_t i = 0u; i < encoded.size();) {
     if (i + 2u > encoded.size() or encoded[i + 1u] <= 0 or
-        static_cast<std::size_t>(encoded[i + 1u]) > BondStore::max_particles or
+        static_cast<std::size_t>(encoded[i + 1u]) > BondTable::max_particles or
         i + 2u + static_cast<std::size_t>(encoded[i + 1u]) > encoded.size()) {
       throw std::invalid_argument("Malformed bond encoding");
     }
@@ -265,6 +254,37 @@ void add_encoded_bonds(System::System &system, std::span<const int> encoded) {
   auto const duplicates = std::ranges::unique(unique_ids);
   unique_ids.erase(duplicates.begin(), duplicates.end());
   check_particles_exist(system, unique_ids);
+  // a bond can be stored only once
+  auto sorted = bonds;
+  std::ranges::sort(sorted, [](auto const &a, auto const &b) {
+    return a.first != b.first
+               ? a.first < b.first
+               : std::ranges::lexicographical_compare(a.second, b.second);
+  });
+  for (std::size_t i = 1u; i < sorted.size(); ++i) {
+    if (sorted[i - 1u].first == sorted[i].first and
+        std::ranges::equal(sorted[i - 1u].second, sorted[i].second)) {
+      throw std::runtime_error(
+          "Bond " + std::to_string(sorted[i].first) + " with partners " +
+          format_ids(sorted[i].second.subspan(1u)) +
+          " appears twice for particle " + std::to_string(sorted[i].second[0]));
+    }
+  }
+  auto first_existing = bonds.size();
+  for (std::size_t i = 0u; i < bonds.size(); ++i) {
+    auto const &[bond_id, ids] = bonds[i];
+    if (local_particle(system, ids[0]) != nullptr and
+        system.cell_structure->bond_table().contains(bond_id, ids)) {
+      first_existing = i;
+      break;
+    }
+  }
+  first_existing = boost::mpi::all_reduce(::comm_cart, first_existing,
+                                          boost::mpi::minimum<std::size_t>());
+  if (first_existing != bonds.size()) {
+    throw std::runtime_error(already_exists_message(
+        bonds[first_existing].first, bonds[first_existing].second));
+  }
   for (auto const &[bond_id, ids] : bonds) {
     add_bond(system, bond_id, ids);
   }
@@ -303,7 +323,7 @@ std::vector<BondTuple> gather_bonds_of_particles(
   std::vector<BondTuple> bonds;
   for (auto const pid : pids) {
     if (local_particle(system, pid) != nullptr) {
-      for (auto const bond : system.cell_structure->bond_store().view(pid)) {
+      for (auto const bond : system.cell_structure->bond_table().view(pid)) {
         if (pred(bond, pid)) {
           auto const ids = bond.particle_ids();
           bonds.emplace_back(bond.bond_id(),
@@ -325,11 +345,11 @@ constexpr std::size_t bond_fetch_cache_max_size = std::size_t{1} << 20;
 
 static void mpi_gather_owned_bonds_local(std::vector<int> const &pids) {
   auto const &system = System::get_system();
-  auto const &bond_store = system.cell_structure->bond_store();
+  auto const &bond_table = system.cell_structure->bond_table();
   std::vector<BondTuple> bonds;
   for (auto const pid : pids) {
     if (local_particle(system, pid) != nullptr) {
-      for (auto const bond : bond_store.owned(pid)) {
+      for (auto const bond : bond_table.owned(pid)) {
         auto const ids = bond.particle_ids();
         bonds.emplace_back(bond.bond_id(),
                            std::vector<int>(ids.begin(), ids.end()));
@@ -377,7 +397,7 @@ bool is_bond_storage_consistent(System::System const &system) {
   // every stored copy, with the id of the particle that holds it
   std::vector<std::pair<BondTuple, int>> copies;
   for (auto const &p : system.cell_structure->local_particles()) {
-    for (auto const bond : system.cell_structure->bond_store().view(p.id())) {
+    for (auto const bond : system.cell_structure->bond_table().view(p.id())) {
       auto const ids = bond.particle_ids();
       copies.emplace_back(
           BondTuple{bond.bond_id(), std::vector<int>(ids.begin(), ids.end())},

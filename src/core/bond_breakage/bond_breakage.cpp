@@ -172,7 +172,7 @@ public:
     for (auto const pid : {id1, id2}) {
       auto *p = system.cell_structure->get_local_particle(pid);
       if (p != nullptr and not p->is_ghost()) {
-        system.cell_structure->bond_store().remove_if(pid, connects);
+        system.cell_structure->bond_table().remove_if(pid, connects);
       }
     }
   }

@@ -23,7 +23,7 @@
 
 #include "cell_system/ParticleDecomposition.hpp"
 
-#include "BondStore.hpp"
+#include "BondTable.hpp"
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
@@ -232,18 +232,18 @@ private:
 #endif
   std::unique_ptr<LocalBondState> m_bond_state;
   /** @brief Bonds of the particles residing on this rank. */
-  BondStore m_bond_store;
+  BondTable m_bond_table;
   /** @brief Ships the bonds of particles moving to another rank. */
   struct BondMigration final : public ParticleMigration {
-    BondStore &store;
-    explicit BondMigration(BondStore &store) : store{store} {}
+    BondTable &store;
+    explicit BondMigration(BondTable &store) : store{store} {}
     void pack(int pid, std::vector<int> &buffer) override {
       store.extract(pid, buffer);
     }
     std::span<const int> unpack(int pid, std::span<const int> buffer) override {
       return store.insert(pid, buffer);
     }
-  } m_bond_migration{m_bond_store};
+  } m_bond_migration{m_bond_table};
   std::unique_ptr<ListType> m_verlet_list_cabana;
   /**
    * @brief Persistent per-neighbor buffer pool for ghost exchanges.
@@ -284,7 +284,7 @@ private:
 
 public:
   CellStructure(BoxGeometry const &box);
-  // the bond migration refers to the bond store of this object
+  // the bond migration refers to the bond table of this object
   CellStructure(CellStructure const &) = delete;
   CellStructure &operator=(CellStructure const &) = delete;
   virtual ~CellStructure();
@@ -794,7 +794,7 @@ private:
     // Owned bonds only: they carry the partner order the bond was created
     // with (e.g. the vertex-first order angle bonds rely on), and every
     // bond is processed exactly once.
-    for (auto const bond : m_bond_store.owned(p.id())) {
+    for (auto const bond : m_bond_table.owned(p.id())) {
       auto const partner_ids = bond.partner_ids();
       if (partner_ids.empty()) {
         continue; // bonds without partners are not evaluated
@@ -973,18 +973,19 @@ public:
   }
 
   /**
-   * @brief Append the bonds owned by a particle to the flat bond lists
-   * (@ref LocalBondState), as particle ids. Safe to call concurrently.
-   * Bonds whose partners are not known on this rank are reported and not
-   * stored.
-   * @param index  Position of the particle in the unique particles.
-   * @param p      Particle residing on this rank.
+   * @brief Append the bonds owned by the particles of this rank to the flat
+   * bond lists (@ref LocalBondState), as particle ids. Bonds whose partners
+   * are not known on this rank are reported and not stored.
    */
-  void append_owned_bonds(std::size_t index, Particle const &p);
+  void append_owned_bonds();
+
+  /** @brief Whether a bond is evaluated on this rank, i.e. its owner
+   *  resides here. */
+  bool is_owned_here(BondRow const &row) const;
 
   /** @brief Bonds of the particles residing on this rank. */
-  BondStore &bond_store() { return m_bond_store; }
-  BondStore const &bond_store() const { return m_bond_store; }
+  BondTable &bond_table() { return m_bond_table; }
+  BondTable const &bond_table() const { return m_bond_table; }
 
   /**
    * @brief Reset local properties of the Verlet list.

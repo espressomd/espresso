@@ -199,17 +199,13 @@ update_cabana_state(CellStructure &cell_structure,
 #endif
     kokkos_parallel_range_for<execution_space>(
         "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa, &id_to_index,
-         &cell_structure](int const index) {
+        [&unique_particles, &aosoa, &id_to_index](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
-          if (not p.is_ghost()) {
-            cell_structure.append_owned_bonds(static_cast<std::size_t>(index),
-                                              p);
-          }
         });
     Kokkos::fence();
+    cell_structure.append_owned_bonds();
     // all particles have an index now
     cell_structure.bond_state().convert_ids_to_indices(id_to_index);
 #ifdef ESPRESSO_CALIPER

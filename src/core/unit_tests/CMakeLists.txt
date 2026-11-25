@@ -85,7 +85,7 @@ espresso_unit_test(SRC thermostats_test.cpp DEPENDS espresso::core
                    Kokkos::kokkos)
 espresso_unit_test(SRC random_test.cpp DEPENDS espresso::utils Kokkos::kokkos
                    Random123)
-espresso_unit_test(SRC BondStore_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC BondTable_test.cpp DEPENDS espresso::core Kokkos::kokkos)
 espresso_unit_test(SRC bonds_test.cpp DEPENDS espresso::core Kokkos::kokkos
                    Boost::mpi)
 espresso_unit_test(SRC energy_test.cpp DEPENDS espresso::core Kokkos::kokkos)

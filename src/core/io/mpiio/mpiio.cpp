@@ -50,7 +50,7 @@
 
 #include "mpiio.hpp"
 
-#include "BondStore.hpp"
+#include "BondTable.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -222,7 +222,7 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
                             BondedInteractionsMap const &bonded_ias,
                             ParticleRange const &particles,
                             write_buffers &buffers,
-                            BondStore const &bond_store) {
+                            BondTable const &bond_table) {
   auto const nlocalpart = static_cast<unsigned long>(particles.size());
   auto const offset = mpi_calculate_file_offset(nlocalpart);
   // keep buffers in order to avoid allocating them on every function call
@@ -297,7 +297,7 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
       std::vector<int> block;
       for (auto const &p : particles) {
         block.clear();
-        bond_store.copy_to(p.id(), block);
+        bond_table.copy_to(p.id(), block);
         bond_archiver << block;
       }
     }
@@ -526,7 +526,13 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
     std::vector<int> block;
     for (auto &p : particles) {
       ia >> block;
-      cell_structure.bond_store().insert(p.id(), block);
+      try {
+        cell_structure.bond_table().insert(p.id(), block);
+      } catch (std::runtime_error const &) {
+        fatal_error("Malformed bond file (written by an incompatible version "
+                    "of ESPResSo?)",
+                    prefix + ".bond");
+      }
     }
   }
 

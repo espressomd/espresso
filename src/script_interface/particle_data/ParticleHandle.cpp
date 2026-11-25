@@ -27,7 +27,7 @@
 #include "script_interface/interactions/BondedInteractions.hpp"
 #include "script_interface/system/System.hpp"
 
-#include "core/BondStore.hpp"
+#include "core/BondTable.hpp"
 #include "core/BoxGeometry.hpp"
 #include "core/PropagationMode.hpp"
 #include "core/bond_queries.hpp"
@@ -655,7 +655,7 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     std::vector<int> local_flat;
     auto const *p = cell_structure.get_local_particle(m_pid);
     if (p != nullptr and not p->is_ghost()) {
-      for (auto const bond : cell_structure.bond_store().owned(m_pid)) {
+      for (auto const bond : cell_structure.bond_table().owned(m_pid)) {
         local_flat.push_back(static_cast<int>(bond.partner_ids().size()));
         local_flat.push_back(bond.bond_id());
         std::ranges::copy(bond.partner_ids(), std::back_inserter(local_flat));

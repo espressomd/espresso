@@ -243,6 +243,15 @@ class DistributedBonds(ut.TestCase):
         finally:
             type(bonds)._batch_size = batch_size
 
+    def test_bulk_part_add_rejects_duplicates(self):
+        n = self.n_part
+        with self.assertRaisesRegex(Exception, "appears twice"):
+            self.system.part.add(
+                pos=[[1., 1., 1.], [2., 2., 2.]],
+                bonds=[[(self.harmonic, 0), (self.harmonic, 0)], []])
+        self.assertEqual(len(self.system.part), n + 2)
+        self.assertEqual(self.owned_bonds(), [])
+
     def test_slice_setter_and_removal_across_ranks(self):
         self.add_chain_bonds()
         # replace the bonds owned by particles on all ranks at once

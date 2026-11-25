@@ -562,9 +562,9 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_COLLISION_DETECTION
   auto collision_kernel =
       [&collision_detection = *collision_detection,
-       &bond_store = std::as_const(*cell_structure).bond_store()](
+       &bond_table = std::as_const(*cell_structure).bond_table()](
           Particle const &p1, Particle const &p2, Distance const &d) {
-        collision_detection.detect_collision(p1, p2, d.dist2, bond_store);
+        collision_detection.detect_collision(p1, p2, d.dist2, bond_table);
       };
   if (not collision_detection->is_off()) {
     auto const verlet_criterion = make_verlet_criterion();

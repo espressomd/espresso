@@ -566,7 +566,7 @@ static void write_le_normal(LeesEdwardsBC const &lebc,
 }
 
 void File::write(const ParticleRange &particles, double time, int step,
-                 BoxGeometry const &box_geo, BondStore const &bond_store) {
+                 BoxGeometry const &box_geo, BondTable const &bond_table) {
   auto &datasets = m_datasets;
   if (m_fields & H5MD_OUT_BOX_L) {
     write_box(box_geo, datasets.at("/particles/atoms/box/edges/value"));
@@ -654,17 +654,17 @@ void File::write(const ParticleRange &particles, double time, int step,
                                   detail::make_serializer(&Particle::q));
   }
   if (m_fields & H5MD_OUT_BONDS) {
-    write_connectivity(particles, bond_store);
+    write_connectivity(particles, bond_table);
   }
 }
 
 void File::write_connectivity(const ParticleRange &particles,
-                              BondStore const &bond_store) {
+                              BondTable const &bond_table) {
   MultiArray3i bond(boost::extents[0][0][0]);
   for (auto const &p : particles) {
     auto nbonds_local = static_cast<decltype(bond)::index>(bond.shape()[1]);
     // Owned bonds only, so that every pair-bond edge is written once.
-    for (auto const b : bond_store.owned(p.id())) {
+    for (auto const b : bond_table.owned(p.id())) {
       auto const partner_ids = b.partner_ids();
       if (partner_ids.size() == 1u) {
         bond.resize(boost::extents[1][nbonds_local + 1][2]);

@@ -313,7 +313,7 @@ void System::System::integrator_sanity_checks() const {
         auto const is_rigid_bond = [this](int bond_id) {
           return std::holds_alternative<RigidBond>(*bonded_ias->at(bond_id));
         };
-        if (find_bond_id_with(cell_structure->bond_store(), p, is_rigid_bond)) {
+        if (find_bond_id_with(cell_structure->bond_table(), p, is_rigid_bond)) {
           runtimeErrorMsg() << "VS COM particles cannot use rigid bonds";
         }
       }

@@ -69,7 +69,7 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   // determine initial connectivity (owned bonds: every pair bond once)
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
-    for (auto const bond : cell_structure.bond_store().owned(pid1)) {
+    for (auto const bond : cell_structure.bond_table().owned(pid1)) {
       if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {

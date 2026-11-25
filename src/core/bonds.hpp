@@ -24,7 +24,7 @@
  * Mutations of the bond topology.
  *
  * Every rank keeps a full copy of each bond one of its local particles
- * participates in (@ref BondStore), separate from the particles, so a bond
+ * participates in (@ref BondTable), separate from the particles, so a bond
  * is known on every MPI rank where one of its participants resides, and
  * nowhere else. The copies are shipped along with the particles when they
  * migrate between ranks. Mutations are therefore collective calls in which
@@ -32,7 +32,7 @@
  * holds the complete topology.
  */
 
-#include "BondStore.hpp"
+#include "BondTable.hpp"
 #include "bond_queries.hpp"
 #include "system/System.hpp"
 

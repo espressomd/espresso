@@ -64,13 +64,13 @@ struct write_buffers {
  * @param bonded_ias Bonds to serialize.
  * @param particles Range of particles to serialize.
  * @param buffers Write buffers.
- * @param bond_store Bonds of the local particles.
+ * @param bond_table Bonds of the local particles.
  */
 void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
                             BondedInteractionsMap const &bonded_ias,
                             ParticleRange const &particles,
                             write_buffers &buffers,
-                            BondStore const &bond_store);
+                            BondTable const &bond_table);
 
 /**
  * @brief Parallel binary input using MPI-IO.

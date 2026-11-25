@@ -44,7 +44,7 @@ public:
   void handle_collisions(System::System &, std::vector<CollisionPair> &) {}
 
   bool detect_collision(Particle const &, Particle const &, double const,
-                        BondStore const &) const {
+                        BondTable const &) const {
     return false;
   }
 };

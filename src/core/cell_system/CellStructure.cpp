@@ -281,25 +281,39 @@ void CellStructure::reset_local_properties() {
   kokkos_deep_copy(execution_space{}, get_aosoa().flags, uint8_t{0});
 }
 
-void CellStructure::append_owned_bonds(std::size_t index, Particle const &p) {
-  // Owned bonds only: every bond enters the flat lists exactly once.
-  // The analyzer reports a false positive in the Kokkos bounds-check error
-  // formatting of the View accesses in LocalBondList::append()
-  // (Kokkos_ENABLE_DEBUG_BOUNDS_CHECK); it anchors the report at this call,
-  // which therefore carries the NOLINT.
-  // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
-  // After set_index_map(), the bonds of the unique particles are located
-  // by position, without lookups.
-  auto const owned = (m_bond_store.is_indexed()) ? m_bond_store.owned_at(index)
-                                                 : m_bond_store.owned(p.id());
-  for (auto const bond : owned) {
-    // the partners must be known on this rank
-    if (resolve_bond_partners(bond.partner_ids())) {
-      m_bond_state->append(bond.bond_id(), bond.particle_ids());
-    } else {
-      bond_resolution_error(bond.partner_ids());
-    }
+bool CellStructure::is_owned_here(BondRow const &row) const {
+  if (row.is_free()) {
+    return false;
   }
+  auto const *owner = get_local_particle(row.ids[0]);
+  return owner != nullptr and not owner->is_ghost();
+}
+
+void CellStructure::append_owned_bonds() {
+  // Every bond enters the flat lists exactly once, on the rank of its
+  // owner. The rows are scanned in parallel: appending is thread-safe.
+  auto const rows = m_bond_table.rows();
+  kokkos_parallel_range_for("append_owned_bonds", std::size_t{0}, rows.size(),
+                            [this, rows](std::size_t i) {
+                              auto const &row = rows[i];
+                              if (not is_owned_here(row)) {
+                                return;
+                              }
+                              auto const bond = row.record();
+                              // the partners must be known on this rank
+                              if (resolve_bond_partners(bond.partner_ids())) {
+                                // The analyzer reports a false positive in
+                                // the Kokkos bounds-check error formatting
+                                // of the View accesses in
+                                // LocalBondList::append().
+                                // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
+                                m_bond_state->append(bond.bond_id(),
+                                                     bond.particle_ids());
+                              } else {
+                                bond_resolution_error(bond.partner_ids());
+                              }
+                            });
+  Kokkos::fence();
 }
 
 void CellStructure::set_index_map() {
@@ -318,44 +332,47 @@ void CellStructure::set_index_map() {
   // between L3 domains
   struct alignas(64) PerThreadCounts {
     int max_id = 0;
+    int pair = 0;
+    int angle = 0;
+    int dihedral = 0;
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
-  auto const n_local = unique_particles.size();
-  // Locate the bonds of every local particle once, so that
-  // append_owned_bonds() reads them by position, without lookups. When
-  // too much memory is unused, the bonds are first rewritten in the order
-  // of the particles.
-  if (m_bond_store.is_wasteful()) {
-    std::vector<int> local_ids;
-    local_ids.reserve(n_local);
-    for (auto const &p : local_particles()) {
-      local_ids.push_back(p.id());
-    }
-    m_bond_store.compact(local_ids);
-  }
-  m_bond_store.index_resize(n_local);
 
-  enumerate_local_particles(
-      *this, [&unique_particles, &thread_counts,
-              &bond_store = m_bond_store](std::size_t index, Particle &p) {
-        unique_particles[index] = &p;
-        bond_store.set_index(index, p.id());
-        auto &counts = thread_counts[omp_get_thread_num()];
-        counts.max_id = std::max(p.id(), counts.max_id);
-      });
+  enumerate_local_particles(*this, [&unique_particles, &thread_counts](
+                                       std::size_t index, Particle &p) {
+    unique_particles[index] = &p;
+    auto &counts = thread_counts[omp_get_thread_num()];
+    counts.max_id = std::max(p.id(), counts.max_id);
+  });
   Kokkos::fence();
-  m_bond_store.index_done();
   int max_id = 0;
   for (auto const &counts : thread_counts) {
     max_id = std::max(counts.max_id, max_id);
   }
+  // Drop the free rows of the bond table when they dominate, so that the
+  // scans below do not depend on the largest number of bonds ever held.
+  if (m_bond_table.is_wasteful()) {
+    m_bond_table.compact();
+  }
   // The counts of owned bonds must agree with what append_owned_bonds()
   // fills in, or the Kokkos views overflow.
+  auto const rows = m_bond_table.rows();
+  kokkos_parallel_range_for("count_owned_bonds", std::size_t{0}, rows.size(),
+                            [this, rows, &thread_counts](std::size_t i) {
+                              auto const &row = rows[i];
+                              if (is_owned_here(row)) {
+                                auto &counts =
+                                    thread_counts[omp_get_thread_num()];
+                                counts.pair += (row.n == 2u) ? 1 : 0;
+                                counts.angle += (row.n == 3u) ? 1 : 0;
+                                counts.dihedral += (row.n == 4u) ? 1 : 0;
+                              }
+                            });
+  Kokkos::fence();
   int pair_count = 0;
   int angle_count = 0;
   int dihedral_count = 0;
-  for (std::size_t i = 0u; i < n_local; ++i) {
-    auto const &counts = m_bond_store.owned_counts_at(i);
+  for (auto const &counts : thread_counts) {
     pair_count += counts.pair;
     angle_count += counts.angle;
     dihedral_count += counts.dihedral;
@@ -438,7 +455,7 @@ void CellStructure::remove_particle(int id) {
   for (auto const &[bond_id, ids] : bonds_to_remove) {
     ::remove_bond(system, bond_id, ids);
   }
-  m_bond_store.erase(id);
+  m_bond_table.erase(id);
 
   // Locate the particle via the index instead of scanning all local
   // particles. Real particles take precedence over ghosts in the index
@@ -525,7 +542,7 @@ void CellStructure::remove_all_particles() {
   m_particle_index.clear();
   clear_bond_properties();
   clear_particle_node();
-  m_bond_store.clear();
+  m_bond_table.clear();
   get_system().on_particle_change();
 }
 

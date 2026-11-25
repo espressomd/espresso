@@ -84,14 +84,14 @@ public:
 
   bool detect_collision(Particle const &p1, Particle const &p2,
                         double const dist_sq,
-                        BondStore const &bond_store) const {
+                        BondTable const &bond_table) const {
     if (dist_sq > distance_sq)
       return false;
 
     if (!glue_to_surface_criterion(p1, p2))
       return false;
 
-    return detect_collision_common(p1, p2, bond_centers, bond_store);
+    return detect_collision_common(p1, p2, bond_centers, bond_table);
   }
 };
 

@@ -93,11 +93,11 @@ class BondedInteractionsMap : public System::Leaf<BondedInteractionsMap> {
 
   /**
    * @brief Bonds of the local particles of the system this container is
-   * bound to. Cached by @ref set_bond_store(), since
+   * bound to. Cached by @ref set_bond_table(), since
    * @ref pair_bond_exists_between() is called from pair kernels, where
    * locking the system is too costly.
    */
-  BondStore const *m_bond_store = nullptr;
+  BondTable const *m_bond_table = nullptr;
 
 public:
   using key_type = container_type::key_type;
@@ -208,8 +208,8 @@ public:
    */
   template <typename BondType>
   bool pair_bond_exists_between(Particle const &p1, Particle const &p2) const {
-    assert(m_bond_store);
-    return ::pair_bond_exists(*m_bond_store, p1, p2, [this](int bond_id) {
+    assert(m_bond_table);
+    return ::pair_bond_exists(*m_bond_table, p1, p2, [this](int bond_id) {
       return std::holds_alternative<BondType>(*at(bond_id));
     });
   }
@@ -218,8 +218,8 @@ public:
    * @brief Set the bonds queried by @ref pair_bond_exists_between.
    * Must be called when attaching the container to a system.
    */
-  void set_bond_store(BondStore const *bond_store) {
-    m_bond_store = bond_store;
+  void set_bond_table(BondTable const *bond_table) {
+    m_bond_table = bond_table;
   }
 
   void on_ia_change();

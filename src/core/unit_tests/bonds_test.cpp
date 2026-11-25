@@ -24,7 +24,7 @@
 #include "EspressoCoreGlobalConfig.hpp"
 #include "ParticleFactory.hpp"
 
-#include "BondStore.hpp"
+#include "BondTable.hpp"
 #include "Particle.hpp"
 #include "bond_queries.hpp"
 #include "bonds.hpp"
@@ -42,6 +42,8 @@
 #include <array>
 #include <cstddef>
 #include <functional>
+#include <iterator>
+#include <ranges>
 #include <vector>
 
 /**
@@ -49,7 +51,7 @@
  * queries (bond_queries.hpp).
  *
  * The bookkeeping of the bonds of one particle is covered by the
- * @ref BondStore unit tests; the interaction with MPI by the
+ * @ref BondTable unit tests; the interaction with MPI by the
  * collision-detection, bond-breakage, particle-slice and distributed-bond
  * regression tests.
  */
@@ -104,8 +106,8 @@ auto all_bond_ids(int pid) {
 std::size_t n_bonds() {
   std::size_t n_local = 0u;
   for (auto const &p : System::get_system().cell_structure->local_particles()) {
-    n_local +=
-        System::get_system().cell_structure->bond_store().owned(p.id()).size();
+    n_local += static_cast<std::size_t>(std::ranges::distance(
+        System::get_system().cell_structure->bond_table().owned(p.id())));
   }
   return boost::mpi::all_reduce(::comm_cart, n_local, std::plus<>());
 }
@@ -144,7 +146,7 @@ BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
   BOOST_CHECK(
       (bonds_of(3) == std::vector<BondTuple>{{angle_bond_id, {2, 1, 3}}}));
   if (auto const *p = local(3)) {
-    BOOST_CHECK_EQUAL(system.cell_structure->bond_store().view(p->id()).size(),
+    BOOST_CHECK_EQUAL(system.cell_structure->bond_table().view(p->id()).size(),
                       1u);
   }
 
@@ -174,7 +176,7 @@ BOOST_FIXTURE_TEST_CASE(add_and_remove, RemoveAllParticles) {
   /* a missing copy is detected */
   ::add_bond(system, pair_bond_id, {1, 2});
   if (local(2)) {
-    system.cell_structure->bond_store().erase(2);
+    system.cell_structure->bond_table().erase(2);
   }
   BOOST_CHECK(not ::is_bond_storage_consistent(system));
 }
@@ -206,7 +208,7 @@ BOOST_FIXTURE_TEST_CASE(bond_queries, RemoveAllParticles) {
   auto const *p2 = local(2);
   auto const *p3 = local(3);
   auto const *p4 = local(4);
-  auto const &store = system.cell_structure->bond_store();
+  auto const &store = system.cell_structure->bond_table();
   if (p1 and p2 and p3 and p4) {
     /* the partners of an owned bond are in creation order */
     for (auto const bond : store.owned(2)) {

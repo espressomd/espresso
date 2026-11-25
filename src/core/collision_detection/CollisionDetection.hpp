@@ -69,11 +69,11 @@ public:
 
   /** @brief Detect (and queue) a collision between the given particles. */
   void detect_collision(Particle const &p1, Particle const &p2,
-                        double const dist_sq, BondStore const &bond_store) {
+                        double const dist_sq, BondTable const &bond_table) {
     if (m_protocol) {
       bool collision_detected = std::visit(
-          [&p1, &p2, dist_sq, &bond_store](auto const &protocol) {
-            return protocol.detect_collision(p1, p2, dist_sq, bond_store);
+          [&p1, &p2, dist_sq, &bond_table](auto const &protocol) {
+            return protocol.detect_collision(p1, p2, dist_sq, bond_table);
           },
           *m_protocol);
 
