@@ -520,7 +520,7 @@ public:
   /**
    * @brief Recompute the fields that the LB step derives from the PDFs.
    * Runs the boundary sweep and the velocity update sweep on the current
-   * PDFs, like the final stage of @ref integrate_pull_scheme, and
+   * PDFs, like the final stage of @c integrate_pull_scheme(), and
    * communicates the ghost layers. The boundary sweep also restores the
    * boundary forces.
    */
