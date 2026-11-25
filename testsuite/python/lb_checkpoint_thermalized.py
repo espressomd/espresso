@@ -29,7 +29,7 @@ import espressomd.lb
 import espressomd.shapes
 
 AGRID = 1.
-BOX_L = 8. * AGRID
+BOX_L = 12. * AGRID
 TIME_STEP = 0.01
 LB_PARAMS = {"agrid": AGRID,
              "density": 0.9,
