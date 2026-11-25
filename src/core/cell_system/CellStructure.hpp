@@ -969,7 +969,8 @@ public:
       kernel(m_decomposition->local_cells(), m_decomposition->box(),
              *m_verlet_list_cabana);
     }
-    m_verlet_list_cabana_filled = rebuild_verlet_list;
+    // The kernel disables the Verlet list on overflow.
+    m_verlet_list_cabana_filled = rebuild_verlet_list and use_verlet_list;
     m_rebuild_verlet_list_cabana = false;
   }
 
