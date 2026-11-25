@@ -38,6 +38,7 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
+#include <iterator>
 #include <map>
 #include <optional>
 #include <span>
@@ -175,6 +176,58 @@ void check_bond_can_be_added(System::System const &system, int bond_id,
   }
 }
 
+namespace {
+/**
+ * @brief Checks of a batch of bonds that need communication, with a fixed
+ * number of collectives: all particles exist, no bond appears twice in the
+ * batch, and no bond exists already.
+ */
+void check_batch_can_be_added(System::System const &system,
+                              std::span<BondRecord const> bonds) {
+  // one collective for the existence of all particles
+  std::vector<int> unique_ids;
+  for (auto const &bond : bonds) {
+    std::ranges::copy(bond.particle_ids(), std::back_inserter(unique_ids));
+  }
+  std::ranges::sort(unique_ids);
+  auto const duplicates = std::ranges::unique(unique_ids);
+  unique_ids.erase(duplicates.begin(), duplicates.end());
+  check_particles_exist(system, unique_ids);
+  // no bond twice in the batch
+  std::vector<BondRecord> sorted(bonds.begin(), bonds.end());
+  std::ranges::sort(sorted, [](BondRecord const &a, BondRecord const &b) {
+    return a.bond_id() != b.bond_id() ? a.bond_id() < b.bond_id()
+                                      : std::ranges::lexicographical_compare(
+                                            a.particle_ids(), b.particle_ids());
+  });
+  auto const twice = std::ranges::adjacent_find(
+      sorted, [](BondRecord const &a, BondRecord const &b) {
+        return a.matches(b.bond_id(), b.particle_ids());
+      });
+  if (twice != sorted.end()) {
+    throw std::runtime_error(
+        "Bond " + std::to_string(twice->bond_id()) + " with partners " +
+        format_ids(twice->partner_ids()) + " appears twice for particle " +
+        std::to_string(twice->owner_id()));
+  }
+  // one collective for the bonds that already exist: their owners know
+  auto const exists_here = [&system](BondRecord const &bond) {
+    return local_particle(system, bond.owner_id()) != nullptr and
+           system.cell_structure->bond_table().contains(bond.bond_id(),
+                                                        bond.particle_ids());
+  };
+  auto first_existing = static_cast<std::size_t>(
+      std::ranges::find_if(bonds, exists_here) - bonds.begin());
+  first_existing = boost::mpi::all_reduce(::comm_cart, first_existing,
+                                          boost::mpi::minimum<std::size_t>());
+  if (first_existing != bonds.size()) {
+    auto const &bond = bonds[first_existing];
+    throw std::runtime_error(
+        already_exists_message(bond.bond_id(), bond.particle_ids()));
+  }
+}
+} // namespace
+
 void check_bonds_can_be_added(System::System const &system, int bond_id,
                               std::span<const int> particle_ids,
                               std::size_t n_particles) {
@@ -182,102 +235,25 @@ void check_bonds_can_be_added(System::System const &system, int bond_id,
     throw std::invalid_argument(
         "Every bond needs the same number of particles");
   }
-  auto const n_bonds = particle_ids.size() / n_particles;
-  auto const bond = [&](std::size_t i) {
-    return particle_ids.subspan(i * n_particles, n_particles);
-  };
-  for (std::size_t i = 0u; i < n_bonds; ++i) {
-    check_bond_shape(system, bond_id, bond(i));
+  std::vector<BondRecord> bonds;
+  for (std::size_t i = 0u; i < particle_ids.size(); i += n_particles) {
+    bonds.emplace_back(bond_id, particle_ids.subspan(i, n_particles));
+    check_bond_shape(system, bond_id, bonds.back().particle_ids());
   }
-  // one collective for the existence of all particles
-  std::vector<int> unique_ids(particle_ids.begin(), particle_ids.end());
-  std::ranges::sort(unique_ids);
-  auto const duplicates = std::ranges::unique(unique_ids);
-  unique_ids.erase(duplicates.begin(), duplicates.end());
-  check_particles_exist(system, unique_ids);
-  // no bond twice in the batch
-  std::vector<std::size_t> order(n_bonds);
-  for (std::size_t i = 0u; i < n_bonds; ++i) {
-    order[i] = i;
-  }
-  auto const less = [&](std::size_t a, std::size_t b) {
-    return std::ranges::lexicographical_compare(bond(a), bond(b));
-  };
-  std::ranges::sort(order, less);
-  for (std::size_t i = 1u; i < n_bonds; ++i) {
-    if (std::ranges::equal(bond(order[i - 1u]), bond(order[i]))) {
-      throw std::runtime_error(
-          "Bond " + std::to_string(bond_id) + " with partners " +
-          format_ids(bond(order[i]).subspan(1u)) +
-          " appears twice for particle " + std::to_string(bond(order[i])[0]));
-    }
-  }
-  // one collective for the bonds that already exist: their owners know
-  auto first_existing = n_bonds;
-  for (std::size_t i = 0u; i < n_bonds; ++i) {
-    auto const ids = bond(i);
-    if (local_particle(system, ids[0]) != nullptr and
-        system.cell_structure->bond_table().contains(bond_id, ids)) {
-      first_existing = i;
-      break;
-    }
-  }
-  first_existing = boost::mpi::all_reduce(::comm_cart, first_existing,
-                                          boost::mpi::minimum<std::size_t>());
-  if (first_existing != n_bonds) {
-    throw std::runtime_error(
-        already_exists_message(bond_id, bond(first_existing)));
-  }
+  check_batch_can_be_added(system, bonds);
 }
 
 void add_encoded_bonds(System::System &system, std::span<const int> encoded) {
-  // decode and validate the layout before touching any particle
-  std::vector<std::pair<int, std::span<const int>>> bonds;
-  std::vector<int> unique_ids;
-  for (auto rest = encoded; not rest.empty();) {
-    auto const [bond, next] = BondEncoding::read(rest);
-    auto const ids = bond.particle_ids();
-    bonds.emplace_back(bond.bond_id(), ids);
-    unique_ids.insert(unique_ids.end(), ids.begin(), ids.end());
-    rest = next;
+  // decode and validate all bonds before adding any
+  std::vector<BondRecord> bonds;
+  while (not encoded.empty()) {
+    auto const [bond, rest] = BondEncoding::read(encoded);
+    bonds.push_back(bond);
+    encoded = rest;
   }
-  std::ranges::sort(unique_ids);
-  auto const duplicates = std::ranges::unique(unique_ids);
-  unique_ids.erase(duplicates.begin(), duplicates.end());
-  check_particles_exist(system, unique_ids);
-  // a bond can be stored only once
-  auto sorted = bonds;
-  std::ranges::sort(sorted, [](auto const &a, auto const &b) {
-    return a.first != b.first
-               ? a.first < b.first
-               : std::ranges::lexicographical_compare(a.second, b.second);
-  });
-  for (std::size_t i = 1u; i < sorted.size(); ++i) {
-    if (sorted[i - 1u].first == sorted[i].first and
-        std::ranges::equal(sorted[i - 1u].second, sorted[i].second)) {
-      throw std::runtime_error(
-          "Bond " + std::to_string(sorted[i].first) + " with partners " +
-          format_ids(sorted[i].second.subspan(1u)) +
-          " appears twice for particle " + std::to_string(sorted[i].second[0]));
-    }
-  }
-  auto first_existing = bonds.size();
-  for (std::size_t i = 0u; i < bonds.size(); ++i) {
-    auto const &[bond_id, ids] = bonds[i];
-    if (local_particle(system, ids[0]) != nullptr and
-        system.cell_structure->bond_table().contains(bond_id, ids)) {
-      first_existing = i;
-      break;
-    }
-  }
-  first_existing = boost::mpi::all_reduce(::comm_cart, first_existing,
-                                          boost::mpi::minimum<std::size_t>());
-  if (first_existing != bonds.size()) {
-    throw std::runtime_error(already_exists_message(
-        bonds[first_existing].first, bonds[first_existing].second));
-  }
-  for (auto const &[bond_id, ids] : bonds) {
-    add_bond(system, bond_id, ids);
+  check_batch_can_be_added(system, bonds);
+  for (auto const &bond : bonds) {
+    add_bond(system, bond.bond_id(), bond.particle_ids());
   }
 }
 
