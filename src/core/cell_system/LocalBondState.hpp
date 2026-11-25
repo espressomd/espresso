@@ -75,6 +75,13 @@ template <std::size_t N> struct LocalBondList {
   /** @brief Replace the particle ids in all rows by particle indices. */
   void convert_ids_to_indices(IdToIndex const &id_to_index);
 
+  /**
+   * @brief Order the rows by their first entry, keeping the order of rows
+   * with the same first entry. Applied to particle indices, the bond loops
+   * then visit the particles in memory order.
+   */
+  void sort_by_first_particle();
+
 #ifdef ESPRESSO_COLLISION_DETECTION
   /**
    * @brief Register a bond created after the list was filled.
@@ -142,6 +149,9 @@ struct LocalBondState {
 
   /** @brief Replace the particle ids in all lists by particle indices. */
   void convert_ids_to_indices(IdToIndex const &id_to_index);
+
+  /** @copydoc LocalBondList::sort_by_first_particle */
+  void sort_by_first_particle();
 
 #ifdef ESPRESSO_COLLISION_DETECTION
   /** @copydoc LocalBondList::add_new_bond */
