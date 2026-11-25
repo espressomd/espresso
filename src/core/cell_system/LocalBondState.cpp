@@ -23,7 +23,6 @@
 
 #include <Kokkos_Core.hpp>
 
-#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <span>
@@ -67,54 +66,17 @@ template <std::size_t N> void LocalBondList<N>::reset() {
 }
 
 template <std::size_t N>
-void LocalBondList<N>::convert_ids_to_indices(IdToIndex const &id_to_index) {
-  if (count == 0) {
-    return;
-  }
-  Kokkos::parallel_for("convert_bond_ids_to_indices",
-                       Kokkos::RangePolicy<execution_space>(0, count),
-                       [&bond_list = list, &id_to_index](int row) {
-                         for (std::size_t col = 0u; col < N; ++col) {
-                           bond_list(row, col) =
-                               id_to_index(bond_list(row, col));
-                         }
-                       });
-}
-
-template <std::size_t N> void LocalBondList<N>::sort_by_first_particle() {
-  if (count < 2) {
-    return;
-  }
-  auto const n_rows = static_cast<std::size_t>(count);
-  // counting sort on the first entry, which is stable
-  int max_first = 0;
-  for (std::size_t row = 0u; row < n_rows; ++row) {
-    max_first = std::max(max_first, list(row, 0));
-  }
-  std::vector<std::size_t> offsets(static_cast<std::size_t>(max_first) + 2u);
-  for (std::size_t row = 0u; row < n_rows; ++row) {
-    ++offsets[static_cast<std::size_t>(list(row, 0)) + 1u];
-  }
-  for (std::size_t i = 1u; i < offsets.size(); ++i) {
-    offsets[i] += offsets[i - 1u];
-  }
-  ListType sorted_list(Kokkos::view_alloc(execution_space{},
-                                          Kokkos::WithoutInitializing,
-                                          "bond_list"),
-                       n_rows);
-  IdsType sorted_ids(Kokkos::view_alloc(execution_space{},
-                                        Kokkos::WithoutInitializing,
-                                        "bond_ids"),
-                     n_rows);
-  for (std::size_t row = 0u; row < n_rows; ++row) {
-    auto const dst = offsets[static_cast<std::size_t>(list(row, 0))]++;
+void LocalBondList<N>::assign(std::span<const int> rows,
+                              std::span<const int> bond_ids) {
+  assert(rows.size() == N * bond_ids.size());
+  allocate(static_cast<int>(bond_ids.size()));
+  for (std::size_t row = 0u; row < bond_ids.size(); ++row) {
     for (std::size_t col = 0u; col < N; ++col) {
-      sorted_list(dst, col) = list(row, col);
+      list(row, col) = rows[row * N + col];
     }
-    sorted_ids(dst) = ids(row);
+    ids(row) = bond_ids[row];
   }
-  list = sorted_list;
-  ids = sorted_ids;
+  count = static_cast<int>(bond_ids.size());
 }
 
 #ifdef ESPRESSO_COLLISION_DETECTION
@@ -188,12 +150,6 @@ template struct LocalBondList<2>;
 template struct LocalBondList<3>;
 template struct LocalBondList<4>;
 
-void LocalBondState::allocate(int n_pairs, int n_angles, int n_dihedrals) {
-  pairs.allocate(n_pairs);
-  angles.allocate(n_angles);
-  dihedrals.allocate(n_dihedrals);
-}
-
 void LocalBondState::clear() {
   pairs.clear();
   angles.clear();
@@ -204,22 +160,6 @@ void LocalBondState::reset() {
   pairs.reset();
   angles.reset();
   dihedrals.reset();
-}
-
-void LocalBondState::convert_ids_to_indices(IdToIndex const &id_to_index) {
-  if (empty()) {
-    return;
-  }
-  pairs.convert_ids_to_indices(id_to_index);
-  angles.convert_ids_to_indices(id_to_index);
-  dihedrals.convert_ids_to_indices(id_to_index);
-  Kokkos::fence();
-}
-
-void LocalBondState::sort_by_first_particle() {
-  pairs.sort_by_first_particle();
-  angles.sort_by_first_particle();
-  dihedrals.sort_by_first_particle();
 }
 
 #ifdef ESPRESSO_COLLISION_DETECTION

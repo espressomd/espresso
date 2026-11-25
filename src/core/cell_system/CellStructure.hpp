@@ -973,15 +973,13 @@ public:
   }
 
   /**
-   * @brief Append the bonds owned by the particles of this rank to the flat
-   * bond lists (@ref LocalBondState), as particle ids. Bonds whose partners
-   * are not known on this rank are reported and not stored.
+   * @brief Build the flat bond lists (@ref LocalBondState) from the bonds
+   * owned by the particles of this rank, as indices into the unique
+   * particles, ordered by the index of the owner. Bonds whose partners are
+   * not known on this rank are reported and not stored. Requires the index
+   * of every unique particle (@ref get_id_to_index()).
    */
-  void append_owned_bonds();
-
-  /** @brief Whether a bond is evaluated on this rank, i.e. its owner
-   *  resides here. */
-  bool is_owned_here(BondRow const &row) const;
+  void build_local_bond_lists();
 
   /** @brief Bonds of the particles residing on this rank. */
   BondTable &bond_table() { return m_bond_table; }

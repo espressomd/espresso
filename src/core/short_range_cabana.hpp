@@ -205,20 +205,8 @@ update_cabana_state(CellStructure &cell_structure,
           id_to_index(p.id()) = index;
         });
     Kokkos::fence();
-    cell_structure.append_owned_bonds();
     // all particles have an index now
-    cell_structure.bond_state().convert_ids_to_indices(id_to_index);
-    // Order the bonds by the memory index of their first particle. The
-    // bond loops then access the particle data in memory order, whatever
-    // the particle ids and the order in which the bonds were created, and
-    // each thread works on its own range of particles.
-#ifdef ESPRESSO_CALIPER
-    ESPRESSO_CALI_MARK_BEGIN("sort_bond_lists");
-#endif
-    cell_structure.bond_state().sort_by_first_particle();
-#ifdef ESPRESSO_CALIPER
-    ESPRESSO_CALI_MARK_END("sort_bond_lists");
-#endif
+    cell_structure.build_local_bond_lists();
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_END("AoSoA commit full");
 #endif

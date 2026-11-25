@@ -56,6 +56,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -279,39 +280,37 @@ void CellStructure::reset_local_properties() {
   kokkos_deep_copy(execution_space{}, get_aosoa().flags, uint8_t{0});
 }
 
-bool CellStructure::is_owned_here(BondRow const &row) const {
-  if (row.is_free()) {
-    return false;
+void CellStructure::build_local_bond_lists() {
+  // Every bond enters the lists once, on the rank of its owner. Walking the
+  // particles in memory order sorts the bonds by the index of their owner,
+  // so that the bond loops access the particle data in memory order.
+  auto const &id_to_index = get_id_to_index();
+  // rows of particle indices and bond ids, for 2, 3 and 4 particles
+  std::array<std::vector<int>, 3> rows;
+  std::array<std::vector<int>, 3> bond_ids;
+  for (auto const *p : m_unique_particles) {
+    if (p->is_ghost()) {
+      continue;
+    }
+    for (auto const bond : m_bond_table.owned(p->id())) {
+      auto const ids = bond.particle_ids();
+      if (ids.size() < 2u) {
+        continue; // bonds without partners are not evaluated
+      }
+      if (not resolve_bond_partners(bond.partner_ids())) {
+        bond_resolution_error(bond.partner_ids());
+        continue;
+      }
+      auto const k = ids.size() - 2u;
+      for (auto const pid : ids) {
+        rows[k].push_back(id_to_index(pid));
+      }
+      bond_ids[k].push_back(bond.bond_id());
+    }
   }
-  auto const *owner = get_local_particle(row.ids[0]);
-  return owner != nullptr and not owner->is_ghost();
-}
-
-void CellStructure::append_owned_bonds() {
-  // Every bond enters the flat lists exactly once, on the rank of its
-  // owner. The rows are scanned in parallel: appending is thread-safe.
-  auto const rows = m_bond_table.rows();
-  kokkos_parallel_range_for("append_owned_bonds", std::size_t{0}, rows.size(),
-                            [this, rows](std::size_t i) {
-                              auto const &row = rows[i];
-                              if (not is_owned_here(row)) {
-                                return;
-                              }
-                              auto const bond = row.record();
-                              // the partners must be known on this rank
-                              if (resolve_bond_partners(bond.partner_ids())) {
-                                // The analyzer reports a false positive in
-                                // the Kokkos bounds-check error formatting
-                                // of the View accesses in
-                                // LocalBondList::append().
-                                // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
-                                m_bond_state->append(bond.bond_id(),
-                                                     bond.particle_ids());
-                              } else {
-                                bond_resolution_error(bond.partner_ids());
-                              }
-                            });
-  Kokkos::fence();
+  m_bond_state->pairs.assign(rows[0], bond_ids[0]);
+  m_bond_state->angles.assign(rows[1], bond_ids[1]);
+  m_bond_state->dihedrals.assign(rows[2], bond_ids[2]);
 }
 
 void CellStructure::set_index_map() {
@@ -325,14 +324,11 @@ void CellStructure::set_index_map() {
   using execution_space = Kokkos::DefaultHostExecutionSpace;
   int n_threads = execution_space().concurrency();
 
-  // one cache line per thread: these counters are written on every particle,
-  // so packing them into shared cache lines makes the sweep bounce lines
-  // between L3 domains
+  // one cache line per thread: the maximal id is written on every particle,
+  // so packing the per-thread values into shared cache lines makes the
+  // sweep bounce lines between L3 domains
   struct alignas(64) PerThreadCounts {
     int max_id = 0;
-    int pair = 0;
-    int angle = 0;
-    int dihedral = 0;
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
 
@@ -347,35 +343,11 @@ void CellStructure::set_index_map() {
   for (auto const &counts : thread_counts) {
     max_id = std::max(counts.max_id, max_id);
   }
-  // Drop the free rows of the bond table when they dominate, so that the
-  // scans below do not depend on the largest number of bonds ever held.
+  // Drop the free rows of the bond table when they dominate, so that its
+  // memory does not depend on the largest number of bonds ever held.
   if (m_bond_table.is_wasteful()) {
     m_bond_table.compact();
   }
-  // The counts of owned bonds must agree with what append_owned_bonds()
-  // fills in, or the Kokkos views overflow.
-  auto const rows = m_bond_table.rows();
-  kokkos_parallel_range_for("count_owned_bonds", std::size_t{0}, rows.size(),
-                            [this, rows, &thread_counts](std::size_t i) {
-                              auto const &row = rows[i];
-                              if (is_owned_here(row)) {
-                                auto &counts =
-                                    thread_counts[omp_get_thread_num()];
-                                counts.pair += (row.n == 2u) ? 1 : 0;
-                                counts.angle += (row.n == 3u) ? 1 : 0;
-                                counts.dihedral += (row.n == 4u) ? 1 : 0;
-                              }
-                            });
-  Kokkos::fence();
-  int pair_count = 0;
-  int angle_count = 0;
-  int dihedral_count = 0;
-  for (auto const &counts : thread_counts) {
-    pair_count += counts.pair;
-    angle_count += counts.angle;
-    dihedral_count += counts.dihedral;
-  }
-  m_bond_state->allocate(pair_count, angle_count, dihedral_count);
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
     if (not local_particle or not local_particle->is_ghost()) {
