@@ -41,6 +41,8 @@ struct BondsKernelData {
   CellStructure::ScatterForce local_force;
 #ifdef ESPRESSO_NPT
   CellStructure::ScatterVirial local_virial;
+  /** @brief Whether the virial is needed, i.e. the NPT integrator runs. */
+  bool compute_virial;
 #endif
   CellStructure::AoSoA_pack const &aosoa;
   bool const has_breakage_specs;
@@ -128,10 +130,12 @@ struct PairBondsKernel {
       local_force(j, 1) -= f[1];
       local_force(j, 2) -= f[2];
 #ifdef ESPRESSO_NPT
-      auto const virial = hadamard_product(f, dx);
-      local_virial(0) += virial[0];
-      local_virial(1) += virial[1];
-      local_virial(2) += virial[2];
+      if (data.compute_virial) {
+        auto const virial = hadamard_product(f, dx);
+        local_virial(0) += virial[0];
+        local_virial(1) += virial[1];
+        local_virial(2) += virial[2];
+      }
 #endif
     } else {
       auto partner_id = aosoa.id(j);

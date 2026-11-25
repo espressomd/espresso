@@ -149,7 +149,8 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 #endif
 
 static BondsKernelData
-create_kokkos_bonds_kernel_data(System::System const &system) {
+create_kokkos_bonds_kernel_data(System::System const &system,
+                                [[maybe_unused]] bool compute_virial) {
   auto scatter_force = system.cell_structure->get_scatter_force();
 #ifdef ESPRESSO_NPT
   auto scatter_virial = system.cell_structure->get_scatter_virial();
@@ -161,6 +162,7 @@ create_kokkos_bonds_kernel_data(System::System const &system) {
                                 scatter_force,
 #ifdef ESPRESSO_NPT
                                 scatter_virial,
+                                compute_virial,
 #endif
                                 aosoa,
                                 !system.bond_breakage->breakage_specs.empty()};
@@ -492,7 +494,8 @@ void System::System::calculate_forces() {
   ESPRESSO_CALI_MARK_BEGIN("cabana_short_range");
 #endif
   auto &bs = cell_structure->bond_state();
-  auto bonds_kernel_data = create_kokkos_bonds_kernel_data(*this);
+  auto bonds_kernel_data =
+      create_kokkos_bonds_kernel_data(*this, virial != nullptr);
   auto pair_bonds_kernel = PairBondsKernel{
       bonds_kernel_data, bs.pairs.list, bs.pairs.ids, get_ptr(coulomb_kernel)};
   auto angle_bonds_kernel =
@@ -545,7 +548,8 @@ void System::System::calculate_forces() {
 #ifdef ESPRESSO_NPT
   auto const have_bonds = not cell_structure->bond_state().empty();
   if (generic_pair_path or
-      (bonded_ias->maximal_cutoff() >= 0. and have_bonds)) {
+      (virial != nullptr and bonded_ias->maximal_cutoff() >= 0. and
+       have_bonds)) {
     cell_structure->mark_virial_replicas_dirty();
   }
 #endif // ESPRESSO_NPT
