@@ -117,19 +117,20 @@ void AtomDecomposition::resort(bool global_flag,
     return;
   }
 
-  /* Sort displaced particles by the node they belong to. */
-  std::vector<std::vector<Particle>> send_buf(m_comm.size());
-  // data of the particles kept outside of them, e.g. their bonds
-  std::vector<std::vector<int>> side_send(m_comm.size());
+  /* Sort displaced particles by the node they belong to. The migration
+   * data of the particles, e.g. their bonds, travels in the same message. */
+  using Message = MigrationMessage<std::vector<Particle>>;
+  std::vector<Message> send_buf(m_comm.size());
   for (auto it = local().particles().begin();
        it != local().particles().end();) {
     auto const target_node = id_to_rank(it->id());
     if (target_node != m_comm.rank()) {
       diff.emplace_back(RemovedParticle{it->id()});
+      auto &message = send_buf.at(target_node);
       if (m_migration) {
-        m_migration->pack(it->id(), side_send.at(target_node));
+        m_migration->pack(it->id(), message.data);
       }
-      send_buf.at(target_node).emplace_back(std::move(*it));
+      message.particles.emplace_back(std::move(*it));
       it = local().particles().erase(it);
     } else {
       ++it;
@@ -137,21 +138,17 @@ void AtomDecomposition::resort(bool global_flag,
   }
 
   /* Exchange particles */
-  std::vector<std::vector<Particle>> recv_buf(m_comm.size());
+  std::vector<Message> recv_buf(m_comm.size());
   boost::mpi::all_to_all(m_comm, send_buf, recv_buf);
-  if (m_migration) {
-    std::vector<std::vector<int>> side_recv(m_comm.size());
-    boost::mpi::all_to_all(m_comm, side_send, side_recv);
-    for (std::size_t rank = 0u; rank < recv_buf.size(); ++rank) {
-      unpack_migration(recv_buf[rank], side_recv[rank]);
-    }
+  for (auto const &message : recv_buf) {
+    unpack_migration(message.particles, message.data);
   }
 
   diff.emplace_back(ModifiedList{local().particles()});
 
   /* Add new particles belonging to this node */
-  for (auto &parts : recv_buf) {
-    for (auto &p : parts) {
+  for (auto &message : recv_buf) {
+    for (auto &p : message.particles) {
       local().particles().insert(std::move(p));
     }
   }

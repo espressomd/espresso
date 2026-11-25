@@ -26,6 +26,9 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <cassert>
 #include <optional>
 #include <span>
@@ -63,6 +66,23 @@ public:
    */
   virtual std::span<const int> unpack(int pid, std::span<const int> buffer) = 0;
   virtual ~ParticleMigration() = default;
+};
+
+/**
+ * @brief Particles sent to another MPI rank, together with their
+ * migration data (see @ref ParticleMigration), in a single message.
+ */
+template <class Particles> struct MigrationMessage {
+  Particles particles;
+  /** @brief Migration data of the particles, in their order. */
+  std::vector<int> data;
+
+private:
+  friend boost::serialization::access;
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar & particles;
+    ar & data;
+  }
 };
 
 /**
