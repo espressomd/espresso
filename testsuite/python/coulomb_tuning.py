@@ -32,6 +32,10 @@ class CoulombCloudWallTune(ut.TestCase):
     system = espressomd.System(box_l=[10.0, 10.0, 10.0])
     system.time_step = 0.01
     system.cell_system.skin = 0.4
+    # The random charge cloud is not relaxed. Without a force cap, close
+    # pairs of opposite charges gain huge velocities during the many
+    # integration steps of the tuning, and particles leave their MPI domain.
+    system.force_cap = 5.
 
     def setUp(self):
         data = np.load(tests_common.data_path("coulomb_tuning_system.npz"))

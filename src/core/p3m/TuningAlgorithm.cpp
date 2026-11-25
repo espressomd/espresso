@@ -243,9 +243,14 @@ TuningAlgorithm::tune_skin_for_fastest_candidates() {
 
   auto best = Parameters{};
   auto best_skin = cell_structure.get_verlet_skin();
+  auto const initial_skin = best_skin;
   auto const n_steps = skin_tuning_steps_factor * m_timings;
   m_logger->log_skin_tuning_start();
   for (auto const &candidate : candidates) {
+    // The cell system is re-initialized for the interaction range of this
+    // candidate plus the current skin. The skin tuned for the previous
+    // candidate can be too large for the (longer) range of this candidate.
+    cell_structure.set_verlet_skin(initial_skin);
     commit(candidate.mesh, candidate.cao, candidate.r_cut_iL,
            candidate.alpha_L);
     on_solver_change();
@@ -274,6 +279,12 @@ TuningAlgorithm::tune_skin_for_fastest_candidates() {
       best_skin = skin;
     }
   }
+  // The skin tuned for the best candidate may exceed what the cell system
+  // supports for the cutoff of the last candidate. Activate the best
+  // candidate with the initial skin first, then apply its tuned skin.
+  cell_structure.set_verlet_skin(initial_skin);
+  commit(best.mesh, best.cao, best.r_cut_iL, best.alpha_L);
+  on_solver_change();
   cell_structure.set_verlet_skin(best_skin);
   m_logger->log_tuned_skin(best_skin);
   return best;
