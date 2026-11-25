@@ -208,19 +208,17 @@ update_cabana_state(CellStructure &cell_structure,
     cell_structure.append_owned_bonds();
     // all particles have an index now
     cell_structure.bond_state().convert_ids_to_indices(id_to_index);
-    // With several threads, bonds ordered by particle give each thread its
-    // own range of particles in the bond loops. A single thread is better
-    // served by the creation order, where consecutive bonds of a chain
-    // share particles.
-    if (Kokkos::DefaultHostExecutionSpace().concurrency() > 1) {
+    // Order the bonds by the memory index of their first particle. The
+    // bond loops then access the particle data in memory order, whatever
+    // the particle ids and the order in which the bonds were created, and
+    // each thread works on its own range of particles.
 #ifdef ESPRESSO_CALIPER
-      ESPRESSO_CALI_MARK_BEGIN("sort_bond_lists");
+    ESPRESSO_CALI_MARK_BEGIN("sort_bond_lists");
 #endif
-      cell_structure.bond_state().sort_by_first_particle();
+    cell_structure.bond_state().sort_by_first_particle();
 #ifdef ESPRESSO_CALIPER
-      ESPRESSO_CALI_MARK_END("sort_bond_lists");
+    ESPRESSO_CALI_MARK_END("sort_bond_lists");
 #endif
-    }
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_END("AoSoA commit full");
 #endif
