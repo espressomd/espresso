@@ -158,6 +158,8 @@ TabulatedDistanceBond::energy(Utils::Vector3d const &dx) const {
 }
 
 /** Compute the three-body angle interaction force.
+ *  The tabulated force values are @f$ -\mathrm{d}V/\mathrm{d}\theta @f$,
+ *  with the same sign convention as for the distance and dihedral tables.
  *  @param[in]  vec1  Vector from central particle to left particle.
  *  @param[in]  vec2  Vector from central particle to right particle.
  *  @return Forces on the second, first and third particles, in that order.
@@ -169,9 +171,9 @@ TabulatedAngleBond::forces(Utils::Vector3d const &vec1,
   auto forceFactor = [this](double const cos_phi) {
     auto const sin_phi = sqrt(1 - Utils::sqr(cos_phi));
     auto const phi = acos(cos_phi);
-    auto const tab_pot = pot;
-    auto const gradient = tab_pot->force(phi);
-    return -gradient / sin_phi;
+    /* table lookup: the tabulated value is -dV/dphi */
+    auto const dV_dphi = -pot->force(phi);
+    return -dV_dphi / sin_phi;
   };
 
   return angle_generic_force(vec1, vec2, forceFactor, true);

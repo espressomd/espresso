@@ -214,9 +214,10 @@ class InteractionsAngleBondTest(ut.TestCase):
                 (self.angle_cosine_potential, self.angle_cosine_force),
                 (self.angle_harmonic_potential, self.angle_harmonic_force),
                 (self.angle_cos_squared_potential, self.angle_cos_squared_force)]:
+            # the force table holds -dV/dphi, the *_force helpers return dV/dphi
             angle_tabulated = espressomd.interactions.TabulatedAngle(
                 energy=fun_pot(phi=phi, bend=at_bend, phi0=at_phi0),
-                force=fun_force(phi=phi, bend=at_bend, phi0=at_phi0))
+                force_angle=-fun_force(phi=phi, bend=at_bend, phi0=at_phi0))
             self.run_test(angle_tabulated,
                           lambda phi: fun_force(
                               phi=phi, bend=at_bend, phi0=at_phi0),
