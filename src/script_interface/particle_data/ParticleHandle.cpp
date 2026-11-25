@@ -57,10 +57,12 @@
 #include <cassert>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <ranges>
 #include <set>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -652,28 +654,25 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     // the bonds it knows, and the head node gathers them. Only the bonds
     // this particle owns are exposed to Python.
     auto const &cell_structure = get_cell_structure()->get_cell_structure();
-    std::vector<int> local_flat;
+    std::vector<int> encoded;
     auto const *p = cell_structure.get_local_particle(m_pid);
     if (p != nullptr and not p->is_ghost()) {
       for (auto const bond : cell_structure.bond_table().owned(m_pid)) {
-        local_flat.push_back(static_cast<int>(bond.partner_ids().size()));
-        local_flat.push_back(bond.bond_id());
-        std::ranges::copy(bond.partner_ids(), std::back_inserter(local_flat));
+        BondEncoding::append(encoded, bond);
       }
     }
-    Utils::Mpi::gather_buffer(local_flat, context()->get_comm());
+    Utils::Mpi::gather_buffer(encoded, context()->get_comm());
     if (not context()->is_head_node()) {
       return {};
     }
+    // one entry per bond: the bond id, then the partners
     std::vector<std::vector<Variant>> bonds_flat;
-    for (std::size_t i = 0u; i < local_flat.size();) {
-      auto const n_partners = static_cast<std::size_t>(local_flat[i]);
-      std::vector<Variant> bond_flat;
-      for (std::size_t j = 0u; j <= n_partners; ++j) {
-        bond_flat.emplace_back(local_flat[i + 1u + j]);
-      }
+    for (auto rest = std::span<const int>(encoded); not rest.empty();) {
+      auto const [bond, next] = BondEncoding::read(rest);
+      std::vector<Variant> bond_flat{bond.bond_id()};
+      std::ranges::copy(bond.partner_ids(), std::back_inserter(bond_flat));
       bonds_flat.emplace_back(std::move(bond_flat));
-      i += 2u + n_partners;
+      rest = next;
     }
     return make_vector_of_variants(bonds_flat);
   }

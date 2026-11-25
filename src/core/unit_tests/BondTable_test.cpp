@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(remove_bonds_of) {
 
   /* a particle that comes back is a local participant again */
   add(table, 0, {6, 7}, {6});
-  std::vector<int> buffer{1, 0, 2, 6, 7, 0, 0};
+  std::vector<int> buffer{1, 0, 2, 6, 7};
   table.insert(7, buffer);
   BOOST_CHECK_EQUAL(table.size(), 1u);
   BOOST_CHECK_EQUAL(table.n_particles(), 2u);
@@ -281,17 +281,17 @@ BOOST_AUTO_TEST_CASE(many_bonds) {
 BOOST_AUTO_TEST_CASE(malformed_input) {
   BondTable table;
   auto const check_throws = [&](std::vector<int> const &buffer) {
-    BOOST_CHECK_THROW(table.insert(1, buffer), std::runtime_error);
+    BOOST_CHECK_THROW(table.insert(1, buffer), std::invalid_argument);
   };
   check_throws({});
   check_throws({-1});
-  check_throws({1, 0, 2, 1, 2});                // too short
-  check_throws({1, 0, 7, 1, 2, 3, 4});          // too many participants
-  check_throws({1, 0, 0, 1, 2, 3, 4});          // no participants
-  check_throws({1, -2, 2, 1, 2, 0, 0});         // invalid bond id
-  check_throws({2, 0, 2, 1, 2, 0, 0, 0, 2, 1}); // second bond truncated
+  check_throws({1, 0, 2, 1});             // too short
+  check_throws({1, 0, 5, 1, 2, 3, 4, 5}); // too many participants
+  check_throws({1, 0, 0, 1, 2});          // no participants
+  check_throws({1, -2, 2, 1, 2});         // invalid bond id
+  check_throws({2, 0, 2, 1, 2, 0, 2, 1}); // second bond truncated
   /* a valid buffer is accepted */
-  table.insert(1, std::vector<int>{1, 0, 2, 1, 2, 0, 0});
+  table.insert(1, std::vector<int>{1, 0, 2, 1, 2});
   BOOST_CHECK_EQUAL(table.size(), 1u);
 }
 

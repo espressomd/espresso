@@ -32,7 +32,11 @@
 #include <ranges>
 #include <span>
 #include <stdexcept>
+#include <utility>
 #include <vector>
+
+/** @brief Maximal number of particles in a bond. */
+inline constexpr std::size_t max_bond_particles = 4u;
 
 /**
  * @brief Read-only view on one bond.
@@ -75,7 +79,7 @@ struct BondRow {
   /** @brief Bit @c i is set if participant @c i resides on this rank. */
   std::uint16_t local_mask = 0u;
   /** @brief Participants in creation order, owner first. */
-  std::array<int, 4> ids{};
+  std::array<int, max_bond_particles> ids{};
 
   bool is_free() const { return bond_id < 0; }
   std::span<const int> particle_ids() const { return {ids.data(), n}; }
@@ -93,6 +97,38 @@ struct BondRow {
   /** @brief Whether a participant resides on this rank. */
   bool is_local(int pid) const { return (local_mask & mask_of(pid)) != 0u; }
 };
+
+/**
+ * @brief Flat encoding of bonds in a buffer of ints, e.g. to communicate
+ * them or write them to a file: one bond after the other, each as
+ * <tt>[bond_id, n, id_0, ..., id_{n-1}]</tt>.
+ */
+namespace BondEncoding {
+/** @brief Append a bond to a buffer. */
+inline void append(std::vector<int> &buffer, BondRecord const &bond) {
+  auto const ids = bond.particle_ids();
+  buffer.push_back(bond.bond_id());
+  buffer.push_back(static_cast<int>(ids.size()));
+  buffer.insert(buffer.end(), ids.begin(), ids.end());
+}
+
+/**
+ * @brief Read the first bond of a buffer.
+ * @return the bond, which refers to the buffer, and the rest of the buffer.
+ * @throw std::invalid_argument if the buffer does not start with a valid
+ *        bond.
+ */
+inline std::pair<BondRecord, std::span<const int>>
+read(std::span<const int> buffer) {
+  if (buffer.size() < 2u or buffer[0] < 0 or buffer[1] < 1 or
+      static_cast<std::size_t>(buffer[1]) > max_bond_particles or
+      buffer.size() < 2u + static_cast<std::size_t>(buffer[1])) {
+    throw std::invalid_argument("Malformed bond data");
+  }
+  auto const n = static_cast<std::size_t>(buffer[1]);
+  return {BondRecord{buffer[0], buffer.subspan(2u, n)}, buffer.subspan(2u + n)};
+}
+} // namespace BondEncoding
 
 /**
  * @brief The bonds of the particles residing on this MPI rank.
@@ -117,12 +153,6 @@ struct BondRow {
  * boundaries have entries in that second index.
  */
 class BondTable {
-public:
-  /** @brief Maximal number of particles in a bond. */
-  static constexpr std::size_t max_particles = 4u;
-  /** @brief Ints per row in the buffers of @ref extract(). */
-  static constexpr std::size_t packed_row_size = 2u + max_particles;
-
 private:
   using Index = boost::unordered_flat_map<int, std::vector<std::uint32_t>>;
 
@@ -209,7 +239,7 @@ private:
    *  see @ref set_local(). */
   std::uint32_t new_row(int bond_id, std::span<const int> ids) {
     assert(bond_id >= 0);
-    assert(not ids.empty() and ids.size() <= max_particles);
+    assert(not ids.empty() and ids.size() <= max_bond_particles);
     std::uint32_t row;
     if (m_free.empty()) {
       row = static_cast<std::uint32_t>(m_rows.size());
@@ -414,8 +444,8 @@ public:
   /**
    * @brief Move the bonds of a particle into a buffer, e.g. to send them
    * along with the particle to another rank, and forget the particle.
-   * Appends the number of bonds, then per bond
-   * <tt>[bond_id, n, id_0, ..., id_3]</tt>.
+   * Appends the number of bonds, then the bonds in the format of
+   * @ref BondEncoding.
    */
   void extract(int pid, std::vector<int> &buffer) {
     copy_to(pid, buffer);
@@ -428,10 +458,7 @@ public:
     auto const &rows = rows_of(pid);
     buffer.push_back(static_cast<int>(rows.size()));
     for (auto const row : rows) {
-      auto const &r = m_rows[row];
-      buffer.push_back(r.bond_id);
-      buffer.push_back(r.n);
-      buffer.insert(buffer.end(), r.ids.begin(), r.ids.end());
+      BondEncoding::append(buffer, m_rows[row].record());
     }
   }
 
@@ -440,31 +467,21 @@ public:
    * from a buffer filled by @ref extract(). Bonds already stored, because
    * a partner resides on this rank, are shared.
    * @return the remainder of the buffer.
+   * @throw std::invalid_argument if the buffer is malformed.
    */
   std::span<const int> insert(int pid, std::span<const int> buffer) {
-    auto const malformed = [] {
-      throw std::runtime_error("Malformed bond data");
-    };
     if (buffer.empty() or buffer[0] < 0) {
-      malformed();
+      throw std::invalid_argument("Malformed bond data");
     }
-    auto const n_bonds = static_cast<std::size_t>(buffer[0]);
+    auto const n_bonds = buffer[0];
     buffer = buffer.subspan(1u);
-    if (buffer.size() / packed_row_size < n_bonds) {
-      malformed();
-    }
-    for (std::size_t i = 0u; i < n_bonds; ++i) {
-      auto const bond_id = buffer[0];
-      if (bond_id < 0 or buffer[1] < 1 or
-          static_cast<std::size_t>(buffer[1]) > max_particles) {
-        malformed();
-      }
-      auto const ids = buffer.subspan(2u, static_cast<std::size_t>(buffer[1]));
-      buffer = buffer.subspan(packed_row_size);
+    for (int i = 0; i < n_bonds; ++i) {
+      auto const [bond, rest] = BondEncoding::read(buffer);
+      buffer = rest;
       // the bond is stored already if the particle had not left, or if a
       // partner resides on this rank
-      auto const row = find(bond_id, ids);
-      set_local(pid, row ? *row : new_row(bond_id, ids));
+      auto const row = find(bond.bond_id(), bond.particle_ids());
+      set_local(pid, row ? *row : new_row(bond.bond_id(), bond.particle_ids()));
     }
     return buffer;
   }

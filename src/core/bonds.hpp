@@ -37,7 +37,9 @@
 #include "system/System.hpp"
 
 #include <boost/mpi/communicator.hpp>
+#include <boost/serialization/vector.hpp>
 
+#include <compare>
 #include <cstddef>
 #include <functional>
 #include <optional>
@@ -45,8 +47,27 @@
 #include <utility>
 #include <vector>
 
-/** @brief A bond id and the ids of the bonded particles, owner first. */
-using BondTuple = std::pair<int, std::vector<int>>;
+/**
+ * @brief A bond that owns its particle ids, e.g. to communicate it, unlike
+ * the @ref BondRecord view.
+ */
+struct BondTuple {
+  /** @brief Key of the bonded interaction. */
+  int bond_id;
+  /** @brief Participants in creation order, owner first. */
+  std::vector<int> particle_ids;
+
+  static BondTuple from(BondRecord const &bond) {
+    auto const ids = bond.particle_ids();
+    return {bond.bond_id(), {ids.begin(), ids.end()}};
+  }
+  auto operator<=>(BondTuple const &) const = default;
+
+  template <class Archive> void serialize(Archive &ar, long int /*version*/) {
+    ar & bond_id;
+    ar & particle_ids;
+  }
+};
 
 /**
  * @brief Add a bond between particles.

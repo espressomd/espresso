@@ -234,17 +234,12 @@ void add_encoded_bonds(System::System &system, std::span<const int> encoded) {
   // decode and validate the layout before touching any particle
   std::vector<std::pair<int, std::span<const int>>> bonds;
   std::vector<int> unique_ids;
-  for (std::size_t i = 0u; i < encoded.size();) {
-    if (i + 2u > encoded.size() or encoded[i + 1u] <= 0 or
-        static_cast<std::size_t>(encoded[i + 1u]) > BondTable::max_particles or
-        i + 2u + static_cast<std::size_t>(encoded[i + 1u]) > encoded.size()) {
-      throw std::invalid_argument("Malformed bond encoding");
-    }
-    auto const n = static_cast<std::size_t>(encoded[i + 1u]);
-    auto const ids = encoded.subspan(i + 2u, n);
-    bonds.emplace_back(encoded[i], ids);
+  for (auto rest = encoded; not rest.empty();) {
+    auto const [bond, next] = BondEncoding::read(rest);
+    auto const ids = bond.particle_ids();
+    bonds.emplace_back(bond.bond_id(), ids);
     unique_ids.insert(unique_ids.end(), ids.begin(), ids.end());
-    i += 2u + n;
+    rest = next;
   }
   std::ranges::sort(unique_ids);
   auto const duplicates = std::ranges::unique(unique_ids);
@@ -340,9 +335,7 @@ std::vector<BondTuple> gather_bonds_of_particles(
     if (local_particle(system, pid) != nullptr) {
       for (auto const bond : system.cell_structure->bond_table().view(pid)) {
         if (pred(bond, pid)) {
-          auto const ids = bond.particle_ids();
-          bonds.emplace_back(bond.bond_id(),
-                             std::vector<int>(ids.begin(), ids.end()));
+          bonds.push_back(BondTuple::from(bond));
         }
       }
     }
@@ -365,9 +358,7 @@ static void mpi_gather_owned_bonds_local(std::vector<int> const &pids) {
   for (auto const pid : pids) {
     if (local_particle(system, pid) != nullptr) {
       for (auto const bond : bond_table.owned(pid)) {
-        auto const ids = bond.particle_ids();
-        bonds.emplace_back(bond.bond_id(),
-                           std::vector<int>(ids.begin(), ids.end()));
+        bonds.push_back(BondTuple::from(bond));
       }
     }
   }
@@ -380,7 +371,7 @@ static void mpi_gather_owned_bonds_local(std::vector<int> const &pids) {
       bond_fetch_cache[pid].clear();
     }
     for (auto &bond : bonds) {
-      auto const owner_id = bond.second.front();
+      auto const owner_id = bond.particle_ids.front();
       bond_fetch_cache[owner_id].emplace_back(std::move(bond));
     }
   }
@@ -413,10 +404,7 @@ bool is_bond_storage_consistent(System::System const &system) {
   std::vector<std::pair<BondTuple, int>> listings;
   for (auto const &p : system.cell_structure->local_particles()) {
     for (auto const bond : system.cell_structure->bond_table().view(p.id())) {
-      auto const ids = bond.particle_ids();
-      listings.emplace_back(
-          BondTuple{bond.bond_id(), std::vector<int>(ids.begin(), ids.end())},
-          p.id());
+      listings.emplace_back(BondTuple::from(bond), p.id());
     }
   }
   Utils::Mpi::gather_buffer(listings, ::comm_cart);
@@ -428,7 +416,7 @@ bool is_bond_storage_consistent(System::System const &system) {
       ++holders[bond][holder];
     }
     for (auto const &[bond, counts] : holders) {
-      auto const &ids = bond.second;
+      auto const &ids = bond.particle_ids;
       // each distinct participant lists it the same number of times
       std::map<int, int> expected;
       for (auto const pid : ids) {

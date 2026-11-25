@@ -528,7 +528,7 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
       ia >> block;
       try {
         cell_structure.bond_table().insert(p.id(), block);
-      } catch (std::runtime_error const &) {
+      } catch (std::invalid_argument const &) {
         fatal_error("Malformed bond file (written by an incompatible version "
                     "of ESPResSo?)",
                     prefix + ".bond");
