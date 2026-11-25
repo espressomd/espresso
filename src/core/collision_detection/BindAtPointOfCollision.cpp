@@ -179,14 +179,10 @@ void BindAtPointOfCollision::handle_collisions(
     }
   } // Loop over all collisions in the queue
 
-  // Create the bonds on all ranks: the bonds recorded locally are gathered
-  // and broadcast, so that add_bond() stores a copy in every participant,
-  // wherever it resides.
+  // The global queue is the same on all ranks, so they agree on whether to
+  // take part in this collective call.
   if (not global_collision_queue.empty()) {
-    ::sync_bond_tuples(new_bonds, ::comm_cart);
-    for (auto const &[bond_id, particle_ids] : new_bonds) {
-      ::add_bond(system, bond_id, particle_ids);
-    }
+    add_bonds_on_all_ranks(system, new_bonds);
   }
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS

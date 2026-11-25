@@ -82,10 +82,29 @@ inline auto gather_collision_queue(std::vector<CollisionPair> const &local) {
 }
 
 /**
+ * @brief Create bonds that were recorded on some ranks only.
+ *
+ * The bonds recorded locally are gathered and broadcast, so that
+ * @ref ::add_bond() stores every bond on the ranks of all its participants.
+ * Collective: must be called on all ranks, also those without bonds.
+ *
+ * @param system     The system.
+ * @param new_bonds  Bonds recorded on this rank; on return, the bonds of
+ *                   all ranks.
+ */
+inline void add_bonds_on_all_ranks(System::System &system,
+                                   std::vector<BondTuple> &new_bonds) {
+  ::sync_bond_tuples(new_bonds, ::comm_cart);
+  for (auto const &[bond_id, particle_ids] : new_bonds) {
+    ::add_bond(system, bond_id, particle_ids);
+  }
+}
+
+/**
  * @brief Bind the centers of the colliding particles.
  *
  * The local queues are gathered into the global collision queue, because
- * every participant of a new bond must store a copy of it, wherever it
+ * a new bond must be stored on every rank where one of its participants
  * resides, while a collision across a rank boundary may be queued on only
  * one of the ranks, or on both. Each pair is ordered as (smaller id, larger id)
  * and duplicates are removed, so that exactly one bond is created per colliding
