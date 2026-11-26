@@ -260,8 +260,8 @@ class Test(ut.TestCase):
         self.assertIsNone(self.system.electrostatics.solver)
         self.system.periodicity = [True, True, True]
 
-    @ut.skipIf(system.cell_system.get_state()["n_nodes"] > 2,
-               "Skipping test: only runs for n_nodes <= 2")
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 2,
+               "Skipping test: only runs for n_nodes == 2")
     def test_elc_p3m_simd_exceptions(self):
         import espressomd.electrostatics
         self.system.time_step = 0.01

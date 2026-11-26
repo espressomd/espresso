@@ -656,7 +656,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.lb
         self.assertTrue(thmst.is_active)
         self.assertEqual(thmst.seed, 23)
-        self.assertEqual(thmst.philox_counter, 0)
+        self.assertEqual(thmst.philox_counter, 2)
         self.assertAlmostEqual(thmst.gamma, 2., delta=1e-10)
         self.assertAlmostEqual(system.thermostat.kT, 0., delta=1e-10)
 

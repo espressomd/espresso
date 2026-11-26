@@ -417,6 +417,7 @@ if lbf_class:
     system.lb = lbf
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
+        system.thermostat.lb.call_method("override_philox_counter", counter=2)
     if not le_active:
         system.ekcontainer = ekcontainer
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
