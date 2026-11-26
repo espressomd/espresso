@@ -412,7 +412,7 @@ template <int cao> struct AssignCharge {
               });
         });
     Kokkos::fence();
-    int num_threads = execution_space().concurrency();
+    auto const num_threads = execution_space().concurrency();
     // reduce plane by plane, with the same static partition of the x-planes
     // as the halo exchange and the FFT input extraction; the sum overwrites
     // the previous content of the charge density
@@ -482,85 +482,40 @@ template <int cao> struct AssignForces {
     assert(cao == p3m.inter_weights.cao());
     using execution_space = Kokkos::DefaultHostExecutionSpace;
 
-    auto const kernel = [&p3m](auto pref, auto &p_force, std::size_t p_index) {
-      auto const weights = p3m.inter_weights.template load<cao>(p_index);
-
-      Utils::Vector3d force{};
-      p3m_interpolate(p3m.local_mesh, weights,
-                      [&force, &p3m](int ind, double w) {
-                        force[0u] += w * double(p3m.rs_E_fields[0u][ind]);
-                        force[1u] += w * double(p3m.rs_E_fields[1u][ind]);
-                        force[2u] += w * double(p3m.rs_E_fields[2u][ind]);
-                      });
-
-      auto access = p_force.access();
-      access(p_index, 0) -= pref * force[0];
-      access(p_index, 1) -= pref * force[1];
-      access(p_index, 2) -= pref * force[2];
+    // E: electric field components, interpolate: stencil walk over E
+    auto const assign = [&](auto const &E, auto const &interpolate) {
+      auto const n_part = cell_structure.count_local_particles();
+      auto const &aosoa = cell_structure.get_aosoa();
+      auto scatter_force = cell_structure.get_scatter_force();
+      kokkos_parallel_range_for<execution_space>(
+          "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
+            auto const pref = aosoa.charge(p_index) * force_prefac;
+            if (not pref) {
+              return;
+            }
+            auto const weights = p3m.inter_weights.template load<cao>(p_index);
+            Utils::Vector3d force{};
+            interpolate(weights, [&force, &E](int ind, double w) {
+              force[0u] += w * double(E[0u][ind]);
+              force[1u] += w * double(E[1u][ind]);
+              force[2u] += w * double(E[2u][ind]);
+            });
+            auto access = scatter_force.access();
+            access(p_index, 0) -= pref * force[0];
+            access(p_index, 1) -= pref * force[1];
+            access(p_index, 2) -= pref * force[2];
+          });
     };
 
-    auto const kernel_no_halo = [&p3m, &no_halo_strides](auto pref,
-                                                         auto &p_force,
-                                                         std::size_t p_index) {
-      auto const &strides = *no_halo_strides;
-      auto const &local_mesh = p3m.local_mesh;
-      auto const &mesh = local_mesh.dim_no_halo;
-      auto const &dim = local_mesh.dim;
-      auto const weights = p3m.inter_weights.template load<cao>(p_index);
-      // first stencil point in the (row-major) halo mesh
-      auto const first = Utils::Vector3i{{weights.ind / (dim[1] * dim[2]),
-                                          (weights.ind / dim[2]) % dim[1],
-                                          weights.ind % dim[2]}} -
-                         local_mesh.n_halo_ld;
-      // offsets of the periodic images of the stencil points
-      std::array<std::array<int, cao>, 3> offset;
-      for (auto d : {0u, 1u, 2u}) {
-        for (int i = 0; i < cao; i++) {
-          auto const n = first[d] + i;
-          offset[d][i] = (((n % mesh[d]) + mesh[d]) % mesh[d]) * strides[d];
-        }
-      }
-
-      auto const &E = p3m.rs_E_fields_no_halo;
-      Utils::Vector3d force{};
-      for (int i0 = 0; i0 < cao; i0++) {
-        auto const w_x = weights.w_x[i0];
-        for (int i1 = 0; i1 < cao; i1++) {
-          auto const w_xy = w_x * weights.w_y[i1];
-          auto const ind_xy = offset[0][i0] + offset[1][i1];
-          for (int i2 = 0; i2 < cao; i2++) {
-            auto const w = w_xy * weights.w_z[i2];
-            auto const ind = ind_xy + offset[2][i2];
-            force[0u] += w * double(E[0u][ind]);
-            force[1u] += w * double(E[1u][ind]);
-            force[2u] += w * double(E[2u][ind]);
-          }
-        }
-      }
-
-      auto access = p_force.access();
-      access(p_index, 0) -= pref * force[0];
-      access(p_index, 1) -= pref * force[1];
-      access(p_index, 2) -= pref * force[2];
-    };
-
-    auto const n_part = cell_structure.count_local_particles();
-    auto const &aosoa = cell_structure.get_aosoa();
-    auto scatter_force = cell_structure.get_scatter_force();
     if (no_halo_strides) {
-      kokkos_parallel_range_for<execution_space>(
-          "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
-            if (auto const pref = aosoa.charge(p_index) * force_prefac) {
-              kernel_no_halo(pref, scatter_force, p_index);
-            }
-          });
+      assign(p3m.rs_E_fields_no_halo, [&](auto const &weights, auto kernel) {
+        p3m_interpolate_periodic(p3m.local_mesh, *no_halo_strides, weights,
+                                 kernel);
+      });
     } else {
-      kokkos_parallel_range_for<execution_space>(
-          "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
-            if (auto const pref = aosoa.charge(p_index) * force_prefac) {
-              kernel(pref, scatter_force, p_index);
-            }
-          });
+      assign(p3m.rs_E_fields, [&](auto const &weights, auto kernel) {
+        p3m_interpolate(p3m.local_mesh, weights, kernel);
+      });
     }
   }
 };

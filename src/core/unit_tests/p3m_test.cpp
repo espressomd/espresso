@@ -402,7 +402,7 @@ BOOST_FIXTURE_TEST_CASE(p3m_forces, ParticleFactory) {
   auto const positions = std::array<Utils::Vector3d, 4>{
       {{1.3, 2.7, 0.4}, {7.9, 3.1, 5.6}, {2.2, 8.6, 7.3}, {10.9, 11.6, 11.3}}};
   auto const charges = std::array<double, 4>{{+1., -1., +0.5, -0.5}};
-  // reference forces of the halo exchange path
+  // reference k-space forces, computed with the padded electric field
   auto const forces_ref = std::array<Utils::Vector3d, 4>{{
       {-3.948462637768e-02, -3.664156665389e-02, -2.366230322212e-03},
       {-1.796541823041e-03, 7.079949821642e-03, -5.895725754431e-03},
@@ -421,11 +421,8 @@ BOOST_FIXTURE_TEST_CASE(p3m_forces_non_cubic_mesh, ParticleFactory) {
   auto const positions = std::array<Utils::Vector3d, 4>{
       {{0.3, 0.2, 6.1}, {5.9, 11.8, 0.3}, {6.0, 5.8, 6.4}, {11.7, 6.2, 11.8}}};
   auto const charges = std::array<double, 4>{{+1., -1., +0.5, -0.5}};
-  // (a mesh size divisible by 16 would select a k-space slab decomposition
-  // along x on 8 ranks, which leaves ranks without k-space data when the
-  // r2c dimension is x)
   auto const setup = P3MTestMesh{{12, 14, 10}, 4};
-  // reference forces of the padded halo exchange path (upstream, 1 rank)
+  // reference k-space forces, computed with the padded electric field
   auto const forces_ref = std::array<Utils::Vector3d, 4>{{
       {8.821271830162e-04, -4.067718746322e-03, -1.333226550091e-03},
       {-4.657770983589e-03, 4.042236216161e-03, 2.805867909286e-03},

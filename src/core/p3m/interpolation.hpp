@@ -23,12 +23,14 @@
 
 #include <config/config.hpp>
 
+#include <utils/Vector.hpp>
 #include <utils/index.hpp>
 #include <utils/math/bspline.hpp>
 
 #include <Kokkos_Core.hpp>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cstddef>
 #include <iterator>
@@ -287,5 +289,49 @@ void p3m_interpolate(P3MLocalMesh const &local_mesh,
       q_ind += local_mesh.q_2_off;
     }
     q_ind += local_mesh.q_21_off;
+  }
+}
+
+/**
+ * @brief P3M grid interpolation on the periodic mesh without halo.
+ *
+ * Like @ref p3m_interpolate, but the kernel receives the linear index of
+ * the periodic image of each interpolation point in the mesh without halo.
+ * Only valid if the local mesh is the global mesh (single rank).
+ *
+ * @param local_mesh Mesh info.
+ * @param strides Strides of the mesh without halo.
+ * @param weights Set of weights
+ * @param kernel The kernel to run.
+ */
+template <int cao, template <int> class WeightsStorage, class Kernel>
+void p3m_interpolate_periodic(P3MLocalMesh const &local_mesh,
+                              Utils::Vector3i const &strides,
+                              WeightsStorage<cao> const &weights,
+                              Kernel kernel) {
+  auto const &mesh = local_mesh.dim_no_halo;
+  auto const &dim = local_mesh.dim;
+  // first interpolation point in the (row-major) mesh with halo
+  auto const first =
+      Utils::Vector3i{{weights.ind / (dim[1] * dim[2]),
+                       (weights.ind / dim[2]) % dim[1], weights.ind % dim[2]}} -
+      local_mesh.n_halo_ld;
+  // offsets of the periodic images of the interpolation points
+  std::array<std::array<int, cao>, 3> offset;
+  for (auto d : {0u, 1u, 2u}) {
+    for (int i = 0; i < cao; i++) {
+      auto const n = first[d] + i;
+      offset[d][i] = (((n % mesh[d]) + mesh[d]) % mesh[d]) * strides[d];
+    }
+  }
+  for (int i0 = 0; i0 < cao; i0++) {
+    auto const w_x = weights.w_x[i0];
+    for (int i1 = 0; i1 < cao; i1++) {
+      auto const w_xy = w_x * weights.w_y[i1];
+      auto const ind_xy = offset[0][i0] + offset[1][i1];
+      for (int i2 = 0; i2 < cao; i2++) {
+        kernel(ind_xy + offset[2][i2], w_xy * weights.w_z[i2]);
+      }
+    }
   }
 }
