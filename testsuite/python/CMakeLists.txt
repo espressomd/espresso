@@ -416,6 +416,9 @@ if(${ESPRESSO_TEST_NP} GREATER_EQUAL 2)
 endif()
 python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX
             1_core NUM_THREADS 2)
+python_test(FILE lb_checkpoint_thermalized.py MAX_NUM_PROC 4 GPU_SLOTS 0)
+python_test(FILE lb_checkpoint_thermalized.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX
+            1_core)
 python_test(FILE dp3m_magnetostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE p3m_madelung.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
