@@ -53,9 +53,12 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 #include <Kokkos_Core.hpp>
 
 #include <cstddef>
+#include <exception>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 /** @brief P3M kernel architecture. */
 enum class Arch { CPU, CUDA };
@@ -348,4 +351,13 @@ struct P3MFFTConfig {
   /** @brief Direction of the reduced dimension (if @c use_r2c is true). */
   static auto constexpr r2c_dir = R2CDir;
 };
+
+class p3m_tuning_exception : public std::exception {
+  std::string m_msg;
+
+public:
+  p3m_tuning_exception(std::string msg) : m_msg{std::move(msg)} {}
+  char const *what() const noexcept override { return m_msg.c_str(); }
+};
+
 #endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

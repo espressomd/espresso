@@ -62,5 +62,5 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     PROPERTY
       COMPILE_OPTIONS
       $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
-  )
+      $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 endif()

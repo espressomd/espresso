@@ -627,6 +627,7 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(len(all_partcls), len(ids))
         np.testing.assert_equal(all_partcls.id, sorted(ids))
         np.testing.assert_equal(all_partcls.pos, pos[np.argsort(ids)])
+        self.assertIsNone(all_partcls.call_method("unknown"))
 
         # Access via slicing
         np.testing.assert_equal(system.part.by_ids(range(3, 6)).id,

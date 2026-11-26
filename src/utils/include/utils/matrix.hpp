@@ -248,8 +248,8 @@ namespace boost::qvm {
 template <typename T, std::size_t Rows, std::size_t Cols>
 struct mat_traits<Utils::Matrix<T, Rows, Cols>> {
   using mat_type = Utils::Matrix<T, Rows, Cols>;
-  static int const rows = Rows;
-  static int const cols = Cols;
+  static constexpr int rows = Rows;
+  static constexpr int cols = Cols;
   using scalar_type = T;
 
   template <std::size_t R, std::size_t C>
