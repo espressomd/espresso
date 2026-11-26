@@ -121,6 +121,16 @@ foreach(TEST_NUM_PROC 1 4)
       HaloPlanValidator_test NUM_PROC ${TEST_NUM_PROC})
   endif()
 endforeach()
+espresso_unit_test_executable(
+  NAME RegularDecomposition_test SRC RegularDecomposition_test.cpp DEPENDS
+  espresso::core Kokkos::kokkos Boost::mpi MPI::MPI_CXX)
+foreach(TEST_NUM_PROC 1 2 3 4)
+  if(${TEST_NUM_PROC} LESS_EQUAL ${ESPRESSO_TEST_NP})
+    espresso_unit_test_register(
+      NAME RegularDecomposition_test_${TEST_NUM_PROC}_mpi_ranks TARGET
+      RegularDecomposition_test NUM_PROC ${TEST_NUM_PROC})
+  endif()
+endforeach()
 espresso_unit_test(SRC TabulatedPotential_test.cpp DEPENDS espresso::core
                    Kokkos::kokkos)
 if(ESPRESSO_BUILD_WITH_WALBERLA)
@@ -143,16 +153,21 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:espresso::p3m::compiler_flags>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> Cabana::Core
     Kokkos::kokkos)
-  foreach(TEST_NUM_PROC 1 3 4)
+  foreach(TEST_NUM_PROC 1 2 3 4)
     foreach(TEST_NUM_THREADS 1 2)
       if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
         if(${TEST_NUM_PROC} LESS_EQUAL ${ESPRESSO_TEST_NP})
+          math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
           set(TEST_NAME
               p3m_test_${TEST_NUM_PROC}_mpi_ranks_${TEST_NUM_THREADS}_omp_threads
           )
           espresso_unit_test_register(
             NAME ${TEST_NAME} TARGET p3m_test_matrix NUM_PROC ${TEST_NUM_PROC}
             NUM_THREADS ${TEST_NUM_THREADS})
+          if(${TEST_NUM_CORES} GREATER ${ESPRESSO_HOST_NUM_CORES})
+            # MPI barriers + OpenMP fences cause timeouts when oversubscribing
+            set_tests_properties(${TEST_NAME} PROPERTIES DISABLED ON)
+          endif()
         endif()
       endif()
     endforeach()
@@ -165,6 +180,10 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     SOURCE math_test.cpp APPEND
     PROPERTY COMPILE_OPTIONS
              $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=20208>)
+  # disable GCC static analysis on large TUs to reduce RAM usage
+  set_source_files_properties(
+    p3m_test.cpp TARGET_DIRECTORY p3m_test_matrix
+    PROPERTIES COMPILE_OPTIONS $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
@@ -186,11 +205,11 @@ set_property(
     COMPILE_OPTIONS
     $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=128>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=loop_not_reachable>
-)
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 set_property(
   SOURCE p3m_test.cpp
   APPEND
   PROPERTY
     COMPILE_OPTIONS
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
-)
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)

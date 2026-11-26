@@ -57,8 +57,8 @@ template <typename FloatType> class p3m_send_mesh {
   int r_ur[6][3];
   /** sizes for recv buffers. */
   int r_size[6];
-  /** maximal size for send/recv buffers. */
-  int max;
+  /** maximal size for send/recv buffers (both directions of a dimension). */
+  int max = -1;
 
   /** vector to store grid points to send. */
   std::vector<FloatType> send_grid;
@@ -67,6 +67,15 @@ template <typename FloatType> class p3m_send_mesh {
   /** all neighbors are this rank and the send and receive blocks of each
    *  direction are disjoint: exchange in place, without buffers */
   bool self_exchange = false;
+
+  /**
+   * Exchange halo blocks with both neighbors along one dimension.
+   * Send buffer layout: [to left | to right],
+   * recv buffer layout: [from right | from left].
+   */
+  void exchange(boost::mpi::communicator const &comm, int left, int right,
+                int send_left, int send_right, int recv_right, int recv_left,
+                int tag);
 
 public:
   /** @brief Whether the halo exchange is done in place on this rank,

@@ -333,7 +333,7 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
   if (not fft_backend) {
     fft_backend = std::make_shared<P3MFFTHeffte<FloatType, FFTConfig>>(
         ::comm_cart, p3m.params.mesh, p3m.local_mesh.ld_no_halo,
-        p3m.local_mesh.ur_no_halo, ::communicator.node_grid);
+        p3m.local_mesh.ur_no_halo, ::communicator.node_grid, 3u);
   }
   p3m.fft = std::move(fft_backend);
   auto const rs_array_size =
@@ -344,10 +344,15 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
       static_cast<std::size_t>(Utils::product(p3m.fft->ks_local_size()));
   p3m.rs_charge_density.resize(rs_array_size);
   p3m.ks_charge_density.resize(fft_mesh_size);
+  p3m.rs_E_fields_no_halo_batched.resize(3ul * rs_array_size_no_halo);
+  p3m.ks_E_fields_batched.resize(3ul * fft_mesh_size);
   for (auto d : {0u, 1u, 2u}) {
-    p3m.ks_E_fields[d].resize(fft_mesh_size);
+    p3m.ks_E_fields[d] = {p3m.ks_E_fields_batched.data() + d * fft_mesh_size,
+                          fft_mesh_size};
     p3m.rs_E_fields[d].resize(rs_array_size);
-    p3m.rs_E_fields_no_halo[d].resize(rs_array_size_no_halo);
+    p3m.rs_E_fields_no_halo[d] = {p3m.rs_E_fields_no_halo_batched.data() +
+                                      d * rs_array_size_no_halo,
+                                  rs_array_size_no_halo};
   }
   p3m.calc_differential_operator();
 
@@ -441,7 +446,7 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::charge_assign() {
   // the weights of all particles and the full charge density are
   // overwritten by the parallel charge assignment
   p3m.inter_weights.reset_for_zfill(p3m.params.cao);
-  prepare_charge_density_replicas();
+  prepare_fft_mesh(false, false);
 
   Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
       p3m.params.cao, p3m, *get_system().cell_structure);
@@ -629,16 +634,14 @@ void CoulombP3MImpl<FloatType, Architecture,
   // back-transform the k-space electric field to real space
   auto const size = p3m.local_mesh.ur_no_halo - p3m.local_mesh.ld_no_halo;
   auto const rs_mesh_size_no_halo = Utils::product(size);
+  p3m.fft->backward_batch(3u, p3m.ks_E_fields_batched.data(),
+                          p3m.rs_E_fields_no_halo_batched.data());
+  if (p3m.halo_comm.is_self_exchange()) {
+    // the halo layers would only hold periodic images of the local mesh,
+    // which the force assignment reads from the field without halo
+    return;
+  }
   for (auto d : {0u, 1u, 2u}) {
-    auto k_space = p3m.ks_E_fields[d].data();
-    auto r_space = p3m.rs_E_fields_no_halo[d].data();
-    p3m.fft->backward(k_space, r_space);
-    if (p3m.halo_comm.is_self_exchange()) {
-      // the halo layers would only hold periodic images of the local mesh,
-      // which the force assignment reads from the field without halo
-      continue;
-    }
-
     // add zeros around the E-field in real space to make room for ghost
     // layers, writing straight into the persistent halo-sized buffer (no
     // per-step allocation, only the halo shells are zeroed)
@@ -650,10 +653,6 @@ void CoulombP3MImpl<FloatType, Architecture,
         p3m.rs_E_fields[d].data(), std::span(begin, rs_mesh_size_no_halo),
         p3m.local_mesh.dim_no_halo, p3m.local_mesh.n_halo_ld,
         p3m.local_mesh.n_halo_ur);
-  }
-
-  if (p3m.halo_comm.is_self_exchange()) {
-    return;
   }
 
   // ghost communicate the boundary layers of the E-field in real space
@@ -933,6 +932,7 @@ public:
       return std::nullopt;
     }
 #endif
+    assert(p3m.fft != nullptr);
     auto const [KX, KY, KZ] = get_memory_layout();
     auto valid_decomposition = false;
     // calculate box size in k-space
@@ -1227,7 +1227,7 @@ void CoulombP3MImpl<FloatType, Architecture,
   }
 }
 
-/* Initialize the CPU kernels.
+/* Initialize the GPU force kernel and the CPU energy kernel.
  * This operation is time-consuming and sets up data members
  * that are only relevant for ELC force corrections, since the
  * GPU implementation uses CPU kernels to compute energies.

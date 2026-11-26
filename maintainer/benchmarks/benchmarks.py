@@ -161,8 +161,8 @@ def add_common_args(parser, default_particles_per_core):
                         help="Fix the Verlet skin (disables skin tuning)")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--particles_per_core", metavar="N", action="store",
-                       type=int, default=None, required=False,
-                       help="Particles per core (core = MPI rank * OMP thread; "
+                       type=int, default=default_particles_per_core, required=False,
+                       help="Particles per core (cores = MPI ranks * OMP threads; "
                             f"default: {default_particles_per_core})")
     group.add_argument("--n_particles", metavar="N", action="store",
                        type=int, default=None, required=False,
