@@ -28,6 +28,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <ranges>
 #include <unordered_map>
@@ -35,7 +36,7 @@
 
 class ComFixed {
 private:
-  std::unordered_map<int, int> m_type_index;
+  std::unordered_map<int, std::size_t> m_type_index;
 
   std::vector<Utils::Vector3d>
   local_type_forces(ParticleRange const &particles) const {
@@ -72,15 +73,8 @@ public:
   void set_fixed_types(std::vector<int> const &p_types) {
     m_type_index.clear();
 
-    /* Assign dense indices 0..n_distinct-1. Using try_emplace with the
-     * current map size as the candidate index makes duplicate types collapse
-     * onto a single index instead of inflating the counter, so every stored
-     * index stays < m_type_index.size(). Consumers (local_type_forces,
-     * local_type_masses, apply) size their vectors by m_type_index.size() and
-     * index by it->second, so this invariant is required to avoid an
-     * out-of-bounds vector access. */
     for (auto const &p_type : p_types) {
-      m_type_index.try_emplace(p_type, static_cast<int>(m_type_index.size()));
+      m_type_index.try_emplace(p_type, m_type_index.size());
     }
   }
 
@@ -115,10 +109,7 @@ public:
       auto it = m_type_index.find(p.type());
       if (it != m_type_index.end()) {
         auto const mass_frac = p.mass() / masses[it->second];
-        auto const &type_force = forces[it->second];
-        for (unsigned int i = 0u; i < 3u; i++) {
-          p.force()[i] -= mass_frac * type_force[i];
-        }
+        p.force() -= mass_frac * forces[it->second];
       }
     }
   }

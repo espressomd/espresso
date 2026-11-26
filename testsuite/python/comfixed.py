@@ -44,9 +44,11 @@ class ComFixed(ut.TestCase):
         return np.average(parts.pos, axis=0, weights=parts.mass)
 
     def check_com_conserved(self, fixed_types, particle_types):
-        """Set up a system whose particles carry the given ``particle_types``,
+        """
+        Set up a system whose particles carry the given ``particle_types``,
         fix the centre of mass of ``fixed_types`` and assert that the COM of
-        the fixed particles does not drift during integration."""
+        the fixed particles does not drift during integration.
+        """
         system = self.system
 
         for i in range(100):
@@ -74,20 +76,16 @@ class ComFixed(ut.TestCase):
             system.integrator.run(100)
 
     def test(self):
-        self.check_com_conserved(fixed_types=[0, 2], particle_types=[0, 2])
+        self.check_com_conserved(fixed_types=[2, 0], particle_types=[0, 2])
+        self.assertEqual(set(self.system.comfixed.types), {0, 2})
 
         # Interface check
         self.system.comfixed.types = [0, 2]
-        self.assertEqual(self.system.comfixed.types, [2, 0])
+        self.assertEqual(set(self.system.comfixed.types), {0, 2})
 
     def test_duplicate_types(self):
-        """Regression test for bug #27: a duplicated entry in the ComFixed
-        types list used to leave the internal type->index map with a stored
-        index >= map size, producing an out-of-bounds vector access in
-        ComFixed::apply() during integration. The duplicate must be handled
-        safely (deduplicated): fixing the COM of types ``[1, 1]`` must behave
-        exactly like fixing the COM of type ``1`` and conserve it."""
         self.check_com_conserved(fixed_types=[1, 1], particle_types=[1, 3])
+        self.assertEqual(set(self.system.comfixed.types), {1})
 
 
 if __name__ == "__main__":
