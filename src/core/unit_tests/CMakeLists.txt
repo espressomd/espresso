@@ -153,16 +153,21 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:espresso::p3m::compiler_flags>
     $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte> Cabana::Core
     Kokkos::kokkos)
-  foreach(TEST_NUM_PROC 1 3 4)
+  foreach(TEST_NUM_PROC 1 2 3 4)
     foreach(TEST_NUM_THREADS 1 2)
       if(${TEST_NUM_THREADS} LESS_EQUAL ${ESPRESSO_TEST_NT})
         if(${TEST_NUM_PROC} LESS_EQUAL ${ESPRESSO_TEST_NP})
+          math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
           set(TEST_NAME
               p3m_test_${TEST_NUM_PROC}_mpi_ranks_${TEST_NUM_THREADS}_omp_threads
           )
           espresso_unit_test_register(
             NAME ${TEST_NAME} TARGET p3m_test_matrix NUM_PROC ${TEST_NUM_PROC}
             NUM_THREADS ${TEST_NUM_THREADS})
+          if(${TEST_NUM_CORES} GREATER ${ESPRESSO_HOST_NUM_CORES})
+            # MPI barriers + OpenMP fences cause timeouts when oversubscribing
+            set_tests_properties(${TEST_NAME} PROPERTIES DISABLED ON)
+          endif()
         endif()
       endif()
     endforeach()
