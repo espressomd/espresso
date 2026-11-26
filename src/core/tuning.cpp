@@ -36,6 +36,7 @@
 #include <mpi.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -156,12 +157,8 @@ void System::tune_verlet_skin(double min_skin, double max_skin, double tol,
   if (adjust_max_skin and max_skin > max_permissible_skin)
     b = max_permissible_skin;
 
-  if (b < a) {
-    throw std::runtime_error(
-        "Cannot tune the Verlet skin: the maximal permissible skin " +
-        std::to_string(b) + " is smaller than the minimal skin " +
-        std::to_string(a));
-  }
+  // the script interface and the P3M tuner guarantee a non-empty interval
+  assert(b >= a);
 
   /* Minimize the time per step: coarse scan of interior skins, then
    * repeated halving of the bracket around the best sample. The best
