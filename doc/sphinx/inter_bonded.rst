@@ -224,11 +224,10 @@ A tabulated bond length can be instantiated via
 
 This creates a bond type identifier with a tabulated potential. The force table
 contains :math:`-\mathrm{d}V/\mathrm{d}r`, i.e. the negative derivative of the
-energy with respect to the distance, so that positive values are repulsive.
-The force acts in the direction of the connecting vector between the particles.
-The bond breaks above the tabulated range, but for distances smaller than the
-tabulated range, a linear extrapolation based on the first two tabulated force
-values is used.
+energy with respect to the distance. The force acts in the direction of the 
+connecting vector between the particles. The bond breaks above the tabulated 
+range, but for distances smaller than the tabulated range, a linear extrapolation 
+based on the first two tabulated force values is used.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
@@ -364,10 +363,8 @@ A tabulated bond angle can be instantiated via
 The energy and force tables must be sampled from :math:`0` to :math:`\pi`,
 where :math:`\pi` corresponds to a flat angle.
 The force table ``force_angle`` contains :math:`-\mathrm{d}V/\mathrm{d}\theta`,
-i.e. the negative derivative of the energy with respect to the bond angle
-(the same sign convention as for :ref:`Tabulated distance` and
-:ref:`Tabulated dihedral potential`); note that this is an energy, not a force,
-since :math:`\theta` is dimensionless.
+i.e. the negative derivative of the energy with respect to the bond angle;
+note that this is an energy, not a force, since :math:`\theta` is dimensionless.
 The forces are scaled with the
 inverse length of the connecting vectors. The force on the extremities acts
 perpendicular to the connecting vector between the corresponding particle and
@@ -450,8 +447,7 @@ A tabulated dihedral interaction can be instantiated via
 The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
 The force table ``force_dihedral`` contains
 :math:`-\mathrm{d}V/\mathrm{d}\phi`, i.e. the negative derivative of the energy
-with respect to the dihedral angle (the same sign convention as for
-:ref:`Tabulated distance` and :ref:`Tabulated angle potential`); note that this
+with respect to the dihedral angle; note that this
 is an energy, not a force, since :math:`\phi` is dimensionless.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
