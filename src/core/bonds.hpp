@@ -107,6 +107,21 @@ void check_particles_exist(System::System const &system,
                            std::span<const int> particle_ids);
 
 /**
+ * @brief Check the shape of a bond, e.g. before a user adds it.
+ *
+ * The bonded interaction must exist, the bond must have the number of
+ * partners its bonded interaction expects, and its partners must be
+ * distinct and differ from the owner (@p particle_ids[0]).
+ *
+ * Needs no communication: when called with the same arguments on all MPI
+ * ranks, it throws on all ranks or on none.
+ *
+ * @throw std::invalid_argument if the bond is malformed.
+ */
+void check_bond_shape(System::System const &system, int bond_id,
+                      std::span<const int> particle_ids);
+
+/**
  * @brief Check that a bond can be added, e.g. before a user adds it.
  *
  * The bond must have the number of partners its bonded interaction
@@ -163,16 +178,18 @@ void add_bonds(System::System &system, int bond_id,
  *
  * The bonds are encoded one after the other as
  * <tt>[bond_id, n, id_0, ..., id_{n-1}]</tt> and added in this order, as
- * with @ref add_bond(). Only the existence of the particles is checked,
- * with a single collective. Must be called on all MPI ranks with the same
- * arguments.
+ * with @ref add_bond(). Every bond is checked with
+ * @ref check_bond_shape(), and the existence of the particles and that no
+ * bond exists already or appears twice are checked with a fixed number of
+ * collectives. Must be called on all MPI ranks with the same arguments.
  *
  * The caller is responsible for calling
  * @ref System::System::on_particle_change().
  *
- * @throw std::invalid_argument on all ranks, if the encoding is malformed.
- * @throw std::runtime_error on all ranks, if a particle does not exist;
- *        no bond is added then.
+ * @throw std::invalid_argument on all ranks, if the encoding or a bond is
+ *        malformed.
+ * @throw std::runtime_error on all ranks, if a particle does not exist or
+ *        a bond already exists; no bond is added then.
  */
 void add_encoded_bonds(System::System &system, std::span<const int> encoded);
 

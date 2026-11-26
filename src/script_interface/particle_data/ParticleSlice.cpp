@@ -54,10 +54,23 @@ static void set_particles_bonds(
     ::System::System &system) {
   // Validate the new bonds before touching the old ones
   {
+    if (all_bonds_ids.size() != pids.size() or
+        all_bonds_partner_ids.size() != pids.size()) {
+      throw std::invalid_argument("Every particle needs a list of bonds");
+    }
     std::vector<int> all_ids(pids.begin(), pids.end());
-    for (auto const &bonds_partner_ids : all_bonds_partner_ids) {
-      for (auto const &partner_ids : bonds_partner_ids) {
-        std::ranges::copy(partner_ids, std::back_inserter(all_ids));
+    for (std::size_t i = 0; i < pids.size(); ++i) {
+      if (all_bonds_ids[i].size() != all_bonds_partner_ids[i].size()) {
+        throw std::invalid_argument(
+            "Every bond needs a bond id and a list of partners");
+      }
+      for (std::size_t j = 0; j < all_bonds_ids[i].size(); ++j) {
+        std::vector<int> particle_ids = {pids[i]};
+        std::ranges::copy(all_bonds_partner_ids[i][j],
+                          std::back_inserter(particle_ids));
+        ::check_bond_shape(system, all_bonds_ids[i][j], particle_ids);
+        std::ranges::copy(all_bonds_partner_ids[i][j],
+                          std::back_inserter(all_ids));
       }
     }
     ::check_particles_exist(system, all_ids);

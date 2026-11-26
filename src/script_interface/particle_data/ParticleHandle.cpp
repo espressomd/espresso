@@ -618,9 +618,17 @@ Variant ParticleHandle::do_call_method(std::string const &name,
           get_value<std::vector<std::vector<int>>>(params, "bonds_parts");
       // Validate the new bonds before touching the old ones
       context()->parallel_try_catch([&]() {
+        if (bonds_ids.size() != bonds_partner_ids.size()) {
+          throw std::invalid_argument(
+              "Every bond needs a bond id and a list of partners");
+        }
         std::vector<int> all_ids = {m_pid};
-        for (auto const &partner_ids : bonds_partner_ids) {
-          std::ranges::copy(partner_ids, std::back_inserter(all_ids));
+        for (std::size_t i = 0; i < bonds_ids.size(); ++i) {
+          std::vector<int> particle_ids = {m_pid};
+          std::ranges::copy(bonds_partner_ids[i],
+                            std::back_inserter(particle_ids));
+          ::check_bond_shape(*get_system(), bonds_ids[i], particle_ids);
+          std::ranges::copy(bonds_partner_ids[i], std::back_inserter(all_ids));
         }
         ::check_particles_exist(*get_system(), all_ids);
       });
@@ -681,8 +689,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     auto const partner_ids = get_value<std::vector<int>>(params, "part_id");
     std::vector<int> particle_ids = {m_pid};
     std::ranges::copy(partner_ids, std::back_inserter(particle_ids));
-    context()->parallel_try_catch(
-        [&]() { ::check_particles_exist(*get_system(), particle_ids); });
+    context()->parallel_try_catch([&]() {
+      ::check_bond_shape(*get_system(), bond_id, particle_ids);
+      ::check_particles_exist(*get_system(), particle_ids);
+    });
     ::add_bond(*get_system(), bond_id, particle_ids);
     get_system()->on_particle_change();
   } else if (name == "del_bond") {

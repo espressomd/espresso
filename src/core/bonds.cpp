@@ -132,11 +132,13 @@ void check_particles_exist(System::System const &system,
   }
 }
 
-namespace {
-/** @brief Checks of a bond that need no communication. */
 void check_bond_shape(System::System const &system, int bond_id,
                       std::span<const int> particle_ids) {
   check_not_empty(particle_ids);
+  if (not system.bonded_ias->contains(bond_id)) {
+    throw std::invalid_argument("The bond type " + std::to_string(bond_id) +
+                                " does not exist");
+  }
   auto const owner_id = particle_ids[0];
   auto const partner_ids = particle_ids.subspan(1u);
   if (std::ranges::find(partner_ids, owner_id) != partner_ids.end()) {
@@ -159,6 +161,7 @@ void check_bond_shape(System::System const &system, int bond_id,
   }
 }
 
+namespace {
 std::string already_exists_message(int bond_id,
                                    std::span<const int> particle_ids) {
   return "Bond " + std::to_string(bond_id) + " with partners " +
@@ -248,6 +251,7 @@ void add_encoded_bonds(System::System &system, std::span<const int> encoded) {
   std::vector<BondRecord> bonds;
   while (not encoded.empty()) {
     auto const [bond, rest] = BondEncoding::read(encoded);
+    check_bond_shape(system, bond.bond_id(), bond.particle_ids());
     bonds.push_back(bond);
     encoded = rest;
   }
