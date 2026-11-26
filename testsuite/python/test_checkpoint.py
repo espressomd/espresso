@@ -441,7 +441,7 @@ class CheckpointTest(ut.TestCase):
             (vtk_root / filename.format(1)).unlink(missing_ok=True)
             (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
-    @utx.skipIfMissingFeatures(["WALBERLA"])
+    @utx.skipIfMissingFeatures(["WALBERLA", "FFTW"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_solver_vtk(self):
         lbf = system.lb
@@ -656,7 +656,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.lb
         self.assertTrue(thmst.is_active)
         self.assertEqual(thmst.seed, 23)
-        self.assertEqual(thmst.philox_counter, 0)
+        self.assertEqual(thmst.philox_counter, 2)
         self.assertAlmostEqual(thmst.gamma, 2., delta=1e-10)
         self.assertAlmostEqual(system.thermostat.kT, 0., delta=1e-10)
 
@@ -797,7 +797,8 @@ class CheckpointTest(ut.TestCase):
             integ['integrator'],
             espressomd.integrate.StokesianDynamics)
         expected_params = {
-            'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
+            'approximation_method': 'ft', 'viscosity': 0.5,
+            'radii': {i: 1.5 + i / 10. for i in range(8)},
             'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
         params = integ['integrator'].get_params()
         self.assertEqual(params, expected_params)

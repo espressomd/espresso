@@ -22,7 +22,7 @@
 #include "cell_system/Cell.hpp"
 
 #include "BoxGeometry.hpp"
-#include "ghosts.hpp"
+#include "ghosts/HaloPlan.hpp"
 
 #include <utils/Vector.hpp>
 
@@ -74,13 +74,12 @@ public:
   virtual void resort(bool global_flag, std::vector<ParticleChange> &diff) = 0;
 
   /**
-   * @brief Communicator for updating ghosts from the real particles.
+   * @brief Topology-agnostic halo-exchange plan.
+   *
+   * Returns a @ref GhostComm::HaloPlan describing the ghost communication for
+   * this decomposition. All decompositions implement this.
    */
-  virtual GhostCommunicator const &exchange_ghosts_comm() const = 0;
-  /**
-   * @brief Communicator for force reduction.
-   */
-  virtual GhostCommunicator const &collect_ghost_force_comm() const = 0;
+  virtual GhostComm::HaloPlan const *halo_plan() const = 0;
 
   /**
    * @brief Get pointer to local cells.

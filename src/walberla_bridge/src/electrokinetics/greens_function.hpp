@@ -50,8 +50,8 @@ __global__ void
 create_greens_function(gpu::FieldAccessor<FloatType> greens_function, int x_min,
                        int y_min, int z_min, int x_max, int y_max, int z_max,
                        int global_dim_x, int global_dim_y, int global_dim_z) {
-  using RealType = std::conditional<std::is_same<FloatType, float>::value,
-                                    cufftReal, cufftDoubleReal>::type;
+  using RealType = std::conditional_t<std::is_same_v<FloatType, float>,
+                                      cufftReal, cufftDoubleReal>;
   greens_function.set(blockIdx, threadIdx);
   unsigned int index =
       greens_function.getLinearIndex(blockIdx, threadIdx, gridDim, blockDim);

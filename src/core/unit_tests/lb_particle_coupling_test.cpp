@@ -199,7 +199,8 @@ BOOST_FIXTURE_TEST_CASE(rng, CleanupActorLB) {
   thermostat.gamma = 0.2;
   espresso::set_lb_kT(1.);
 
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   BOOST_CHECK_EQUAL(thermostat.rng_seed(), 17u);
   BOOST_CHECK_EQUAL(thermostat.rng_counter(), 11ul);
   BOOST_CHECK(not thermostat.is_seed_required());
@@ -227,7 +228,7 @@ BOOST_FIXTURE_TEST_CASE(rng, CleanupActorLB) {
 
   espresso::set_lb_kT(0.);
   LB::ParticleCoupling coupling_unthermalized{thermostat, lb, box_geo,
-                                              local_box};
+                                              local_box, params.time_step};
   auto const step3_norandom =
       coupling_unthermalized.get_noise_term(test_partcl_2);
   BOOST_CHECK((step3_norandom == Utils::Vector3d{0., 0., 0.}));
@@ -274,7 +275,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, swimmer_force, bdata::make(kTs), kT) {
   // swimmer coupling
   {
     if (in_local_halo(local_box, p.pos(), params.agrid)) {
-      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+      LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                    params.time_step};
       coupling.kernel({&p});
       auto const interpolated = LB::get_force_to_be_applied(p.pos());
       auto const expected =
@@ -328,7 +330,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, particle_coupling, bdata::make(kTs),
       espresso::lb_fluid->get_lattice().get_local_domain().first;
   thermostat.gamma = 0.2;
   Particle p{};
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   auto expected = coupling.get_noise_term(p);
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
   p.mu_E() = Utils::Vector3d{-2., 1.5, 1.};
@@ -390,7 +393,8 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
   set_particle_property(pid, &Particle::mu_E, Utils::Vector3d{-2., 1.5, 1.});
 #endif
 
-  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box};
+  LB::ParticleCoupling coupling{thermostat, lb, box_geo, local_box,
+                                params.time_step};
   auto expected = Utils::Vector3d{};
   {
     auto const p_opt = copy_particle_to_head_node(comm, system, pid);
@@ -517,6 +521,61 @@ BOOST_DATA_TEST_CASE_F(CleanupActorLB, coupling_particle_lattice_ia,
         ErrorHandling::mpi_gather_runtime_errors_all(world.rank() == 0);
     for (auto const &error_message : error_messages) {
       BOOST_CHECK_EQUAL(error_message.what(), error_message_ref);
+    }
+  }
+}
+
+BOOST_FIXTURE_TEST_CASE(ghost_communication_pdf_flushes_density,
+                        CleanupActorLB) {
+  auto &lb = espresso::system->lb;
+  auto const &lattice = espresso::lb_fluid->get_lattice();
+  auto const &grid = params.grid_dimensions;
+  auto const gl = static_cast<int>(lattice.get_ghost_layers());
+
+  // distinct, node-dependent density (differs from the initial params.density)
+  auto fold = [](Utils::Vector3i n) {
+    for (auto i = 0u; i < 3u; ++i) {
+      if (n[i] < 0)
+        n[i] += grid[i];
+      else if (n[i] >= grid[i])
+        n[i] -= grid[i];
+    }
+    return n;
+  };
+  auto node_density = [&fold](Utils::Vector3i const &node) {
+    auto const f = fold(node);
+    return 2. + 1e-3 * static_cast<double>(f[0] + 17 * f[1] + 311 * f[2]);
+  };
+
+  // Write a distinct density on every locally-owned node. This sets ONLY the
+  // GhostComm::PDF pending flag; GhostComm::VEL stays clear.
+  for (auto x = -gl; x < grid[0] + gl; ++x) {
+    for (auto y = -gl; y < grid[1] + gl; ++y) {
+      for (auto z = -gl; z < grid[2] + gl; ++z) {
+        auto const node = Utils::Vector3i{x, y, z};
+        if (lattice.node_in_local_domain(node)) {
+          BOOST_REQUIRE(
+              espresso::lb_fluid->set_node_density(node, node_density(node)));
+        }
+      }
+    }
+  }
+
+  // synchronize the PDF ghost layer through the core wrapper
+  lb.ghost_communication_pdf();
+
+  // read local halo and check the PDF ghost layer was correctly updated
+  for (auto x = -gl; x < grid[0] + gl; ++x) {
+    for (auto y = -gl; y < grid[1] + gl; ++y) {
+      for (auto z = -gl; z < grid[2] + gl; ++z) {
+        auto const node = Utils::Vector3i{x, y, z};
+        if (lattice.node_in_local_halo(node) and
+            not lattice.node_in_local_domain(node)) {
+          auto const res = espresso::lb_fluid->get_node_density(node, true);
+          BOOST_REQUIRE(res);
+          BOOST_CHECK_CLOSE(*res, node_density(node), 1e-9);
+        }
+      }
     }
   }
 }

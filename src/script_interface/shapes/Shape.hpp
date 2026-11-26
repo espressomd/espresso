@@ -19,15 +19,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
-#define SCRIPT_INTERFACE_SHAPES_SHAPE_HPP
+#pragma once
 
+#include "script_interface/ScriptInterface.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
+
 #include <shapes/Shape.hpp>
 
 #include <utils/Vector.hpp>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -44,6 +46,11 @@ public:
   Variant do_call_method(std::string const &name,
                          VariantMap const &params) override {
     if (name == "calc_distance") {
+      context()->parallel_try_catch([&]() {
+        if (not params.contains("position")) {
+          throw std::runtime_error("Parameter 'position' is missing");
+        }
+      });
       auto const pos = get_value<Utils::Vector3d>(params.at("position"));
       double dist;
       Utils::Vector3d vec;
@@ -52,6 +59,11 @@ public:
     }
 
     if (name == "is_inside") {
+      context()->parallel_try_catch([&]() {
+        if (not params.contains("position")) {
+          throw std::runtime_error("Parameter 'position' is missing");
+        }
+      });
       auto const pos = get_value<Utils::Vector3d>(params.at("position"));
       auto is_in = shape()->is_inside(pos);
       return {is_in};
@@ -71,5 +83,3 @@ public:
 
 } /* namespace Shapes */
 } /* namespace ScriptInterface */
-
-#endif

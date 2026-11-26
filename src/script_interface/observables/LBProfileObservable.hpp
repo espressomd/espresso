@@ -26,6 +26,7 @@
 
 #include "Observable.hpp"
 #include "core/observables/LBProfileObservable.hpp"
+#include "script_interface/get_value.hpp"
 
 #include <algorithm>
 #include <cstddef>
@@ -91,14 +92,23 @@ public:
 
   void do_construct(VariantMap const &params) override {
     ObjectHandle::context()->parallel_try_catch([&]() {
-      m_observable =
-          make_shared_from_args<CoreLBObs, double, double, double, double,
-                                double, double, int, int, int, double, double,
-                                double, double, double, double, bool>(
-              params, "sampling_delta_x", "sampling_delta_y",
-              "sampling_delta_z", "sampling_offset_x", "sampling_offset_y",
-              "sampling_offset_z", "n_x_bins", "n_y_bins", "n_z_bins", "min_x",
-              "max_x", "min_y", "max_y", "min_z", "max_z", "allow_empty_bins");
+      m_observable = std::make_shared<CoreLBObs>(
+          get_value_or<double>(params, "sampling_delta_x", 1.),
+          get_value_or<double>(params, "sampling_delta_y", 1.),
+          get_value_or<double>(params, "sampling_delta_z", 1.),
+          get_value_or<double>(params, "sampling_offset_x", 0.),
+          get_value_or<double>(params, "sampling_offset_y", 0.),
+          get_value_or<double>(params, "sampling_offset_z", 0.),
+          get_value<int>(params, "n_x_bins"),
+          get_value<int>(params, "n_y_bins"),
+          get_value<int>(params, "n_z_bins"),
+          get_value<double>(params, "min_x"),
+          get_value<double>(params, "max_x"),
+          get_value<double>(params, "min_y"),
+          get_value<double>(params, "max_y"),
+          get_value<double>(params, "min_z"),
+          get_value<double>(params, "max_z"),
+          get_value_or<bool>(params, "allow_empty_bins", false));
     });
   }
 

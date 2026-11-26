@@ -23,10 +23,15 @@
 
 #include "cell_system/Cell.hpp"
 
+#include "ghosts/HaloPlan.hpp"
+#include "ghosts/HaloPlanValidator.hpp"
+#include "ghosts/mark_boundary_cells.hpp"
+
 #include <utils/Vector.hpp>
 
 #include <boost/mpi/collectives/all_to_all.hpp>
 
+#include <cassert>
 #include <cstddef>
 #include <limits>
 #include <utility>
@@ -52,45 +57,40 @@ void AtomDecomposition::configure_neighbors() {
   local().m_neighbors = Neighbors<Cell *>(red_neighbors, black_neighbors);
 }
 
-GhostCommunicator AtomDecomposition::prepare_comm() {
-  /* no need for comm for only 1 node */
+GhostComm::HaloPlan AtomDecomposition::make_halo_plan() {
+  using GhostComm::CollectivePattern;
+  using GhostComm::CollectiveSection;
+  using GhostComm::HaloPlan;
+
+  HaloPlan plan;
+  plan.comm = m_comm;
+
+  // Single rank: no communication needed; collective section is None.
   if (m_comm.size() == 1) {
-    return GhostCommunicator{m_comm, 0};
+    plan.collective = CollectiveSection{CollectivePattern::None, {}};
+    return plan;
   }
 
-  auto ghost_comm =
-      GhostCommunicator{m_comm, static_cast<std::size_t>(m_comm.size())};
-  /* every node has its dedicated comm step */
-  for (int n = 0; n < m_comm.size(); n++) {
-    ghost_comm.communications[n].part_lists.resize(1);
-    ghost_comm.communications[n].part_lists[0] = &(cells.at(n).particles());
-    ghost_comm.communications[n].node = n;
+  // One cell pointer per rank: cells[root] is the ParticleList for that root.
+  // The engine uses op.direction to pick Broadcast (Push) or ReduceSum
+  // (Reduce) at run time, so we store Broadcast as the canonical marker that
+  // this section is active.  run_collective reads op.direction to decide which
+  // MPI collective to invoke.
+  std::vector<ParticleList *> cell_ptrs;
+  cell_ptrs.reserve(static_cast<std::size_t>(m_comm.size()));
+  for (int n = 0; n < m_comm.size(); ++n) {
+    cell_ptrs.push_back(&cells.at(static_cast<std::size_t>(n)).particles());
   }
-
-  return ghost_comm;
+  plan.collective =
+      CollectiveSection{CollectivePattern::Broadcast, std::move(cell_ptrs)};
+  return plan;
 }
 
 void AtomDecomposition::configure_comms() {
-  m_exchange_ghosts_comm = prepare_comm();
-  m_collect_ghost_force_comm = prepare_comm();
-
-  if (m_comm.size() > 1) {
-    for (int n = 0; n < m_comm.size(); n++) {
-      /* use the prefetched send buffers. Node 0 transmits first and never
-       * prefetches. */
-      if (m_comm.rank() == 0 || m_comm.rank() != n) {
-        m_exchange_ghosts_comm.communications[n].type = GHOST_BCST;
-      } else {
-        m_exchange_ghosts_comm.communications[n].type =
-            GHOST_BCST | GHOST_PREFETCH;
-      }
-      m_collect_ghost_force_comm.communications[n].type = GHOST_RDCE;
-    }
-    /* first round: all nodes except the first one prefetch their send data */
-    if (m_comm.rank() != 0) {
-      m_exchange_ghosts_comm.communications[0].type |= GHOST_PREFETCH;
-    }
-  }
+  m_halo_plan = make_halo_plan();
+  // NOTE: validation is deferred to the constructor, AFTER mark_cells() has
+  // populated local_cells()/ghost_cells(). Validating here would check empty
+  // spans (vacuously) since mark_cells() runs later.
 }
 
 void AtomDecomposition::mark_cells() {
@@ -156,6 +156,40 @@ AtomDecomposition::AtomDecomposition(boost::mpi::communicator comm,
   configure_neighbors();
   /* fill local and ghost cell lists */
   mark_cells();
+  /* classify local cells as interior or boundary.
+   *
+   * AtomDecomposition has no spatial locality: the single local cell
+   * interacts with every other rank's cell and there is no subset of
+   * particles whose force contributions are guaranteed to arrive before
+   * the velocity update.  Interior is therefore always empty and all local
+   * cells are boundary.  mark_boundary_cells() handles the ghost-neighbour
+   * case (multi-rank); the explicit loop below catches the single-rank case
+   * where there are no ghost cells and no neighbours at all.
+   */
+  GhostComm::mark_boundary_cells(AtomDecomposition::local_cells(),
+                                 AtomDecomposition::ghost_cells());
+  for (Cell *c : AtomDecomposition::local_cells()) {
+    c->m_is_boundary = true;
+  }
+#ifdef ESPRESSO_ADDITIONAL_CHECKS
+  // Validate now that local_cells()/ghost_cells() are populated by
+  // mark_cells().
+  assert(GhostComm::report_violations(
+      GhostComm::validate_halo_plan(m_halo_plan,
+                                    AtomDecomposition::local_cells(),
+                                    AtomDecomposition::ghost_cells()),
+      "AtomDecomposition"));
+  // NOTE: validate_halo_plan_symmetry is NOT called here.
+  // During checkpoint loading, decompositions are transiently rebuilt while
+  // maximal_cutoff is rank-divergent (ranks may have different cell grids for a
+  // brief window before the next consistent rebuild).  The transient plan is
+  // never used — it is immediately replaced — so the asymmetry is harmless.
+  // A construction-time collective all_to_all inside a ctor is also dangerous:
+  // if one rank aborts the others block forever in the collective.
+  // Symmetry is instead validated at FIRST USE of the plan in
+  // halo_exchange_start (see GhostComm::halo_exchange_start in
+  // HaloExchange.cpp).
+#endif
 }
 
 Utils::Vector3d AtomDecomposition::max_cutoff() const {

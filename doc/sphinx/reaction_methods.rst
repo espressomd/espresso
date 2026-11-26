@@ -35,12 +35,6 @@ Please keep in mind the following remarks:
   :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
   in all reaction method classes.
 
-* Some of the functionality requires particle book-keeping. If your simulation
-  script raises runtime errors about "provided particle type X is currently not
-  tracked by the system", use :meth:`system.setup_type_map(type_list=[X])
-  <espressomd.system.System.setup_type_map>` where ``X`` is the particle
-  type to track.
-
 Thermodynamic ensembles
 -----------------------
 
@@ -196,7 +190,8 @@ As before in the reaction ensemble, one can define multiple reactions (e.g. for 
 
 .. code-block:: python
 
-    cpH = reaction_methods.ConstantpHEnsemble(kT=1, exclusion_range=1., seed=77)
+    cpH = reaction_methods.ConstantpHEnsemble(
+        kT=1., seed=77, exclusion_range=1., system=system)
     cpH.add_reaction(gamma=K_diss,
                      reactant_types=[0],
                      reactant_coefficients=[1],
@@ -252,7 +247,7 @@ For this one has to provide the following reaction to the Widom method:
 .. code-block:: python
 
     type_B = 1
-    widom = reaction_methods.WidomInsertion(kT=1, seed=77)
+    widom = reaction_methods.WidomInsertion(kT=1., seed=77, system=system)
     widom.add_reaction(reactant_types=[],
                        reactant_coefficients=[],
                        product_types=[type_B],
@@ -353,14 +348,44 @@ The Monte Carlo (MC) sampling of the reaction can  be coupled with a configurati
 For non-interacting systems this coupling is not an issue, but for interacting systems the insertion of new particles
 can lead to instabilities in the MD integration ultimately leading to a crash of the simulation.
 
-This integration instabilities can be avoided by defining a distance around the particles which already exist in the system
-where new particles will not be inserted, which is defined by the required keyword ``exclusion_range``.
-This prevents big overlaps with the newly inserted particles, avoiding too big forces between particles, which prevents the MD integration from crashing.
-The value of the exclusion range does not affect the limiting result and it only affects the convergence and the stability of the integration.  For interacting systems,
-it is usually a good practice to choose the exclusion range such that it is comparable to the diameter of the particles.
+These integration instabilities can be avoided by defining a distance
+``exclusion_range`` around particles in the system, within which new particles
+will not be inserted (and old particles will not be removed, to maintain detailed balance).
+This prevents big overlaps with the newly inserted particles, which would
+otherwise cause large forces between particles and crash the MD integrator.
+The value of the exclusion range does not affect the limiting result
+and only affects the convergence and the stability of the integration.
+For interacting systems, it is usually a good practice to choose the exclusion
+range such that it is comparable to the diameter of the particles.
 
-If particles with significantly different sizes are present, it is desired to define a different exclusion range for each pair of particle types. This can be done by
-defining an exclusion radius per particle type by using the optional argument ``exclusion_radius_per_type``. Then, their exclusion range is calculated using
-the Lorentz-Berthelot combination rule, *i.e.* ``exclusion_range = exclusion_radius_per_type[particle_type_1] + exclusion_radius_per_type[particle_type_2]``.
-If the exclusion radius of one particle type is not defined, the value of the parameter provided in ``exclusion_range`` is used by default.
-If the value in ``exclusion_radius_per_type`` is equal to 0, then the exclusion range of that particle type with any other particle is 0.
+If particles with significantly different sizes are present, it is desirable
+to define a different exclusion range for each pair of particle types.
+This can be done by defining an exclusion radius per particle type via
+the optional argument ``exclusion_radius_per_type``.
+Then, their exclusion range is calculated using the Lorentz-Berthelot
+combination rule, *i.e.*
+
+.. code-block:: python
+
+    exclusion_range = exclusion_radius_per_type[particle_type_1] + \
+                      exclusion_radius_per_type[particle_type_2]
+
+If the exclusion radius of one particle type is not defined, the value
+of the parameter provided in ``exclusion_range`` is used by default.
+If the value in ``exclusion_radius_per_type`` is equal to 0,
+then the exclusion range of that particle type with any other particle is 0.
+For more detail, see :class:`~espressomd.reaction_methods.ExclusionRadius`.
+
+.. _Writing new Monte Carlo methods:
+
+Writing new Monte Carlo methods
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Most of the logic for reaction methods is implemented at the Python level.
+The C++ core is only used for performance-relevant operations on particles.
+Hence, one can prototype new reaction methods with relative ease.
+For example, the acceptance probability for a Monte Carlo trial move
+is exposed in :meth:`ReactionAlgorithm.calculate_acceptance_probability()
+<espressomd.reaction_methods.ReactionAlgorithm.calculate_acceptance_probability>`.
+Reaction method classes override this function with their custom expression
+for the acceptance probability.
