@@ -76,16 +76,18 @@ class ComFixed(ut.TestCase):
             system.integrator.run(100)
 
     def test(self):
-        self.check_com_conserved(fixed_types=[2, 0], particle_types=[0, 2])
-        self.assertEqual(set(self.system.comfixed.types), {0, 2})
+        self.check_com_conserved(fixed_types=[0, 2], particle_types=[0, 2])
+        self.assertEqual(self.system.comfixed.types, [0, 2])
 
         # Interface check
         self.system.comfixed.types = [0, 2]
-        self.assertEqual(set(self.system.comfixed.types), {0, 2})
+        self.assertEqual(self.system.comfixed.types, [0, 2])
+        self.system.comfixed.types = [2, 0]
+        self.assertEqual(self.system.comfixed.types, [0, 2])
 
     def test_duplicate_types(self):
         self.check_com_conserved(fixed_types=[1, 1], particle_types=[1, 3])
-        self.assertEqual(set(self.system.comfixed.types), {1})
+        self.assertEqual(self.system.comfixed.types, [1])
 
 
 if __name__ == "__main__":

@@ -81,6 +81,7 @@ public:
   std::vector<int> get_fixed_types() const {
     std::vector<int> res{};
     std::ranges::copy(std::views::keys(m_type_index), std::back_inserter(res));
+    std::ranges::sort(res);
     return res;
   }
 
