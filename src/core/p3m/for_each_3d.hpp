@@ -140,34 +140,53 @@ void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
 {
   auto constexpr is_host_exec_space =
       Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible != 0;
+  auto const size = stop - start;
   if constexpr (is_host_exec_space) {
-    if (Kokkos::num_threads() == 1) {
-      // serial execution policy is only implemented for host code
-      int linear_loop_index = 0u;
+    // serial loop over the box [lo, hi), starting at the given linear index
+    auto const serial = [&kernel](Utils::Vector3i const &lo,
+                                  Utils::Vector3i const &hi, int linear_index) {
       if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
-        for (int nx = start[0u]; nx < stop[0u]; ++nx) {
-          for (int ny = start[1u]; ny < stop[1u]; ++ny) {
-            for (int nz = start[2u]; nz < stop[2u]; ++nz) {
-              kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
-              linear_loop_index++;
+        for (int nx = lo[0u]; nx < hi[0u]; ++nx) {
+          for (int ny = lo[1u]; ny < hi[1u]; ++ny) {
+            for (int nz = lo[2u]; nz < hi[2u]; ++nz) {
+              kernel(Utils::Vector3i{nx, ny, nz}, linear_index);
+              linear_index++;
             }
           }
         }
       } else {
-        for (int nz = start[2u]; nz < stop[2u]; ++nz) {
-          for (int ny = start[1u]; ny < stop[1u]; ++ny) {
-            for (int nx = start[0u]; nx < stop[0u]; ++nx) {
-              kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
-              linear_loop_index++;
+        for (int nz = lo[2u]; nz < hi[2u]; ++nz) {
+          for (int ny = lo[1u]; ny < hi[1u]; ++ny) {
+            for (int nx = lo[0u]; nx < hi[0u]; ++nx) {
+              kernel(Utils::Vector3i{nx, ny, nz}, linear_index);
+              linear_index++;
             }
           }
         }
       }
+    };
+    if (Kokkos::num_threads() == 1) {
+      serial(start, stop, 0);
       return;
     }
+    // each thread processes contiguous slabs along the slowest index, the
+    // same partition as the halo-mesh loops and heFFTe's pack/unpack, so
+    // that consecutive loops touch the same memory on the same thread
+    auto constexpr slowest =
+        (memory_order == Utils::MemoryOrder::ROW_MAJOR) ? 0u : 2u;
+    auto const slab_size = size[1u] * size[2u - slowest];
+    Kokkos::parallel_for("for_each_3d",
+                         Kokkos::RangePolicy<ExecSpace>(0, size[slowest]),
+                         [=](int i) {
+                           Utils::Vector3i lo(start);
+                           Utils::Vector3i hi(stop);
+                           lo[slowest] += i;
+                           hi[slowest] = lo[slowest] + 1;
+                           serial(lo, hi, i * slab_size);
+                         });
+    return;
   }
   // parallel execution policy
-  auto const size = stop - start;
   constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
   using Range3d = Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3, iter, iter>>;
   Range3d policy({0, 0, 0}, {size[0], size[1], size[2]});

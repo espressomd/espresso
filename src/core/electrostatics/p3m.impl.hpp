@@ -225,7 +225,7 @@ public:
                     num_threads, p3m.local_mesh.size);
     kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
                      FloatType{0});
-    if (num_threads > 1 or zero_rs) {
+    if (zero_rs) {
       std::ranges::fill(p3m.rs_charge_density, FloatType{0});
     }
   }

@@ -413,28 +413,40 @@ template <int cao> struct AssignCharge {
         });
     Kokkos::fence();
     auto const num_threads = execution_space().concurrency();
-    if (num_threads > 1) {
-      kokkos_parallel_range_for<execution_space>(
-          "ReduceInterpolatedCharges", std::size_t{0}, p3m.local_mesh.size,
-          [&p3m, num_threads](std::size_t const i) {
-            value_type acc{};
-            for (int tid = 0; tid < num_threads; ++tid) {
-              acc += p3m.rs_charge_density_kokkos(tid, i);
+    // reduce plane by plane, with the same static partition of the x-planes
+    // as the halo exchange and the FFT input extraction; the sum overwrites
+    // the previous content of the charge density
+    assert(p3m.local_mesh.size ==
+           static_cast<std::size_t>(Utils::product(p3m.local_mesh.dim)));
+    assert(p3m.rs_charge_density.size() == p3m.local_mesh.size);
+    auto const plane = static_cast<std::size_t>(p3m.local_mesh.dim[1]) *
+                       static_cast<std::size_t>(p3m.local_mesh.dim[2]);
+    auto *const rho = p3m.rs_charge_density.data();
+    kokkos_parallel_range_for<execution_space>(
+        "ReduceInterpolatedCharges", 0, p3m.local_mesh.dim[0],
+        [&p3m, num_threads, plane, rho](int const x) {
+          auto const begin = static_cast<std::size_t>(x) * plane;
+          auto const end = begin + plane;
+          for (auto i = begin; i < end; ++i) {
+            rho[i] = p3m.rs_charge_density_kokkos(0, i);
+          }
+          for (int tid = 1; tid < num_threads; ++tid) {
+            for (auto i = begin; i < end; ++i) {
+              rho[i] += p3m.rs_charge_density_kokkos(tid, i);
             }
-            p3m.rs_charge_density.at(i) = acc;
-          });
-      Kokkos::fence();
-    } else {
-      std::copy_n(p3m.rs_charge_density_kokkos.data(), p3m.local_mesh.size,
-                  p3m.rs_charge_density.begin());
-    }
+          }
+        });
+    Kokkos::fence();
   }
 };
 } // namespace
 
 template <typename FloatType, Arch Architecture, class FFTConfig>
 void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::charge_assign() {
-  prepare_fft_mesh(true, false);
+  // the weights of all particles and the full charge density are
+  // overwritten by the parallel charge assignment
+  p3m.inter_weights.reset_for_zfill(p3m.params.cao);
+  prepare_fft_mesh(false, false);
 
   Utils::integral_parameter<int, AssignCharge, p3m_min_cao, p3m_max_cao>(
       p3m.params.cao, p3m, *get_system().cell_structure);
@@ -454,38 +466,57 @@ void CoulombP3MImpl<FloatType, Architecture, FFTConfig>::assign_charge(
 
 namespace {
 template <int cao> struct AssignForces {
-  void operator()(auto &p3m, auto force_prefac,
-                  CellStructure &cell_structure) const {
+  /**
+   * @param p3m             P3M state.
+   * @param force_prefac    Force prefactor.
+   * @param cell_structure  Cell structure.
+   * @param no_halo_strides If set, read the electric field without halo
+   *                        (with these strides) instead of the field with
+   *                        halo: every stencil point is mapped to its
+   *                        periodic image in the global mesh. Only valid if
+   *                        the local mesh is the global mesh (single rank).
+   */
+  void operator()(auto &p3m, auto force_prefac, CellStructure &cell_structure,
+                  std::optional<Utils::Vector3i> const &no_halo_strides) const {
 
     assert(cao == p3m.inter_weights.cao());
     using execution_space = Kokkos::DefaultHostExecutionSpace;
 
-    auto const kernel = [&p3m](auto pref, auto &p_force, std::size_t p_index) {
-      auto const weights = p3m.inter_weights.template load<cao>(p_index);
-
-      Utils::Vector3d force{};
-      p3m_interpolate(p3m.local_mesh, weights,
-                      [&force, &p3m](int ind, double w) {
-                        force[0u] += w * double(p3m.rs_E_fields[0u][ind]);
-                        force[1u] += w * double(p3m.rs_E_fields[1u][ind]);
-                        force[2u] += w * double(p3m.rs_E_fields[2u][ind]);
-                      });
-
-      auto access = p_force.access();
-      access(p_index, 0) -= pref * force[0];
-      access(p_index, 1) -= pref * force[1];
-      access(p_index, 2) -= pref * force[2];
+    // E: electric field components, interpolate: stencil walk over E
+    auto const assign = [&](auto const &E, auto const &interpolate) {
+      auto const n_part = cell_structure.count_local_particles();
+      auto const &aosoa = cell_structure.get_aosoa();
+      auto scatter_force = cell_structure.get_scatter_force();
+      kokkos_parallel_range_for<execution_space>(
+          "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
+            auto const pref = aosoa.charge(p_index) * force_prefac;
+            if (not pref) {
+              return;
+            }
+            auto const weights = p3m.inter_weights.template load<cao>(p_index);
+            Utils::Vector3d force{};
+            interpolate(weights, [&force, &E](int ind, double w) {
+              force[0u] += w * double(E[0u][ind]);
+              force[1u] += w * double(E[1u][ind]);
+              force[2u] += w * double(E[2u][ind]);
+            });
+            auto access = scatter_force.access();
+            access(p_index, 0) -= pref * force[0];
+            access(p_index, 1) -= pref * force[1];
+            access(p_index, 2) -= pref * force[2];
+          });
     };
 
-    auto const n_part = cell_structure.count_local_particles();
-    auto const &aosoa = cell_structure.get_aosoa();
-    auto scatter_force = cell_structure.get_scatter_force();
-    kokkos_parallel_range_for<execution_space>(
-        "AssignForces", std::size_t{0u}, n_part, [&](std::size_t p_index) {
-          if (auto const pref = aosoa.charge(p_index) * force_prefac) {
-            kernel(pref, scatter_force, p_index);
-          }
-        });
+    if (no_halo_strides) {
+      assign(p3m.rs_E_fields_no_halo, [&](auto const &weights, auto kernel) {
+        p3m_interpolate_periodic(p3m.local_mesh, *no_halo_strides, weights,
+                                 kernel);
+      });
+    } else {
+      assign(p3m.rs_E_fields, [&](auto const &weights, auto kernel) {
+        p3m_interpolate(p3m.local_mesh, weights, kernel);
+      });
+    }
   }
 };
 } // namespace
@@ -560,6 +591,11 @@ void CoulombP3MImpl<FloatType, Architecture,
   auto const rs_mesh_size_no_halo = Utils::product(size);
   p3m.fft->backward_batch(3u, p3m.ks_E_fields_batched.data(),
                           p3m.rs_E_fields_no_halo_batched.data());
+  if (p3m.halo_comm.is_self_exchange()) {
+    // the halo layers would only hold periodic images of the local mesh,
+    // which the force assignment reads from the field without halo
+    return;
+  }
   for (auto d : {0u, 1u, 2u}) {
     // add zeros around the E-field in real space to make room for ghost
     // layers, writing straight into the persistent halo-sized buffer (no
@@ -699,8 +735,18 @@ double CoulombP3MImpl<FloatType, Architecture, FFTConfig>::long_range_kernel(
     // assign particle forces
     auto const force_prefac = prefactor / volume;
     auto &particle_data = cell_structure;
+    auto no_halo_strides = std::optional<Utils::Vector3i>{};
+    if (p3m.halo_comm.is_self_exchange()) {
+      auto const &mesh = p3m.local_mesh.dim_no_halo;
+      assert(mesh == p3m.params.mesh);
+      if constexpr (FFTConfig::r_space_order == Utils::MemoryOrder::ROW_MAJOR) {
+        no_halo_strides = Utils::Vector3i{{mesh[1] * mesh[2], mesh[2], 1}};
+      } else {
+        no_halo_strides = Utils::Vector3i{{1, mesh[0], mesh[0] * mesh[1]}};
+      }
+    }
     Utils::integral_parameter<int, AssignForces, p3m_min_cao, p3m_max_cao>(
-        p3m.params.cao, p3m, force_prefac, particle_data);
+        p3m.params.cao, p3m, force_prefac, particle_data, no_halo_strides);
 
     // add dipole forces
     // Eq. (3.19) @cite deserno00b
