@@ -94,6 +94,11 @@ void LBWalberlaImpl<FloatType, Architecture>::set_collision_model(
     throw std::domain_error(
         "Lees-Edwards LB only supports shear_plane_normal=\"y\"");
   }
+  // the collision kernel applies the velocity jump to the x-component
+  if (shear_direction != 0u) {
+    throw std::domain_error(
+        "Lees-Edwards LB only supports shear_direction=\"x\"");
+  }
   auto const &lattice = get_lattice();
   auto const n_ghost_layers = lattice.get_ghost_layers();
   auto const blocks = lattice.get_blocks();
