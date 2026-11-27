@@ -104,6 +104,12 @@ option(ESPRESSO_BUILD_WITH_FFTW "Build with FFTW support" ON)
 option(ESPRESSO_BUILD_WITH_KOKKOS_FFT
        "Use kokkos-fft for the single-rank P3M reciprocal-space FFT" ON)
 option(ESPRESSO_BUILD_WITH_CUDA "Build with GPU support" OFF)
+option(ESPRESSO_BUILD_WITH_HIP
+       "Build with GPU support for AMD GPUs, compiled with HIP (ROCm)" OFF)
+if(ESPRESSO_BUILD_WITH_HIP)
+  # a HIP build is a GPU build; the cache keeps ESPRESSO_BUILD_WITH_CUDA as set
+  set(ESPRESSO_BUILD_WITH_CUDA ON)
+endif()
 option(ESPRESSO_BUILD_WITH_HDF5 "Build with HDF5 support" OFF)
 option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
@@ -273,7 +279,26 @@ endblock()
 
 set(ESPRESSO_XCOMPILER "")
 set(ESPRESSO_PTXAS "")
-if(ESPRESSO_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_HIP)
+  # enable_language(HIP) honors an explicit -DCMAKE_HIP_ARCHITECTURES, otherwise
+  # auto-detects the host GPU(s), and errors on a no-GPU build host.
+  enable_language(HIP)
+  find_package(hipfft REQUIRED)
+  # match CUDA/CPU FMA contraction so the CPU-vs-GPU consistency tests stay
+  # within tolerance (clang for HIP defaults to -ffp-contract=fast)
+  string(APPEND CMAKE_HIP_FLAGS " -ffp-contract=on")
+  set(CMAKE_HIP_STANDARD ${ESPRESSO_MINIMAL_CUDA_STANDARD})
+  # the ROCm libraries directory is an implicit HIP link directory, which CMake
+  # leaves out of the runtime path of executables that link the HIP runtime or
+  # rocFFT indirectly (e.g. through a static heFFTe)
+  macro(espresso_add_cuda_rpaths)
+    set(TARGET_NAME ${ARGV0})
+    set_property(TARGET ${TARGET_NAME} APPEND
+                 PROPERTY BUILD_RPATH "$<TARGET_FILE_DIR:hip::amdhip64>")
+    set_property(TARGET ${TARGET_NAME} APPEND
+                 PROPERTY INSTALL_RPATH "$<TARGET_FILE_DIR:hip::amdhip64>")
+  endmacro()
+elseif(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
   enable_language(CUDA)
   check_language(CUDA)
@@ -670,7 +695,8 @@ endif()
 #
 
 set(ESPRESSO_OPENMP_COMPONENTS CXX)
-if(ESPRESSO_BUILD_WITH_CUDA AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL NVHPC)
+if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP
+   AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL NVHPC)
   # FindOpenMP doesn't fully support NVHPC+CUDA as of CMake 4.3, see ticket:
   # https://gitlab.kitware.com/cmake/cmake/-/work_items/23003
   list(APPEND ESPRESSO_OPENMP_COMPONENTS CUDA)
@@ -735,7 +761,9 @@ if(ESPRESSO_BUILD_WITH_FFTW)
     )
     # cmake-format: on
     set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
-    if(ESPRESSO_BUILD_WITH_CUDA)
+    if(ESPRESSO_BUILD_WITH_HIP)
+      set(Heffte_ENABLE_ROCM ON CACHE BOOL "")
+    elseif(ESPRESSO_BUILD_WITH_CUDA)
       set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
     endif()
     set(Heffte_ENABLE_DOXYGEN OFF CACHE BOOL "")
@@ -785,7 +813,8 @@ if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
   set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
   if(${ESPRESSO_BUILD_WITH_CUDA} AND NOT ${ESPRESSO_BUILD_WITH_WALBERLA}
-     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+     AND NOT ESPRESSO_BUILD_WITH_HIP AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL
+                                         "NVIDIA")
     set(Kokkos_ENABLE_CUDA ON CACHE BOOL "")
     set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
     if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
@@ -1120,7 +1149,9 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
     set(WALBERLA_BUILD_DOC off CACHE BOOL "")
     set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
     set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-    if(ESPRESSO_BUILD_WITH_CUDA)
+    if(ESPRESSO_BUILD_WITH_HIP)
+      set(WALBERLA_BUILD_WITH_HIP "on" CACHE BOOL "")
+    elseif(ESPRESSO_BUILD_WITH_CUDA)
       set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
       if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
         if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
@@ -1168,7 +1199,8 @@ if(ESPRESSO_BUILD_WITH_WALBERLA)
               walberla::blockforest walberla::communication walberla::field
               walberla::stencil walberla::vtk
               $<$<BOOL:${WALBERLA_BUILD_WITH_FFTW}>:walberla::fft>
-              $<$<BOOL:${WALBERLA_BUILD_WITH_CUDA}>:walberla::gpu>)
+              $<$<BOOL:${WALBERLA_BUILD_WITH_CUDA}>:walberla::gpu>
+              $<$<BOOL:${WALBERLA_BUILD_WITH_HIP}>:walberla::gpu>)
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(
@@ -1192,8 +1224,13 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
   set(CALIPER_WITH_MPI on CACHE BOOL "")
-  set(CALIPER_WITH_NVTX ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
-  set(CALIPER_WITH_CUPTI ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
+  # NVTX and CUPTI are CUDA tools, not available for HIP code
+  set(ESPRESSO_CALIPER_WITH_CUDA_TOOLS OFF)
+  if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP)
+    set(ESPRESSO_CALIPER_WITH_CUDA_TOOLS ON)
+  endif()
+  set(CALIPER_WITH_NVTX ${ESPRESSO_CALIPER_WITH_CUDA_TOOLS} CACHE BOOL "")
+  set(CALIPER_WITH_CUPTI ${ESPRESSO_CALIPER_WITH_CUDA_TOOLS} CACHE BOOL "")
   set(CALIPER_INSTALL_CONFIG off CACHE BOOL "")
   set(CALIPER_INSTALL_HEADERS off CACHE BOOL "")
   set(BUILD_SHARED_LIBS ON)

@@ -295,6 +295,28 @@ The extra compiler flags in the Clang CMake command above are needed to pin
 the search paths of Clang. Clang would otherwise select the default GCC version,
 which is often GCC 15 on Ubuntu 26.04.
 
+.. _AMD GPU acceleration:
+
+AMD GPU acceleration
+""""""""""""""""""""
+
+On AMD GPUs, the electrostatics and magnetostatics GPU algorithms
+(|p3m| and dipolar direct summation) and the GPU lattice-Boltzmann and
+electrokinetics solvers can be compiled with HIP from a ROCm installation
+that provides hipFFT, rocFFT and rocThrust. waLBerla is then built with its
+HIP backend and heFFTe with its rocFFT backend:
+
+.. code-block:: bash
+
+    cmake .. -D ESPRESSO_BUILD_WITH_HIP=ON \
+      -D CMAKE_HIP_COMPILER=/opt/rocm/llvm/bin/clang++ \
+      -D CMAKE_PREFIX_PATH=/opt/rocm
+
+The device code is generated for the GPUs detected on the build machine.
+To select the architectures explicitly, pass a semicolon-separated list,
+for example ``-D CMAKE_HIP_ARCHITECTURES="gfx90a;gfx942;gfx1100"``.
+Run ``rocminfo | grep gfx`` to display the architecture of your GPU.
+
 .. _Setting up a Jupyter environment:
 
 Setting up a Jupyter environment
@@ -892,6 +914,7 @@ in the :file:`CMakeLists.txt` file. Most options are boolean values
 The following options control features from external libraries:
 
 * ``ESPRESSO_BUILD_WITH_CUDA``: Build with GPU support.
+* ``ESPRESSO_BUILD_WITH_HIP``: Build with GPU support for AMD GPUs, compiled with HIP; implies ``ESPRESSO_BUILD_WITH_CUDA`` (see :ref:`AMD GPU acceleration`).
 * ``ESPRESSO_BUILD_WITH_HDF5``: Build with HDF5 support.
 * ``ESPRESSO_BUILD_WITH_FFTW``: Build with FFTW support.
 * ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.

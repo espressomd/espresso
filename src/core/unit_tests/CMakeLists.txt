@@ -187,8 +187,16 @@ if(ESPRESSO_BUILD_WITH_FFTW)
 endif()
 
 if(ESPRESSO_BUILD_WITH_CUDA)
-  espresso_unit_test(SRC cuda_test.cu DEPENDS espresso::utils espresso::core
-                     Kokkos::kokkos CUDA::cudart)
+  if(ESPRESSO_BUILD_WITH_HIP)
+    set_source_files_properties(cuda_test.cu PROPERTIES LANGUAGE HIP)
+    espresso_unit_test(SRC cuda_test.cu DEPENDS espresso::utils espresso::core
+                       Kokkos::kokkos hip::host)
+    set_target_properties(cuda_test PROPERTIES HIP_ARCHITECTURES
+                                               "${CMAKE_HIP_ARCHITECTURES}")
+  else()
+    espresso_unit_test(SRC cuda_test.cu DEPENDS espresso::utils espresso::core
+                       Kokkos::kokkos CUDA::cudart)
+  endif()
 endif()
 set_property(
   SOURCE random_test.cpp thermostats_test.cpp

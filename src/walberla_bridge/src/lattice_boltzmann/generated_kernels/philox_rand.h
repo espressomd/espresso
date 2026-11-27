@@ -93,7 +93,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__) ||               \
-    defined(__clang__) && defined(__CUDA__)
+    defined(__clang__) && defined(__CUDA__) || defined(__HIP__)
 #define QUALIFIERS static __forceinline__ __device__
 #elif defined(__OPENCL_VERSION__)
 #define QUALIFIERS static inline
@@ -134,7 +134,7 @@ typedef svfloat64_t svfloat64_st;
 
 QUALIFIERS uint32 mulhilo32(uint32 a, uint32 b, uint32 *hip) {
 #if !defined(__CUDA_ARCH__) && !defined(__HIP_DEVICE_COMPILE__) &&             \
-    (!defined(__clang__) || !defined(__CUDA__))
+    (!defined(__clang__) || !defined(__CUDA__)) && !defined(__HIP__)
   // host code
 #if defined(__powerpc__) && (!defined(__clang__) || defined(__xlC__))
   *hip = __mulhwu(a, b);
@@ -262,7 +262,7 @@ QUALIFIERS void philox_float4(uint32 ctr0, uint32 ctr1, uint32 ctr2,
 
 #if !defined(__CUDA_ARCH__) && !defined(__OPENCL_VERSION__) &&                 \
     !defined(__HIP_DEVICE_COMPILE__) &&                                        \
-    (!defined(__clang__) || !defined(__CUDA__))
+    (!defined(__clang__) || !defined(__CUDA__)) && !defined(__HIP__)
 #if defined(__SSE4_1__) || (defined(_MSC_VER) && !defined(_M_ARM64))
 QUALIFIERS void _philox4x32round(__m128i *ctr, __m128i *key) {
   __m128i lohi0a = _mm_mul_epu32(ctr[0], _mm_set1_epi32(PHILOX_M4x32_0));

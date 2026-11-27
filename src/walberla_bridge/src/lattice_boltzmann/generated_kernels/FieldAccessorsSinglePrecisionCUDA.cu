@@ -52,8 +52,8 @@
 #if defined(__NVCC__)
 #define RESTRICT __restrict__
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
 #else
@@ -70,8 +70,18 @@
 #endif
 
 // LCOV_EXCL_START
+/** @brief Block index as @c uint3 (HIP built-ins do not convert). */
+static __forceinline__ __device__ uint3 block_index() {
+  return make_uint3(blockIdx.x, blockIdx.y, blockIdx.z);
+}
+
+/** @brief Thread index as @c uint3 (HIP built-ins do not convert). */
+static __forceinline__ __device__ uint3 thread_index() {
+  return make_uint3(threadIdx.x, threadIdx.y, threadIdx.z);
+}
+
 /** @brief Get linear index of flattened data with original layout @c fzyx. */
-static __forceinline__ __device__ uint getLinearIndex(uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset) {
+static __forceinline__ __device__ uint getLinearIndex(uint fOffset) {
   auto const x = threadIdx.x;
   auto const y = blockIdx.x;
   auto const z = blockIdx.y;
@@ -104,7 +114,7 @@ static dim3 calculate_dim_grid(uint const threads_x,
   assert(threads_per_block >= 1u);
   auto const threads_y = threads_per_block * blocks_per_grid_y;
   auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
-  return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  return dim3(blocks_per_grid_x, blocks_per_grid_y, 1u);
 }
 
 namespace walberla {
@@ -116,8 +126,8 @@ namespace Population {
 __global__ void kernel_get(
     gpu::FieldAccessor<float> pdf,
     float *RESTRICT pop) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
-  pdf.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(19u);
+  pdf.set(block_index(), thread_index());
   pop += offset;
   if (pdf.isValidPosition()) {
     pop[0u] = pdf.get(0u);
@@ -145,8 +155,8 @@ __global__ void kernel_get(
 __global__ void kernel_set(
     gpu::FieldAccessor<float> pdf,
     float const *RESTRICT pop) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
-  pdf.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(19u);
+  pdf.set(block_index(), thread_index());
   pop += offset;
   if (pdf.isValidPosition()) {
     pdf.get(0u) = pop[0u];
@@ -174,7 +184,7 @@ __global__ void kernel_set(
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<float> pdf,
     float const *RESTRICT pop) {
-  pdf.set(blockIdx, threadIdx);
+  pdf.set(block_index(), thread_index());
   if (pdf.isValidPosition()) {
     pdf.get(0u) = pop[0u];
     pdf.get(1u) = pop[1u];
@@ -203,10 +213,10 @@ __global__ void kernel_set_vel(
     gpu::FieldAccessor<float> velocity,
     gpu::FieldAccessor<float> force,
     float const *RESTRICT pop) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 19u);
-  pdf.set(blockIdx, threadIdx);
-  velocity.set(blockIdx, threadIdx);
-  force.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(19u);
+  pdf.set(block_index(), thread_index());
+  velocity.set(block_index(), thread_index());
+  force.set(block_index(), thread_index());
   pop += offset;
   if (pdf.isValidPosition()) {
     const float f_0 = pdf.get(0u) = pop[0u];
@@ -352,8 +362,8 @@ namespace Vector {
 __global__ void kernel_get(
     gpu::FieldAccessor<float> vec,
     float *u_out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  vec.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  vec.set(block_index(), thread_index());
   u_out += offset;
   if (vec.isValidPosition()) {
     u_out[0u] = vec.get(0u);
@@ -365,8 +375,8 @@ __global__ void kernel_get(
 __global__ void kernel_set(
     gpu::FieldAccessor<float> vec,
     float const *RESTRICT u_in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  vec.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  vec.set(block_index(), thread_index());
   u_in += offset;
   if (vec.isValidPosition()) {
     vec.get(0u) = u_in[0u];
@@ -378,7 +388,7 @@ __global__ void kernel_set(
 __global__ void kernel_broadcast(
     gpu::FieldAccessor<float> vec,
     float const *RESTRICT u_in) {
-  vec.set(blockIdx, threadIdx);
+  vec.set(block_index(), thread_index());
   if (vec.isValidPosition()) {
     vec.get(0u) = u_in[0u];
     vec.get(1u) = u_in[1u];
@@ -389,8 +399,8 @@ __global__ void kernel_broadcast(
 __global__ void kernel_add(
     gpu::FieldAccessor<float> vec,
     float const *RESTRICT u_in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  vec.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  vec.set(block_index(), thread_index());
   u_in += offset;
   if (vec.isValidPosition()) {
     vec.get(0u) += u_in[0u];
@@ -402,7 +412,7 @@ __global__ void kernel_add(
 __global__ void kernel_broadcast_add(
     gpu::FieldAccessor<float> vec,
     float const *RESTRICT u_in) {
-  vec.set(blockIdx, threadIdx);
+  vec.set(block_index(), thread_index());
   if (vec.isValidPosition()) {
     vec.get(0u) += u_in[0u];
     vec.get(1u) += u_in[1u];
@@ -800,8 +810,8 @@ __global__ void kernel_get(
     gpu::FieldAccessor<float> pdf,
     float *RESTRICT rho_out,
     float const density) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-  pdf.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(1u);
+  pdf.set(block_index(), thread_index());
   rho_out += offset;
   if (pdf.isValidPosition()) {
     float const f_0 = pdf.get(0u);
@@ -836,8 +846,8 @@ __global__ void kernel_set(
     gpu::FieldAccessor<float> pdf,
     float const *RESTRICT rho_in,
     float const density) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-  pdf.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(1u);
+  pdf.set(block_index(), thread_index());
   rho_in += offset;
   if (pdf.isValidPosition()) {
     float const f_0 = pdf.get(0u);
@@ -946,9 +956,9 @@ __global__ void kernel_get(
     gpu::FieldAccessor<float> pdf,
     gpu::FieldAccessor<float> force,
     float *RESTRICT u_out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  pdf.set(blockIdx, threadIdx);
-  force.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  pdf.set(block_index(), thread_index());
+  force.set(block_index(), thread_index());
   u_out += offset;
   if (pdf.isValidPosition()) {
     float const f_0 = pdf.get(0u);
@@ -993,10 +1003,10 @@ __global__ void kernel_set(
     gpu::FieldAccessor<float> velocity,
     gpu::FieldAccessor<float> force,
     float const *RESTRICT u_in) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  pdf.set(blockIdx, threadIdx);
-  velocity.set(blockIdx, threadIdx);
-  force.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  pdf.set(block_index(), thread_index());
+  velocity.set(block_index(), thread_index());
+  force.set(block_index(), thread_index());
   u_in += offset;
   if (pdf.isValidPosition()) {
     float const f_0 = pdf.get(0u);
@@ -1113,10 +1123,10 @@ __global__ void kernel_set(
     gpu::FieldAccessor<float> force,
     float const *RESTRICT f_in,
     float const density) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  pdf.set(blockIdx, threadIdx);
-  velocity.set(blockIdx, threadIdx);
-  force.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  pdf.set(block_index(), thread_index());
+  velocity.set(block_index(), thread_index());
+  force.set(block_index(), thread_index());
   f_in += offset;
   if (pdf.isValidPosition()) {
     float const f_0 = pdf.get(0u);
@@ -1206,9 +1216,9 @@ __global__ void kernel_get(
     gpu::FieldAccessor<float> force,
     float *RESTRICT out,
     float const density) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 3u);
-  pdf.set(blockIdx, threadIdx);
-  force.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(3u);
+  pdf.set(block_index(), thread_index());
+  force.set(block_index(), thread_index());
   out += offset;
   if (pdf.isValidPosition()) {
     float const f_1 = pdf.get(1u);
@@ -1275,8 +1285,8 @@ namespace PressureTensor {
 __global__ void kernel_get(
     gpu::FieldAccessor<float> pdf,
     float *RESTRICT p_out) {
-  auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 9u);
-  pdf.set(blockIdx, threadIdx);
+  auto const offset = getLinearIndex(9u);
+  pdf.set(block_index(), thread_index());
   p_out += offset;
   if (pdf.isValidPosition()) {
     float const f_1 = pdf.getNeighbor(0, -1, 0, 1u);

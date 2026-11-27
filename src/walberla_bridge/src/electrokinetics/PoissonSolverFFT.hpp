@@ -27,7 +27,7 @@
 
 #include "generated_kernels/EK_FieldAccessors_double_precision.h"
 #include "generated_kernels/EK_FieldAccessors_single_precision.h"
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 #include "generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
 #include "generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
 #endif
@@ -42,7 +42,7 @@
 #include <field/vtk/VTKWriter.h>
 #include <stencil/D3Q27.h>
 #include <waLBerlaDefinitions.h>
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 #include <gpu/AddGPUFieldToStorage.h>
 #include <gpu/FieldAccessor.h>
 #include <gpu/FieldIndexing.h>
@@ -69,6 +69,14 @@
 #pragma clang diagnostic pop
 #elif defined(__GNUC__) or defined(__GNUG__)
 #pragma GCC diagnostic pop
+#endif
+
+#if defined(__HIPCC__)
+// heFFTe recognizes the cuFFT complex types but not the hipFFT ones
+namespace heffte {
+template <> struct is_ccomplex<hipfftComplex> : std::true_type {};
+template <> struct is_zcomplex<hipfftDoubleComplex> : std::true_type {};
+} // namespace heffte
 #endif
 
 #include <algorithm>
@@ -115,7 +123,7 @@ protected:
         blockforest::communication::UniformBufferedScheme<Stencil>;
   };
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
   template <typename FT> struct FieldTrait<FT, lbmpy::Arch::GPU> {
     using ComplexType = std::conditional_t<std::is_same_v<FloatType, float>,
                                            cufftComplex, cufftDoubleComplex>;
@@ -143,6 +151,10 @@ protected:
     using backend =
         std::conditional_t<Architecture == lbmpy::Arch::GPU,
                            heffte::backend::cufft, heffte::backend::fftw>;
+#elif defined(__HIPCC__)
+    using backend =
+        std::conditional_t<Architecture == lbmpy::Arch::GPU,
+                           heffte::backend::rocfft, heffte::backend::fftw>;
 #else  // __CUDACC__
     using backend = heffte::backend::fftw;
 #endif // __CUDACC__
@@ -178,7 +190,7 @@ private:
     std::vector<ComplexType> m_potential_fourier;
   };
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
   template <typename FT> struct Green<FT, lbmpy::Arch::GPU> {
     using GreenFunctionField = gpu::GPUField<FloatType>;
     using PotentialFourier = gpu::GPUField<ComplexType>;
@@ -208,7 +220,7 @@ public:
                    double permittivity)
       : PoissonSolver(std::move(lattice), permittivity) {
     auto blocks = get_lattice().get_blocks();
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       using GreenFunctionField =
           Green<FloatType, lbmpy::Arch::GPU>::GreenFunctionField;
@@ -302,7 +314,7 @@ public:
     auto const grid_range = get_lattice().get_local_grid_range();
     heffte::plan_options options = heffte::default_options<
         typename heffte_container<ComplexType>::backend>();
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       options.use_reorder = false;
       options.algorithm = heffte::reshape_algorithm::p2p_plined;
@@ -337,7 +349,7 @@ public:
                            m_green.m_potential_fourier.data(),
                            heffte->buffer->data());
     }
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       using PotentialFourier =
           Green<FloatType, lbmpy::Arch::GPU>::PotentialFourier;
@@ -440,7 +452,7 @@ public:
         }
       }
     }
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       using PotentialFourier =
           Green<FloatType, lbmpy::Arch::GPU>::PotentialFourier;
@@ -482,7 +494,7 @@ public:
         }
       }
     }
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       for (auto &block : *get_lattice().get_blocks()) {
         auto field = block.template getData<PotentialField>(
@@ -511,7 +523,7 @@ public:
         }
       }
     }
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       // the FFT-solver re-uses the potential field for the charge
       for (auto &block : *get_lattice().get_blocks()) {
@@ -609,7 +621,7 @@ public:
   }
 
 private:
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
   void add_fields(PotentialField *field_out,
                   gpu::GPUField<FloatType> *field_add, FloatType factor) {
     auto kernel = gpu::make_kernel(add_fields_with_factor<FloatType>);

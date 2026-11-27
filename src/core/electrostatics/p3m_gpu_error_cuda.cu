@@ -34,8 +34,6 @@
 #include <thrust/device_vector.h>
 #include <thrust/reduce.h>
 
-#include <cuda.h>
-
 #include <algorithm>
 #include <cstddef>
 #include <numbers>

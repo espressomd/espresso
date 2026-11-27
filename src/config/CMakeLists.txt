@@ -19,6 +19,12 @@
 
 add_subdirectory(include/config)
 
+if(ESPRESSO_BUILD_WITH_HIP)
+  # report the HIP compiler as the GPU compiler in the toolchain metadata
+  set(CMAKE_CUDA_COMPILER_ID "${CMAKE_HIP_COMPILER_ID}")
+  set(CMAKE_CUDA_COMPILER_VERSION "${CMAKE_HIP_COMPILER_VERSION}")
+endif()
+
 configure_file(${CMAKE_SOURCE_DIR}/cmake/espresso_cmake_config.cmakein
                ${CMAKE_CURRENT_BINARY_DIR}/include/config/cmake_config.hpp)
 

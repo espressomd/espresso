@@ -50,8 +50,8 @@
 #if defined(__NVCC__)
 #define RESTRICT __restrict__
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 #define RESTRICT __restrict__
 #else
@@ -68,8 +68,18 @@
 #endif
 
 // LCOV_EXCL_START
+/** @brief Block index as @c uint3 (HIP built-ins do not convert). */
+static __forceinline__ __device__ uint3 block_index() {
+  return make_uint3(blockIdx.x, blockIdx.y, blockIdx.z);
+}
+
+/** @brief Thread index as @c uint3 (HIP built-ins do not convert). */
+static __forceinline__ __device__ uint3 thread_index() {
+  return make_uint3(threadIdx.x, threadIdx.y, threadIdx.z);
+}
+
 /** @brief Get linear index of flattened data with original layout @c fzyx. */
-static __forceinline__ __device__ uint getLinearIndex( uint3 blockIdx, uint3 threadIdx, uint3 gridDim, uint3 blockDim, uint fOffset ) {
+static __forceinline__ __device__ uint getLinearIndex( uint fOffset ) {
   auto const x = threadIdx.x;
   auto const y = blockIdx.x;
   auto const z = blockIdx.y;
@@ -102,7 +112,7 @@ static dim3 calculate_dim_grid(uint const threads_x,
   assert(threads_per_block >= 1u);
   auto const threads_y = threads_per_block * blocks_per_grid_y;
   auto const blocks_per_grid_x = (threads_x + threads_y - 1) / threads_y;
-  return make_uint3(blocks_per_grid_x, blocks_per_grid_y, 1);
+  return dim3(blocks_per_grid_x, blocks_per_grid_y, 1u);
 }
 
 namespace walberla {
@@ -116,8 +126,8 @@ namespace Population
         gpu::FieldAccessor< {{dtype}} > pdf,
         {{dtype}} * RESTRICT pop )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
-        pdf.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{Q}}u);
+        pdf.set( block_index(), thread_index() );
         pop += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -130,8 +140,8 @@ namespace Population
         gpu::FieldAccessor< {{dtype}} > pdf,
         {{dtype}} const * RESTRICT pop )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
-        pdf.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{Q}}u);
+        pdf.set( block_index(), thread_index() );
         pop += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -144,7 +154,7 @@ namespace Population
         gpu::FieldAccessor< {{dtype}} > pdf,
         {{dtype}} const * RESTRICT pop )
     {
-        pdf.set( blockIdx, threadIdx );
+        pdf.set( block_index(), thread_index() );
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
                 pdf.get({{i}}u) = pop[{{i}}u];
@@ -158,10 +168,10 @@ namespace Population
         gpu::FieldAccessor< {{dtype}} > force,
         {{dtype}} const * RESTRICT pop )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{Q}}u);
-        pdf.set( blockIdx, threadIdx );
-        velocity.set( blockIdx, threadIdx );
-        force.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{Q}}u);
+        pdf.set( block_index(), thread_index() );
+        velocity.set( block_index(), thread_index() );
+        force.set( block_index(), thread_index() );
         pop += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -290,8 +300,8 @@ namespace Vector
         gpu::FieldAccessor< {{dtype}} > vec,
         {{dtype}} * u_out )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        vec.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        vec.set( block_index(), thread_index() );
         u_out += offset;
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
@@ -304,8 +314,8 @@ namespace Vector
         gpu::FieldAccessor< {{dtype}} > vec,
         {{dtype}} const * RESTRICT u_in )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        vec.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        vec.set( block_index(), thread_index() );
         u_in += offset;
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
@@ -318,7 +328,7 @@ namespace Vector
         gpu::FieldAccessor< {{dtype}} > vec,
         {{dtype}} const * RESTRICT u_in )
     {
-        vec.set( blockIdx, threadIdx );
+        vec.set( block_index(), thread_index() );
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
                 vec.get({{i}}u) = u_in[{{i}}u];
@@ -330,8 +340,8 @@ namespace Vector
         gpu::FieldAccessor< {{dtype}} > vec,
         {{dtype}} const * RESTRICT u_in )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        vec.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        vec.set( block_index(), thread_index() );
         u_in += offset;
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
@@ -344,7 +354,7 @@ namespace Vector
         gpu::FieldAccessor< {{dtype}} > vec,
         {{dtype}} const * RESTRICT u_in )
     {
-        vec.set( blockIdx, threadIdx );
+        vec.set( block_index(), thread_index() );
         if (vec.isValidPosition()) {
             {% for i in range(D) -%}
                 vec.get({{i}}u) += u_in[{{i}}u];
@@ -732,8 +742,8 @@ namespace Density
         {{dtype}} * RESTRICT rho_out,
         {{dtype}} const density )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-        pdf.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex(1u);
+        pdf.set( block_index(), thread_index() );
         rho_out += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -749,8 +759,8 @@ namespace Density
         {{dtype}} const * RESTRICT rho_in,
         {{dtype}} const density )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, 1u);
-        pdf.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex(1u);
+        pdf.set( block_index(), thread_index() );
         rho_in += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -842,9 +852,9 @@ namespace Velocity
         gpu::FieldAccessor< {{dtype}} > force,
         {{dtype}} * RESTRICT u_out )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        pdf.set( blockIdx, threadIdx );
-        force.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        pdf.set( block_index(), thread_index() );
+        force.set( block_index(), thread_index() );
         u_out += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -864,10 +874,10 @@ namespace Velocity
         gpu::FieldAccessor< {{dtype}} > force,
         {{dtype}} const * RESTRICT u_in )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        pdf.set( blockIdx, threadIdx );
-        velocity.set( blockIdx, threadIdx );
-        force.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        pdf.set( block_index(), thread_index() );
+        velocity.set( block_index(), thread_index() );
+        force.set( block_index(), thread_index() );
         u_in += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -966,10 +976,10 @@ namespace Force {
         {{dtype}} const * RESTRICT f_in,
         {{dtype}} const density )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        pdf.set( blockIdx, threadIdx );
-        velocity.set( blockIdx, threadIdx );
-        force.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        pdf.set( block_index(), thread_index() );
+        velocity.set( block_index(), thread_index() );
+        force.set( block_index(), thread_index() );
         f_in += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(Q) -%}
@@ -1040,9 +1050,9 @@ namespace MomentumDensity
         {{dtype}} * RESTRICT out,
         {{dtype}} const density )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D}}u);
-        pdf.set( blockIdx, threadIdx );
-        force.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D}}u);
+        pdf.set( block_index(), thread_index() );
+        force.set( block_index(), thread_index() );
         out += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(1, Q) -%}
@@ -1091,8 +1101,8 @@ namespace PressureTensor
         gpu::FieldAccessor< {{dtype}} > pdf,
         {{dtype}} * RESTRICT p_out )
     {
-        auto const offset = getLinearIndex(blockIdx, threadIdx, gridDim, blockDim, {{D**2}}u);
-        pdf.set( blockIdx, threadIdx );
+        auto const offset = getLinearIndex({{D**2}}u);
+        pdf.set( block_index(), thread_index() );
         p_out += offset;
         if (pdf.isValidPosition()) {
             {% for i in range(1, Q) -%}

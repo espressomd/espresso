@@ -56,15 +56,26 @@ add_library(espresso::core ALIAS espresso_core)
 espresso_set_common_target_properties(espresso_core)
 
 if(ESPRESSO_BUILD_WITH_CUDA)
-  target_sources(
-    espresso_core
-    PRIVATE cuda/init.cpp cuda/common_cuda.cu cuda/init_cuda.cu
-            cuda/CudaHostAllocator.cu
-            magnetostatics/dipolar_direct_sum_gpu_cuda.cu
-            electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
-            system/GpuParticleData_cuda.cu)
-  target_link_libraries(espresso_core PRIVATE CUDA::cuda_driver CUDA::cudart
-                                              CUDA::cufft)
+  set(ESPRESSO_CUDA_SOURCES
+      cuda/common_cuda.cu cuda/init_cuda.cu cuda/CudaHostAllocator.cu
+      magnetostatics/dipolar_direct_sum_gpu_cuda.cu
+      electrostatics/p3m_gpu_cuda.cu electrostatics/p3m_gpu_error_cuda.cu
+      system/GpuParticleData_cuda.cu)
+  target_sources(espresso_core PRIVATE cuda/init.cpp ${ESPRESSO_CUDA_SOURCES})
+  if(ESPRESSO_BUILD_WITH_HIP)
+    set_source_files_properties(${ESPRESSO_CUDA_SOURCES} PROPERTIES LANGUAGE
+                                                                    HIP)
+    set_target_properties(espresso_core PROPERTIES HIP_ARCHITECTURES
+                                                   "${CMAKE_HIP_ARCHITECTURES}")
+    # Link hipFFT (pulls hip::host only). rocThrust is header-only and resolved
+    # from the ROCm include path; we deliberately do not link roc::rocthrust
+    # because it pulls hip::device, whose INTERFACE_COMPILE_OPTIONS inject "-x
+    # hip" into every CXX source of the consumer and break the host C++ TUs.
+    target_link_libraries(espresso_core PRIVATE hip::hipfft)
+  else()
+    target_link_libraries(espresso_core PRIVATE CUDA::cuda_driver CUDA::cudart
+                                                CUDA::cufft)
+  endif()
   target_include_directories(
     espresso_core
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -80,10 +91,12 @@ espresso_set_kokkos_properties_on_source_files(espresso_core)
 install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
+if(ESPRESSO_BUILD_WITH_CUDA AND NOT ESPRESSO_BUILD_WITH_HIP)
+  set(ESPRESSO_OPENMP_CUDA OpenMP::OpenMP_CUDA)
+endif()
 target_link_libraries(
   espresso_core
-  PUBLIC Cabana::Core Kokkos::kokkos OpenMP::OpenMP_CXX
-         $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+  PUBLIC Cabana::Core Kokkos::kokkos OpenMP::OpenMP_CXX ${ESPRESSO_OPENMP_CUDA}
   PRIVATE espresso::config espresso::utils::mpi espresso::shapes
           espresso::compiler_flags
           $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>

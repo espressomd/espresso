@@ -26,6 +26,7 @@ set_property(
 
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_walberla PRIVATE lb_walberla_init.cu)
+  espresso_set_walberla_gpu_source_language(lb_walberla_init.cu)
   set_property(
     SOURCE lb_walberla_init.cu TARGET_DIRECTORY espresso_walberla
     APPEND

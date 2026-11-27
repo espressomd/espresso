@@ -19,7 +19,7 @@
 
 function(configure_codegen_kernel kernel)
   set(backends ".cpp")
-  if(WALBERLA_BUILD_WITH_CUDA)
+  if(WALBERLA_BUILD_WITH_CUDA OR WALBERLA_BUILD_WITH_HIP)
     list(APPEND backends "_CUDA.cu")
   endif()
   foreach(precision single double)

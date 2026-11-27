@@ -38,8 +38,8 @@
 #endif // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 {% endif -%}
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 {% for name in defines -%}
 #define {{name}} {{defines_table["clang_dev"][name]}}
@@ -61,8 +61,8 @@
 #pragma clang diagnostic ignored "{{pragma}}"
 {% endfor -%}
 {% endif -%}
-#endif // defined(__CUDA_ARCH__)
-#endif // defined(__CUDA__)
+#endif // defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
+#endif // defined(__CUDA__) or defined(__HIP__)
 #elif defined(__GNUC__) or defined(__GNUG__)
 {% for name in defines -%}
 #define {{name}} {{defines_table["gcc"][name]}}
@@ -94,8 +94,8 @@
 #endif // defined(__NVCC_DIAG_PRAGMA_SUPPORT__)
 {% endif -%}
 #elif defined(__clang__)
-#if defined(__CUDA__)
-#if defined(__CUDA_ARCH__)
+#if defined(__CUDA__) or defined(__HIP__)
+#if defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
 // clang compiling CUDA code in device mode
 {% if pragmas["clang_dev"] -%}
 #pragma clang diagnostic pop
@@ -105,8 +105,8 @@
 // clang compiling CUDA code in host mode
 #pragma clang diagnostic pop
 {% endif -%}
-#endif // defined(__CUDA_ARCH__)
-#endif // defined(__CUDA__)
+#endif // defined(__CUDA_ARCH__) or defined(__HIP_DEVICE_COMPILE__)
+#endif // defined(__CUDA__) or defined(__HIP__)
 #elif defined(__GNUC__) or defined(__GNUG__)
 {% if pragmas["gcc"] -%}
 #pragma GCC diagnostic pop

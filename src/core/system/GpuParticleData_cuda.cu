@@ -35,8 +35,6 @@
 #include <thrust/copy.h>
 #include <thrust/device_vector.h>
 
-#include <cuda.h>
-
 #include <cstddef>
 #include <cstdio>
 #include <memory>

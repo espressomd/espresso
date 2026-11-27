@@ -95,7 +95,8 @@ void LBWalberlaImpl<FloatType, Architecture>::add_forces_at_pos(
       kernel(pos[i], forces[i]);
     }
   }
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   if constexpr (Architecture == lbmpy::Arch::GPU) {
     auto const &lattice = get_lattice();
     auto const &block = *(lattice.get_blocks()->begin());
@@ -237,7 +238,8 @@ LBWalberlaImpl<FloatType, Architecture>::get_velocities_at_pos(
     auto const kernel = make_velocity_interpolation_kernel();
     std::ranges::transform(pos, std::back_inserter(vel), kernel);
   }
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   if constexpr (Architecture == lbmpy::Arch::GPU) {
     auto const &lattice = get_lattice();
     auto const &block = *(lattice.get_blocks()->begin());
@@ -284,7 +286,8 @@ LBWalberlaImpl<FloatType, Architecture>::get_densities_at_pos(
     auto const kernel = make_density_interpolation_kernel();
     std::ranges::transform(pos, std::back_inserter(rho), kernel);
   }
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   if constexpr (Architecture == lbmpy::Arch::GPU) {
     auto const &lattice = get_lattice();
     auto const &block = *(lattice.get_blocks()->begin());

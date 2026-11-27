@@ -31,7 +31,7 @@
 
 #include <utils/Vector.hpp>
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 #include <thrust/device_vector.h>
 #endif
 
@@ -97,7 +97,7 @@ private:
       return m_value_boundary->contains(global);
     }
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     /**
      * @brief Build a flattened version of the unordered map container.
      * The coordinate list (COO) format is used, similar to how sparse
@@ -132,7 +132,7 @@ private:
 #endif
 
   private:
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
     thrust::device_vector<int> m_flat_indices;
     thrust::device_vector<FloatType> m_flat_values;
 #endif
@@ -212,7 +212,7 @@ public:
     if (m_pending_changes) {
       m_boundary->template fillFromFlagField<FlagField>(
           m_blocks, m_flag_field_id, Boundary_flag, Domain_flag);
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
       m_callback.rebuild_flat_map_device(m_local_domain);
 #endif
       m_pending_changes = false;
@@ -225,7 +225,7 @@ public:
             static_cast<int>(field->zSize())};
   }
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
   auto get_flattened_map_device() const {
     return m_callback.get_flattened_map_device();
   }

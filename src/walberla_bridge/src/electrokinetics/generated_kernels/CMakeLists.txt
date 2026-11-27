@@ -19,7 +19,7 @@
 
 function(configure_codegen_kernel kernel)
   set(backends ".cpp")
-  if(WALBERLA_BUILD_WITH_CUDA)
+  if(WALBERLA_BUILD_WITH_CUDA OR WALBERLA_BUILD_WITH_HIP)
     list(APPEND backends "_CUDA.cu")
   endif()
   foreach(precision single double)
@@ -41,9 +41,11 @@ configure_codegen_kernel(FrictionCouplingKernel)
 configure_codegen_kernel(FixedFlux)
 configure_codegen_kernel(Dirichlet)
 
-if(WALBERLA_BUILD_WITH_CUDA)
+if(WALBERLA_BUILD_WITH_CUDA OR WALBERLA_BUILD_WITH_HIP)
   foreach(precision single double)
     target_sources(espresso_walberla_codegen
                    PRIVATE EK_FieldAccessors_${precision}_precision_CUDA.cu)
+    espresso_set_walberla_gpu_source_language(
+      EK_FieldAccessors_${precision}_precision_CUDA.cu)
   endforeach()
 endif()

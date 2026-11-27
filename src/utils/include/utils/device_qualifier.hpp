@@ -19,7 +19,7 @@
 
 #pragma once
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) || defined(__HIPCC__)
 #define DEVICE_THROW(E)
 #define DEVICE_QUALIFIER __host__ __device__
 #define HOST_ONLY_QUALIFIER __host__

@@ -22,9 +22,6 @@
 #include "utils.cuh"
 #include "utils.hpp"
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-
 #include <cstdio>
 #include <cstdlib>
 #include <sstream>

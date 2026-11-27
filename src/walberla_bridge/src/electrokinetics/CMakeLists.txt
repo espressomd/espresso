@@ -28,6 +28,8 @@ set_property(
 if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_walberla PRIVATE ek_walberla_init.cu)
   target_sources(espresso_walberla PRIVATE ek_poisson_none_init_cuda.cu)
+  espresso_set_walberla_gpu_source_language(ek_walberla_init.cu
+                                            ek_poisson_none_init_cuda.cu)
   set_property(
     SOURCE ek_walberla_init.cu TARGET_DIRECTORY espresso_walberla
     APPEND
@@ -40,5 +42,6 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_sources(espresso_walberla PRIVATE ek_poisson_fft_init.cpp)
   if(ESPRESSO_BUILD_WITH_CUDA)
     target_sources(espresso_walberla PRIVATE ek_poisson_fft_init_cuda.cu)
+    espresso_set_walberla_gpu_source_language(ek_poisson_fft_init_cuda.cu)
   endif()
 endif()

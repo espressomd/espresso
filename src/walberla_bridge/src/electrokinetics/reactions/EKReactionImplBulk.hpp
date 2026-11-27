@@ -52,7 +52,8 @@ public:
       kernel = detail::ReactionKernelBulkSelector::get_kernel(
           get_reactants(), get_coefficient());
     } else {
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
       kernel = detail::ReactionKernelBulkSelector::get_kernel_gpu(
           get_reactants(), get_coefficient());
 #endif

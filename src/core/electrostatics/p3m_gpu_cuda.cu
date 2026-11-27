@@ -62,9 +62,6 @@
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
-#include <cuda.h>
-#include <cufft.h>
-
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -111,9 +108,9 @@ struct P3MGpuData {
 
 struct P3MGpuFftPlan {
   /** Forward FFT plan */
-  cufftHandle forw_plan;
+  cufftHandle forw_plan = 0;
   /** Backward FFT plan */
-  cufftHandle back_plan;
+  cufftHandle back_plan = 0;
 };
 
 struct P3MGpuParams {
@@ -135,8 +132,14 @@ struct P3MGpuParams {
     free_device_pointer(p3m_gpu_data.force_mesh_y);
     free_device_pointer(p3m_gpu_data.force_mesh_z);
     free_device_pointer(p3m_gpu_data.G_hat);
-    cufftDestroy(p3m_fft.forw_plan);
-    cufftDestroy(p3m_fft.back_plan);
+    auto const destroy_fft_plan = [](cufftHandle &plan) {
+      if (plan != 0) {
+        cufftDestroy(plan);
+        plan = 0;
+      }
+    };
+    destroy_fft_plan(p3m_fft.forw_plan);
+    destroy_fft_plan(p3m_fft.back_plan);
     is_initialized = false;
   }
 };

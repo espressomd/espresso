@@ -40,8 +40,9 @@
 #define HAS_HEFFTE
 #endif
 
-#if defined(WALBERLA_BUILD_WITH_CUDA) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
-#include <cuda_runtime_api.h>
+#if defined(WALBERLA_BUILD_WITH_GPU_SUPPORT) and                               \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#include <gpu/GPUWrapper.h>
 #endif
 
 #include <mpi.h>
@@ -66,12 +67,13 @@ static EKTestParameters params; // populated in main()
 
 boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
   bool has_compatible_device = false;
-#if defined(WALBERLA_BUILD_WITH_CUDA) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if defined(WALBERLA_BUILD_WITH_GPU_SUPPORT) and                               \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
   int n_devices = 0;
-  cudaGetDeviceCount(&n_devices);
+  gpuGetDeviceCount(&n_devices);
   if (n_devices > 0) {
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, 0);
+    gpuDeviceProp prop;
+    gpuGetDeviceProperties(&prop, 0);
     if (prop.major >= 3) {
       has_compatible_device = true;
     }
@@ -85,7 +87,8 @@ template <lbmpy::Arch Architecture = lbmpy::Arch::CPU> struct Factory {
   static auto constexpr new_ek_solver = walberla::new_ek_poisson_fft;
 };
 
-#if defined(WALBERLA_BUILD_WITH_CUDA) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if defined(WALBERLA_BUILD_WITH_GPU_SUPPORT) and                               \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
 template <> struct Factory<lbmpy::Arch::GPU> {
   static auto constexpr new_ek_species = walberla::new_ek_walberla_gpu;
   static auto constexpr new_ek_solver = walberla::new_ek_poisson_fft_cuda;
@@ -238,14 +241,16 @@ BOOST_AUTO_TEST_SUITE(suite_cuda, *boost::unit_test::precondition(has_gpu))
 using test_types = boost::mpl::list<float, double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(ek_poisson_solver_fft_cuda, FT, test_types) {
-#if defined(HAS_HEFFTE) and defined(WALBERLA_BUILD_WITH_CUDA) and              \
-    defined(__CUDACC__) and defined(ESPRESSO_TEST_BUILD_FOR_GPU)
+#if defined(HAS_HEFFTE) and defined(WALBERLA_BUILD_WITH_GPU_SUPPORT) and       \
+    (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(ESPRESSO_TEST_BUILD_FOR_GPU)
   Fixture<FT, lbmpy::Arch::GPU>().runTest();
 #endif
 }
 
 BOOST_AUTO_TEST_CASE(ek_poisson_solver_none_cuda) {
-#if defined(WALBERLA_BUILD_WITH_CUDA) and defined(__CUDACC__) and              \
+#if defined(WALBERLA_BUILD_WITH_GPU_SUPPORT) and                               \
+    (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
     defined(ESPRESSO_TEST_BUILD_FOR_GPU)
   FixtureNone<lbmpy::Arch::GPU>().runTest();
 #endif

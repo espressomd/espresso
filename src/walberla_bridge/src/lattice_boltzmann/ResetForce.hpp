@@ -21,7 +21,7 @@
 
 #include "generated_kernels/FieldAccessorsDoublePrecision.h"
 #include "generated_kernels/FieldAccessorsSinglePrecision.h"
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) or defined(__HIPCC__)
 #include "generated_kernels/FieldAccessorsDoublePrecisionCUDA.cuh"
 #include "generated_kernels/FieldAccessorsSinglePrecisionCUDA.cuh"
 #endif

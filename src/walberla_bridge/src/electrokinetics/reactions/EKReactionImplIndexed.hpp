@@ -59,7 +59,8 @@ public:
   FlagUID const Boundary_flag{"boundary"};
 
   using FlagField = field::FlagField<uint8_t>;
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
   using IndexVectors = std::conditional_t<
       Architecture == lbmpy::Arch::CPU,
       detail::ReactionKernelIndexedSelector::KernelTrait<>::
@@ -131,7 +132,8 @@ public:
       kernel = detail::ReactionKernelIndexedSelector::get_kernel(
           get_reactants(), get_coefficient(), m_indexvector_id);
     } else {
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+#if (defined(__CUDACC__) or defined(__HIPCC__)) and                            \
+    defined(WALBERLA_BUILD_WITH_GPU_SUPPORT)
       kernel = detail::ReactionKernelIndexedSelector::get_kernel_gpu(
           get_reactants(), get_coefficient(), m_indexvector_id);
 #endif
