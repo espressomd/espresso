@@ -48,8 +48,7 @@
  *  Random numbers depend on
  *  1. dpd_rng_counter (initialized by seed) which is increased on integration
  *  2. Salt (decorrelates different counters)
- *  3. Two particle IDs (order-independent, decorrelates particles, gets rid of
- *     seed-per-node)
+ *  3. Two particle IDs (order-independent, decorrelates particles)
  */
 Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
   auto const pref = (pid1 < pid2) ? 1.0 : -1.0;
@@ -59,15 +58,15 @@ Utils::Vector3d dpd_noise(DPDThermostat const &dpd, int pid1, int pid2) {
 }
 
 void InteractionsNonBonded::dpd_init(double kT, double time_step) {
+  // the uniform distribution has variance sigma^2 = 1 / 12
+  auto const noise_variance = 12. / time_step;
+  auto const pref = 2. * kT * noise_variance;
   auto const max_type = get_max_seen_particle_type();
   for (int type_a = 0; type_a <= max_type; type_a++) {
     for (int type_b = type_a; type_b <= max_type; type_b++) {
       auto &ia_params = get_ia_param(type_a, type_b);
-
-      ia_params.dpd.radial.pref =
-          sqrt(24.0 * kT * ia_params.dpd.radial.gamma / time_step);
-      ia_params.dpd.trans.pref =
-          sqrt(24.0 * kT * ia_params.dpd.trans.gamma / time_step);
+      ia_params.dpd.radial.pref = std::sqrt(pref * ia_params.dpd.radial.gamma);
+      ia_params.dpd.trans.pref = std::sqrt(pref * ia_params.dpd.trans.gamma);
     }
   }
 }

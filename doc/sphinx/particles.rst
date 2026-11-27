@@ -34,6 +34,12 @@ as arguments, and it returns an instance of
 properties of the newly created particle. The ``pos`` property is required, all
 other properties are optional.
 All available particle properties are members of :class:`~espressomd.particle_data.ParticleHandle`.
+The :attr:`~espressomd.particle_data.ParticleHandle.type` property controls
+two-body non-bonded interactions, and values used in a simulation should
+ideally not be arbitrary, but rather contiguous and starting from 0 to
+avoid performance penalties (see :ref:`particle type performance <particle-type-performance>` and
+how some algorithms like Monte Carlo need to carefully handle this via
+:meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`).
 
 Note that the instances of :class:`~espressomd.particle_data.ParticleHandle` returned by
 :meth:`ParticleList.add() <espressomd.particle_data.ParticleList.add>` are handles for the live particles in the

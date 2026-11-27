@@ -51,7 +51,7 @@ inline Utils::Vector3d dpd_pair_force(DPDParameters const &params,
                                       Utils::Vector3d const &noise) {
   if (dist < params.cutoff) {
     auto const r_cut = params.cutoff;
-    auto const calc_xk = [&]() {
+    auto const calc_xk_sqrt = [&]() {
       auto const x = dist / r_cut;
       if (params.k == 1.)
         return x;
@@ -59,9 +59,9 @@ inline Utils::Vector3d dpd_pair_force(DPDParameters const &params,
         return x * x;
       return std::pow(x, params.k);
     };
-    auto const omega = params.wf ? 1. - calc_xk() : 1.;
-    auto const f_d = params.gamma * (omega * omega) * v;
-    auto const f_r = params.pref * omega * noise;
+    auto const omega_sqrt = params.wf ? 1. - calc_xk_sqrt() : 1.;
+    auto const f_d = params.gamma * (omega_sqrt * omega_sqrt) * v;
+    auto const f_r = params.pref * omega_sqrt * noise;
     return f_r - f_d;
   }
   return {};

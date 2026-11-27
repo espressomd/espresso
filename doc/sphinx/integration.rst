@@ -608,9 +608,9 @@ for Newton's equations, therefore the velocity Verlet integrator is used.
 The accuracy of the velocity Verlet integrator is reduced by
 one order in :math:`dt` because forces are now velocity-dependent.
 
-The random process :math:`\vec{\eta}(t)` is discretized by drawing an uncorrelated random numbers
-:math:`\vec{\eta_*}` for each particle.
-The distribution of :math:`{\vec{\eta}_*}` is uniform and satisfies
+The random process :math:`\vec{\eta}(t)` is discretized by drawing uncorrelated random vectors
+:math:`\vec{\eta}_*` for each particle.
+The distribution of :math:`\vec{\eta}_*` is uniform and satisfies
 
 .. math:: \left\langle\vec{\eta}_*\right\rangle = \vec{0} ,\, \left\langle\eta_*^\alpha \eta_*^\beta\right\rangle =  \frac{\delta_{\alpha,\beta}}{dt},
 
