@@ -60,6 +60,25 @@ with the real particles they are tracking, or to facilitate the use of custom
 potentials in polymers. This is achieved via the
 :meth:`espressomd.particle_data.ParticleList.auto_exclusions()` method.
 
+.. note::
+    :name: particle-type-performance
+
+    The non-bonded interactions are stored in a table whose size grows
+    quadratically with the largest particle type (:math:`\sim N^2/2`).
+    This can lead to high memory usage and noticeable slowdowns when
+    the largest particle type is 100 or larger.
+
+    For :math:`N=100`, the matrix contains 5000 entries,
+    most of which are zero (sparse matrix), but they are iterated
+    anyway during the short-range force calculation loop,
+    causing a noticeable slowdown.
+
+    In addition, energy and pressure analysis functions will allocate
+    a significant amount of memory to store all 15000 individual components
+    (3 values per type pair).
+    For :math:`N=1000`, the resident RAM usage will be around 1 GiB per
+    MPI rank, and can only be released at the end of the Python session.
+
 .. _Isotropic non-bonded interactions:
 
 Isotropic non-bonded interactions
@@ -555,55 +574,49 @@ DPD interaction
 
 This is a special interaction that is to be used in conjunction with the
 :ref:`Dissipative Particle Dynamics (DPD)` thermostat.
-The parameters can be set via::
+The parameters are set via the :class:`espressomd.interactions.DPDInteraction` class
+and the :meth:`espressomd.thermostat.Thermostat.set_dpd()` method::
 
-    system.non_bonded_inter[type1, type2].dpd.set_params(**kwargs)
+    # dissipative force F^D (parallel and perpendicular)
+    system.non_bonded_inter[type1, type2].dpd.set_params(
+        weight_function=0, gamma=gamma, r_cut=r_cut,
+        trans_weight_function=0, trans_gamma=gamma, trans_r_cut=r_cut)
+    # conservative force F^C
+    system.non_bonded_inter[type1, type2].hat.set_params(F_max=1., cutoff=r_cut)
+    # random force F^R (parallel and perpendicular)
+    system.thermostat.set_dpd(kT=kT, seed=123)
 
-This command defines an interaction between particles of the types ``type1`` and ``type2``
-that contains velocity-dependent friction and noise according
-to a temperature set by :py:meth:`espressomd.thermostat.Thermostat.set_dpd()`.
-The parameters for the interaction are
-
-* ``gamma``
-* ``weight_function``
-* ``k``
-* ``r_cut``
-* ``trans_gamma``
-* ``trans_weight_function``
-* ``trans_r_cut``
-
-which will be explained below. The interaction
-only has an effect if the DPD thermostat is activated.
+The interaction only has an effect if the DPD thermostat is activated.
 
 The interaction consists of a friction force :math:`\vec{F}_{ij}^{D}` and
 a random force :math:`\vec{F}_{ij}^R` added to the other interactions
-between particles :math:`i` and :math:`j`. It is decomposed into a component
+between particles :math:`i` and :math:`j` :cite:`soddemann03a`. It is decomposed into a component
 parallel and perpendicular to the distance vector :math:`\vec{r}_{ij}` of the particle pair.
 The friction force contributions of the parallel part are
 
-.. math:: \vec{F}_{ij}^{D} = -\gamma_\parallel w_\parallel (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
+.. math:: \vec{F}_{ij}^{D} = -\gamma^\parallel w^\parallel (r_{ij}) (\hat{r}_{ij} \cdot \vec{v}_{ij}) \hat{r}_{ij}
 
 for the dissipative force and
 
-.. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\parallel w_\parallel (r_{ij}) }  \eta_{ij}(t) \hat{r}_{ij}
+.. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma^\parallel w^\parallel (r_{ij}) } (\hat{r}_{ij} \cdot \vec{\eta}_{ij}(t)) \hat{r}_{ij}
 
-for the random force. This introduces the friction coefficient :math:`\gamma_\parallel` (parameter ``gamma``) and the weight function
-:math:`w_\parallel`. The thermal energy :math:`k_B T` is not set by the interaction,
-but by the DPD thermostat (:py:meth:`espressomd.thermostat.Thermostat.set_dpd()`)
-to be equal for all particles. The weight function can be specified via the ``weight_function`` switch.
+for the random force.
+This introduces the friction coefficient :math:`\gamma^\parallel` (parameter ``gamma``)
+and the weight function :math:`w^\parallel`.
+The projection operator involves the unit vector :math:`\hat{r}_{ij} = \vec{r}_{ij} / |\vec{r}_{ij}|`.
+The thermal energy :math:`k_B T` is set globally by the DPD thermostat.
+The weight function can be specified via the ``weight_function`` switch.
 The possible values for ``weight_function`` are 0 and 1, corresponding to the
-order of :math:`w_\parallel`:
+order of :math:`w^\parallel`:
 
 .. math::
 
-   w_\parallel (r_{ij}) =  \left\{
-   \begin{array}{clcr}
-                1                      & , \; \text{weight_function} = 0 \\
-                {( 1 - (\frac{r_{ij}}{r^\text{cut}_\parallel})^k} )^2 & , \; \text{weight_function} = 1
-      \end{array}
-      \right.
-
-Both weight functions are set to zero for :math:`r_{ij}>r^\text{cut}_\parallel` (parameter ``r_cut``).
+   w^\parallel (r_{ij}) =
+     \begin{cases}
+        1 & \text{if } r_{ij} < r_\textrm{cut}^\parallel \text{ and } \texttt{weight\_function} = 0 \\
+        \left( 1 - \left(\frac{r_{ij}}{r_\text{cut}^\parallel}\right)^k \right)^2 & \text{if } r_{ij} < r_\textrm{cut}^\parallel \text{ and } \texttt{weight\_function} = 1 \\
+        0 & \text{if } r_{ij} \geq r_\textrm{cut}^\parallel
+     \end{cases}
 
 In case the ``weight_function`` 1 is selected the parameter ``k`` can be chosen. :math:`k = 1` is the
 default and recovers the linear ramp. :math:`k > 1` enhances the dissipative nature of the interaction
@@ -611,26 +624,26 @@ and thus yields higher Schmidt numbers :cite:`yaghoubi15a`.
 
 The random force has the properties
 
-.. math:: <\eta_{ij}(t)> = 0 , <\eta_{ij}^\alpha(t)\eta_{kl}^\beta(t')> = \delta_{\alpha\beta} \delta_{ik}\delta_{jl}\delta(t-t')
+.. math:: \left\langle\vec{\eta}_{ij}(t)\right\rangle = \vec{0} , \left\langle\eta_{ij}^\alpha(t)\eta_{kl}^\beta(t')\right\rangle = \delta_{\alpha\beta} \delta_{ik}\delta_{jl}\delta(t-t')
 
-and is numerically discretized to a random number :math:`\overline{\eta}` for each spatial
-component for each particle pair drawn from a uniform distribution
-with properties
+(:math:`\langle\cdot\rangle` denotes the ensemble average and :math:`\alpha,\beta` are spatial coordinates).
 
-.. math:: <\overline{\eta}> = 0 , <\overline{\eta}\overline{\eta}> = 1/dt
+The random process :math:`\vec{\eta}(t)` is discretized by drawing uncorrelated random vectors
+:math:`\vec{\eta}_*` for each particle pair.
+The distribution of :math:`\vec{\eta}_*` is uniform and satisfies
 
-For the perpendicular part, the dissipative and random force are calculated analogously
+.. math:: \left\langle\vec{\eta}_*\right\rangle = \vec{0} ,\, \left\langle\eta_*^\alpha \eta_*^\beta\right\rangle =  \frac{\delta_{\alpha,\beta}}{dt},
 
-.. math:: \vec{F}_{ij}^{D} = -\gamma_\bot w^D (r_{ij}) (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
-.. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma_\bot w_\bot (r_{ij})} (I-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\eta}_{ij}
+For the perpendicular (or "transverse") component, the dissipative and random force are calculated analogously :cite:`junghans08a,kobayashi20a`
 
-and introduce the second set of parameters prefixed with ``trans_``.
-For :math:`w_\bot (r_{ij})` (parameter ``trans_weight_function``)
-the same options are available as for :math:`w_\parallel (r_{ij})`.
+.. math:: \vec{F}_{ij}^{D} = -\gamma^\bot w^\bot (r_{ij}) (\mathbb{1}-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{v}_{ij}
+.. math:: \vec{F}_{ij}^R = \sqrt{2 k_B T \gamma^\bot w^\bot (r_{ij})} (\mathbb{1}-\hat{r}_{ij}\otimes\hat{r}_{ij}) \cdot \vec{\eta}_{ij}
+
+and introduce the second set of parameters prefixed with ``trans_`` .
+For :math:`w^\bot (r_{ij})` (parameter ``trans_weight_function``)
+the same options are available as for :math:`w^\parallel (r_{ij})`.
 
 Note: This interaction does *not* conserve angular momentum.
-
-A more detailed description of the interaction can be found in :cite:`soddemann03a`.
 
 .. _Thole correction:
 

@@ -33,7 +33,8 @@ Please keep in mind the following remarks:
 
 * For improved performance, you can set the type of invalidated particles with
   :meth:`~espressomd.reaction_methods.ReactionAlgorithm.set_non_interacting_type`
-  in all reaction method classes.
+  in all reaction method classes. The default value is 100 and can slow down
+  simulations (see :ref:`particle type performance <particle-type-performance>` for details)
 
 Thermodynamic ensembles
 -----------------------
