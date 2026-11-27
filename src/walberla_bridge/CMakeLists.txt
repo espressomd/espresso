@@ -42,7 +42,7 @@ endif()
 # codegen-specific Clang-Tidy overrides
 list(APPEND SKIP_CLANG_TIDY_CHECKS "-modernize-use-auto")
 list(APPEND SKIP_CLANG_TIDY_CHECKS "-readability-non-const-parameter")
-list(APPEND SKIP_CLANG_TIDY_CHECKS_CXX "-clang-analyzer-deadcode.DeadStores")
+list(APPEND SKIP_CLANG_TIDY_CHECKS "-clang-analyzer-deadcode.DeadStores")
 list(APPEND SKIP_CLANG_TIDY_CHECKS_CUDA
      "-bugprone-multi-level-implicit-pointer-conversion")
 
@@ -56,6 +56,22 @@ foreach(LANG CXX CUDA)
 endforeach()
 unset(SKIP_CLANG_TIDY_CHECKS)
 
+# headers needed by the sweepgen kernels: waLBerla v8 core (execution tags) and
+# the pystencils runtime from the Python environment
+if(NOT EXISTS
+   "${walberla_SOURCE_DIR}/include/walberla/v8/sweep/ExecutionTags.hpp")
+  message(
+    FATAL_ERROR
+      "waLBerla v8 core headers not found in '${walberla_SOURCE_DIR}/include'")
+endif()
+add_library(espresso_walberla_sweepgen_includes INTERFACE)
+add_library(espresso::walberla_sweepgen_includes ALIAS
+            espresso_walberla_sweepgen_includes)
+target_include_directories(espresso_walberla_sweepgen_includes SYSTEM
+                           INTERFACE ${walberla_SOURCE_DIR}/include)
+target_link_libraries(espresso_walberla_sweepgen_includes
+                      INTERFACE Pystencils::runtime)
+
 function(espresso_configure_walberla_target)
   set(TARGET_NAME ${ARGV0})
   espresso_set_common_target_properties(${TARGET_NAME})
@@ -63,6 +79,8 @@ function(espresso_configure_walberla_target)
   target_include_directories(
     ${TARGET_NAME} PUBLIC include PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                           ${walberla_BINARY_DIR}/src)
+  target_link_libraries(${TARGET_NAME}
+                        PRIVATE espresso::walberla_sweepgen_includes)
   if(ESPRESSO_BUILD_WITH_CLANG_TIDY)
     foreach(LANG CXX CUDA)
       set(TARGET_CLANG_TIDY "${ESPRESSO_${LANG}_CLANG_TIDY}")
@@ -108,6 +126,12 @@ target_compile_options(
   $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-shadow=compatible-local>
   $<$<COMPILE_LANG_AND_ID:CXX,CrayClang,IntelLLVM>:-Wno-reorder-ctor>
   $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-int-float-conversion>
+  # unused variables in swapShadowBuffers() of sweepgen sweeps
+  $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=177>
+  $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-unused-variable>
+  $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unused-variable>
+  # pystencils device functions are host-only in the Clang host pass
+  $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/PystencilsClangCuda.hpp>
   # silence diagnostics from MPI vendors
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CXX,Clang,IntelLLVM,AppleClang>>:-Wno-cast-function-type-mismatch>
   $<$<AND:$<STREQUAL:${ESPRESSO_MPIEXEC_VENDOR},OpenMPI>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Wno-cast-function-type-mismatch>

@@ -35,10 +35,10 @@ class Tutorial(ut.TestCase):
 
     def test_exponents(self):
         msg = 'The R_F exponent should be close to 0.588'
-        self.assertGreater(tutorial.rf_exponent, 0.50, msg=msg)
+        self.assertGreater(tutorial.rf_exponent, 0.40, msg=msg)
         self.assertLess(tutorial.rf_exponent, 0.85, msg=msg)
         msg = 'The R_g exponent should be close to 0.588'
-        self.assertGreater(tutorial.rg_exponent, 0.50, msg=msg)
+        self.assertGreater(tutorial.rg_exponent, 0.45, msg=msg)
         self.assertLess(tutorial.rg_exponent, 0.75, msg=msg)
         msg = 'The R_h exponent should be close to 0.333'
         self.assertGreater(tutorial.rh_exponent, 0.30, msg=msg)

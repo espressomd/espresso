@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "generated_kernels/ReactionKernelBulk_all.h"
+#include "ReactionKernelSelector.hpp"
 
 #include <walberla_bridge/Architecture.hpp>
 #include <walberla_bridge/LatticeWalberla.hpp>
@@ -47,16 +47,9 @@ public:
     // synchronization before or not run and do a synchronization afterwards.
     // The better solution is probably the latter one. Not sure why it fails
     // atm.
-    std::function<void(IBlock *)> kernel;
-    if (!get_reactants()[0]->is_gpu()) {
-      kernel = detail::ReactionKernelBulkSelector::get_kernel(
-          get_reactants(), get_coefficient());
-    } else {
-#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
-      kernel = detail::ReactionKernelBulkSelector::get_kernel_gpu(
-          get_reactants(), get_coefficient());
-#endif
-    }
+    auto const kernel =
+        detail::ReactionKernelSelector::get_bulk_kernel<Architecture>(
+            get_reactants(), get_coefficient());
     for (auto &block : *get_lattice()->get_blocks()) {
       kernel(&block);
     }

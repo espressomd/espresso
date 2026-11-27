@@ -25,11 +25,11 @@
 
 #include "greens_function.hpp"
 
-#include "generated_kernels/EK_FieldAccessors_double_precision.h"
-#include "generated_kernels/EK_FieldAccessors_single_precision.h"
+#include "generated_kernels/EKFieldAccessorsDoublePrecision.h"
+#include "generated_kernels/EKFieldAccessorsSinglePrecision.h"
 #if defined(__CUDACC__)
-#include "generated_kernels/EK_FieldAccessors_double_precision_CUDA.cuh"
-#include "generated_kernels/EK_FieldAccessors_single_precision_CUDA.cuh"
+#include "generated_kernels/EKFieldAccessorsDoublePrecisionCUDA.cuh"
+#include "generated_kernels/EKFieldAccessorsSinglePrecisionCUDA.cuh"
 #endif
 
 #include <utils/Vector.hpp>

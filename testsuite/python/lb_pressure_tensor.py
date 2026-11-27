@@ -109,11 +109,13 @@ class TestLBPressureTensor:
             np.mean(self.p_global, axis=0),
             p_avg_expected, atol_diag=c_s_lb**2 * 3, atol_offdiag=c_s_lb**2 / 6)
 
+        # the time average of a single node fluctuates strongly: the
+        # off-diagonal tolerance is a few standard deviations of it
         # ... for two nodes.
         for time_series in [self.p_node0, self.p_node1]:
             self.assert_allclose_matrix(
                 np.mean(time_series, axis=0),
-                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 10)
+                p_avg_expected, atol_diag=c_s_lb**2 * 200, atol_offdiag=c_s_lb**2 * 15)
 
         # Test that <sigma_[i!=j]> ~=0 and sigma_[ij]==sigma_[ji] ...
         tol_global = 8 / np.sqrt(self.steps)

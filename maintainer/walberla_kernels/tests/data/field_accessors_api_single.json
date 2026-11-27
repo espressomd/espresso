@@ -1,0 +1,629 @@
+[
+ {
+  "defaults": [
+   null,
+   "Vector3<float>(float{0})",
+   "float{1}"
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::EquilibriumDistribution",
+  "parameter names": [
+   "direction",
+   "u",
+   "rho"
+  ],
+  "parameter types": [
+   "stencil::Direction",
+   "Vector3<float> const&",
+   "float"
+  ],
+  "return type": "float"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Force",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "force",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "GhostLayerField<float,3>*",
+   "GhostLayerField<float,3>*",
+   "Vector3<float> const&",
+   "float",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Force",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "values",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "GhostLayerField<float,3>*",
+   "GhostLayerField<float,3>*",
+   "std::vector<float> const&",
+   "float",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "pop",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "GhostLayerField<float,3>*",
+   "GhostLayerField<float,3> const*",
+   "std::array<float,19> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "GhostLayerField<float,3>*",
+   "GhostLayerField<float,3> const*",
+   "std::vector<float> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "u",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "GhostLayerField<float,3>*",
+   "GhostLayerField<float,3> const*",
+   "Vector3<float> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "velocity_field",
+   "force_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "GhostLayerField<float,3>*",
+   "GhostLayerField<float,3> const*",
+   "std::vector<float> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "rho_in",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "float",
+   "float",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "values",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "std::vector<float> const&",
+   "float",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Equilibrium",
+  "parameter names": [
+   "pdf_field",
+   "u",
+   "rho",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "Vector3<float> const&",
+   "float",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "add",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3>*",
+   "Vector3<float> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "float",
+   "Cell const&"
+  ],
+  "return type": "float"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Density",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "float",
+   "CellInterval const&"
+  ],
+  "return type": "std::vector<float>"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::PressureTensor",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "float",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::PressureTensor",
+  "parameter names": [
+   "pdf_field",
+   "density",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "float",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "force_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "GhostLayerField<float,3> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Velocity",
+  "parameter names": [
+   "pdf_field",
+   "force_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "GhostLayerField<float,3> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "reduce",
+  "namespace": "lbm::accessor::MomentumDensity",
+  "parameter names": [
+   "pdf_field",
+   "force_field",
+   "density"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "GhostLayerField<float,3> const*",
+   "float"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "pop",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "std::array<float,19> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "std::vector<float> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "values",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3>*",
+   "std::vector<float> const&",
+   "CellInterval const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null,
+   null
+  ],
+  "name": "set",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3>*",
+   "Vector3<float> const&",
+   "Cell const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "add_to_all",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3>*",
+   "Vector3<float> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "cell"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3> const*",
+   "Cell const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "get",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "ci"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3> const*",
+   "CellInterval const&"
+  ],
+  "return type": "auto"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "lbm::accessor::Population",
+  "parameter names": [
+   "pdf_field",
+   "pop"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19>*",
+   "std::array<float,19> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "initialize",
+  "namespace": "lbm::accessor::Vector",
+  "parameter names": [
+   "vec_field",
+   "vec"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,3>*",
+   "Vector3<float> const&"
+  ],
+  "return type": "void"
+ },
+ {
+  "defaults": [
+   null,
+   null
+  ],
+  "name": "reduce",
+  "namespace": "lbm::accessor::PressureTensor",
+  "parameter names": [
+   "pdf_field",
+   "density"
+  ],
+  "parameter types": [
+   "GhostLayerField<float,19> const*",
+   "float"
+  ],
+  "return type": "auto"
+ }
+]
