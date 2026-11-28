@@ -18,6 +18,7 @@
 #
 from .script_interface import ScriptInterfaceHelper, script_interface_register
 from .code_features import assert_features
+from .propagation import Propagation
 import signal
 
 
@@ -32,6 +33,16 @@ class IntegratorHandle(ScriptInterfaceHelper):
 
     def __str__(self):
         return f'{self.__class__.__name__}({self.integrator.__class__.__name__})'  # nopep8
+
+    @property
+    def default_propagation(self):
+        """
+        Propagation modes that
+        :attr:`~espressomd.propagation.Propagation.SYSTEM_DEFAULT` resolves
+        to for the active integrator and thermostat combination (read-only).
+
+        """
+        return Propagation(self.get_parameter("default_propagation"))
 
     def run(self, *args, **kwargs):
         """
