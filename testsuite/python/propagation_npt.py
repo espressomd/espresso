@@ -16,6 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+import pickle
 import unittest as ut
 import unittest_decorators as utx
 import tests_common
@@ -63,6 +64,24 @@ class PropagationNPT:
         with self.assertRaises(Exception):
             self.system.integrator.set_isotropic_npt(
                 ext_pressure=1, piston=1, direction=[True, False])
+
+    def test_barostat_survives_serialization(self):
+        system = self.system
+        system.integrator.set_isotropic_npt(
+            ext_pressure=1., piston=4., barostat=self.barostat)
+        integrator = system.integrator.integrator
+
+        # the active barostat must be readable from Python
+        self.assertEqual(integrator.get_params()["barostat"], self.barostat)
+
+        # pickling goes through the same serialization as checkpointing
+        restored = pickle.loads(pickle.dumps(integrator))
+        self.assertEqual(restored.get_params()["barostat"], self.barostat)
+
+        system.integrator.integrator = restored
+        self.assertEqual(
+            system.integrator.integrator.get_params()["barostat"],
+            self.barostat)
 
     @utx.skipIfMissingFeatures(["MASS", "EXTERNAL_FORCES"])
     def test_00_propagation(self):
