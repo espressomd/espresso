@@ -22,6 +22,11 @@ stages:
   dependencies: []
   timeout: 20m
   interruptible: false
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - script_failure
   tags:
     - espresso
     - no-cuda
@@ -37,6 +42,7 @@ variables:
 status_pending:
   <<: *notification_job_definition
   stage: prepare
+  allow_failure: true
   script: sh maintainer/gh_post_status.sh pending
 
 style:
