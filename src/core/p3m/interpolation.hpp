@@ -73,8 +73,8 @@ class p3m_interpolation_cache {
 
 public:
   p3m_interpolation_cache()
-      : ca_frac("p3m_interpolation_cache::ca_frac", 0, 0),
-        ca_fmp("p3m_interpolation_cache::ca_fmp", 0, 0) {}
+      : ca_frac("p3m_interpolation_cache::ca_frac", 0),
+        ca_fmp("p3m_interpolation_cache::ca_fmp", 0) {}
 
   /**
    * @brief Number of points in the cache.
@@ -219,7 +219,7 @@ p3m_calculate_interpolation_weights(std::span<const double, 3> position,
 /**
  * @brief P3M grid interpolation.
  *
- * This runs an kernel for every interpolation point
+ * This runs a kernel for every interpolation point
  * in a set of interpolation weights with the linear
  * grid index and the weight of the point as arguments.
  *

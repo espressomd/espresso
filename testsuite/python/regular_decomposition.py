@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import itertools
+import tests_common
 
 np.random.seed(42)
 
@@ -329,6 +330,81 @@ class RegularDecomposition(ut.TestCase):
                 msg=f"Top boundary: pair not found for "
                 f"{[0, y_bot, z_hi]} and {[0, y_top, z_lo]} "
                 f"(iteration {i})")
+
+    def restore_system_state(self, min_global_cut, skin, periodicity, box_l):
+        system = self.system
+        system.part.clear()
+        system.non_bonded_inter.reset()
+        system.periodicity = periodicity
+        system.box_l = box_l
+        system.min_global_cut = min_global_cut
+        system.cell_system.skin = skin
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_small_cell_grids(self):
+        """Check the cell pairing on systems with only one to four cells per
+        direction in the global cell grid, where several images of a cell
+        can be in the neighborhood of another cell: pairs must be found
+        exactly once and the forces must match the all-pairs (N-square)
+        result."""
+        system = self.system
+        # restore the global state even if an assertion fails
+        self.addCleanup(self.restore_system_state, system.min_global_cut,
+                        system.cell_system.skin, system.periodicity,
+                        system.box_l)
+        system.part.clear()
+        system.non_bonded_inter.reset()
+        system.min_global_cut = 0.
+        system.cell_system.skin = 0.4
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=1., cutoff=2.5, shift="auto")
+        rng = np.random.default_rng(seed=42)
+        int_range = 2.9
+        node_grid = np.array(system.cell_system.node_grid)
+        # with the interaction range 2.9, a box length of 2.95, 6, 9, 12
+        # gives 1, 2, 3, 4 cells per direction in the global cell grid;
+        # with several MPI ranks it is split over the node grid, boxes
+        # with a local box smaller than the interaction range are skipped
+        cases = [([6., 6., 6.], 3 * [True]),
+                 ([9., 9., 9.], 3 * [True]),
+                 ([6., 9., 12.], 3 * [True]),
+                 ([6.5, 6.5, 9.5], 3 * [True]),
+                 ([12., 6., 9.], 3 * [True]),
+                 ([9., 12., 6.], 3 * [True]),
+                 ([2.95, 6., 12.], 3 * [True]),
+                 ([12., 9., 6.], [True, False, True]),
+                 ([6., 9., 12.], [False, False, False])]
+        n_cases = 0
+        for box_l, periodicity in cases:
+            if np.any(np.array(box_l) / node_grid < int_range):
+                continue
+            n_cases += 1
+            system.part.clear()
+            system.periodicity = periodicity
+            system.box_l = box_l
+            system.cell_system.set_regular_decomposition(
+                use_verlet_lists=True)
+            # jittered simple cubic lattice at density ~0.6
+            n = np.maximum(
+                1, (np.array(box_l) * 0.6**(1. / 3.)).astype(int))
+            grid = np.meshgrid(*[(np.arange(k) + 0.5) * (l / k)
+                                 for k, l in zip(n, box_l)], indexing="ij")
+            pos = np.reshape(grid, (3, -1)).T
+            pos += rng.uniform(-0.1, 0.1, pos.shape)
+            system.part.add(pos=pos)
+            tests_common.check_non_bonded_loop_trace(self, system)
+            system.integrator.run(0, recalc_forces=True)
+            f_rd = np.copy(system.part.all().f)
+            system.cell_system.set_regular_decomposition(
+                use_verlet_lists=False)
+            system.integrator.run(0, recalc_forces=True)
+            f_rd_cells = np.copy(system.part.all().f)
+            system.cell_system.set_n_square()
+            system.integrator.run(0, recalc_forces=True)
+            f_n2 = np.copy(system.part.all().f)
+            np.testing.assert_allclose(f_rd, f_n2, rtol=0., atol=1e-10)
+            np.testing.assert_allclose(f_rd_cells, f_n2, rtol=0., atol=1e-10)
+        self.assertGreater(n_cases, 0)
 
     def test_fully_connected_boundary_periodicity_check(self):
         """Check that setting up a fully connected boundary raises an error

@@ -144,7 +144,7 @@ public:
   virtual void charge_assign_elc(ElcImageLayers const &layers, bool assign_real,
                                  bool assign_images) = 0;
 
-  virtual void prepare_fft_mesh(bool reset_weights) = 0;
+  virtual void prepare_fft_mesh(bool reset_weights, bool zero_rs) = 0;
 
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,

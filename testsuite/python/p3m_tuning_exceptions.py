@@ -278,7 +278,7 @@ class Test(ut.TestCase):
             espressomd.magnetostatics.DipolarP3M)
 
         # check bisection exception
-        with self.assertRaisesRegex(RuntimeError, r"Root must be bracketed for bisection in dp3m_rtbisection"):
+        with self.assertRaisesRegex(RuntimeError, "Root must be bracketed for bisection in dp3m_rtbisection"):
             solver = espressomd.magnetostatics.DipolarP3M(
                 prefactor=2, accuracy=0.01, cao=1,
                 r_cut=0.373, alpha=3.81, mesh=(8, 8, 8))

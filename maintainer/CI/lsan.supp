@@ -1,0 +1,4 @@
+# one-time allocations during MPI_Init (Open MPI, UCX, ROCm), never freed
+leak:ompi_mpi_init
+# PMIx progress thread
+leak:libpmix.so
