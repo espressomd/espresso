@@ -33,7 +33,7 @@ class ProfileObservablesTest(ut.TestCase):
     system.part.add(pos=[4.0, 4.0, 6.0], v=[0.0, 0.0, 1.0])
     system.part.add(pos=[6.0, 8.0, 16.0], v=[0.0, 1.0, 0.0])
     bin_volume = 5.0**3
-    kwargs = {'ids': list(system.part.all().id),
+    kwargs = {'particles': list(system.part.all().id),
               'n_x_bins': 2,
               'n_y_bins': 3,
               'n_z_bins': 4,
@@ -97,7 +97,7 @@ class ProfileObservablesTest(ut.TestCase):
 
     def test_pid_profile_interface(self):
         # test setters and getters
-        params = {'ids': list(self.system.part.all().id),
+        params = {'particles': list(self.system.part.all().id),
                   'n_x_bins': 4,
                   'n_y_bins': 6,
                   'n_z_bins': 8,
@@ -109,7 +109,8 @@ class ProfileObservablesTest(ut.TestCase):
                   'max_z': 5.0}
         observable = espressomd.observables.DensityProfile(**params)
         # check pids
-        np.testing.assert_array_equal(np.copy(observable.ids), params['ids'])
+        np.testing.assert_array_equal(
+            np.copy(observable.ids), params['particles'])
         with self.assertRaises(RuntimeError):
             observable.ids = [observable.ids[0]]
         # check bins

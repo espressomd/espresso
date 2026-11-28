@@ -40,7 +40,7 @@ class Sample(ut.TestCase):
 
     def test_particle_coupling(self):
         part_vel = espressomd.observables.ParticleVelocities(
-            ids=list(range(100)))
+            particles=list(range(100)))
         mean_velocity = np.mean(part_vel.calculate())
         self.assertGreater(mean_velocity, 1e-5)
 
