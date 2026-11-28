@@ -17,8 +17,8 @@ repos:
         entry: sh maintainer/format/autopep8.sh
         language: system
         always_run: false
-        files: '.*\.(py|pyx|pxd)'
-        exclude: '\.pylintrc|.*.\.py\.in|^libs/'
+        files: '.*\.(py|pyx|pxd)$'
+        exclude: '^libs/'
         args: ["--ignore=E266,E402,E701,W291,W293", "--in-place"]
 
     -   id: cmake-format
@@ -43,6 +43,6 @@ repos:
         entry: sh maintainer/lint/pylint.sh
         language: system
         always_run: false
-        files: '.*\.py'
+        files: '.*\.(py|py.in)$'
         args: ["--score=no", "--reports=no", "--output-format=text"]
         log_file: pylint.log

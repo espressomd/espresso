@@ -96,16 +96,6 @@ void set_particle_pos(int p_id, Utils::Vector3d const &pos);
  */
 void remove_particle(int p_id);
 
-/** Remove all particles. */
-void remove_all_particles();
-
-void init_type_map(int type);
-void on_particle_type_change(int p_id, int old_type, int new_type);
-
-/** Find a particle of given type and return its id */
-int get_random_p_id(int type, int random_index_in_type_map);
-int number_of_particles_with_type(int type);
-
 /**
  * @brief Check if particle exists.
  *

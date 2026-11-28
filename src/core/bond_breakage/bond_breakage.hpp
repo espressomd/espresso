@@ -76,7 +76,7 @@ using Queue = std::vector<QueueEntry>;
  * Each MPI rank receives the broadcast global queue and only builds actions
  * for the particles it actually holds locally; referenced particles that are
  * not resolvable on this rank (@ref CellStructure::get_local_particle returns
- * @c nullptr) yield an empty action set. Exposed (non-static) for unit testing.
+ * @c nullptr) yield an empty action set.
  */
 ActionSet actions_for_breakage(CellStructure const &cell_structure,
                                QueueEntry const &e, BreakageSpec const &spec);
@@ -104,7 +104,8 @@ public:
     auto const &spec = *(breakage_specs.at(bond_type));
 
     // Is the bond length longer than the breakage length?
-    if (distance >= spec.breakage_length) {
+    if (distance >= spec.breakage_length and
+        spec.action_type != ActionType::NONE) {
       queue_breakage(particle_id, bond_partners, bond_type);
       return true;
     }

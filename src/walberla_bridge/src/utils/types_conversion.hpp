@@ -46,7 +46,8 @@ template <> inline Vector3<double> es2walberla(Utils::Vector3d const &v) {
 
 template <typename T> auto to_vector3d(Vector3<T> const &v) noexcept {
   return Utils::Vector3d{Utils::detail::carray_alias<double, 3u>{
-      double_c(v[0]), double_c(v[1]), double_c(v[2])}};
+      static_cast<double>(v[0]), static_cast<double>(v[1]),
+      static_cast<double>(v[2])}};
 }
 
 inline Utils::Vector3i to_vector3i(Vector3<int> const &v) noexcept {
@@ -60,15 +61,17 @@ inline Utils::Vector3i to_vector3i(Cell const &v) noexcept {
 }
 
 template <typename T> auto to_vector3(Utils::Vector3d const &v) noexcept {
-  return Vector3<T>{numeric_cast<T>(v[0]), numeric_cast<T>(v[1]),
-                    numeric_cast<T>(v[2])};
+  return Vector3<T>{static_cast<T>(v[0]), static_cast<T>(v[1]),
+                    static_cast<T>(v[2])};
 }
 
 template <typename T> auto to_vector9d(Matrix3<T> const &m) noexcept {
   return Utils::VectorXd<9>{Utils::detail::carray_alias<double, 9u>{
-      double_c(m[0]), double_c(m[1]), double_c(m[2]), double_c(m[3]),
-      double_c(m[4]), double_c(m[5]), double_c(m[6]), double_c(m[7]),
-      double_c(m[8])}};
+      static_cast<double>(m[0]), static_cast<double>(m[1]),
+      static_cast<double>(m[2]), static_cast<double>(m[3]),
+      static_cast<double>(m[4]), static_cast<double>(m[5]),
+      static_cast<double>(m[6]), static_cast<double>(m[7]),
+      static_cast<double>(m[8])}};
 }
 
 } // namespace walberla

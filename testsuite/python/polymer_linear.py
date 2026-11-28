@@ -209,6 +209,7 @@ class LinearPolymerPositions(ut.TestCase):
         Check runtime error messages.
 
         """
+        self.assertIsNone(espressomd.polymer._Polymer().call_method("unknown"))
         with self.assertRaisesRegex(RuntimeError, "Parameter 'seed' is missing"):
             espressomd.polymer.linear_polymer_positions(
                 n_polymers=1, beads_per_chain=10, bond_length=0.1)

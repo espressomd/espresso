@@ -109,6 +109,56 @@ class CorrelatorTest(ut.TestCase):
         for i in range(corr.shape[0]):
             np.testing.assert_array_almost_equal(corr[i], [v**2 * tau[i]**2])
 
+    def test_finalize_preserves_long_lag_tail(self):
+        """
+        Bug #2: a particle moving with constant velocity ``v`` from the
+        origin has position ``r(t) = v*t``, so the componentwise
+        square-distance autocorrelation is analytically
+        ``C(tau) = (v*tau)**2`` at *every* hierarchy level (the linear
+        compression of two linearly-growing positions is again linear in
+        time). With ``tau_lin=10`` and ``tau_max=2`` the hierarchy depth is
+        >= 2 (multi-block), so ``finalize()`` exercises the buggy compression
+        loop. After ``finalize()`` the *entire* result array, including the
+        long-lag tail that finalize touches, must still equal ``(v*tau)**2``.
+
+        On buggy HEAD the discarded compression results leave the
+        higher-level slots holding stale (older, smaller) positions, so the
+        long-lag tail is corrupted while the short-lag entries (filled by
+        ``update()``, which assigns correctly) remain correct.
+        """
+        s = self.system
+        v = np.array([1., 2., 3.])
+        p = s.part.add(pos=(0., 0., 0.), v=v)
+
+        obs = espressomd.observables.ParticlePositions(ids=(p.id,))
+        acc = espressomd.accumulators.Correlator(
+            obs1=obs, tau_lin=10, tau_max=2., delta_N=1, system=s,
+            corr_operation="square_distance_componentwise")
+
+        # accumulate enough samples to fully populate the higher hierarchy
+        # levels (the long-lag tail), so finalize() has data to compress
+        s.integrator.run(1000)
+        s.auto_update_accumulators.add(acc)
+        s.integrator.run(2000)
+
+        # trigger the buggy compression path
+        acc.finalize()
+
+        corr = acc.result()
+        tau = self.calc_tau(s.time_step, acc.tau_lin, corr.shape[0])
+        sizes = acc.sample_sizes()
+
+        # sanity: the long-lag tail must actually carry samples, otherwise
+        # the test would be vacuous and not exercise the bug
+        self.assertGreater(sizes[-1], 0)
+
+        # the analytic correlation holds for every lag, short and long
+        for i in range(corr.shape[0]):
+            np.testing.assert_array_almost_equal(
+                corr[i], [v**2 * tau[i]**2],
+                err_msg=f"finalized correlation wrong at lag index {i} "
+                f"(tau={tau[i]}, n_samples={sizes[i]})")
+
     def test_tensor_product(self):
         s = self.system
         v = np.array([1, 2, 3])
@@ -315,6 +365,20 @@ class CorrelatorTest(ut.TestCase):
             create_accumulator(tau_lin=3)
         with self.assertRaisesRegex(RuntimeError, "tau_max must be >= delta_t"):
             create_accumulator(delta_N=2 * int(10. / self.system.time_step))
+        # delta_N <= 0 is meaningless and must be rejected at construction
+        # (otherwise delta_t=0 leads to log2(inf) UB in the Correlator)
+        with self.assertRaisesRegex(RuntimeError, "delta_N must be >= 1"):
+            create_accumulator(delta_N=0)
+        with self.assertRaisesRegex(RuntimeError, "delta_N must be >= 1"):
+            create_accumulator(delta_N=-1)
+        # the runtime setter must reject invalid values too
+        acc = create_accumulator()
+        with self.assertRaisesRegex(RuntimeError, "delta_N must be >= 1"):
+            acc.delta_N = 0
+        with self.assertRaisesRegex(RuntimeError, "delta_N must be >= 1"):
+            acc.delta_N = -3
+        # a rejected setter call must leave the previous value intact
+        self.assertEqual(acc.delta_N, 1)
         with self.assertRaisesRegex(ValueError, "correlation operation 'unknown' not implemented"):
             create_accumulator(corr_operation="unknown")
         with self.assertRaisesRegex(ValueError, "unknown compression method 'unknown1' for first observable"):
@@ -364,6 +428,25 @@ class CorrelatorTest(ut.TestCase):
             self.system.auto_update_accumulators.add(self.expired_system_acc)
         with self.assertRaisesRegex(RuntimeError, "auto_update_accumulators property"):
             pickle.dumps(acc)
+
+    def test_delta_N_validation(self):
+        """delta_N <= 0 must be rejected by all accumulators (construction and
+        runtime setter). With delta_N=0 an auto-update would hang the
+        integrator (frequency=0) and the Correlator hits UB at construction."""
+        self.system.part.add(pos=[(0, 0, 0)])
+        obs = espressomd.observables.ParticleVelocities(ids=(0,))
+
+        for ctor in (espressomd.accumulators.MeanVarianceCalculator,
+                     espressomd.accumulators.TimeSeries):
+            for bad in (0, -1):
+                with self.assertRaisesRegex(RuntimeError, "delta_N must be >= 1"):
+                    ctor(obs=obs, delta_N=bad)
+            # runtime setter
+            acc = ctor(obs=obs, delta_N=1)
+            for bad in (0, -2):
+                with self.assertRaisesRegex(RuntimeError, "delta_N must be >= 1"):
+                    acc.delta_N = bad
+            self.assertEqual(acc.delta_N, 1)
 
 
 if __name__ == "__main__":

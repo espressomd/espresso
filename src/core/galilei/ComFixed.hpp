@@ -28,6 +28,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <functional>
 #include <ranges>
 #include <unordered_map>
@@ -35,7 +36,7 @@
 
 class ComFixed {
 private:
-  std::unordered_map<int, int> m_type_index;
+  std::unordered_map<int, std::size_t> m_type_index;
 
   std::vector<Utils::Vector3d>
   local_type_forces(ParticleRange const &particles) const {
@@ -72,15 +73,15 @@ public:
   void set_fixed_types(std::vector<int> const &p_types) {
     m_type_index.clear();
 
-    int i = 0;
     for (auto const &p_type : p_types) {
-      m_type_index[p_type] = i++;
+      m_type_index.try_emplace(p_type, m_type_index.size());
     }
   }
 
   std::vector<int> get_fixed_types() const {
     std::vector<int> res{};
     std::ranges::copy(std::views::keys(m_type_index), std::back_inserter(res));
+    std::ranges::sort(res);
     return res;
   }
 
@@ -109,10 +110,7 @@ public:
       auto it = m_type_index.find(p.type());
       if (it != m_type_index.end()) {
         auto const mass_frac = p.mass() / masses[it->second];
-        auto const &type_force = forces[it->second];
-        for (unsigned int i = 0u; i < 3u; i++) {
-          p.force()[i] -= mass_frac * type_force[i];
-        }
+        p.force() -= mass_frac * forces[it->second];
       }
     }
   }
