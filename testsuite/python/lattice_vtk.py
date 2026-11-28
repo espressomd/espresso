@@ -593,10 +593,7 @@ class LBWalberlaVTKDoublePrecisionBlocksCPU(TestLBVTK, ut.TestCase):
     lattice_class = espressomd.lb.Lattice
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False, "gpu": False}
-    # use more than one waLBerla block per MPI rank: with box_l=[6,7,3] and
-    # agrid=0.5 the lattice is 12x14x6, so [2,1,1] splits it into two blocks
-    # along x on a single rank. The VTK field writers must export each block's
-    # own data, not the last block's data for every block.
+    # two waLBerla blocks per MPI rank, split along x
     lattice_params = {"blocks_per_mpi_rank": [2, 1, 1]}
     vtk_id = "lb_double_precision_blocks_cpu"
 
