@@ -53,6 +53,7 @@ public:
   std::vector<double>
   evaluate(boost::mpi::communicator const &comm, ParticleReferenceRange const &,
            ParticleObservables::traits<Particle> const &) const override {
+    check_particle_ids_exist(comm, target_ids());
 
     auto const &system = System::get_system();
     auto const &box_geo = *system.box_geo;

@@ -19,6 +19,8 @@ import unittest as ut
 import espressomd
 import numpy as np
 import espressomd.observables
+import sys
+import subprocess
 
 
 def cos_persistence_angles(positions):
@@ -243,6 +245,58 @@ class ObservableTests(ut.TestCase):
         for i in range(3):
             with self.assertRaises(RuntimeError):
                 espressomd.observables.CosPersistenceAngles(ids=np.arange(i))
+
+    def test_nonexistent_id_is_rejected(self):
+        nonexistent = 99
+        self.assertNotIn(nonexistent, list(range(self.n_parts)))
+        obs = espressomd.observables.ParticleDistances(
+            ids=[0, 1, 2, nonexistent])
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {nonexistent} does not exist"):
+            obs.calculate()
+        obs = espressomd.observables.ParticleDistances(ids=[0, 1, 2])
+        np.testing.assert_array_equal(obs.calculate().shape, (2,))
+
+    @ut.skipIf(
+        system.cell_system.get_state()["n_nodes"] > 1,
+        "subprocess re-initializes espressomd; only safe outside an MPI run")
+    def test_nonexistent_id_does_not_crash_subprocess(self):
+        child_script = r"""
+import espressomd
+import espressomd.observables
+
+system = espressomd.System(box_l=[10., 10., 10.])
+system.time_step = 0.01
+system.cell_system.skin = 0.4
+for i in range(3):
+    system.part.add(pos=[1. + i, 1. + i, 1. + i], id=i)
+system.integrator.run(0)
+try:
+    obs = espressomd.observables.ParticleDistances(ids=[0, 1, 2, 99])
+    res = obs.calculate()
+except Exception as err:
+    print("REJECTED:" + type(err).__name__)
+else:
+    print("NO_REJECTION:" + str(res))
+"""
+        # Run the child with the same interpreter/environment as the parent
+        # (pypresso sets PYTHONPATH in os.environ, inherited by the child).
+        proc = subprocess.run(
+            [sys.executable, "-c", child_script],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            universal_newlines=True, timeout=300)
+        out = proc.stdout + proc.stderr
+        self.assertGreaterEqual(
+            proc.returncode, 0,
+            msg=f"child killed by signal {-proc.returncode} (OOB/crash); "
+            f"output was:\n{out}")
+        self.assertEqual(
+            proc.returncode, 0,
+            msg=f"child exited with code {proc.returncode}; output:\n{out}")
+        self.assertIn(
+            "REJECTED:", proc.stdout,
+            msg=f"nonexistent observable id was not rejected with an "
+            f"exception (OOB read / silently-wrong result); "
+            f"output:\n{out}")
 
 
 if __name__ == "__main__":
