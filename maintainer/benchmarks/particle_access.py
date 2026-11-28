@@ -27,9 +27,9 @@ def benchmark_operation(operation_func, n_iter):
     """Execute an operation multiple times and return timing statistics."""
     timings = []
     for _ in range(n_iter):
-        tick = time.time()
+        tick = time.perf_counter()
         operation_func()
-        tock = time.time()
+        tock = time.perf_counter()
         timings.append(tock - tick)
     return np.mean(timings), np.std(timings)
 
@@ -56,7 +56,7 @@ parser.add_argument("--additional_properties", metavar="PROPS", action="store",
                     help="Comma-separated list of additional properties to test (e.g., 'mass,type,v')")
 parser.add_argument("--n_iter", metavar="N", action="store",
                     type=int, default=20, required=False,
-                    help="Number of iterations for timing (default: 10)")
+                    help="Number of iterations for timing (default: 20)")
 
 args = parser.parse_args()
 
@@ -74,13 +74,12 @@ system.cell_system.skin = 0.5
 n_proc = system.cell_system.get_state()["n_nodes"]
 n_part = n_proc * args.particles_per_core
 
-print(f"Benchmark Configuration:")
+print("Benchmark Configuration:")
 print(f"  Particles per core: {args.particles_per_core}")
 print(f"  Total particles: {n_part}")
 print(f"  MPI ranks: {n_proc}")
 print(f"  Iterations: {args.n_iter}")
-print(f"  Additional properties: {
-      additional_props if additional_props else 'None'}")
+print(f"  Additional properties: {additional_props or 'None'}")
 print()
 
 # Test 1: Bulk particle creation without providing IDs
@@ -139,8 +138,9 @@ def benchmark_property_access(properties, access_func, time_scale=1e6, time_unit
     for prop in properties:
         avg, std = benchmark_operation(
             lambda: access_func(prop), args.n_iter)
-        print(f"  {prop}: {avg * time_scale:.3f} {time_unit} ± {std *
-              time_scale:.3f} {time_unit}, {1 / avg:.0f} particles/s")
+        avg_scaled, std_scaled = avg * time_scale, std * time_scale
+        print(f"  {prop}: {avg_scaled:.3f} {time_unit} ± {std_scaled:.3f} "
+              f"{time_unit}, {1 / avg:.0f} particles/s")
 
 
 # Test single particle read
@@ -172,8 +172,9 @@ def benchmark_slice_access(properties, access_func, description, time_scale=1e3,
     for prop in properties:
         avg, std = benchmark_operation(
             lambda: access_func(prop), args.n_iter)
-        print(f"  {prop}: {avg * time_scale:.3f} {time_unit} ± {std *
-              time_scale:.3f} {time_unit} ({n_part / avg:.0f} particles/s)")
+        avg_scaled, std_scaled = avg * time_scale, std * time_scale
+        print(f"  {prop}: {avg_scaled:.3f} {time_unit} ± {std_scaled:.3f} "
+              f"{time_unit} ({n_part / avg:.0f} particles/s)")
 
 
 # Test slice read - re-instantiating slice on every access
@@ -213,14 +214,14 @@ def benchmark_cached_slice_access(properties, access_func, warmup_func, descript
             # Warm-up access
             warmup_func(particle_slice, prop)
             # Timed access
-            tick = time.time()
+            tick = time.perf_counter()
             access_func(particle_slice, prop)
-            tock = time.time()
+            tock = time.perf_counter()
             timings.append(tock - tick)
         avg = np.mean(timings)
         std = np.std(timings)
-        print(f"  {prop}: {avg * 1e3:.3f} ms ± {std *
-              1e3:.3f} ms ({n_part / avg:.0f} particles/s)")
+        print(f"  {prop}: {avg * 1e3:.3f} ms ± {std * 1e3:.3f} ms "
+              f"({n_part / avg:.0f} particles/s)")
 
 
 # Test slice read - cached slice
