@@ -19,6 +19,7 @@
 import unittest as ut
 import unittest_decorators as utx
 import espressomd
+import espressomd.interactions
 import numpy as np
 import itertools
 import tests_common
@@ -97,6 +98,65 @@ class RegularDecomposition(ut.TestCase):
         # check particle resorting when the left and right cells are different
         self.system.cell_system.node_grid = [4, 1, 1]
         self.check_resort()
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_resort_many_movers(self):
+        """Integrate a hot system of bonded dimers in a box of a few cells,
+        so that every Verlet update moves many particles between cells
+        (with several OpenMP threads, the cells are resorted in parallel).
+        After each block of steps, check that no particle was lost or
+        duplicated, that particles, ids and bonds can be accessed, and that
+        the forces agree with the N-square cell system."""
+        system = self.system
+        # undo the cell system settings and interactions of the other tests
+        system.min_global_cut = 0.
+        system.non_bonded_inter[0, 1].lennard_jones.deactivate()
+        system.cell_system.set_regular_decomposition(
+            use_verlet_lists=True, fully_connected_boundary=None)
+        system.box_l = 3 * [19.2]
+        system.cell_system.skin = 0.3
+        system.time_step = 0.01
+        lattice = np.arange(12) * 1.6
+        pos = np.array(np.meshgrid(lattice, lattice, lattice, indexing="ij"))
+        pos = pos.reshape((3, -1)).T
+        pos += np.random.uniform(-0.1, 0.1, pos.shape)
+        n_part = len(pos)
+        ids = np.random.permutation(np.arange(3, 3 + 3 * n_part, 3))
+        partcls = system.part.add(id=ids, pos=pos,
+                                  v=np.random.normal(0., 2., pos.shape))
+        harmonic = espressomd.interactions.HarmonicBond(k=100., r_0=1.6)
+        system.bonded_inter.add(harmonic)
+        for i in range(0, n_part, 2):
+            system.part.by_id(ids[i]).add_bond((harmonic, ids[i + 1]))
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=1., cutoff=2.5, shift="auto")
+        system.cell_system.set_regular_decomposition(use_verlet_lists=True)
+        try:
+            for _ in range(4):
+                system.thermostat.set_langevin(kT=4., gamma=0.5, seed=42)
+                system.integrator.run(40)
+                system.thermostat.turn_off()
+                self.assertEqual(len(system.part), n_part)
+                self.assertEqual(sum(system.cell_system.resort()), n_part)
+                np.testing.assert_array_equal(
+                    np.sort(system.part.all().id), np.sort(ids))
+                for i in range(0, n_part, 2):
+                    bonds = system.part.by_id(ids[i]).bonds
+                    self.assertEqual(len(bonds), 1)
+                    self.assertEqual(bonds[0][1], ids[i + 1])
+                system.integrator.run(0, recalc_forces=True)
+                f_rd = np.copy(partcls.f)
+                system.cell_system.set_n_square(use_verlet_lists=False)
+                system.integrator.run(0, recalc_forces=True)
+                np.testing.assert_allclose(
+                    np.copy(partcls.f), f_rd, atol=1e-10, rtol=1e-10)
+                system.cell_system.set_regular_decomposition(
+                    use_verlet_lists=True)
+        finally:
+            system.thermostat.turn_off()
+            system.part.clear()
+            system.bonded_inter.clear()
+            system.non_bonded_inter[0, 0].lennard_jones.deactivate()
 
     def test_position_rounding(self):
         """This places a particle on the box boundary,

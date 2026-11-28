@@ -86,6 +86,12 @@ struct CellStructure::AoSoA_pack {
 #ifdef ESPRESSO_DIPOLES
       dipm = DipmViewType("dipm", num_particles);
 #endif
+    } else if (position.extent(0) == num_particles) {
+      // Same extent: keep the views. Kokkos::realloc() would zero-fill them,
+      // but the full AoSoA commit that follows every rebuild of the local
+      // properties writes every field of every particle (the flags are
+      // zeroed by the caller).
+      return;
     } else {
       // Reallocation
       Kokkos::realloc(position, num_particles);
