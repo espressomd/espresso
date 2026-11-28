@@ -56,13 +56,9 @@ public:
 
 protected:
   /**
-   * Resolve the per-block buffer for the block currently being written.
-   * waLBerla runs the registering before-function exactly once (filling
-   * @ref m_block_content / @ref m_block_dims for every local block) and then
-   * iterates all blocks, calling @c configure() with @ref block_ set to the
-   * current block. Selecting the buffer by block pointer here is required so
-   * that ranks holding more than one block do not all read the last block's
-   * data.
+   * Select the buffer of the block currently being written.
+   * waLBerla runs the before-function once, which fills the buffers of all
+   * local blocks, and then calls @c configure() for each block.
    */
   void configure() override {
     WALBERLA_ASSERT_NOT_NULLPTR(this->block_);
