@@ -169,9 +169,19 @@ class VirialPressureConsistency(ut.TestCase):
     def test_dp3m_pressure(self):
         self.system.magnetostatics.solver = espressomd.magnetostatics.DipolarP3M(
             prefactor=2., accuracy=1e-4, mesh=32, cao=6, r_cut=7.5, tune=True)
+        # the skin tuning integrates the system: restore the initial state
+        # afterwards, so that the sampled trajectory does not depend on the
+        # number of steps taken by the tuning algorithm
+        particles = self.system.part.all()
+        pos = np.copy(particles.pos)
+        vel = np.copy(particles.v)
         skin = self.system.cell_system.tune_skin(
             min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)
         print(f"Tuned skin: {skin}")
+        particles.pos = pos
+        particles.v = vel
+        self.system.thermostat.langevin.call_method(
+            "override_philox_counter", counter=0)
 
         num_samples = 25
         pressures_via_virial = {"total": [], "dipolar": []}

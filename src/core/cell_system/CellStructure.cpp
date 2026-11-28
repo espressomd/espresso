@@ -33,6 +33,7 @@
 #include "aosoa_pack.hpp"
 #include "cell_system/CellStructureType.hpp"
 #include "communication.hpp"
+#include "errorhandling.hpp"
 #include "ghosts.hpp"
 #include "ghosts/HaloExchange.hpp"
 #include "integrators/Propagation.hpp"
@@ -691,8 +692,14 @@ void CellStructure::resort_particles(bool global_flag) {
   m_le_pos_offset_at_last_resort = lebc.pos_offset;
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
-  check_particle_index();
-  check_particle_sorting();
+  // A failed check is reported as a runtime error: throwing on a single rank
+  // would leave the other ranks blocked in the next collective call.
+  try {
+    check_particle_index();
+    check_particle_sorting();
+  } catch (std::exception const &err) {
+    runtimeErrorMsg() << err.what();
+  }
 #endif
 }
 

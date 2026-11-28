@@ -192,6 +192,10 @@ public:
     if (tuning.timings <= 0) {
       throw std::domain_error("Parameter 'timings' must be > 0");
     }
+    if (tuning.tune_skin and not tuning.with_integration) {
+      throw std::domain_error(
+          "Parameter 'tune_skin' requires 'tune_with_integration'");
+    }
     if (dp3m.params.mesh != Utils::Vector3i::broadcast(dp3m.params.mesh[0])) {
       throw std::domain_error("DipolarP3M requires a cubic mesh");
     }

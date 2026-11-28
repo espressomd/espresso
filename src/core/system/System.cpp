@@ -510,7 +510,6 @@ void System::on_integration_start() {
   }
 
   invalidate_fetch_cache();
-  cell_structure->clear_local_properties();
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   if (!Utils::Mpi::all_compare(::comm_cart, cell_structure->use_verlet_list)) {

@@ -194,6 +194,8 @@ private:
   bool m_verlet_skin_set = false;
   bool m_rebuild_verlet_list = true;
   bool m_rebuild_verlet_list_cabana = true;
+  /** Whether the last Cabana rebuild filled the Verlet list. */
+  bool m_verlet_list_cabana_filled = false;
   std::vector<std::pair<Particle *, Particle *>> m_verlet_list;
   double m_le_pos_offset_at_last_resort = 0.;
   /** @brief Verlet list skin. */
@@ -931,6 +933,18 @@ public:
                            int &dihedral_count, Particle const &p);
 
   /**
+   * @brief Request a rebuild if the Cabana Verlet list is empty.
+   * Call this before @ref prepare_verlet_list_cabana when the force
+   * calculation reads the list. The list stays empty after a rebuild that
+   * skipped filling it, e.g. during steepest descent.
+   */
+  void require_verlet_list_cabana() {
+    if (not m_verlet_list_cabana_filled) {
+      m_rebuild_verlet_list_cabana = true;
+    }
+  }
+
+  /**
    * @brief Reset local properties of the Verlet list.
    * @param cutoff    Pair interaction cutoff.
    * @return True if a rebuild is needed.
@@ -955,6 +969,8 @@ public:
       kernel(m_decomposition->local_cells(), m_decomposition->box(),
              *m_verlet_list_cabana);
     }
+    // The kernel disables the Verlet list on overflow.
+    m_verlet_list_cabana_filled = rebuild_verlet_list and use_verlet_list;
     m_rebuild_verlet_list_cabana = false;
   }
 
