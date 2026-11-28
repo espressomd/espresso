@@ -100,7 +100,8 @@ void init_forces_and_thermostat(System::System const &system) {
 #ifdef ESPRESSO_ROTATION
       if (propagation.should_propagate_with(p, PropagationMode::ROT_LANGEVIN))
         p.torque() += convert_vector_body_to_space(
-            p, friction_thermo_langevin_rotation(langevin, p, time_step, kT));
+            p.quat(),
+            friction_thermo_langevin_rotation(langevin, p, time_step, kT));
 #endif
     }
   });

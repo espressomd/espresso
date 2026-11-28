@@ -61,13 +61,13 @@
 #include <vector>
 
 /** Interaction type for unused bonded interaction slots */
-struct NoneBond {
+struct NoneBond { // LCOV_EXCL_LINE
   static constexpr int num = 0;
   double cutoff() const { return bonded_inactive_cutoff; }
 };
 
 /** Interaction type for virtual bonds */
-struct VirtualBond {
+struct VirtualBond { // LCOV_EXCL_LINE
   static constexpr int num = 1;
   double cutoff() const { return bonded_inactive_cutoff; }
 };

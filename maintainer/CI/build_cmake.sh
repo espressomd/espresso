@@ -104,7 +104,7 @@ set_default_value with_coverage false
 set_default_value with_coverage_python ${with_coverage}
 set_default_value with_ubsan false
 set_default_value with_asan false
-set_default_value with_static_analysis false
+set_default_value with_clang_tidy false
 set_default_value with_caliper false
 set_default_value with_fpe false
 set_default_value myconfig "default"
@@ -171,7 +171,7 @@ cmake_param_list+=(
   -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON:BOOL=${with_coverage_python}
   -D ESPRESSO_BUILD_WITH_ASAN:BOOL=${with_asan}
   -D ESPRESSO_BUILD_WITH_UBSAN:BOOL=${with_ubsan}
-  -D ESPRESSO_BUILD_WITH_CLANG_TIDY:BOOL=${with_static_analysis}
+  -D ESPRESSO_BUILD_WITH_CLANG_TIDY:BOOL=${with_clang_tidy}
   -D ESPRESSO_BUILD_WITH_CUDA:BOOL=${with_cuda}
 )
 
@@ -237,9 +237,8 @@ cd "${builddir}"
 
 # load modules
 if [ -f "/etc/os-release" ]; then
-    if grep -qP 'NAME="(openSUSE|SLES|SLED)' /etc/os-release; then
-        . /etc/profile.d/modules.sh
-        module load gnu-openmpi
+    if grep -q 'NAME="Ubuntu"' /etc/os-release; then
+        export OMPI_MCA_opal_abort_print_stack=1
     elif grep -qP 'NAME="(Fedora|Red Hat Enterprise) Linux"' /etc/os-release; then
         for f in /etc/profile.d/*module*.sh; do
             . "${f}"
@@ -247,16 +246,6 @@ if [ -f "/etc/os-release" ]; then
         module load mpi
         # Fedora's Kokkos is missing feature ENABLE_IMPL_VIEW_LEGACY
         sed -i "/find_package(Kokkos/d" ${srcdir}/CMakeLists.txt
-    elif grep -q 'NAME="Ubuntu"' /etc/os-release; then
-        default_gcov="$(which "gcov")"
-        custom_gcov="$(which "${GCOV:-gcov}")"
-        if [ ! "${custom_gcov}" = "${default_gcov}" ] && [ -d "${HOME}/.local/var/lib/alternatives" ]; then
-            update-alternatives --altdir "${HOME}/.local/etc/alternatives" \
-                                --admindir "${HOME}/.local/var/lib/alternatives" \
-                                --install "${HOME}/.local/bin/gcov" "gcov" "${custom_gcov}" 10
-        fi
-        export OMPI_MCA_mpi_abort_print_stack=enabled
-        export OMPI_MCA_hwloc_base_binding_policy=none
     fi
 fi
 
@@ -393,9 +382,9 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     gpg --import "${CODECOV_PUBLIC_KEY}"
 
     # download uploader and signatures
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+    curl -OSs https://cli.codecov.io/latest/linux/codecov
+    curl -OSs https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+    curl -OSs https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
 
     # check uploader integrity, exit script in case of failure
     gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
@@ -404,19 +393,22 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
 
     codecov_opts=""
     if [ "${with_coverage}" = true ]; then
-        echo "Running lcov and gcov..."
-        codecov_opts="${codecov_opts} --gcov"
+        echo "Running lcov..."
         "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
+        codecov_opts="${codecov_opts} -f coverage.info"
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."
         python3 -m coverage combine testsuite/python testsuite/tutorials testsuite/samples testsuite/benchmarks testsuite/scripts
         python3 -m coverage xml
+        codecov_opts="${codecov_opts} -f coverage.xml"
     fi
+    echo "Checking Codecov availability..."
+    curl -sS -o /dev/null https://ingest.codecov.io
     echo "Uploading to Codecov..."
     for codecov_trial in 1 2 3; do
         codecov_errno="0"
-        ./codecov ${codecov_opts} -t "${CODECOV_TOKEN}" --nonZero || codecov_errno="${?}"
+        ./codecov upload-coverage ${codecov_opts} --network-root-folder "${srcdir}" -t "${CODECOV_TOKEN}" --git-service github --disable-file-fixes --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
         if [ "${codecov_errno}" = "0" ]; then
             break
         fi
