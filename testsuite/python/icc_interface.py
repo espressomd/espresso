@@ -119,6 +119,8 @@ class Test(ut.TestCase):
                           ({"eps_out": -1.}, "Parameter 'eps_out' must be > 0"),
                           ({"ext_field": 0.},
                            "parameter 'ext_field' is not convertible to 'Utils::Vector<double, 3>'"),
+                          ({"relaxaton": 0.9},
+                           "Parameter 'relaxaton' is not a valid parameter"),
                           ]
 
         for kwargs, error in invalid_params:
