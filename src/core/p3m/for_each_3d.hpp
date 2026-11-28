@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The ESPResSo project
+ * Copyright (C) 2024-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -23,9 +23,7 @@
 
 #include <utils/index.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
-#endif
 
 #include <concepts>
 #include <cstddef>
@@ -79,59 +77,103 @@ void for_each_3d(detail::IndexVectorConcept auto &&start,
   }
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+/**
+ * @brief Repeat an operation on every element of a 3D grid.
+ *
+ * Intermediate values that depend on the iterated coordinates
+ * are calculated and stored once per iteration. This is useful
+ * when the operation is costly.
+ *
+ * @param start       Initial values for the loop counters.
+ * @param stop        Final values (one-past-the-end) for the loop counters.
+ * @param counters    Loop counters.
+ * @param kernel      Functor to execute.
+ * @param projector   Projection of the current loop counter.
+ * @tparam Order      Data layout.
+ * @tparam Kernel     Nullary function.
+ * @tparam Projector  Binary function that takes a nesting depth and a loop
+ *                    counter as arguments and projects a value.
+ */
+template <Utils::MemoryOrder Order, class Kernel,
+          class Projector = decltype(detail::noop_projector)>
+  requires std::invocable<Kernel> and std::invocable<Projector, unsigned, int>
+void for_each_3d_order(detail::IndexVectorConcept auto &&start,
+                       detail::IndexVectorConcept auto &&stop,
+                       detail::IndexVectorConcept auto &&counters,
+                       Kernel &&kernel,
+                       Projector &&projector = detail::noop_projector) {
+  auto constexpr is_row_major = Order == Utils::MemoryOrder::ROW_MAJOR;
+  auto constexpr index_fast = is_row_major ? 2u : 0u;
+  auto constexpr index_slow = is_row_major ? 0u : 2u;
+  auto constexpr index_medium = 1u;
+  auto &nx = counters[index_slow];
+  auto &ny = counters[index_medium];
+  auto &nz = counters[index_fast];
+  for (nx = start[index_slow]; nx < stop[index_slow]; ++nx) {
+    projector(index_slow, nx);
+    for (ny = start[index_medium]; ny < stop[index_medium]; ++ny) {
+      projector(index_medium, ny);
+      for (nz = start[index_fast]; nz < stop[index_fast]; ++nz) {
+        projector(index_fast, nz);
+        kernel();
+      }
+    }
+  }
+}
+
 /** @brief Mapping between ESPResSo and Kokkos tags for memory order */
 template <Utils::MemoryOrder Order>
 using LayoutIterate = std::conditional_t<
     Order == Utils::MemoryOrder::COLUMN_MAJOR,
     std::integral_constant<Kokkos::Iterate, Kokkos::Iterate::Left>,
     std::integral_constant<Kokkos::Iterate, Kokkos::Iterate::Right>>;
-#endif
 
 /**
  * @brief Run a kernel(index_3d, linear_index) over the given 3d range with
  * given memory order
  */
-template <Utils::MemoryOrder memory_order, class Kernel>
+template <Utils::MemoryOrder memory_order,
+          class ExecSpace = Kokkos::DefaultHostExecutionSpace>
 void for_each_3d_lin(detail::IndexVectorConcept auto &&start,
-                     detail::IndexVectorConcept auto &&stop, Kernel &&kernel) {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  if (Kokkos::num_threads() > 1) {
-    int nx = stop[0] - start[0];
-    int ny = stop[1] - start[1];
-    int nz = stop[2] - start[2];
-    constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
-    using Range3d = Kokkos::MDRangePolicy<Kokkos::Rank<3, iter, iter>>;
-    Range3d policy({0, 0, 0}, {nx, ny, nz});
-    Kokkos::parallel_for(
-        "for_each_3d", policy, KOKKOS_LAMBDA(int i, int j, int k) {
-          auto const idx = {start[0] + i, start[1] + j, start[2] + k};
-          auto const linear_idx =
-              Utils::get_linear_index<memory_order>({i, j, k}, {nx, ny, nz});
-          kernel(idx, linear_idx);
-        });
-    return;
-  }
-#endif
-
-  int linear_loop_index = 0u;
-  if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
-    for (int nx = start[0u]; nx < stop[0u]; ++nx) {
-      for (int ny = start[1u]; ny < stop[1u]; ++ny) {
-        for (int nz = start[2u]; nz < stop[2u]; ++nz) {
-          kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
-          linear_loop_index++;
-        }
-      }
-    }
-  } else {
-    for (int nz = start[2u]; nz < stop[2u]; ++nz) {
-      for (int ny = start[1u]; ny < stop[1u]; ++ny) {
+                     detail::IndexVectorConcept auto &&stop, auto &&kernel)
+  requires Kokkos::is_execution_space<ExecSpace>::value
+{
+  auto constexpr is_host_exec_space =
+      Kokkos::SpaceAccessibility<ExecSpace, Kokkos::HostSpace>::accessible != 0;
+  if constexpr (is_host_exec_space) {
+    if (Kokkos::num_threads() == 1) {
+      // serial execution policy is only implemented for host code
+      int linear_loop_index = 0u;
+      if constexpr (memory_order == Utils::MemoryOrder::ROW_MAJOR) {
         for (int nx = start[0u]; nx < stop[0u]; ++nx) {
-          kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
-          linear_loop_index++;
+          for (int ny = start[1u]; ny < stop[1u]; ++ny) {
+            for (int nz = start[2u]; nz < stop[2u]; ++nz) {
+              kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
+              linear_loop_index++;
+            }
+          }
+        }
+      } else {
+        for (int nz = start[2u]; nz < stop[2u]; ++nz) {
+          for (int ny = start[1u]; ny < stop[1u]; ++ny) {
+            for (int nx = start[0u]; nx < stop[0u]; ++nx) {
+              kernel(Utils::Vector3i{nx, ny, nz}, linear_loop_index);
+              linear_loop_index++;
+            }
+          }
         }
       }
+      return;
     }
   }
+  // parallel execution policy
+  auto const size = stop - start;
+  constexpr Kokkos::Iterate iter = LayoutIterate<memory_order>::value;
+  using Range3d = Kokkos::MDRangePolicy<ExecSpace, Kokkos::Rank<3, iter, iter>>;
+  Range3d policy({0, 0, 0}, {size[0], size[1], size[2]});
+  Kokkos::parallel_for("for_each_3d", policy, [=](int i, int j, int k) {
+    auto const linear_idx =
+        Utils::get_linear_index<memory_order>(i, j, k, size);
+    kernel(start + Utils::Vector3i{{i, j, k}}, linear_idx);
+  });
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Copyright (C) 2017-2024 The ESPResSo project
+# Copyright (C) 2017-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -31,11 +31,12 @@ fi
 
 lcov --gcov-tool "${GCOV:-gcov}" \
      --quiet \
-     --ignore-errors graph,mismatch,mismatch,gcov,unused \
+     --ignore-errors graph,mismatch,mismatch,inconsistent,inconsistent,gcov,unused,unused \
      --directory . \
      --filter brace,blank,range,region \
      --capture \
      --rc lcov_json_module="JSON::XS" \
+     --rc derive_function_end_line=0 \
      --exclude "/usr/*" \
      --exclude "*/tmpxft_*cudafe1.stub.*" \
      --exclude "${bindir}/_deps/*" \

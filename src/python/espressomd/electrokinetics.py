@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,7 +21,7 @@ import itertools
 import numpy as np
 
 from . import utils
-from .detail.walberla import VTKOutputBase, LatticeWalberla  # pylint: disable=unused-import
+from .detail.walberla import VTKOutputBase, Lattice  # pylint: disable=unused-import
 from .script_interface import ScriptInterfaceHelper, script_interface_register, ScriptObjectList, array_variant
 import espressomd.detail.walberla
 import espressomd.shapes
@@ -41,12 +41,19 @@ class EKFFT(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.lb.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     permittivity : :obj:`float`
         permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    tau: : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
+    gpu : :obj:`bool`, optional
+        Use GPU implementation.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
+
+    Methods
+    -------
     add_vtk_writer()
         Attach a VTK writer.
 
@@ -94,19 +101,43 @@ class EKFFT(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class EKFFTGPU(ScriptInterfaceHelper):
+class EKNone(ScriptInterfaceHelper, espressomd.detail.walberla.LatticeModel):
     """
-    A FFT-based Poisson solver on the GPU.
-    Intrinsically assumes periodic boundary conditions.
+    The default Poisson solver.
+    Imposes a user-controlled electrostatic potential field.
+    The potential is initialized to 0 on all lattice nodes.
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.lb.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
-    permittivity : :obj:`float`
-        permittivity of the fluid :math:`\\epsilon_0 \\epsilon_{\\mathrm{r}}`.
+    tau : :obj:`float`
+        EK time step, must be an integer multiple of the MD time step.
     single_precision : :obj:`bool`, optional
         Use single-precision floating-point arithmetic.
+
+    Methods
+    -------
+    save_checkpoint()
+        Write the electrostatic potential field to a file.
+
+        Parameters
+        ----------
+        path : :obj:`str` or :obj:`pathlib.Path`
+            Destination file path.
+        binary : :obj:`bool`
+            Whether to write in binary or ASCII mode.
+
+    load_checkpoint()
+        Load the electrostatic potential field from a file.
+
+        Parameters
+        ----------
+        path : :obj:`str` or :obj:`pathlib.Path`
+            File path to read from.
+        binary : :obj:`bool`
+            Whether to read in binary or ASCII mode.
+
     add_vtk_writer()
         Attach a VTK writer.
 
@@ -126,8 +157,8 @@ class EKFFTGPU(ScriptInterfaceHelper):
     clear_vtk_writers()
         Detach all VTK writers.
     """
-    _so_name = "walberla::EKFFTGPU"
-    _so_features = ("WALBERLA_FFT", "CUDA")
+    _so_name = "walberla::EKNone"
+    _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
         "add_vtk_writer",
@@ -154,29 +185,8 @@ class EKFFTGPU(ScriptInterfaceHelper):
 
 
 @script_interface_register
-class EKNone(ScriptInterfaceHelper):
-    """
-    The default Poisson solver.
-    Imposes a null electrostatic potential everywhere.
-
-    Parameters
-    ----------
-    lattice : :obj:`espressomd.lb.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
-        Lattice object.
-    single_precision : :obj:`bool`, optional
-        Use single-precision floating-point arithmetic.
-    """
-    _so_name = "walberla::EKNone"
-    _so_features = ("WALBERLA",)
-    _so_creation_policy = "GLOBAL"
-
-    def __init__(self, *args, **kwargs):
-        _check_lattice_blocks(self.__class__.__name__, kwargs)
-        super().__init__(*args, **kwargs)
-
-
-@script_interface_register
 class EKPoissonSolverNode(ScriptInterfaceHelper):
+    """Node of an EK Poisson grid."""
     _so_name = "walberla::EKPoissonSolverNode"
     _so_creation_policy = "GLOBAL"
 
@@ -217,9 +227,14 @@ class EKPoissonSolverNode(ScriptInterfaceHelper):
     def potential(self):
         return self.call_method("get_potential")
 
+    @potential.setter
+    def potential(self, value):
+        self.call_method("set_potential", value=value)
+
 
 @script_interface_register
 class EKPoissonSolverSlice(ScriptInterfaceHelper):
+    """Slice of an EK Poisson grid."""
     _so_name = "walberla::EKPoissonSolverSlice"
     _so_creation_policy = "GLOBAL"
 
@@ -283,6 +298,10 @@ class EKPoissonSolverSlice(ScriptInterfaceHelper):
     @property
     def potential(self):
         return self._getter("potential",)
+
+    @potential.setter
+    def potential(self, values):
+        self._setter("potential", values)
 
 
 @script_interface_register
@@ -349,7 +368,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.electrokinetics.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.
@@ -368,12 +387,14 @@ class EKSpecies(ScriptInterfaceHelper,
     kT : :obj:`float`, optional
         Thermal energy of the simulated heat bath (for thermalized species).
         Set it to 0 for an unthermalized species.
-    single_precision : :obj:`bool`, optional
-        Use single-precision floating-point arithmetic.
     thermalized : :obj:`bool`, optional
         Whether the species is thermalized.
     seed : :obj:`int`, optional
         Seed for the random number generator.
+    gpu : :obj:`bool`, optional
+        Use GPU implementation.
+    single_precision : :obj:`bool`, optional
+        Use single-precision floating-point arithmetic.
 
     Methods
     -------
@@ -427,7 +448,7 @@ class EKSpecies(ScriptInterfaceHelper,
 
     """
 
-    _so_name = "walberla::EKSpeciesCPU"
+    _so_name = "walberla::EKSpecies"
     _so_features = ("WALBERLA",)
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
@@ -449,8 +470,7 @@ class EKSpecies(ScriptInterfaceHelper,
             super().__init__(**kwargs)
 
     def default_params(self):
-        return {"single_precision": False,
-                "kT": 0., "ext_efield": [0., 0., 0.],
+        return {"kT": 0., "ext_efield": [0., 0., 0.], "gpu": False,
                 "thermalized": False}
 
     def __getitem__(self, key):
@@ -512,26 +532,15 @@ class EKSpecies(ScriptInterfaceHelper,
             values=array_variant(value.flatten()))
 
 
-@script_interface_register
-class EKSpeciesGPU(EKSpecies):
-    """
-    GPU implementation of the `EKSpecies`
-
-    """
-    _so_name = "walberla::EKSpeciesGPU"
-    _so_creation_policy = "GLOBAL"
-    _so_features = ("WALBERLA", "CUDA")
-
-    def default_params(self):
-        params = super().default_params()
-        params["single_precision"] = True
-        return params
-
-
 class FluxBoundary:
     """
     Hold flux information for the flux boundary
     condition at a single node.
+
+    Parameters
+    ----------
+    flux : (3,) array_like of :obj:`float`
+        Imposed flux.
 
     """
 
@@ -546,6 +555,11 @@ class DensityBoundary:
     Hold density information for the density boundary
     condition at a single node.
 
+    Parameters
+    ----------
+    density : :obj:`float`
+        Imposed density.
+
     """
 
     def __init__(self, density):
@@ -556,6 +570,7 @@ class DensityBoundary:
 
 @script_interface_register
 class EKSpeciesNode(ScriptInterfaceHelper):
+    """Node of an EK species grid."""
     _so_name = "walberla::EKSpeciesNode"
     _so_creation_policy = "GLOBAL"
 
@@ -683,6 +698,7 @@ class EKSpeciesNode(ScriptInterfaceHelper):
 
 @script_interface_register
 class EKSpeciesSlice(ScriptInterfaceHelper):
+    """Slice of an EK species grid."""
     _so_name = "walberla::EKSpeciesSlice"
     _so_creation_policy = "GLOBAL"
 
@@ -863,7 +879,7 @@ class VTKOutput(VTKOutputBase):
     ----------
     identifier : :obj:`str`
         Name of the VTK writer.
-    observables : :obj:`list`, {'density', 'flux',}
+    observables : :obj:`list`, {'density', 'flux', 'boundary'}
         List of observables to write to the VTK files.
     delta_N : :obj:`int`
         Write frequency. If this value is 0 (default), the object is a
@@ -878,6 +894,10 @@ class VTKOutput(VTKOutputBase):
         Force parallel unstructured grid format (file extension: ``.vtu``).
         If ``False``, uses parallel structured grid format if possible
         (file extension: ``.vti``).
+    include_boundaries : :obj:`bool` (optional), default is ``False``
+        If ``True``, include boundary cells in the VTK output.
+        Boundary cells will show the density or flux defined by the boundary
+        condition. If ``False``, boundary cells are excluded.
 
     """
     _so_name = "walberla::EKVTKHandle"
@@ -925,7 +945,7 @@ class EKBulkReaction(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.electrokinetics.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.
@@ -939,6 +959,73 @@ class EKBulkReaction(ScriptInterfaceHelper):
     _so_creation_policy = "GLOBAL"
 
 
+@script_interface_register
+class EKIndexedReactionSlice(ScriptInterfaceHelper):
+    """Slice of an EK indexed reaction."""
+    _so_name = "walberla::EKIndexedReactionSlice"
+    _so_creation_policy = "GLOBAL"
+
+    def required_keys(self):
+        return {"parent_sip", "slice_range"}
+
+    def validate_params(self, params):
+        utils.check_required_keys(self.required_keys(), params.keys())
+
+    def __init__(self, *args, **kwargs):
+        if "sip" in kwargs:
+            super().__init__(**kwargs)
+        else:
+            self.validate_params(kwargs)
+            slice_range = kwargs.pop("slice_range")
+            grid_size = kwargs["parent_sip"].shape
+            extra_kwargs = espressomd.detail.walberla.get_slice_bounding_box(
+                slice_range, grid_size)
+            super().__init__(*args, **kwargs, **extra_kwargs)
+
+    def __reduce__(self):
+        raise NotImplementedError(
+            "Cannot serialize EK indexed reaction slice objects")
+
+    def _getter(self, attr):
+        value_grid, shape = self.call_method(f"get_{attr}")
+        return utils.array_locked(
+            np.reshape(value_grid, shape).astype(bool))
+
+    def _setter(self, attr, values):
+        dimensions = self.call_method("get_slice_size")
+        if 0 in dimensions:
+            raise AttributeError(
+                f"Cannot set properties of an empty '{self.__class__.__name__}' object")
+
+        values = np.copy(values)
+        value_shape = tuple(self.call_method("get_value_shape", name=attr))
+        target_shape = (*dimensions, *value_shape)
+
+        # broadcast if only one element was provided
+        if values.shape == value_shape or values.shape == () and value_shape == (1,):
+            values = np.full(target_shape, values)
+
+        def shape_squeeze(shape):
+            return tuple(x for x in shape if x != 1)
+
+        if shape_squeeze(values.shape) != shape_squeeze(target_shape):
+            target_shape = tuple([int(x) for x in target_shape])
+            raise ValueError(
+                f"Input-dimensions of '{attr}' array {values.shape} does not "
+                f"match slice dimensions {target_shape}")
+
+        self.call_method(f"set_{attr}",
+                         values=array_variant(values.flatten().astype(int)))
+
+    @property
+    def is_boundary(self):
+        return self._getter("is_boundary")
+
+    @is_boundary.setter
+    def is_boundary(self, values):
+        self._setter("is_boundary", values)
+
+
 class EKIndexedReaction(ScriptInterfaceHelper):
     """
     Reaction type that is applied only on specific cells in the domain.
@@ -946,7 +1033,7 @@ class EKIndexedReaction(ScriptInterfaceHelper):
 
     Parameters
     ----------
-    lattice : :obj:`espressomd.electrokinetics.LatticeWalberla <espressomd.detail.walberla.LatticeWalberla>`
+    lattice : :obj:`espressomd.electrokinetics.Lattice <espressomd.detail.walberla.Lattice>`
         Lattice object.
     tau : :obj:`float`
         EK time step, must be an integer multiple of the MD time step.
@@ -968,19 +1055,7 @@ class EKIndexedReaction(ScriptInterfaceHelper):
     def __getitem__(self, key):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(typ, slice) for typ in key):
-                shape = self.shape
-
-                indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
-                           for i in range(3)]
-                dimensions = [ind.size for ind in indices]
-
-                value_grid = np.zeros((*dimensions,), dtype=bool)
-                indices = itertools.product(*map(enumerate, indices))
-                for (i, x), (j, y), (k, z) in indices:
-                    value_grid[i, j, k] = self.call_method(
-                        "get_node_is_boundary", node=(x, y, z))
-
-                return utils.array_locked(value_grid)
+                return EKIndexedReactionSlice(parent_sip=self, slice_range=key)
             else:
                 return self.call_method("get_node_is_boundary", node=key)
         raise TypeError(
@@ -989,25 +1064,8 @@ class EKIndexedReaction(ScriptInterfaceHelper):
     def __setitem__(self, key, values):
         if isinstance(key, (tuple, list, np.ndarray)) and len(key) == 3:
             if any(isinstance(typ, slice) for typ in key):
-                shape = self.shape
-
-                indices = [np.atleast_1d(np.arange(shape[i])[key[i]])
-                           for i in range(3)]
-                dimensions = tuple(ind.size for ind in indices)
-
-                values = np.copy(values)
-
-                # broadcast if only one element was provided
-                if values.shape == ():
-                    values = np.full(dimensions, values)
-                if values.shape != dimensions:
-                    raise ValueError(
-                        f"Input-dimensions of array {values.shape} does not match slice dimensions {dimensions}.")
-
-                indices = itertools.product(*map(enumerate, indices))
-                for (i, x), (j, y), (k, z) in indices:
-                    self.call_method("set_node_is_boundary", node=(
-                        x, y, z), is_boundary=bool(values[i, j, k]))
+                EKIndexedReactionSlice(
+                    parent_sip=self, slice_range=key).is_boundary = values
             else:
                 return self.call_method(
                     "set_node_is_boundary", node=key, is_boundary=values)

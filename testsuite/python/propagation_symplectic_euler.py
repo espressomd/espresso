@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2025 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,12 +20,14 @@ import espressomd
 import espressomd.propagation
 import numpy as np
 import unittest as ut
+import unittest_decorators as utx
 
 
 class SymplecticEuler(ut.TestCase):
 
     system = espressomd.System(box_l=[10., 10., 10.])
     system.cell_system.skin = 0.4
+    system.min_global_cut = 2.
     system.time_step = 0.01
 
     def tearDown(self):
@@ -39,9 +41,8 @@ class SymplecticEuler(ut.TestCase):
 
     def test_newton_laws(self):
         """
-        Tests integration of Newton's equations for a particle with and without
+        Check integration of Newton's equations for a particle with and without
         external forces and with time step changes on the way.
-
         """
         system = self.system
         system.integrator.set_symplectic_euler()
@@ -89,6 +90,88 @@ class SymplecticEuler(ut.TestCase):
             for i in range(3):
                 self.assertAlmostEqual(
                     max_local_error[i + 1] / max_local_error[i], 4.0, delta=0.4)
+
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_body_lab_conversion(self):
+        system = self.system
+        for integrator_name in ["vv", "symplectic_euler"]:
+            system.time = 0.
+            system.time_step = 1e-6
+            getattr(system.integrator, f"set_{integrator_name}")()
+            system.part.clear()
+            ext_torque = np.array([1., -0.5, 2.])
+            p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                                director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                                ext_torque=ext_torque)
+            for i in range(4):
+                system.integrator.run(1, recalc_forces=(i == 2))
+                omega_lab = np.copy(p.omega_lab)
+                torque_lab = np.copy(p.torque_lab)
+                ref_omega = ext_torque * system.time
+                np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
+                np.testing.assert_allclose(torque_lab, ext_torque, rtol=1e-10)
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
+    def test_body_lab_vs_relative(self):
+        system = self.system
+        for integrator_name in ["vv", "symplectic_euler"]:
+            system.time = 0.
+            system.time_step = 1e-6
+            getattr(system.integrator, f"set_{integrator_name}")()
+            system.part.clear()
+            ext_force = np.array([1., -0.5, 2.])
+            p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                                director=np.array([1., 0.5, 0.3]) / 1.34**0.5)
+            p_vs = system.part.add(
+                pos=[0.5, 0.2, -0.3], rotation=3 * [True], ext_force=ext_force)
+            p_vs.vs_auto_relate_to(p)
+
+            for i in range(4):
+                system.integrator.run(1, recalc_forces=(i == 2))
+                omega_lab = np.copy(p.omega_lab)
+                torque_lab = np.copy(p.torque_lab)
+                ref_torque = np.cross(np.copy(p_vs.pos - p.pos), ext_force)
+                ref_omega = ref_torque * system.time
+                np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
+                np.testing.assert_allclose(torque_lab, ref_torque, rtol=1e-10)
+
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_torque_lab_for_zero_steps(self):
+        """
+        Integrating zero steps must leave the torques in the lab frame,
+        such that the next integration is not affected and the particle
+        torque can be read out, regardless of how forces are recalculated.
+        """
+        system = self.system
+        sequences = [
+            [{"steps": 0}, {"steps": 1}],
+            [{"steps": 0}, {"steps": 0}, {"steps": 2}],
+            [{"steps": 0}, {"steps": 1, "reuse_forces": True}],
+            [{"steps": 1}, {"steps": 0, "recalc_forces": True}, {"steps": 1}],
+            [{"steps": 0, "recalc_forces": True}, {"steps": 1}, {"steps": 0},
+             {"steps": 3}],
+        ]
+        for integrator_name in ["vv", "symplectic_euler"]:
+            for sequence in sequences:
+                system.time = 0.
+                system.time_step = 1e-6
+                getattr(system.integrator, f"set_{integrator_name}")()
+                system.part.clear()
+                ext_torque = np.array([1., -0.5, 2.])
+                p = system.part.add(
+                    pos=[0., 0., 0.], rotation=3 * [True],
+                    director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                    ext_torque=ext_torque)
+                for kwargs in sequence:
+                    system.integrator.run(**kwargs)
+                    err_msg = f"with set_{integrator_name}() and {sequence=} "\
+                        f"after run(**{kwargs})"
+                    np.testing.assert_allclose(
+                        np.copy(p.torque_lab), ext_torque, rtol=1e-10,
+                        atol=0., err_msg=err_msg)
+                    np.testing.assert_allclose(
+                        np.copy(p.omega_lab), ext_torque * system.time,
+                        rtol=1e-10, atol=1e-12, err_msg=err_msg)
 
 
 if __name__ == "__main__":

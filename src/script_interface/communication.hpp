@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
-#define ESPRESSO_SRC_SCRIPT_INTERFACE_COMMUNICATION_HPP
+
+#pragma once
 
 #include <boost/mpi/collectives/reduce.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -39,5 +39,3 @@ T mpi_reduce_sum(boost::mpi::communicator const &comm, T const &result) {
 }
 
 } // namespace ScriptInterface
-
-#endif

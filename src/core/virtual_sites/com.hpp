@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) 2025-2026 The ESPResSo project
+ *
+ * This file is part of ESPResSo.
+ *
+ * ESPResSo is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ESPResSo is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#pragma once
+
+#include <config/config.hpp>
+
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+
+#include "BoxGeometry.hpp"
+#include "cell_system/CellStructure.hpp"
+
+#include <optional>
+
+void vs_com_update_particles(CellStructure &cell_structure,
+                             BoxGeometry const &box_geo);
+void vs_com_back_transfer_forces_and_torques(CellStructure &cell_structure);
+
+std::optional<int> get_pid_for_vs_com(CellStructure &cell_structure,
+                                      int mol_id);
+
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -68,38 +68,38 @@ class LBMassCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBMassWalberlaDoublePrecisionCPU(LBMassCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 1e-10
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBMassWalberlaSinglePrecisionCPU(LBMassCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 5e-7
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBMassWalberlaDoublePrecisionGPU(LBMassCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
     atol = 1e-10
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBMassWalberlaSinglePrecisionGPU(LBMassCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     atol = 5e-7
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBMassWalberlaDoublePrecisionBlocksCPU(LBMassCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False,
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
                  "blocks_per_mpi_rank": [1, 1, 2]}
     atol = 1e-10
 

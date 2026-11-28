@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -22,4 +22,5 @@ target_sources(
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/AtomDecomposition.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/CellStructure.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/HybridDecomposition.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/LocalBondState.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/RegularDecomposition.cpp)

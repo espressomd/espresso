@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,9 +25,6 @@ import numpy as np
 import espressomd
 import espressomd.electrostatics
 
-required_features = ["P3M", "WCA"]
-espressomd.assert_features(required_features)
-
 parser = argparse.ArgumentParser()
 group = parser.add_mutually_exclusive_group()
 group.add_argument("--cpu", action="store_const", dest="mode",
@@ -35,6 +32,11 @@ group.add_argument("--cpu", action="store_const", dest="mode",
 group.add_argument("--gpu", action="store_const", dest="mode",
                    const="gpu", help="P3M on GPU")
 args = parser.parse_args()
+
+required_features = ["P3M", "WCA"]
+if args.mode == "gpu":
+    required_features.append("CUDA")
+espressomd.assert_features(required_features)
 
 
 print("""
@@ -110,10 +112,8 @@ print(f"Start with minimal distance {act_min_dist}")
 #############################################################
 
 print("\nSCRIPT--->Create p3m\n")
-if args.mode == "gpu":
-    p3m = espressomd.electrostatics.P3MGPU(prefactor=2.0, accuracy=1e-3)
-else:
-    p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-3)
+p3m = espressomd.electrostatics.P3M(prefactor=1.0, accuracy=1e-3,
+                                    gpu=(args.mode == "gpu"))
 
 print("\nSCRIPT--->Add actor (automatic tuning)\n")
 system.electrostatics.solver = p3m

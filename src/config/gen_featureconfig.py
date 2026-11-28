@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 # Copyright (C) 2012 Olaf Lenz
 #
 # This file is part of ESPResSo.
@@ -104,17 +104,17 @@ hfile.write("""\
 /* Handle implications */
 /***********************/
 """)
-implication_template = string.Template("""
-// $feature implies $implied
-#if defined(ESPRESSO_$feature) && !defined(ESPRESSO_$implied)
-#define ESPRESSO_$implied
-#endif
-""")
-for feature, implied in sorted(defs.implications):
-    hfile.write(implication_template.substitute(
-        feature=feature, implied=implied))
-
-hfile.write("\n")
+for rules in defs.implications_topologically_ordered:
+    for implied in sorted(rules.keys()):
+        implying = sorted(rules[implied])
+        condition = " || ".join(f"defined(ESPRESSO_{s})" for s in implying)
+        if len(implying) > 1:
+            condition = f"({condition})"
+        hfile.write(
+            f"#if !defined(ESPRESSO_{implied}) && {condition}\n"
+            f"#define ESPRESSO_{implied}\n"
+            f"#endif\n\n"
+        )
 
 # output warnings if internal features are set manually
 hfile.write("""\
@@ -133,6 +133,7 @@ derivation_template = string.Template("""
 for feature, expr, cppexpr in sorted(defs.derivations):
     hfile.write(derivation_template.substitute(
         feature=feature, cppexpr=cppexpr, expr=expr))
+hfile.write("\n")
 
 # generate compiler errors when incompatible features are selected
 hfile.write("""\
@@ -170,7 +171,7 @@ cfile.write("""
 /* Feature list */
 /****************/
 
-static constexpr char const *const FEATURES[] = {
+inline constexpr char const *const FEATURES[] = {
 """)
 
 feature_string = """
@@ -183,8 +184,11 @@ for feature in sorted(defs.externals.union(defs.features, defs.derived)):
     cfile.write(feature_string.format(feature=feature))
 
 cfile.write("""
+  // zero-length arrays are not allowed by the C standard
+  "__sentinel"
+
 };
-static constexpr auto const NUM_FEATURES = sizeof(FEATURES) / sizeof(char*);
+inline constexpr auto const NUM_FEATURES = sizeof(FEATURES) / sizeof(char*) - 1ul;
 """)
 
 cfile.write("""
@@ -192,7 +196,7 @@ cfile.write("""
 /* Feature full list */
 /*********************/
 
-static constexpr char const *const FEATURES_ALL[] = {\
+inline constexpr char const *const FEATURES_ALL[] = {\
 """)
 
 feature_string = """
@@ -203,7 +207,7 @@ for feature in sorted(defs.allfeatures):
 
 cfile.write("""
 };
-static constexpr auto const NUM_FEATURES_ALL = sizeof(FEATURES_ALL) / sizeof(char*);
+inline constexpr auto const NUM_FEATURES_ALL = sizeof(FEATURES_ALL) / sizeof(char*);
 """)
 
 cfile.close()

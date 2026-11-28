@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -65,14 +65,14 @@ template <> struct traits<Particle> {
   }
   auto velocity_body(Particle const &p) const {
 #ifdef ESPRESSO_ROTATION
-    return convert_vector_space_to_body(p, p.v());
+    return convert_vector_space_to_body(p.quat(), p.v());
 #else
     return Utils::Vector3d{};
 #endif
   }
   auto angular_velocity(Particle const &p) const {
 #ifdef ESPRESSO_ROTATION
-    return convert_vector_body_to_space(p, p.omega());
+    return convert_vector_body_to_space(p.quat(), p.omega());
 #else
     return Utils::Vector3d{};
 #endif

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 The ESPResSo project
+# Copyright (C) 2024-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -31,6 +31,7 @@ class Test(ut.TestCase):
         system = espressomd.System(box_l=[1., 1., 1.], min_global_cut=0.01)
         self.assertEqual(system.min_global_cut, 0.01)
         self.assertEqual(system.time_step, -1.)
+        self.assertIsNone(system.call_method("unknown"))
         with self.assertRaisesRegex(RuntimeError, "You can only have one instance of the system class at a time"):
             espressomd.System(box_l=[1., 1., 1.])
 

@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 272d4a09ec35da50685afc9586645e1b9984b423
 
 #include <cmath>
 
@@ -49,9 +49,7 @@ namespace pystencils {
 
 namespace internal_117eb60e8d249794b47e39bf52c9e4fe {
 static FUNC_PREFIX void streamcollidesweepthermalizedsingleprecision_streamcollidesweepthermalizedsingleprecision(float *RESTRICT const _data_force, float *RESTRICT const _data_pdfs, float *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_0, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, float kT, float omega_bulk, float omega_even, float omega_odd, float omega_shear, uint32_t seed, uint32_t time_step) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
     const float xi_20 = omega_bulk * 0.5f;
     const float xi_47 = omega_shear * 0.041666666666666664f;
@@ -69,9 +67,7 @@ static FUNC_PREFIX void streamcollidesweepthermalizedsingleprecision_streamcolli
     const float xi_226 = omega_odd * 0.125f;
     const float rr_0 = 0.0f;
     const float xi_45 = rr_0 * 0.041666666666666664f;
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {
@@ -423,16 +419,16 @@ void StreamCollideSweepThermalizedSinglePrecision::run(IBlock *block) {
     }
   }
 
-  auto &omega_shear = this->omega_shear_;
-  auto &kT = this->kT_;
-  auto &block_offset_1 = this->block_offset_1_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &time_step = this->time_step_;
   auto &block_offset_2 = this->block_offset_2_;
   auto &block_offset_0 = this->block_offset_0_;
-  auto &omega_odd = this->omega_odd_;
-  auto &seed = this->seed_;
+  auto &omega_shear = this->omega_shear_;
   auto &omega_even = this->omega_even_;
+  auto &kT = this->kT_;
+  auto &time_step = this->time_step_;
+  auto &omega_odd = this->omega_odd_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &seed = this->seed_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()))
   float *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
@@ -491,16 +487,16 @@ void StreamCollideSweepThermalizedSinglePrecision::runOnCellInterval(const share
     }
   }
 
-  auto &omega_shear = this->omega_shear_;
-  auto &kT = this->kT_;
-  auto &block_offset_1 = this->block_offset_1_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &time_step = this->time_step_;
   auto &block_offset_2 = this->block_offset_2_;
   auto &block_offset_0 = this->block_offset_0_;
-  auto &omega_odd = this->omega_odd_;
-  auto &seed = this->seed_;
+  auto &omega_shear = this->omega_shear_;
   auto &omega_even = this->omega_even_;
+  auto &kT = this->kT_;
+  auto &time_step = this->time_step_;
+  auto &omega_odd = this->omega_odd_;
+  auto &block_offset_1 = this->block_offset_1_;
+  auto &seed = this->seed_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(force->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(force->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(force->nrOfGhostLayers()))

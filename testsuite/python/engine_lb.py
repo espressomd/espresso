@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -249,7 +249,7 @@ class SwimmerTest:
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False}
     tol = 1e-10
 
@@ -260,7 +260,7 @@ class SwimmerTestDomDecWalberla(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True}
     tol = 1e-10
 
@@ -271,7 +271,7 @@ class SwimmerTestDomDecWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False}
     tol = 1e-10
 
@@ -282,7 +282,7 @@ class SwimmerTestNSquareWalberla(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True}
     tol = 1e-10
 
@@ -293,7 +293,7 @@ class SwimmerTestNSquareWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False}
     tol = 1e-10
 
@@ -305,7 +305,7 @@ class SwimmerTestHybrid0CPUWalberla(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True}
     tol = 1e-10
 
@@ -317,7 +317,7 @@ class SwimmerTestHybrid0CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False}
     tol = 1e-10
 
@@ -329,7 +329,7 @@ class SwimmerTestHybrid1CPUWalberla(SwimmerTest, ut.TestCase):
 @utx.skipIfMissingFeatures(REQUIRED_FEATURES)
 class SwimmerTestHybrid1CPUWalberlaSinglePrecision(SwimmerTest, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True}
     tol = 1e-10
 

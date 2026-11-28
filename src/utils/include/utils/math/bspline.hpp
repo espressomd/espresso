@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -36,6 +36,8 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 #endif
+
+// NOLINTBEGIN(bugprone-unhandled-code-paths)
 
 namespace Utils {
 /** @brief Formula of the B-spline. */
@@ -325,6 +327,8 @@ DEVICE_QUALIFIER auto bspline_d(int i, T x) -> T
   return T{};
 }
 } // namespace Utils
+
+// NOLINTEND(bugprone-unhandled-code-paths)
 
 #if defined(__clang__)
 #pragma clang diagnostic pop

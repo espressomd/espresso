@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2024 The ESPResSo project
+ * Copyright (C) 2011-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -57,6 +57,17 @@ void GlueToSurface::initialize(System::System &system) {
   }
   // Cache square of cutoff
   distance_sq = Utils::sqr(distance);
+
+  assert(system.bonded_ias->contains(bond_centers));
+  if (number_of_partners(*system.bonded_ias->at(bond_centers)) != 1) {
+    throw std::runtime_error("The bond type to be used for binding particle "
+                             "centers needs to be a pair bond");
+  }
+  assert(system.bonded_ias->contains(bond_vs));
+  if (number_of_partners(*system.bonded_ias->at(bond_vs)) != 1) {
+    throw std::runtime_error("The bond type to be used for binding virtual "
+                             "sites needs to be a pair bond");
+  }
 
   if (part_type_vs < 0) {
     throw std::domain_error("Collision detection particle type for virtual "

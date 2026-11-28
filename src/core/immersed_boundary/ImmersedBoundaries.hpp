@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,8 +24,6 @@
 #include "cell_system/CellStructure.hpp"
 #include "system/Leaf.hpp"
 
-#include <cassert>
-#include <cstddef>
 #include <vector>
 
 struct IBMVolCons;

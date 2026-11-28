@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -27,7 +27,8 @@ from virtual_sites_tracers_common import VirtualSitesTracersCommon
     ["VIRTUAL_SITES_INERTIALESS_TRACERS", "WALBERLA"])
 class VirtualSitesTracers(VirtualSitesTracersCommon, ut.TestCase):
 
-    LBClass = espressomd.lb.LBFluidWalberla
+    LBClass = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
 
 
 if __name__ == "__main__":

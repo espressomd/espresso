@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -117,6 +117,19 @@ class ParticleSliceTest(ut.TestCase):
         qs = self.p0p1.q
         self.assertEqual(qs[0], -1)
         self.assertEqual(qs[1], 1)
+
+    @utx.skipIfMissingFeatures(["MASS"])
+    def test_masses(self):
+        ps = self.system.part.by_ids([0, 1, 2])
+        # handle Utils::Vector3d
+        ps.mass = [1.5, 2.5, 2.5]
+        np.testing.assert_allclose(np.copy(ps.mass), [1.5, 2.5, 2.5])
+        # handle Utils::Vector3i
+        ps.mass = [3, 1, 3]
+        np.testing.assert_allclose(np.copy(ps.mass), [3., 1., 3.])
+        # handle std::vector<Variant>
+        ps.mass = [4.5, 5, 2]
+        np.testing.assert_allclose(np.copy(ps.mass), [4.5, 5., 2.])
 
     def test_propagation(self):
         Propagation = espressomd.propagation.Propagation
@@ -465,6 +478,52 @@ class ParticleSliceTest(ut.TestCase):
         self.assertEqual(len(self.system.part.by_ids([])), 0)
         self.assertEqual(len(self.system.part.by_ids([0])), 1)
         self.assertEqual(len(self.system.part.by_ids([0, 1, 2])), 3)
+
+    @utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+    def test_charge_roundtrip_non_ascending(self):
+        """Setting then reading .q on a non-ascending selection must
+        preserve the selection order, not return pid-sorted values."""
+        selection = [3, 1, 2]
+        s = self.system.part.by_ids(selection)
+
+        charges = [10., 20., 30.]
+        s.q = charges
+        # Setter wrote: pid3 -> 10, pid1 -> 20, pid2 -> 30.
+
+        read_back = np.array(s.q)
+        # Correct (order-preserving) result equals what we set, in the
+        # same order as `selection`. The buggy getter sorts by pid and
+        # returns [q(pid1), q(pid2), q(pid3)] = [20, 30, 10].
+        np.testing.assert_array_almost_equal(
+            read_back, charges,
+            err_msg=f"selection={selection} returned {read_back.tolist()}, "
+            f"expected {charges}")
+
+        # Cross-check: per-particle reads define the truth.
+        truth = [self.system.part.by_id(pid).q for pid in selection]
+        np.testing.assert_array_almost_equal(read_back, truth)
+
+    def test_pos_roundtrip_non_ascending(self):
+        """Same round-trip check for the .pos special setter/getter."""
+        selection = [3, 1, 2]
+        s = self.system.part.by_ids(selection)
+
+        positions = [[0.1, 0.2, 0.3],
+                     [0.4, 0.5, 0.6],
+                     [0.7, 0.8, 0.9]]
+        s.pos = positions
+        # Setter wrote: pid3 -> row0, pid1 -> row1, pid2 -> row2.
+
+        read_back = np.array(s.pos)
+        # Correct result preserves selection order; buggy getter returns
+        # rows reordered by ascending pid (pid1, pid2, pid3).
+        np.testing.assert_array_almost_equal(
+            read_back, np.array(positions),
+            err_msg=f"selection={selection} returned {read_back.tolist()}, "
+            f"expected {positions}")
+
+        truth = [self.system.part.by_id(pid).pos for pid in selection]
+        np.testing.assert_array_almost_equal(read_back, truth)
 
     def test_non_existing_property(self):
         with self.assertRaises(AttributeError):

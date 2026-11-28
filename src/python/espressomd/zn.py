@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2024 The ESPResSo project
+# Copyright (C) 2024-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,30 +21,17 @@ import subprocess
 import numpy as np
 import zndraw
 import zndraw.utils
-import zndraw.draw
+import zndraw.materials
+import zndraw.geometries
 import espressomd
 import secrets
 import time
 import urllib.parse
+import requests
 import typing
 import scipy.spatial.transform
 
 from espressomd.plugins import ase
-
-# Standard colors
-color_dict = {"black": "#303030",
-              "red": "#e6194B",
-              "green": "#3cb44b",
-              "yellow": "#ffe119",
-              "blue": "#4363d8",
-              "orange": "#f58231",
-              "purple": "#911eb4",
-              "cyan": "#42d4f4",
-              "magenta": "#f032e6",
-              "lime": "#bfef45",
-              "brown": "#9A6324",
-              "grey": "#a9a9a9",
-              "white": "#f0f0f0"}
 
 
 class LBField:
@@ -134,10 +121,9 @@ class LBField:
     def __call__(self):
         origins = self._build_grid()
         velocities = self._get_velocities()
-        velocities = origins + velocities
         vector_field = np.stack([origins, velocities], axis=1)
 
-        return vector_field.tolist()
+        return vector_field
 
 
 class VectorField:
@@ -159,14 +145,10 @@ class VectorField:
     arrow_config : :obj:`dict`, optional
         Configuration for the arrows, by default ``None`` and then uses the default configuration:
 
-        'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]]
+        'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]]
             HSL colormap for the arrows, where the first value is the minimum value and the second value is the maximum value.
         'normalize': True
             Normalize the colormap to the maximum value each frame
-        'colorrange': [0, 1]
-            Range of the colormap, only used if normalize is False
-        'scale_vector_thickness': True
-            Scale the thickness of the arrows with the velocity
         'opacity': 1.0
             Opacity of the arrows
     """
@@ -191,7 +173,7 @@ class VectorField:
         vectors = self.scale * vectors
         vector_field = np.stack([origins, vectors], axis=1)
 
-        return vector_field.tolist()
+        return vector_field
 
 
 class Visualizer():
@@ -235,6 +217,7 @@ class Visualizer():
                  colors: dict = None,
                  radii: dict = None,
                  bonds: bool = False,
+                 forces: bool = False,
                  jupyter: bool = True,
                  vector_field: typing.Union[VectorField, LBField] = None,
                  ):
@@ -245,6 +228,7 @@ class Visualizer():
             "colors": colors,
             "radii": radii,
             "bonds": bonds,
+            "forces": forces,
             "vector_field": vector_field,
         }
 
@@ -258,18 +242,32 @@ class Visualizer():
         # A server is started in a subprocess, and we have to wait for it
         if self.SERVER_PORT is None:
             print("Starting ZnDraw server, this may take a few seconds")
-            self.port = port
-            self._start_server()
-            time.sleep(10)
+            Visualizer.SERVER_PORT = port
+            self.server = subprocess.Popen(
+                ["zndraw", "--no-browser", f"--port={self.SERVER_PORT}"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+
+        # Check that the server is up
+        request_deadline = time.monotonic() + 30
+        while time.monotonic() < request_deadline:
+            try:
+                r = requests.get(
+                    f"{self.url}:{self.SERVER_PORT}/health", timeout=1)
+                if r.status_code == 200:
+                    break
+            except requests.RequestException:
+                pass
+            time.sleep(0.5)
+        else:
+            raise RuntimeError(
+                "ZnDraw server did not start within the expected time")
 
         self._start_zndraw()
-        time.sleep(2)
 
         if vector_field is not None:
-            self.arrow_config = {'colormap': [[-0.5, 0.9, 0.5], [-0.0, 0.9, 0.5]],
+            self.arrow_config = {'colormap': [[0.5, 0.9, 0.5], [0.0, 0.9, 0.5]],
                                  'normalize': True,
-                                 'colorrange': [0, 1],
-                                 'scale_vector_thickness': True,
                                  'opacity': 1.0}
 
             if vector_field.arrow_config is not None:
@@ -284,25 +282,24 @@ class Visualizer():
             raise NotImplementedError(
                 "Only Jupyter notebook is supported at the moment")
 
-    def _start_server(self):
-        """
-        Start the ZnDraw server through a subprocess
-        """
-        Visualizer.SERVER_PORT = self.port
-
-        self.server = subprocess.Popen(["zndraw", "--no-browser", f"--port={self.port}"],
-                                       stdout=subprocess.DEVNULL,
-                                       stderr=subprocess.DEVNULL
-                                       )
+        # Wait until the session is ready
+        request_deadline = time.monotonic() + 30
+        while time.monotonic() < request_deadline:
+            if len(self.zndraw.sessions) > 0:
+                break
+            time.sleep(0.5)
+        else:
+            raise RuntimeError(
+                "ZnDraw session did not start within the expected time")
 
     def _start_zndraw(self):
         """
         Start the ZnDraw client and connect to the server
         """
         url = f"{self.url}:{self.SERVER_PORT}"
-        self.zndraw = zndraw.ZnDraw(url=url, token=self.token)
+        self.zndraw = zndraw.ZnDraw(url=url, room=self.token)
         parsed_url = urllib.parse.urlparse(
-            f"{self.zndraw.url}/token/{self.zndraw.token}")
+            f"{self.zndraw.url}/rooms/{self.zndraw.room}")
         self.address = parsed_url._replace(scheme="http").geturl()
 
     def _show_jupyter(self):
@@ -320,14 +317,17 @@ class Visualizer():
         particles = self.system.part.all()
         all_types = particles.type
         self.system.visualizer_params = self.params
-        Asedata = ase.ASEInterface()
-        Asedata.register_system(self.system)
-        data = Asedata.get(folded=self.params["folded"])
+        ase_interf = ase.ASEInterface(
+            system=self.system,
+            particle_slice=self.system.part.all(),
+            use_folded_positions=self.params["folded"],
+            export_forces=self.params["forces"])
+        data = ase_interf.atoms
         if self.params["colors"] is not None:
-            data.arrays['colors'] = [self.params["colors"].get(
+            data.arrays["colors"] = [self.params["colors"].get(
                 z, "white") for z in all_types]
         if self.params["radii"] is not None:
-            data.arrays['radii'] = [self.params["radii"].get(
+            data.arrays["radii"] = [self.params["radii"].get(
                 z, 0.5) for z in all_types]
 
         if self.params["bonds"]:
@@ -350,8 +350,65 @@ class Visualizer():
             if self.params["folded"]:
                 # add ghost particles and bonds for PBC crossing bonds
                 bonds = self._handle_pbc_bonds(bonds=bonds, ase_data=data)
-            # data.info["connectivity"] = bonds  # from zndraw version 0.5.12
-            data.connectivity = bonds
+            data.info["connectivity"] = bonds
+
+        if self.frame_count == 0:
+            x, y, z = self.system.box_l / 2
+            z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
+
+            self.zndraw.geometries["camera"] = zndraw.geometries.Camera(
+                position=(x, y, z_dist),
+                target=(x, y, z),
+            )
+
+            # activate the camera
+            for key in self.zndraw.sessions.keys():
+                self.zndraw.api.set_active_camera(key, "camera")
+
+            if self.params["forces"]:
+                self.zndraw.geometries["force_arrows"] = zndraw.geometries.Arrow(
+                    position="arrays.positions",
+                    direction="arrays.forces",
+                    color=["gray"] if self.params["colors"] else "arrays.colors",
+                    radius=4 *
+                    max(self.params["radii"].values()
+                        ) if self.params["radii"] else 1.0,
+                    opacity=0.8,
+                    hovering=zndraw.geometries.InteractionSettings(
+                        enabled=False),
+                    selecting=zndraw.geometries.InteractionSettings(
+                        enabled=False),
+                )
+
+        if self.params["vector_field"] is not None:
+            field_data = self.params["vector_field"]()
+            data.info["vector_positions"] = field_data[:, 0]
+            vector_directions = np.copy(field_data[:, 1])
+            magnitudes = np.linalg.norm(
+                vector_directions, axis=1, keepdims=True)
+            if self.arrow_config['normalize']:
+                mask = magnitudes.flatten() > 0.
+                vector_directions[mask] /= magnitudes[mask]
+            data.info["vector_directions"] = vector_directions
+
+            colormap = np.array(self.arrow_config['colormap'])
+            max_magnitude = np.max(magnitudes)
+            min_magnitude = np.min(magnitudes)
+            vector_color = colormap[0] + (magnitudes - min_magnitude) / (
+                max_magnitude - min_magnitude) * (colormap[1] - colormap[0])
+            vector_color = _convert_array_to_color(vector_color)
+            data.info["vector_color"] = vector_color
+
+            for key, value in self.arrow_config.items():
+                data.info[key] = value
+            if "vector_field" not in self.zndraw.geometries.keys():
+                shape_options = {"hovering": zndraw.geometries.InteractionSettings(enabled=False),
+                                 "selecting": zndraw.geometries.InteractionSettings(enabled=False)}
+                self.zndraw.geometries["vector_field"] = zndraw.geometries.Arrow(
+                    position="info.vector_positions",
+                    direction="info.vector_directions",
+                    color="info.vector_color",
+                    **shape_options)
 
         # Catch when the server is initializing an empty frame
         # len(self.zndraw) is a expensive socket call, so we try to avoid it
@@ -360,56 +417,35 @@ class Visualizer():
         else:
             self.zndraw[0] = data
 
-        if self.frame_count == 0:
-            self.zndraw.socket.sleep(1)
-
-            x, y, z = self.system.box_l / 2
-            z_dist = max([1.5 * y, 1.5 * x, 1.5 * z])
-
-            self.zndraw.camera = {
-                'position': [x, y, z_dist],
-                'target': [x, y, z]
-            }
-
-            if self.params["vector_field"] is not None:
-                for key, value in self.arrow_config.items():
-                    setattr(self.zndraw.config.arrows, key, value)
-
         self.frame_count += 1
 
     def register_setting(self, cls, **kwargs):
         self.zndraw.register_modifier(cls, **kwargs)
 
-    def draw_constraints(self, shapes: list):
+    def draw_constraints(self, shapes: list, **shape_options):
         """
         Draw constraints on the visualizer
         """
         if not isinstance(shapes, list):
             raise ValueError("Constraints must be given in a list")
 
-        objects = []
+        if "hovering" not in shape_options:
+            shape_options["hovering"] = zndraw.geometries.InteractionSettings(
+                enabled=False)
+        if "selecting" not in shape_options:
+            shape_options["selecting"] = zndraw.geometries.InteractionSettings(
+                enabled=False)
 
         for shape in shapes:
-
             shape_type = shape.__class__.__name__
 
-            mat = zndraw.draw.Material(color="#b0b0b0", opacity=0.8)
-
-            if shape_type == "Cylinder":
-                center = shape.center
-                axis = shape.axis
-                length = shape.length
+            if shape_type == "Sphere":
+                center = tuple(shape.center)
                 radius = shape.radius
+                key = f"{shape_type}_{center}_{radius}"
 
-                rotation_angles = zndraw.utils.direction_to_euler(
-                    axis, roll=np.pi / 2)
-
-                objects.append(zndraw.draw.Cylinder(position=center,
-                                                    rotation=rotation_angles,
-                                                    radius_bottom=radius,
-                                                    radius_top=radius,
-                                                    height=length,
-                                                    material=mat))
+                self.zndraw.geometries[key] = zndraw.geometries.Sphere(
+                    position=[tuple(center)], radius=[radius], **shape_options)
 
             elif shape_type == "Wall":
                 dist = shape.dist
@@ -423,69 +459,48 @@ class Visualizer():
                 base_position = np.copy(corners[0])
                 corners -= base_position
 
-                # Rotate plane to align with z-axis, Custom2DShape only works
-                # in the xy-plane
-                unit_z = np.array([0, 0, 1])
-                r, _ = scipy.spatial.transform.Rotation.align_vectors(
-                    [unit_z], [normal])
-                rotated_corners = r.apply(corners)
+                vertices, euler_angles = _corners_to_shape_geometry(corners)
 
-                # Sort corners in a clockwise order, except the first corner
-                angles = np.arctan2(
-                    rotated_corners[1:, 1], rotated_corners[1:, 0])
-                sorted_indices = np.argsort(angles)
-                sorted_corners = rotated_corners[1:][sorted_indices]
-                sorted_corners = np.vstack(
-                    [rotated_corners[0], sorted_corners])[:, :2]
-
-                r, _ = scipy.spatial.transform.Rotation.align_vectors(
-                    [normal], [unit_z])
-                euler_angles = r.as_euler("xyz")
-
-                # invert the z-axis, unsure why this is needed, maybe
-                # different coordinate systems
-                euler_angles[2] *= -1.
-
-                objects.append(zndraw.draw.Custom2DShape(
-                    position=base_position, rotation=euler_angles,
-                    points=sorted_corners, material=mat))
-
-            elif shape_type == "Sphere":
-                center = shape.center
-                radius = shape.radius
-
-                objects.append(
-                    zndraw.draw.Sphere(position=center, radius=radius, material=mat))
+                key = f"{shape_type}_{dist}_{normal}"
+                self.zndraw.geometries[key] = zndraw.geometries.Shape(
+                    position=[tuple(base_position)],
+                    rotation=[tuple(euler_angles)],
+                    vertices=vertices, **shape_options)
 
             elif shape_type == "Rhomboid":
-                a = shape.a
-                b = shape.b
-                c = shape.c
-                corner = shape.corner
-
-                objects.append(
-                    zndraw.draw.Rhomboid(position=corner, vectorA=a, vectorB=b, vectorC=c, material=mat))
-
-            elif shape_type == "Ellipsoid":
-                center = shape.center
-                a = shape.a
-                b = shape.b
-
-                objects.append(zndraw.draw.Ellipsoid(position=center,
-                               a=a, b=b, c=b, material=mat))
+                vecs = np.array([shape.a, shape.b, shape.c])
+                corner_base = shape.corner
+                for direction in range(3):
+                    for side in range(2):
+                        vec1 = vecs[(direction + 1) % 3]
+                        vec2 = vecs[(direction + 2) % 3]
+                        corner = np.copy(corner_base)
+                        if (side == 1):
+                            corner += vecs[direction]
+                        corners = np.array([corner,
+                                            corner + vec1,
+                                            corner + vec1 + vec2,
+                                            corner + vec2])
+                        base_position = np.copy(corners[0])
+                        corners -= base_position
+                        vertices, euler_angles = _corners_to_shape_geometry(
+                            corners, False)
+                        key = f"{shape_type}_{corner_base}_{vecs}_{direction * 2 + side}"  # nopep8
+                        self.zndraw.geometries[key] = zndraw.geometries.Shape(
+                            position=[tuple(base_position)],
+                            rotation=[tuple(euler_angles)],
+                            vertices=vertices, **shape_options)
 
             else:
                 raise NotImplementedError(
                     f"Shape of type {shape_type} isn't available in ZnDraw")
 
-            self.zndraw.geometries = objects
-
     def _handle_pbc_bonds(self, bonds, ase_data):
         box_l = self.system.box_l
         positions = ase_data.arrays['positions']
         max_index = len(positions)
-        colors = ase_data.arrays['colors']
-        min_radii = np.min(ase_data.arrays['radii'])
+        colors = ase_data.arrays.get('colors')
+        radii = ase_data.arrays.get('radii')
         numbers = ase_data.arrays['numbers']
         bonds_to_add = []
         ghost_positions = []
@@ -529,7 +544,8 @@ class Visualizer():
             wall_intersection_b = pos_b - (1 - best_distance) * distance_vec
 
             ghost_positions.extend([wall_intersection_a, wall_intersection_b])
-            ghost_colors.extend([colors[b[0]], colors[b[1]]])
+            if colors is not None:
+                ghost_colors.extend([colors[b[0]], colors[b[1]]])
             ghost_numbers.extend([numbers[b[0]], numbers[b[1]]])
             bonds_to_add.extend(
                 [(b[0], max_index, 1), (b[1], max_index + 1, 1)])
@@ -540,12 +556,20 @@ class Visualizer():
             return bonds
 
         # add ghost particles
+        n_ghosts = len(ghost_positions)
         ase_data.arrays['positions'] = np.vstack([positions, ghost_positions])
-        ase_data.arrays['colors'] = np.hstack(
-            [ase_data.arrays['colors'], ghost_colors])
-        ase_data.arrays['radii'] = np.hstack(
-            [ase_data.arrays['radii'], [1e-6 * min_radii] * len(ghost_positions)])
         ase_data.arrays['numbers'] = np.hstack([numbers, ghost_numbers])
+        if colors is not None:
+            ase_data.arrays['colors'] = np.hstack([colors, ghost_colors])
+        # ghost particles must be invisible: give them a vanishing radius
+        if radii is None:
+            radii = np.full(len(positions), 0.5)
+        min_radii = np.min(radii)
+        ase_data.arrays['radii'] = np.hstack(
+            [radii, [1e-6 * min_radii] * n_ghosts])
+        if 'forces' in ase_data.arrays:
+            ase_data.arrays['forces'] = np.vstack(
+                [ase_data.arrays['forces'], np.zeros((n_ghosts, 3))])
 
         bonds.extend(bonds_to_add)
         return bonds
@@ -609,3 +633,51 @@ class WallIntersection:
                 intersections.append(intersection)
 
         return np.array(intersections)
+
+
+def _corners_to_shape_geometry(corners, sort=True):
+    """
+    Calculate the vertices and Euler angles of a rhombus defined by its corners.
+    """
+    unit_z = np.array([0., 0., 1.])
+    v1 = corners[1] - corners[0]
+    v2 = corners[-1] - corners[0]
+    normal = np.cross(v2, v1)
+    normal = normal / np.linalg.norm(normal)
+
+    rot, _ = scipy.spatial.transform.Rotation.align_vectors(
+        [normal], [unit_z])
+
+    rot_matix = np.linalg.inv(rot.as_matrix())
+    vertices = np.column_stack([
+        corners @ rot_matix[0, :],
+        corners @ rot_matix[1, :]
+    ])
+
+    if sort:
+        angles = np.arctan2(vertices[:, 1], vertices[:, 0])
+        sorted_indices = np.argsort(angles)
+        sorted_vertices = vertices[:][sorted_indices]
+    else:
+        sorted_vertices = vertices
+
+    euler_angles = rot.as_euler('xyz')
+    # invert the z-axis (different coordinate system)
+    euler_angles[2] *= -1
+
+    return sorted_vertices, euler_angles
+
+
+def _convert_array_to_color(array):
+    """
+    Converts a (n,3) array to a list of color strings.
+    """
+    if array.shape[-1] != 3:
+        raise NotImplementedError(
+            f"The color array should be 3 dimensional")
+    hex_array = array * 255
+    hex_array = np.clip(hex_array, 0, 255)
+    hex_array = hex_array.astype(np.uint8)
+    hex_array = hex_array.reshape((-1, hex_array.shape[-1]))
+    hex_strings = [f"#{r:02X}{g:02X}{b:02X}" for r, g, b in hex_array]
+    return hex_strings

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -148,7 +148,7 @@ BOOST_DATA_TEST_CASE(integrate_with_point_force_unthermalized,
   BOOST_CHECK_SMALL((mom - mom_exp).norm(), 1E-10);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
   Vector3i mpi_shape{};
 

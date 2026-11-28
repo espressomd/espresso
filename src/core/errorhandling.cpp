@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -46,7 +46,6 @@ namespace ErrorHandling {
 static std::unique_ptr<RuntimeErrorCollector> runtimeErrorCollector;
 
 void init_error_handling(boost::mpi::communicator const &comm) {
-
   runtimeErrorCollector = std::make_unique<RuntimeErrorCollector>(comm);
 }
 
@@ -77,6 +76,29 @@ std::vector<RuntimeError> mpi_gather_runtime_errors_all(bool is_head_node) {
   runtimeErrorCollector->gather_local();
   return {};
 }
+
+static void mpi_poll_runtime_messages_local() {
+  bool has_any_message =
+      runtimeErrorCollector->count_local(
+          ErrorHandling::RuntimeError::ErrorLevel::WARNING) != 0;
+  boost::mpi::reduce(runtimeErrorCollector->comm(), has_any_message,
+                     std::logical_or<bool>(), 0);
+}
+
+REGISTER_CALLBACK(mpi_poll_runtime_messages_local)
+
+bool mpi_poll_runtime_messages() {
+  bool has_any_message =
+      runtimeErrorCollector->count_local(
+          ErrorHandling::RuntimeError::ErrorLevel::WARNING) != 0;
+  bool has_any_message_global = has_any_message;
+  if (runtimeErrorCollector->comm().size() > 1) {
+    ::Communication::mpiCallbacks().call(mpi_poll_runtime_messages_local);
+    boost::mpi::reduce(runtimeErrorCollector->comm(), has_any_message,
+                       has_any_message_global, std::logical_or<bool>(), 0);
+  }
+  return has_any_message_global;
+}
 } // namespace ErrorHandling
 
 void errexit() {
@@ -87,7 +109,7 @@ void errexit() {
 
 int check_runtime_errors_local() {
   using namespace ErrorHandling;
-  return runtimeErrorCollector->count(RuntimeError::ErrorLevel::ERROR);
+  return runtimeErrorCollector->count_local(RuntimeError::ErrorLevel::ERROR);
 }
 
 int check_runtime_errors(boost::mpi::communicator const &comm) {

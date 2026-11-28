@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2025 The ESPResSo project
+# Copyright (C) 2009-2026 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -19,8 +19,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-cmake_minimum_required(VERSION 3.27.6)
-cmake_policy(VERSION 3.27.6)
+cmake_minimum_required(VERSION 3.31.6)
+cmake_policy(VERSION 3.31.6)
+if(POLICY CMP0167)
+  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
+  cmake_policy(SET CMP0167 NEW)
+endif()
+if(POLICY CMP0168)
+  # FetchContent no longer relies on a sub-build
+  cmake_policy(SET CMP0168 NEW)
+endif()
 message(STATUS "CMake version: ${CMAKE_VERSION}")
 # CMake modules/macros are in a subdirectory to keep this file cleaner
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -28,7 +36,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 # project info
 project(
   ESPResSo
-  VERSION "5.0.0"
+  VERSION "5.1.0"
   LANGUAGES C CXX
   HOMEPAGE_URL "https://espressomd.org"
   DESCRIPTION
@@ -38,7 +46,7 @@ project(
 set(ESPRESSO_MINIMAL_C_STANDARD 11)
 set(ESPRESSO_MINIMAL_CXX_STANDARD 20)
 set(ESPRESSO_MINIMAL_CUDA_STANDARD 20)
-set(ESPRESSO_MINIMAL_CUDA_VERSION 12.0)
+set(ESPRESSO_MINIMAL_CUDA_VERSION 12.4)
 
 include(FeatureSummary)
 include(GNUInstallDirs)
@@ -71,11 +79,20 @@ set(CMAKE_CXX_FLAGS_RELWITHASSERT "${CMAKE_CXX_FLAGS_RELWITHASSERT} -O3 -g")
 set(ESPRESSO_BUILD_SHARED_LIBS_DEFAULT OFF)
 set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
 
+# shared objects require position-independent code in static libraries
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # On Mac OS X, first look for other packages, then frameworks
 set(CMAKE_FIND_FRAMEWORK LAST)
 
 # avoid applying patches twice with FetchContent
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+
+# customize default options based on basic information
+set(ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT OFF)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "[xX]86")
+  set(ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT ON)
+endif()
 
 # ##############################################################################
 # User input options
@@ -84,18 +101,19 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 option(ESPRESSO_BUILD_WITH_PYTHON "Build with Python bindings" ON)
 option(ESPRESSO_BUILD_WITH_GSL "Build with GSL support" OFF)
 option(ESPRESSO_BUILD_WITH_FFTW "Build with FFTW support" ON)
+option(ESPRESSO_BUILD_WITH_KOKKOS_FFT
+       "Use kokkos-fft for the single-rank P3M reciprocal-space FFT" ON)
 option(ESPRESSO_BUILD_WITH_CUDA "Build with GPU support" OFF)
 option(ESPRESSO_BUILD_WITH_HDF5 "Build with HDF5 support" OFF)
 option(ESPRESSO_BUILD_TESTS "Enable tests" ON)
 option(ESPRESSO_BUILD_WITH_SCAFACOS "Build with ScaFaCoS support" OFF)
 option(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS "Build with Stokesian Dynamics"
        OFF)
-option(ESPRESSO_BUILD_WITH_WALBERLA
-       "Build with waLBerla lattice-Boltzmann support" OFF)
+option(ESPRESSO_BUILD_WITH_NLOPT "Build with NLopt support" OFF)
+option(ESPRESSO_BUILD_WITH_WALBERLA "Build with waLBerla support" ON)
 option(ESPRESSO_BUILD_WITH_WALBERLA_AVX
-       "Build waLBerla lattice-Boltzmann with AVX vectorization" OFF)
-option(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM
-       "Build with shared memory parallelism support" OFF)
+       "Build waLBerla kernels with AVX2 vectorization"
+       ${ESPRESSO_BUILD_WITH_WALBERLA_AVX_DEFAULT})
 option(ESPRESSO_BUILD_BENCHMARKS "Enable benchmarks" OFF)
 option(ESPRESSO_BUILD_WITH_VALGRIND "Build with Valgrind instrumentation" OFF)
 option(ESPRESSO_BUILD_WITH_CALIPER "Build with Caliper instrumentation" OFF)
@@ -132,15 +150,24 @@ option(ESPRESSO_INSIDE_DOCKER "Set this to ON when running inside Docker." OFF)
 mark_as_advanced(ESPRESSO_INSIDE_DOCKER)
 set(ESPRESSO_TEST_TIMEOUT "300"
     CACHE STRING "Timeout in seconds for each testsuite test")
+if(ESPRESSO_BUILD_WITH_PYTHON)
+  set(ESPRESSO_MODULE_INSTALL_PATH ""
+      CACHE PATH "Install ESPResSo Python module in a custom location")
+endif()
 
 if(ESPRESSO_BUILD_WITH_CCACHE)
   find_program(CCACHE_PROGRAM ccache REQUIRED)
   if(CCACHE_PROGRAM)
     message(STATUS "Found ccache: ${CCACHE_PROGRAM}")
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
     set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
     set(CMAKE_CUDA_COMPILER_LAUNCHER ${CCACHE_PROGRAM})
   endif()
 endif()
+
+set(ESPRESSO_NUMPY_SITEARCH ""
+    CACHE FILEPATH
+          "NumPy's third-party platform dependent installation directory")
 
 # Write compile commands to file, for various tools...
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -218,10 +245,12 @@ macro(espresso_minimal_compiler_version)
   endforeach()
 endmacro()
 
-espresso_minimal_compiler_version("GNU" 12.2.0)
-espresso_minimal_compiler_version("Clang" 18.1.0)
-espresso_minimal_compiler_version("AppleClang" 17.0.0)
-espresso_minimal_compiler_version("IntelLLVM" 2023.1)
+espresso_minimal_compiler_version("GNU" 13.3.0)
+espresso_minimal_compiler_version("Clang" 20.1.7)
+espresso_minimal_compiler_version("AppleClang" 21.0.0)
+espresso_minimal_compiler_version("CrayClang" 19.0.0)
+espresso_minimal_compiler_version("IntelLLVM" 2025.2)
+espresso_minimal_compiler_version("NVHPC" 26.5)
 
 set(ESPRESSO_UNSUPPORTED_COMPILERS "Intel;MSVC")
 foreach(LANG C CXX)
@@ -248,15 +277,25 @@ if(ESPRESSO_BUILD_WITH_CUDA)
   include(CheckLanguage)
   enable_language(CUDA)
   check_language(CUDA)
-  find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+  if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVHPC")
+    find_package(CUDAToolkit REQUIRED)
+  else()
+    find_package(CUDAToolkit ${ESPRESSO_MINIMAL_CUDA_VERSION} REQUIRED)
+  endif()
+  find_package(Thrust CONFIG REQUIRED HINTS "${CUDAToolkit_LIBRARY_DIR}/cmake")
+  if(Thrust_VERSION VERSION_LESS 2.5)
+    message(FATAL_ERROR "Thrust >= 2.5 required, found ${Thrust_VERSION}")
+  endif()
   if(NOT DEFINED ESPRESSO_CMAKE_CUDA_ARCHITECTURES)
     if("$ENV{CUDAARCHS}" STREQUAL "")
-      # 1. sm_61: GTX-1000 series (Pascal)
-      # 2. sm_75: RTX-2000 series (Turing)
-      # 3. sm_86: RTX-3000 series (Ampere)
-      # 4. sm_89: RTX-4000 series (Ada)
-      # 5. sm_90: H100 series (Hopper)
-      # 6. sm_120: RTX-5000 series (Blackwell)
+      # cmake-format: off
+      # sm_61: GTX-1000 series (Pascal)
+      # sm_75: RTX-2000 series (Turing)
+      # sm_86: RTX-3000 series (Ampere)
+      # sm_89: RTX-4000 series (Ada)
+      # sm_90: H100 series (Hopper)
+      # sm_120: RTX-5000 series (Blackwell)
+      # cmake-format: on
       set(ESPRESSO_CUDA_ARCHITECTURES "75;86;89")
     else()
       set(ESPRESSO_CUDA_ARCHITECTURES "$ENV{CUDAARCHS}")
@@ -288,7 +327,23 @@ if(ESPRESSO_BUILD_WITH_CUDA)
         FATAL_ERROR
           "Cannot enable code coverage with Clang as the CUDA compiler")
     endif()
-    find_package(CUDACompilerClang 18.1.0 REQUIRED)
+    find_package(CUDACompilerClang 20.1.7 REQUIRED)
+  elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "NVHPC")
+    if(ESPRESSO_BUILD_WITH_COVERAGE)
+      message(
+        FATAL_ERROR
+          "Cannot enable code coverage with nvc++ as the CUDA compiler")
+    endif()
+    find_package(CUDACompilerNVHPC 26.5 REQUIRED)
+    if(${ESPRESSO_NVHPC_DETECTED_CUDA_VERSION} VERSION_LESS
+       ${ESPRESSO_MINIMAL_CUDA_VERSION})
+      message(
+        FATAL_ERROR
+          "Minimal CUDA version is ${ESPRESSO_MINIMAL_CUDA_VERSION}, but nvc++ "
+          "reported ${ESPRESSO_NVHPC_DETECTED_CUDA_VERSION}; if your HPC SDK "
+          "ships multiple CUDA toolkits, try hinting the most recent one with "
+          "'-D CUDAToolkit_NVCC_EXECUTABLE=\${NVHPC_ROOT}/compilers/bin/nvcc'")
+    endif()
   else()
     message(FATAL_ERROR "Unknown CUDA compiler '${CMAKE_CUDA_COMPILER_ID}'")
   endif()
@@ -298,15 +353,48 @@ if(ESPRESSO_BUILD_WITH_CUDA)
              cuda_std_${ESPRESSO_MINIMAL_CUDA_STANDARD})
 endif()
 
-# Python interpreter and Cython interface library
+#
+# Python interpreter, Jupyter and Cython
+#
+
 if(ESPRESSO_BUILD_WITH_PYTHON)
-  find_package(Python 3.11 REQUIRED COMPONENTS Interpreter Development NumPy)
-  find_package(Cython 3.0.4...<3.2.0 REQUIRED)
-  if(CYTHON_VERSION VERSION_LESS 3.0.8)
-    message(WARNING "We strongly recommend using Cython 3.0.8 or later")
-  endif()
+  find_package(Python 3.12 REQUIRED COMPONENTS Interpreter Development NumPy)
+  find_package(Cython 3.0.11...<4.0.0 REQUIRED)
   find_program(IPYTHON_EXECUTABLE NAMES jupyter ipython3 ipython)
+  if(${Python_NumPy_VERSION} VERSION_LESS 2.2.4)
+    message(
+      FATAL_ERROR "NumPy >= 2.2.4 required, found ${Python_NumPy_VERSION} "
+                  "(${Python_NumPy_INCLUDE_DIRS})")
+  endif()
+  if(NOT DEFINED CACHE{ESPRESSO_NUMPY_SITEARCH}
+     OR "$CACHE{ESPRESSO_NUMPY_SITEARCH}" STREQUAL "")
+    # NumPy isn't necessarily installed in Python_SITEARCH. EasyBuild packages
+    # NumPy within SciPy-bundle, for example. Cython needs to include NumPy's
+    # parent directory to properly detect file numpy/__init__.pxd.
+    block(SCOPE_FOR VARIABLES PROPAGATE ESPRESSO_NUMPY_SITEARCH)
+    execute_process(
+      COMMAND ${Python_EXECUTABLE} -c "import numpy;print(numpy.__file__)"
+      OUTPUT_VARIABLE numpy_init_path ERROR_VARIABLE numpy_init_error
+      RESULT_VARIABLE numpy_init_result)
+    if(NOT ${numpy_init_result} EQUAL 0)
+      message(FATAL_ERROR "Cannot import numpy:\n${numpy_init_error}")
+    endif()
+    cmake_path(GET numpy_init_path PARENT_PATH numpy_path)
+    cmake_path(GET numpy_path PARENT_PATH numpy_sitearch)
+    set(ESPRESSO_NUMPY_SITEARCH "${numpy_sitearch}"
+        CACHE FILEPATH
+              "NumPy's third-party platform dependent installation directory"
+              FORCE)
+    endblock()
+  endif()
 endif()
+
+#
+# Documentation tools
+#
+
+find_package(Sphinx 8.1.3)
+find_package(Doxygen 1.15.0)
 
 #
 # Installation folders
@@ -322,7 +410,7 @@ set(ESPRESSO_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
 
 set(ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
 
-# python site-packages, can be overriden with CMake options
+# python site-packages, can be overridden with CMake options
 if(ESPRESSO_BUILD_WITH_PYTHON)
   if(NOT ESPRESSO_INSTALL_PYTHON)
     if(CMAKE_INSTALL_PREFIX STREQUAL "/")
@@ -333,7 +421,10 @@ if(ESPRESSO_BUILD_WITH_PYTHON)
       )
     endif()
   endif()
-  # override: package C++, CUDA and Cython shared objects together
+  if(NOT ESPRESSO_MODULE_INSTALL_PATH STREQUAL "")
+    set(ESPRESSO_INSTALL_PYTHON "${ESPRESSO_MODULE_INSTALL_PATH}")
+  endif()
+  # install shared objects in the Python folder
   set(ESPRESSO_INSTALL_LIBDIR "${ESPRESSO_INSTALL_PYTHON}/espressomd")
   add_custom_target(espresso_packaging_dependencies)
 endif()
@@ -348,14 +439,14 @@ target_compile_options(
   INTERFACE
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wall>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wextra>
-    $<$<COMPILE_LANGUAGE:CXX>:-pedantic>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang>:-pedantic>
     # add extra warnings
-    $<$<COMPILE_LANGUAGE:CXX>:-Wfloat-conversion>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wdelete-non-virtual-dtor>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wnon-virtual-dtor>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wfloat-conversion>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wdelete-non-virtual-dtor>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wnon-virtual-dtor>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wunused-macros>
     $<$<COMPILE_LANGUAGE:CXX>:-Wcast-qual>
     $<$<COMPILE_LANGUAGE:CXX>:-Wcast-align>
-    $<$<COMPILE_LANGUAGE:CXX>:-Wunused-macros>
     $<$<COMPILE_LANGUAGE:CXX>:-Wpointer-arith>
     $<$<COMPILE_LANGUAGE:CXX>:-Winit-self>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wextern-initializer>
@@ -383,41 +474,63 @@ target_compile_options(
     # disable warnings from -Wall and -Wextra, as well as warnings triggered by third-party libraries
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-sign-compare>
     $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-unused-parameter>
-    $<$<COMPILE_LANGUAGE:CXX,CUDA>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-array-bounds>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-array-bounds>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<IN_LIST:${CMAKE_CUDA_HOST_COMPILER_ID},GNU;Clang;CrayClang;AppleClang;IntelLLVM>>:-Xcompiler=-Wno-array-bounds>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-restrict>
     $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-cast-function-type>
     $<$<COMPILE_LANG_AND_ID:CXX,IntelLLVM>:-diag-disable=592>
     $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-global-constructors>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<STREQUAL:${CMAKE_SYSTEM_PROCESSOR},arm>>:-Wno-psabi>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-format-nonliteral>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-float-conversion>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-int-float-conversion>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>>:-Wno-implicit-float-conversion>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM,GNU>>:-Wno-ctad-maybe-unsupported>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
+    $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-pass-failed>
+    $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-pass-failed>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang>>:-Wno-extra-semi>
     $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-cast-qual>
-    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANGUAGE:CXX>>:-Wno-old-style-cast>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>>:-Wno-old-style-cast>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_HDF5}>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=storage_class_not_first>
+    $<$<AND:$<VERSION_LESS:${ESPRESSO_MINIMAL_CXX_STANDARD},23>,$<COMPILE_LANG_AND_ID:CXX,NVHPC>>:--diag_suppress=bad_pp_directive_keyword>
+    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=code_is_unreachable>
+    $<$<COMPILE_LANG_AND_ID:CXX,NVHPC,NVIDIA>:--diag_suppress=loop_not_reachable>
+    # disable GCC's C++17 processor-specific ABI warning (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=94383)
+    $<$<AND:$<COMPILE_LANG_AND_ID:CXX,GNU>,$<IN_LIST:${CMAKE_SYSTEM_PROCESSOR},arm;arm64;aarch64;aarch64_be;powerpc64le>>:-Wno-psabi>
     # warnings are errors
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANGUAGE:CXX>>:-Werror>
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>>:--Werror=all-warnings>
     $<$<AND:$<BOOL:${ESPRESSO_WARNINGS_ARE_ERRORS}>,$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>>:-Werror>
+)
+# cmake-format: on
+
+#
+# Compiler optimizations
+#
+
+# cmake-format: off
+target_compile_options(
+  espresso_compiler_flags
+  INTERFACE
+    # prevent loop auto-vectorization when doing so can introduce invalid math;
+    # for example, when a loop body contains a conditional to skip divisions by
+    # zero, the conditional can be ignored (speculative execution) to get better
+    # performance with SIMD types, and the invalid values are masked afterwards
+    # (but the SIGFPE signal is still sent as a side effect)
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,GNU>>:-ftrapping-math>
+    $<$<AND:$<BOOL:${ESPRESSO_BUILD_WITH_FPE}>,$<COMPILE_LANG_AND_ID:CXX,Clang>>:-Xarch_host -ftrapping-math>
     # configurations for NVCC
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-g -G>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Debug>>:-Xptxas=-O0,-g -Xcompiler=$<IF:$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>,-O0,-Og>,-g --device-debug>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Release>>:-Xptxas=-O3 -Xcompiler=-O3 -DNDEBUG>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:MinSizeRel>>:-Xptxas=-O2 -Xcompiler=-Os -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithDebInfo>>:-Xptxas=-O2 -Xcompiler=-O2,-g -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Coverage>>:-Xptxas=-O3 -Xcompiler=-Og,-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithDebInfo>>:-Xptxas=-O2 -Xcompiler=-O2,-g --generate-line-info -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:Coverage>>:-Xptxas=-O3 -Xcompiler=$<IF:$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>,-O0,-Og>,-g>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<CONFIG:RelWithAssert>>:-Xptxas=-O3 -Xcompiler=-O3,-g>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<BOOL:${CMAKE_OSX_SYSROOT}>>:-Xcompiler=-isysroot;-Xcompiler=${CMAKE_OSX_SYSROOT}>
     # configurations for LLVM
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Debug>>:-g -Og>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Release>>:-O3 -DNDEBUG>
     $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:MinSizeRel>>:-O2 -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithDebInfo>>:-O2 -g -DNDEBUG>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Coverage>>:-Og -g>
-    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithAssert>>:-O3 -g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithDebInfo>>:-O2 -Xarch_host -g -gline-tables-only -DNDEBUG>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:Coverage>>:-Og -Xarch_host -g>
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,Clang,IntelLLVM>,$<CONFIG:RelWithAssert>>:-O3 -Xarch_host -g>
 )
 # cmake-format: on
 
@@ -460,6 +573,13 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_SIZEOF_VOID_P EQUAL 4
                          INTERFACE $<$<COMPILE_LANGUAGE:CXX>:-ffloat-store>)
 endif()
 
+# allow infinities
+target_compile_options(
+  espresso_compiler_flags
+  INTERFACE
+    $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-fno-finite-math-only>
+)
+
 #
 # Sanitizers
 #
@@ -478,9 +598,8 @@ if(ESPRESSO_BUILD_WITH_ASAN)
       $<$<COMPILE_LANGUAGE:CXX,CUDA>:$<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>>
       $<$<COMPILE_LANGUAGE:CXX>:-fno-omit-frame-pointer>)
   target_link_libraries(
-    espresso_compiler_flags
-    INTERFACE -fsanitize=address -g
-              $<$<NOT:$<CONFIG:Debug>>:${ESPRESSO_XCOMPILER}-O1>)
+    espresso_compiler_flags INTERFACE -fsanitize=address -g
+                                      $<$<NOT:$<CONFIG:Debug>>:-O1>)
 endif()
 if(ESPRESSO_BUILD_WITH_MSAN)
   target_compile_options(
@@ -550,101 +669,19 @@ endif()
 # Libraries
 #
 
-if(ESPRESSO_BUILD_WITH_FFTW)
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    list(APPEND FFTW3_COMPONENTS omp)
-  endif()
-  find_package(fftw3 REQUIRED COMPONENTS ${FFTW3_COMPONENTS})
-
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
-    find_package(Heffte 2.4.1 QUIET)
-  endif()
-  if(NOT DEFINED Heffte_FOUND OR NOT ${Heffte_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      heffte
-      GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
-      GIT_TAG        v2.4.1
-      OVERRIDE_FIND_PACKAGE
-    )
-    # cmake-format: on
-    set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
-    if(ESPRESSO_BUILD_WITH_CUDA)
-      set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
-    endif()
-    set(BUILD_SHARED_LIBS ON)
-    FetchContent_MakeAvailable(heffte)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    foreach(HEFFTE_MODULE IN ITEMS FFTW CUDA)
-      if(TARGET Heffte::${HEFFTE_MODULE})
-        set(Heffte_${HEFFTE_MODULE}_FOUND true)
-      endif()
-    endforeach()
-    add_library(Heffte::Heffte INTERFACE IMPORTED GLOBAL)
-    target_link_libraries(Heffte::Heffte INTERFACE Heffte)
-    set_property(TARGET Heffte PROPERTY INSTALL_RPATH "")
-    install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-  endif()
+set(ESPRESSO_OPENMP_COMPONENTS CXX)
+if(ESPRESSO_BUILD_WITH_CUDA AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL NVHPC)
+  # FindOpenMP doesn't fully support NVHPC+CUDA as of CMake 4.3, see ticket:
+  # https://gitlab.kitware.com/cmake/cmake/-/work_items/23003
+  list(APPEND ESPRESSO_OPENMP_COMPONENTS CUDA)
 endif()
+# ESPResSo and Kokkos require some of the new features from OpenMP 5.0, but a
+# version check cannot be enforced here, since GCC versions 12 to 15 report 4.5
+# support for the CXX component, and NVHPC versions <= 26.3 report 4.5 support
+# for the CUDA component
+find_package(OpenMP REQUIRED COMPONENTS ${ESPRESSO_OPENMP_COMPONENTS})
 
-if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-  find_package(OpenMP REQUIRED)
-
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
-    find_package(Kokkos 4.3 QUIET)
-  endif()
-  if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      kokkos
-      GIT_REPOSITORY https://github.com/kokkos/kokkos.git
-      GIT_TAG        18b830e # version 4.6.1 with patches
-      OVERRIDE_FIND_PACKAGE
-    )
-    # cmake-format: on
-    set(BUILD_SHARED_LIBS ON)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-    set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
-    set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
-    set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
-    set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
-    set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
-    set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
-    set(Kokkos_ARCH_NATIVE ON CACHE BOOL "")
-    FetchContent_MakeAvailable(kokkos)
-    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-    install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-    # install all kokkos shared objects
-    get_target_property(ESPRESSO_KOKKOS_LIBS kokkos INTERFACE_LINK_LIBRARIES)
-    foreach(target_name IN LISTS ESPRESSO_KOKKOS_LIBS)
-      get_target_property(target_type ${target_name} TYPE)
-      if(${target_type} STREQUAL "SHARED_LIBRARY" AND ${target_name} MATCHES
-                                                      "^kokkos[a-zA-Z0-9_]+$")
-        install(TARGETS ${target_name}
-                LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
-      endif()
-    endforeach()
-  endif()
-
-  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
-    find_package(Cabana 0.7.0 QUIET)
-  endif()
-  if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
-    # cmake-format: off
-    FetchContent_Declare(
-      cabana
-      GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
-      GIT_TAG        e76c1a1 # 0.7.0 with patches
-      PATCH_COMMAND  patch -p0 < ${CMAKE_CURRENT_SOURCE_DIR}/cmake/cabana.patch
-    )
-    # cmake-format: on
-    set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
-    FetchContent_MakeAvailable(cabana)
-  endif()
-endif()
-
-# We need the parallel hdf5 version!
+# We need the parallel hdf5 version! Has to appear before Cabana.
 if(ESPRESSO_BUILD_WITH_HDF5)
   # The FindHDF5 function will fall back to the serial version if no parallel
   # version was found, and print to the CMake log that HDF5 was found. There is
@@ -661,18 +698,179 @@ if(ESPRESSO_BUILD_WITH_HDF5)
       message(FATAL_ERROR "HDF5 parallel version not found.")
     endif()
   endif()
-  add_library(hdf5 INTERFACE)
-  target_link_libraries(hdf5 INTERFACE $<BUILD_INTERFACE:${HDF5_LIBRARIES}>)
-  target_include_directories(hdf5
-                             INTERFACE $<BUILD_INTERFACE:${HDF5_INCLUDE_DIRS}>)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/HighFive-src)
+    find_package(HighFive 3.3.0 QUIET)
+  endif()
+  if(NOT DEFINED HighFive_FOUND OR NOT ${HighFive_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      HighFive
+      GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+      GIT_TAG        v3.3.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+    )
+    # cmake-format: on
+    FetchContent_MakeAvailable(HighFive)
+  endif()
+endif()
+
+if(ESPRESSO_BUILD_WITH_FFTW)
+  find_package(fftw3 REQUIRED COMPONENTS omp)
+
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/heffte-src)
+    find_package(Heffte 2.4.1 QUIET)
+  endif()
+  if(NOT DEFINED Heffte_FOUND OR NOT ${Heffte_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      heffte
+      GIT_REPOSITORY https://github.com/icl-utk-edu/heffte.git
+      GIT_TAG        v2.4.1
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/heffte.patch
+      OVERRIDE_FIND_PACKAGE
+      SYSTEM
+    )
+    # cmake-format: on
+    set(Heffte_ENABLE_FFTW ON CACHE BOOL "")
+    if(ESPRESSO_BUILD_WITH_CUDA)
+      set(Heffte_ENABLE_CUDA ON CACHE BOOL "")
+    endif()
+    set(Heffte_ENABLE_DOXYGEN OFF CACHE BOOL "")
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(heffte)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    foreach(HEFFTE_MODULE IN ITEMS FFTW CUDA)
+      if(TARGET Heffte::${HEFFTE_MODULE})
+        set(Heffte_${HEFFTE_MODULE}_FOUND true)
+      endif()
+    endforeach()
+    add_library(Heffte::Heffte INTERFACE IMPORTED GLOBAL)
+    target_link_libraries(Heffte::Heffte INTERFACE Heffte)
+    set_property(TARGET Heffte PROPERTY INSTALL_RPATH "")
+    install(TARGETS Heffte LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+  endif()
+endif()
+
+if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos-src)
+  find_package(Kokkos 5.0.2 QUIET)
+  if(DEFINED Kokkos_FOUND AND Kokkos_FOUND AND ESPRESSO_BUILD_WITH_CUDA
+     AND DEFINED Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE
+     AND NOT Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE)
+    message(
+      AUTHOR_WARNING
+        "The Kokkos dependency wasn't compiled with -DKokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE=ON \
+         therefore CMake will build ESPResSo source files with a compiler launcher wrapper"
+    )
+  endif()
+endif()
+if(NOT DEFINED Kokkos_FOUND OR NOT ${Kokkos_FOUND})
   # cmake-format: off
   FetchContent_Declare(
-    HighFive
-    GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
-    GIT_TAG        v3.2.0
+    kokkos
+    GIT_REPOSITORY https://github.com/kokkos/kokkos.git
+    GIT_TAG        5.0.2
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
+    PATCH_COMMAND  patch -p0 -i ${CMAKE_CURRENT_SOURCE_DIR}/cmake/kokkos.patch
+    OVERRIDE_FIND_PACKAGE
+    SYSTEM
   )
   # cmake-format: on
-  FetchContent_MakeAvailable(HighFive)
+  set(BUILD_SHARED_LIBS OFF)
+  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
+  set(Kokkos_ENABLE_SERIAL ON CACHE BOOL "")
+  set(Kokkos_ENABLE_OPENMP ON CACHE BOOL "")
+  set(Kokkos_ENABLE_IMPL_VIEW_LEGACY ON CACHE BOOL "")
+  if(${ESPRESSO_BUILD_WITH_CUDA} AND NOT ${ESPRESSO_BUILD_WITH_WALBERLA}
+     AND NOT CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
+    set(Kokkos_ENABLE_CUDA ON CACHE BOOL "")
+    set(Kokkos_ENABLE_CUDA_RELOCATABLE_DEVICE_CODE OFF CACHE BOOL "")
+    if(Kokkos_ENABLE_CUDA AND NOT CMAKE_CXX_COMPILER_ID STREQUAL Clang)
+      set(Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE ON CACHE BOOL "")
+      set(Kokkos_ENABLE_CUDA_CONSTEXPR ON CACHE BOOL "")
+    else()
+      set(Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE OFF CACHE BOOL "")
+    endif()
+  endif()
+  set(Kokkos_ENABLE_COMPLEX_ALIGN ON CACHE BOOL "")
+  set(Kokkos_ENABLE_AGGRESSIVE_VECTORIZATION ON CACHE BOOL "")
+  set(Kokkos_ENABLE_HWLOC ON CACHE BOOL "")
+  set(Kokkos_ENABLE_DEPRECATED_CODE_4 OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_DEPRECATED_CODE_5 OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_BENCHMARKS OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_EXAMPLES OFF CACHE BOOL "")
+  set(Kokkos_ENABLE_TESTS OFF CACHE BOOL "")
+  FetchContent_MakeAvailable(kokkos)
+  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+  install(TARGETS kokkos LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+  # install all kokkos shared objects
+  get_target_property(ESPRESSO_KOKKOS_LIBS kokkos INTERFACE_LINK_LIBRARIES)
+  foreach(target_name IN LISTS ESPRESSO_KOKKOS_LIBS)
+    get_target_property(target_type ${target_name} TYPE)
+    if(${target_type} STREQUAL "SHARED_LIBRARY" AND ${target_name} MATCHES
+                                                    "^kokkos[a-zA-Z0-9_]+$")
+      install(TARGETS ${target_name}
+              LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+    endif()
+  endforeach()
+  include("${FETCHCONTENT_BASE_DIR}/kokkos-build/KokkosConfigCommon.cmake")
+  target_compile_options(
+    kokkoscore
+    PRIVATE
+      $<$<COMPILE_LANG_AND_ID:CUDA,Clang>:-Wno-unknown-cuda-version>
+      $<$<COMPILE_LANG_AND_ID:CXX,Clang>:-Wno-deprecated-attributes>
+      $<$<COMPILE_LANG_AND_ID:CXX,NVHPC>:--diag_suppress=initialization_not_reachable>
+  )
+endif()
+
+if(ESPRESSO_BUILD_WITH_KOKKOS_FFT AND ESPRESSO_BUILD_WITH_FFTW)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/kokkos_fft-src)
+    find_package(KokkosFFT 2.0 QUIET)
+  endif()
+  if(NOT DEFINED KokkosFFT_FOUND OR NOT ${KokkosFFT_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      kokkos_fft
+      GIT_REPOSITORY https://github.com/kokkos/kokkos-fft.git
+      GIT_TAG        v2.0.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      OVERRIDE_FIND_PACKAGE
+      SYSTEM
+    )
+    # cmake-format: on
+    set(KokkosFFT_ENABLE_FFTW ON CACHE BOOL "")
+    set(KokkosFFT_ENABLE_CUFFT ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
+    set(KokkosFFT_ENABLE_DOCS OFF CACHE BOOL "")
+    set(KokkosFFT_ENABLE_EXAMPLES OFF CACHE BOOL "")
+    FetchContent_MakeAvailable(kokkos_fft)
+  endif()
+endif()
+
+if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/cabana-src)
+  find_package(Cabana 0.8.0 QUIET)
+endif()
+if(NOT DEFINED Cabana_FOUND OR NOT ${Cabana_FOUND})
+  # cmake-format: off
+  FetchContent_Declare(
+    cabana
+    GIT_REPOSITORY https://github.com/ECP-copa/Cabana.git
+    GIT_TAG        0.8.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
+    OVERRIDE_FIND_PACKAGE
+    SYSTEM
+  )
+  # cmake-format: on
+  set(Cabana_REQUIRE_HEFFTE ${ESPRESSO_BUILD_WITH_FFTW} CACHE BOOL "")
+  set(Cabana_REQUIRE_CUDA ${Kokkos_ENABLE_CUDA} CACHE BOOL "")
+  set(Cabana_ENABLE_GRID OFF CACHE BOOL "")
+  set(Cabana_ENABLE_DOXYGEN OFF CACHE BOOL "")
+  FetchContent_MakeAvailable(cabana)
 endif()
 
 if(ESPRESSO_BUILD_WITH_SCAFACOS)
@@ -690,12 +888,51 @@ if(ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS)
     stokesian_dynamics
     GIT_REPOSITORY https://github.com/hmenke/espresso-stokesian-dynamics.git
     GIT_TAG        90f6de70d1c0ac9cf468f2fc90f9c601139e4c88
+    GIT_SHALLOW    FALSE
+    GIT_SUBMODULES ""  # don't clone submodules
+    SYSTEM
   )
   # cmake-format: on
   set(STOKESIAN_DYNAMICS 1)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_INSTALL_LIBDIR}")
   FetchContent_MakeAvailable(stokesian_dynamics)
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
+endif()
+
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/nlopt-src)
+    find_package(NLopt 2.7.1 QUIET)
+  endif()
+  if(NOT DEFINED NLopt_FOUND OR NOT ${NLopt_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      nlopt
+      GIT_REPOSITORY https://github.com/stevengj/nlopt.git
+      GIT_TAG        v2.11.0
+      GIT_SHALLOW    TRUE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
+    )
+    # cmake-format: on
+    set(BUILD_SHARED_LIBS off)
+    set(NLOPT_FORTRAN off CACHE BOOL "")
+    set(NLOPT_PYTHON off CACHE BOOL "")
+    set(NLOPT_OCTAVE off CACHE BOOL "")
+    set(NLOPT_MATLAB off CACHE BOOL "")
+    set(NLOPT_GUILE off CACHE BOOL "")
+    set(NLOPT_JAVA off CACHE BOOL "")
+    set(NLOPT_SWIG off CACHE BOOL "")
+    set(NLOPT_LUKSAN off CACHE BOOL "")
+    FetchContent_MakeAvailable(nlopt)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    target_compile_options(
+      nlopt
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=integer_sign_change>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=deprecated_entity>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=mixed_enum_type>)
+  endif()
 endif()
 
 if(ESPRESSO_BUILD_WITH_VALGRIND)
@@ -784,11 +1021,6 @@ endif()
 # Boost
 #
 
-if(POLICY CMP0167)
-  # use BoostConfig.cmake shipped with Boost 1.70+ instead of the one in CMake
-  cmake_policy(SET CMP0167 NEW)
-endif()
-
 list(APPEND ESPRESSO_BOOST_COMPONENTS mpi serialization)
 
 if(ESPRESSO_BUILD_TESTS)
@@ -825,15 +1057,21 @@ if(ESPRESSO_BUILD_TESTS)
             "Extra arguments to give to ctest calls (separated by semicolons)")
   set(ESPRESSO_TEST_NP "4" CACHE STRING
                                  "Maximal number of MPI ranks to use per test")
+  set(ESPRESSO_TEST_NT "4"
+      CACHE STRING "Maximal number of OpenMP threads to use per test")
+  cmake_host_system_information(RESULT ESPRESSO_HOST_NUM_CORES
+                                QUERY NUMBER_OF_LOGICAL_CORES)
   add_library(espresso_tests_compiler_flags INTERFACE)
   add_library(espresso::tests::compiler_flags ALIAS
               espresso_tests_compiler_flags)
-  target_compile_options(espresso_tests_compiler_flags
-                         INTERFACE -Wno-unused-macros)
+  target_compile_options(
+    espresso_tests_compiler_flags
+    INTERFACE $<$<NOT:$<CXX_COMPILER_ID:NVHPC>>:-Wno-unused-macros>
+              $<$<CXX_COMPILER_ID:Clang>:-Wno-c2y-extensions>)
   if(ESPRESSO_BUILD_WITH_COVERAGE)
     target_compile_options(
       espresso_tests_compiler_flags
-      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-default-inline>
+      INTERFACE $<$<CXX_COMPILER_ID:GNU>:-fno-inline>
                 $<$<CXX_COMPILER_ID:GNU>:-fno-elide-constructors>)
   endif()
   if(ESPRESSO_BUILD_WITH_PYTHON)
@@ -851,63 +1089,86 @@ endif()
 #
 
 if(ESPRESSO_BUILD_WITH_WALBERLA)
-  # cmake-format: off
-  FetchContent_Declare(
-    walberla
-    GIT_REPOSITORY https://i10git.cs.fau.de/walberla/walberla.git
-    GIT_TAG        fc081850 # v7.2 with patches
-  )
-  # cmake-format: on
-  string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
-                       "${walberla_SOURCE_DIR}")
-  set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
-  set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
-  set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
-  set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
-  set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
-  set(WALBERLA_BUILD_EXAMPLES off CACHE BOOL "")
-  set(WALBERLA_BUILD_DOC off CACHE BOOL "")
-  set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
-  set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
-  if(ESPRESSO_BUILD_WITH_CUDA)
-    set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
-    if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
-      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        message(FATAL_ERROR "variable CMAKE_CUDA_ARCHITECTURES is undefined")
+  if(NOT EXISTS ${FETCHCONTENT_BASE_DIR}/walberla-src)
+    find_package(waLBerla 7.2 QUIET)
+    if(waLBerla_FOUND AND NOT TARGET walberla::core AND DEFINED
+                                                        walberla_SOURCE_DIR)
+      add_subdirectory(${walberla_SOURCE_DIR} ${walberla_BINARY_DIR}
+                       EXCLUDE_FROM_ALL)
+    endif()
+  endif()
+  if(NOT DEFINED waLBerla_FOUND OR NOT ${waLBerla_FOUND})
+    # cmake-format: off
+    FetchContent_Declare(
+      walberla
+      GIT_REPOSITORY https://github.com/lssfau/walberla.git
+      GIT_TAG        623a60c1 # v7.2 with patches
+      GIT_SHALLOW    FALSE
+      GIT_SUBMODULES ""  # don't clone submodules
+      SYSTEM
+    )
+    # cmake-format: on
+    string(REGEX REPLACE "([/\\]walberla)-src$" "\\1-build" walberla_BINARY_DIR
+                         "${walberla_SOURCE_DIR}")
+    set(WALBERLA_BUILD_TESTS off CACHE BOOL "")
+    set(WALBERLA_BUILD_TOOLS off CACHE BOOL "")
+    set(WALBERLA_BUILD_LEGACY_LBM off CACHE BOOL "")
+    set(WALBERLA_BUILD_BENCHMARKS off CACHE BOOL "")
+    set(WALBERLA_BUILD_TUTORIALS off CACHE BOOL "")
+    set(WALBERLA_BUILD_SHOWCASES off CACHE BOOL "")
+    set(WALBERLA_BUILD_EXAMPLES off CACHE BOOL "")
+    set(WALBERLA_BUILD_DOC off CACHE BOOL "")
+    set(WALBERLA_BUILD_WITH_PYTHON off CACHE BOOL "")
+    set(WALBERLA_LOGLEVEL "WARNING" CACHE STRING "")
+    if(ESPRESSO_BUILD_WITH_CUDA)
+      set(WALBERLA_BUILD_WITH_CUDA "on" CACHE BOOL "")
+      if(NOT ESPRESSO_CUDA_COMPILER STREQUAL "clang")
+        if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+          message(FATAL_ERROR "variable CMAKE_CUDA_ARCHITECTURES is undefined")
+        endif()
       endif()
     endif()
-  endif()
-  set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
+    set(WALBERLA_BUILD_WITH_FFTW off CACHE BOOL "")
     set(WALBERLA_BUILD_WITH_OPENMP on CACHE BOOL "")
-  endif()
-  set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
-  set(BUILD_SHARED_LIBS ON)
-  set(CMAKE_SHARED_LIBRARY_PREFIX "lib")
-  FetchContent_MakeAvailable(walberla)
-  set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
-  set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
-  set(WALBERLA_LIBS
-      walberla::core walberla::domain_decomposition walberla::blockforest
-      walberla::communication walberla::field walberla::stencil walberla::vtk)
-  if(WALBERLA_BUILD_WITH_FFTW)
-    list(APPEND WALBERLA_LIBS walberla::fft)
-  endif()
-  if(WALBERLA_BUILD_WITH_CUDA)
-    list(APPEND WALBERLA_LIBS walberla::gpu)
-  endif()
-  set(WALBERLA_LIBS_EXPORT
-      ${WALBERLA_LIBS} lodepng walberla::boundary walberla::executiontree
-      walberla::geometry walberla::lbm walberla::timeloop)
-  # install all waLBerla shared objects
-  foreach(target_alias IN LISTS WALBERLA_LIBS_EXPORT)
-    string(REPLACE "::" "_" target_name ${target_alias})
-    get_target_property(target_type ${target_name} TYPE)
-    if(${target_type} STREQUAL "SHARED_LIBRARY")
-      install(TARGETS ${target_name}
-              LIBRARY DESTINATION "${ESPRESSO_INSTALL_LIBDIR}")
+    set(WALBERLA_BUILD_WITH_FASTMATH off CACHE BOOL "")
+    set(BUILD_SHARED_LIBS OFF)
+    FetchContent_MakeAvailable(walberla)
+    set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
+    set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+    add_library(espresso_walberla_sqlite_compiler_flags INTERFACE)
+    target_compile_options(
+      espresso_walberla_sqlite_compiler_flags
+      INTERFACE
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-misleading-indentation>
+        $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:-Wno-misleading-indentation>
+        -Wno-unused-but-set-variable)
+    target_link_libraries(walberla_sqlite
+                          PRIVATE espresso_walberla_sqlite_compiler_flags)
+    target_compile_options(
+      sqlite3
+      PRIVATE
+        $<$<COMPILE_LANG_AND_ID:C,GNU>:-Wno-discarded-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:C,Clang>:-Wno-incompatible-pointer-types-discards-qualifiers>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=code_is_unreachable>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=cast_to_qualified_type>
+        $<$<COMPILE_LANG_AND_ID:C,NVHPC>:--diag_suppress=set_but_not_used>)
+    if(CMAKE_BUILD_TYPE MATCHES "^Release$|^RelWith|^MinSizeRel$")
+      # reduce build time and RAM usage of one source file with 50k lines
+      set_source_files_properties(
+        ${walberla_SOURCE_DIR}/src/core/math/Parser.cpp TARGET_DIRECTORY
+        walberla_core PROPERTIES COMPILE_OPTIONS "-O2")
     endif()
-  endforeach()
+  endif()
+  add_library(espresso_walberla_deps INTERFACE)
+  add_library(espresso::walberla_deps ALIAS espresso_walberla_deps)
+  target_link_libraries(
+    espresso_walberla_deps
+    INTERFACE walberla::core walberla::domain_decomposition
+              walberla::blockforest walberla::communication walberla::field
+              walberla::stencil walberla::vtk
+              $<$<BOOL:${WALBERLA_BUILD_WITH_FFTW}>:walberla::fft>
+              $<$<BOOL:${WALBERLA_BUILD_WITH_CUDA}>:walberla::gpu>)
   if(ESPRESSO_BUILD_WITH_WALBERLA_AVX)
     function(espresso_avx_flags_callback COMPILER_AVX2_FLAG)
       target_compile_options(
@@ -924,13 +1185,15 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   FetchContent_Declare(
     caliper
     GIT_REPOSITORY https://github.com/LLNL/Caliper.git
-    GIT_TAG        v2.13.0
+    GIT_TAG        v2.15.0
+    GIT_SHALLOW    TRUE
+    GIT_SUBMODULES ""  # don't clone submodules
   )
   # cmake-format: on
   set(CALIPER_OPTION_PREFIX on CACHE BOOL "")
   set(CALIPER_WITH_MPI on CACHE BOOL "")
-  set(CALIPER_WITH_NVTX off CACHE BOOL "")
-  set(CALIPER_WITH_CUPTI off CACHE BOOL "")
+  set(CALIPER_WITH_NVTX ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
+  set(CALIPER_WITH_CUPTI ${ESPRESSO_BUILD_WITH_CUDA} CACHE BOOL "")
   set(CALIPER_INSTALL_CONFIG off CACHE BOOL "")
   set(CALIPER_INSTALL_HEADERS off CACHE BOOL "")
   set(BUILD_SHARED_LIBS ON)
@@ -940,15 +1203,23 @@ if(ESPRESSO_BUILD_WITH_CALIPER)
   set(BUILD_SHARED_LIBS ${ESPRESSO_BUILD_SHARED_LIBS_DEFAULT})
   set(CMAKE_INSTALL_LIBDIR "${ESPRESSO_OLD_CMAKE_INSTALL_LIBDIR}")
   set(CMAKE_SHARED_LIBRARY_PREFIX "${ESPRESSO_SHARED_LIBRARY_PREFIX}")
+  add_library(espresso_caliper_compiler_flags INTERFACE)
   target_compile_options(
-    caliper-common
-    PRIVATE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-free-nonheap-object
-            -Wno-deprecated-enum-enum-conversion -Wno-volatile>)
+    espresso_caliper_compiler_flags
+    INTERFACE $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-free-nonheap-object
+              -Wno-deprecated-enum-enum-conversion -Wno-volatile
+              -Wno-maybe-uninitialized>)
+  target_link_libraries(caliper-common PRIVATE espresso_caliper_compiler_flags)
+  target_link_libraries(caliper-runtime PRIVATE espresso_caliper_compiler_flags)
 endif()
 
 #
 # Set source file properties
 #
+
+# C++20 modules aren't used by the project; skip the per-TU dependency scan.
+# Must be set after all FetchContent projects so their targets keep the default.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 function(espresso_set_common_target_properties)
   set(TARGET_NAME "${ARGV0}")
@@ -969,10 +1240,52 @@ function(espresso_set_common_target_properties)
     if(ESPRESSO_BUILD_WITH_CUDA)
       if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA")
         set_target_properties(${TARGET_NAME}
-                              PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+                              PROPERTIES CUDA_SEPARABLE_COMPILATION OFF)
       elseif(CMAKE_CUDA_COMPILER_ID STREQUAL "Clang")
         set_target_properties(${TARGET_NAME} PROPERTIES LINKER_LANGUAGE "CXX")
       endif()
+      # handle builds with different GCC versions for C++ and CUDA
+      # (https://github.com/espressomd/espresso/issues/5256)
+      if(CMAKE_CUDA_COMPILER_ID STREQUAL "NVIDIA" AND CMAKE_CXX_COMPILER_ID
+                                                      STREQUAL "GNU"
+         AND NOT "$ENV{CUDAHOSTCXX}" STREQUAL "$ENV{CXX}"
+         AND "$ENV{CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE}" MATCHES
+             "^/usr/lib/gcc/[^/]+/1[4-9]\$")
+        target_link_directories(
+          ${TARGET_NAME} BEFORE PUBLIC
+          "$ENV{CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES_EXCLUDE}")
+      endif()
+    endif()
+  endif()
+endfunction()
+
+function(espresso_set_kokkos_properties_on_source_files)
+  set(TARGET_NAME "${ARGV0}")
+  get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
+  get_target_property(TARGET_DEPS ${TARGET_NAME} LINK_LIBRARIES)
+  if(NOT TARGET_TYPE STREQUAL "INTERFACE_LIBRARY"
+     AND Kokkos_ENABLE_COMPILE_AS_CMAKE_LANGUAGE
+     AND ("Kokkos::kokkos" IN_LIST TARGET_DEPS OR "espresso::core" IN_LIST
+                                                  TARGET_DEPS
+          OR "espresso::p3m" IN_LIST TARGET_DEPS))
+    get_target_property(TARGET_SOURCE_DIR ${TARGET_NAME} SOURCE_DIR)
+    get_target_property(TARGET_SOURCES ${TARGET_NAME} SOURCES)
+    set(CPP_SOURCES "")
+    foreach(SOURCE IN LISTS TARGET_SOURCES)
+      if(SOURCE MATCHES "^\\$<")
+        message(
+          FATAL_ERROR
+            "target ${TARGET_NAME} contains generator expression '${SOURCE}'")
+      endif()
+      if(SOURCE MATCHES "\\.cpp$")
+        cmake_path(ABSOLUTE_PATH SOURCE BASE_DIRECTORY "${TARGET_SOURCE_DIR}"
+                   NORMALIZE)
+        list(APPEND CPP_SOURCES "${SOURCE}")
+      endif()
+    endforeach()
+    if(CPP_SOURCES)
+      set_source_files_properties(${CPP_SOURCES} TARGET_DIRECTORY ${TARGET_NAME}
+                                  PROPERTIES LANGUAGE CUDA)
     endif()
   endif()
 endfunction()

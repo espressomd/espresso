@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,6 +19,8 @@
 
 import os
 import requests
+import requests.adapters
+import urllib3.util.retry
 
 if not os.environ.get('CI_COMMIT_REF_NAME', '').startswith('PR-'):
     raise RuntimeError("Not a pull request.")
@@ -30,17 +32,26 @@ HEADERS = {'Authorization': 'token ' + os.environ['GITHUB_TOKEN']}
 CI_JOB_URL = os.environ['CI_JOB_URL']
 LOGIN = 'espresso-ci'
 
+# Retry on connection errors (DNS failures, refused connections) and on
+# transient server errors, for about 1 minute in total.
+SESSION = requests.Session()
+SESSION.mount('https://', requests.adapters.HTTPAdapter(
+    max_retries=urllib3.util.retry.Retry(
+        total=6, connect=6, read=3, status=3, backoff_factor=2,
+        backoff_max=20, status_forcelist=(500, 502, 503, 504),
+        allowed_methods=None)))
+
 
 def delete_comments_by_token(token):
     """
     Delete posts made by the espresso-ci bot containing the string in ``token``.
     """
-    comments = requests.get(URL, headers=HEADERS)
+    comments = SESSION.get(URL, headers=HEADERS)
     comments.raise_for_status()
     for comment in comments.json():
         if comment['user']['login'] == LOGIN and token in comment['body']:
             print(f"deleting {comment['url']}")
-            response = requests.delete(comment['url'], headers=HEADERS)
+            response = SESSION.delete(comment['url'], headers=HEADERS)
             response.raise_for_status()
 
 
@@ -48,5 +59,5 @@ def post_message(message):
     """
     Post a message using the espresso-ci bot.
     """
-    response = requests.post(URL, headers=HEADERS, json={'body': message})
+    response = SESSION.post(URL, headers=HEADERS, json={'body': message})
     response.raise_for_status()

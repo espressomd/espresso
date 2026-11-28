@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -103,7 +103,7 @@ system.integrator.set_vv()
 system.thermostat.set_langevin(kT=temperature, gamma=1.0, seed=42)
 
 widom = espressomd.reaction_methods.WidomInsertion(
-    kT=temperature, seed=77)
+    kT=temperature, seed=77, system=system)
 
 # add insertion reaction
 insertion_reaction_id = 0
@@ -111,7 +111,6 @@ widom.add_reaction(reactant_types=[],
                    reactant_coefficients=[], product_types=[1, 2],
                    product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(widom.get_status())
-system.setup_type_map(type_list=[0, 1, 2])
 
 
 # Set the hidden particle type to the lowest possible number to speed

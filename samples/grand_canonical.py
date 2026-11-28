@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -89,13 +89,12 @@ for type_1 in types:
             epsilon=wca_eps, sigma=wca_sig)
 
 RE = espressomd.reaction_methods.ReactionEnsemble(
-    kT=temperature, exclusion_range=wca_sig, seed=3)
+    system=system, kT=temperature, exclusion_range=wca_sig, seed=3)
 RE.add_reaction(
     gamma=cs_bulk**2 * np.exp(excess_chemical_potential_pair / temperature),
     reactant_types=[], reactant_coefficients=[], product_types=[1, 2],
     product_coefficients=[1, 1], default_charges={1: -1, 2: +1})
 print(RE.get_status())
-system.setup_type_map(type_list=[0, 1, 2])
 
 # Set the hidden particle type to the lowest possible number to speed
 # up the simulation

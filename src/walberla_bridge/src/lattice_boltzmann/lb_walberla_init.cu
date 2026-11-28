@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -45,18 +45,30 @@
 #include <walberla_bridge/lattice_boltzmann/LBWalberlaBase.hpp>
 
 #include <gpu/DeviceSelectMPI.h>
+#include <waLBerlaDefinitions.h>
 
 #include <memory>
+#include <stdexcept>
 
 std::shared_ptr<LBWalberlaBase>
 new_lb_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     double viscosity, double density, bool single_precision) {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  throw std::runtime_error("waLBerla was compiled without CUDA support");
+#else
   if (single_precision) {
     return std::make_shared<walberla::LBWalberlaImpl<float, lbmpy::Arch::GPU>>(
         lattice, viscosity, density);
   }
   return std::make_shared<walberla::LBWalberlaImpl<double, lbmpy::Arch::GPU>>(
       lattice, viscosity, density);
+#endif
 }
 
-void set_device_id_per_rank() { walberla::gpu::selectDeviceBasedOnMpiRank(); }
+void set_device_id_per_rank() {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  throw std::runtime_error("waLBerla was compiled without CUDA support");
+#else
+  walberla::gpu::selectDeviceBasedOnMpiRank();
+#endif
+}

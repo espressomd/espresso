@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,38 +19,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CORE_INTEGRATORS_STEEPEST_DESCENT_HPP
-#define CORE_INTEGRATORS_STEEPEST_DESCENT_HPP
+#pragma once
 
-#include "ParticleRange.hpp"
+#include "cell_system/CellStructure.hpp"
 
-/** Parameters for the steepest descent algorithm */
-struct SteepestDescentParameters {
-  /** Maximal particle force
+/** @brief Steepest descent algorithm. */
+struct SteepestDescent {
+  /**
+   * @brief Maximal particle force or torque.
    *
-   *  If the maximal force experienced by particles in the system (in any
-   *  direction) is inferior to this threshold, minimization stops.
+   * If the maximal force experienced by particles in the system (in any
+   * direction) is inferior to this threshold, minimization stops.
    */
-  double f_max;
+  double f_max = 0.;
   /** Dampening constant */
-  double gamma;
-  /** Maximal particle displacement
+  double gamma = 0.;
+  /**
+   * Maximal particle displacement or rotation.
    *
-   *  Maximal distance that a particle can travel during one integration step,
-   *  in one direction.
+   * Maximal distance in MD units of length or rotation in radians that
+   * a particle can experience during one integration step, in one direction.
    */
-  double max_displacement;
+  double max_displacement = 0.;
 
-  SteepestDescentParameters(double f_max, double gamma,
-                            double max_displacement);
+  SteepestDescent() = default;
+  SteepestDescent(double f_max, double gamma, double max_displacement);
+
+  /**
+   * @brief Run steepest descent algorithm.
+   * @return whether the maximum force/torque encountered is below the user
+   *         limit @ref SteepestDescent::f_max "f_max".
+   */
+  bool propagate(CellStructure &cell_structure) const;
 };
-
-void register_integrator(SteepestDescentParameters const &obj);
-
-/** Steepest descent integrator
- *  @return whether the maximum force/torque encountered is below the user
- *          limit @ref SteepestDescentParameters::f_max "f_max".
- */
-bool steepest_descent_step(const ParticleRange &particles);
-
-#endif /* CORE_INTEGRATORS_STEEPEST_DESCENT_HPP */

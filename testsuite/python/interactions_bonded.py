@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -94,6 +94,8 @@ class InteractionsBondedTest(ut.TestCase):
     def tearDown(self):
         if espressomd.has_features(["ELECTROSTATICS"]):
             self.system.electrostatics.clear()
+        if espressomd.has_features(['LENNARD_JONES']):
+            self.system.non_bonded_inter[0, 0].lennard_jones.deactivate()
         self.system.part.clear()
         self.system.bonded_inter.clear()
 
@@ -190,9 +192,6 @@ class InteractionsBondedTest(ut.TestCase):
             test_breakage=False)
 
     def test_quartic(self):
-        """Tests the Quartic bonded interaction by comparing the potential and
-           force against the analytic values"""
-
         k0 = 2.
         k1 = 5.
         q_r = 0.5
@@ -289,11 +288,15 @@ class InteractionsBondedTest(ut.TestCase):
             p1.bonds = (fene, p4)  # dist 4.0
             with self.assertRaisesRegex(Exception, error_msg.format(1, 4)):
                 system.integrator.run(0, recalc_forces=True)
+            with self.assertRaisesRegex(Exception, error_msg.format(1, 4)):
+                self.assertEqual(self.system.analysis.energy()["total"], 0.)
             p1.delete_all_bonds()
 
             p2.bonds = (fene, p4)  # dist 3.0
             with self.assertRaisesRegex(Exception, error_msg.format(2, 4)):
                 system.integrator.run(0, recalc_forces=True)
+            with self.assertRaisesRegex(Exception, error_msg.format(2, 4)):
+                self.assertEqual(self.system.analysis.energy()["total"], 0.)
             p2.delete_all_bonds()
 
         with self.subTest(msg="FENE bond breaks on compression"):
@@ -301,13 +304,39 @@ class InteractionsBondedTest(ut.TestCase):
             # Expect bond breakage
             with self.assertRaisesRegex(Exception, error_msg.format(1, 2)):
                 system.integrator.run(0, recalc_forces=True)
+            with self.assertRaisesRegex(Exception, error_msg.format(1, 2)):
+                self.assertEqual(self.system.analysis.energy()["total"], 0.)
             p1.delete_all_bonds()
 
             p3.bonds = (fene, p4)  # dist 1.0
             # Expect bond breakage
             with self.assertRaisesRegex(Exception, error_msg.format(3, 4)):
                 system.integrator.run(0, recalc_forces=True)
+            with self.assertRaisesRegex(Exception, error_msg.format(3, 4)):
+                self.assertEqual(self.system.analysis.energy()["total"], 0.)
             p3.delete_all_bonds()
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] < 2,
+               "only runs for 2 or more MPI ranks")
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_bond_resolution_error(self):
+        system = self.system
+        system.part.clear()
+
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1.0, sigma=1.0, cutoff=1.0, shift="auto")
+
+        hb = espressomd.interactions.HarmonicBond(k=1.0, r_0=1.0, r_cut=0.0)
+        system.bonded_inter.add(hb)
+
+        system.part.add(id=0, pos=[2.5, 5.0, 5.0])
+        system.part.add(id=1, pos=[7.5, 5.0, 5.0])
+        system.part.by_id(0).add_bond((hb, 1))
+
+        # Expect bond resolution error
+        error_msg = "ERROR: bond partner not found on local node, could only find: {}"
+        with self.assertRaisesRegex(Exception, error_msg.format(1)):
+            system.integrator.run(0)
 
 
 if __name__ == '__main__':

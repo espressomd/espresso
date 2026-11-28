@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2023 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -47,9 +47,9 @@ class EKTest:
 
     @classmethod
     def setUpClass(cls):
-        cls.lattice = espressomd.electrokinetics.LatticeWalberla(
+        cls.lattice = espressomd.electrokinetics.Lattice(
             agrid=1., n_ghost_layers=2)
-        cls.ek_species = cls.ek_species_class(
+        cls.ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=cls.lattice,
             single_precision=False,
             **cls.ek_species_params)
@@ -88,11 +88,18 @@ class EKTest:
         flux_ref = espressomd.electrokinetics.FluxBoundary([1e-6, 2e-6, 3e-6])
         ek_species[1:2, 1:, 0].flux_boundary = flux_ref
         ek_species[1:2, 2:, 0].flux_boundary = None
+        ek_flux_slice = np.copy(ek_species[1, 1:, 0].flux)
         for flux in ek_species[1:2, 1, 0].flux_boundary.flatten():
             np.testing.assert_array_almost_equal(
                 flux.flux, flux_ref.flux)
         for flux in ek_species[1:2, 2:, 0:2].flux_boundary.flatten():
             self.assertIsNone(flux)
+        np.testing.assert_array_almost_equal(
+            ek_flux_slice, np.vstack([flux_ref.flux, np.zeros((8, 3))]))
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[1, 1, 0].flux), flux_ref.flux)
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[1, 2, 0].flux), np.zeros((3,)))
 
         # density boundary on slice
         output_boundary_shape = ek_species[0:-1, 1:, 1:].density_boundary.shape
@@ -110,11 +117,18 @@ class EKTest:
         dens_ref = espressomd.electrokinetics.DensityBoundary(1e-6)
         ek_species[2:3, 1:, 0].density_boundary = dens_ref
         ek_species[2:3, 2:, 0].density_boundary = None
+        ek_density_slice = np.copy(ek_species[2, 1:, 0].density)
         for dens in ek_species[2:3, 1, 0].density_boundary.flatten():
             np.testing.assert_array_almost_equal(
                 dens.density, dens_ref.density)
         for dens in ek_species[2:3, 2:, 0:2].density_boundary.flatten():
             self.assertIsNone(dens)
+        np.testing.assert_array_almost_equal(
+            ek_density_slice, [dens_ref.density] + 8 * [2.])
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[2, 1, 0].density), dens_ref.density)
+        np.testing.assert_array_almost_equal(
+            np.copy(ek_species[2, 2, 0].density), 2.)
 
         # is_boundary on slice
         output_boundary_shape = ek_species[1:, 1:, 1:].is_boundary.shape
@@ -156,15 +170,26 @@ class EKTest:
             arranged_indices, iterator_indices)])
 
 
-@utx.skipIfMissingFeatures("WALBERLA")
-class EKSliceCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKSliceDoublePrecisionCPU(EKTest, ut.TestCase):
+    lattice_params = {"single_precision": False, "gpu": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKSliceSinglePrecisionCPU(EKTest, ut.TestCase):
+    lattice_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class EKSliceGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+class EKSliceDoublePrecisionGPU(EKTest, ut.TestCase):
+    lattice_params = {"single_precision": False, "gpu": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKSliceSinglePrecisionGPU(EKTest, ut.TestCase):
+    lattice_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

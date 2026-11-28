@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,8 +19,8 @@
 #
 
 
-AUTOPEP8_VER=2.1.0
-PYCODESTYLE_VER=2.11.1
+AUTOPEP8_VER=2.3.2
+PYCODESTYLE_VER=2.14.0
 
 python3 -m autopep8 --help 2>&1 > /dev/null
 if [ "$?" = "0" ]; then

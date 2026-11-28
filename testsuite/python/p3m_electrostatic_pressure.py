@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -65,15 +65,16 @@ class pressureViaVolumeScaling:
 
 @utx.skipIfMissingFeatures(["P3M", "LENNARD_JONES"])
 class VirialPressureConsistency(ut.TestCase):
-
-    """Test the consistency of the core implementation of the virial pressure
-       with an analytical relation which allows for the calculation of the
-       pressure as a volume derivative of a function of the potential energy
-       change on infinitesimal volume changes.
-       The relation and its derivation can be found in the paper with the name
-       "Efficient pressure estimation in molecular simulations without
-       evaluating the virial"  by Harismiadis, V. I., J. Vorholz, and A. Z.
-       Panagiotopoulos. 1996"""
+    """
+    Test the consistency of the core implementation of the virial pressure
+    with an analytical relation which allows for the calculation of the
+    pressure as a volume derivative of a function of the potential energy
+    change on infinitesimal volume changes.
+    The relation and its derivation can be found in the paper with the name
+    "Efficient pressure estimation in molecular simulations without
+    evaluating the virial"  by Harismiadis, V. I., J. Vorholz, and A. Z.
+    Panagiotopoulos. 1996
+    """
     # Handle to espresso system
     system = espressomd.System(box_l=[50, 50, 50])
 
@@ -114,6 +115,10 @@ class VirialPressureConsistency(ut.TestCase):
                 break
         self.system.integrator.set_vv()
         self.system.thermostat.set_langevin(kT=self.kT, gamma=1.0, seed=41)
+        # reset thermostat state and pin skin value to improve reproducibility
+        self.system.thermostat.langevin.call_method(
+            "override_philox_counter", counter=0)
+        self.system.cell_system.skin = 1.4
 
     def tearDown(self):
         self.system.part.clear()
@@ -121,12 +126,9 @@ class VirialPressureConsistency(ut.TestCase):
         self.system.thermostat.turn_off()
         self.system.integrator.set_vv()
 
-    def check_p3m_pressure(self, class_p3m):
-        p3m = class_p3m(prefactor=2., accuracy=1e-3, mesh=16, cao=6, r_cut=7.5)
-        self.system.electrostatics.solver = p3m
-        skin = self.system.cell_system.tune_skin(
-            min_skin=0.0, max_skin=2.5, tol=0.05, int_steps=100)
-        print(f"Tuned skin: {skin}")
+    def check_p3m_pressure(self, gpu):
+        self.system.electrostatics.solver = espressomd.electrostatics.P3M(
+            prefactor=2., accuracy=1e-3, mesh=16, cao=6, r_cut=7.5, gpu=gpu)
 
         pressures_via_virial = []
         num_samples = 25
@@ -144,11 +146,11 @@ class VirialPressureConsistency(ut.TestCase):
         np.testing.assert_array_less(abs_deviation_in_percent, 5.0)
 
     def test_pressure_p3m_cpu(self):
-        self.check_p3m_pressure(espressomd.electrostatics.P3M)
+        self.check_p3m_pressure(False)
 
     @utx.skipIfMissingGPU()
     def test_pressure_p3m_gpu(self):
-        self.check_p3m_pressure(espressomd.electrostatics.P3MGPU)
+        self.check_p3m_pressure(True)
 
 
 if __name__ == "__main__":

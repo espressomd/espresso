@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
@@ -57,13 +57,22 @@ template <typename FloatType> class p3m_send_mesh {
   int r_ur[6][3];
   /** sizes for recv buffers. */
   int r_size[6];
-  /** maximal size for send/recv buffers. */
-  int max;
+  /** maximal size for send/recv buffers (both directions of a dimension). */
+  int max = -1;
 
   /** vector to store grid points to send. */
   std::vector<FloatType> send_grid;
   /** vector to store grid points to recv */
   std::vector<FloatType> recv_grid;
+
+  /**
+   * Exchange halo blocks with both neighbors along one dimension.
+   * Send buffer layout: [to left | to right],
+   * recv buffer layout: [from right | from left].
+   */
+  void exchange(boost::mpi::communicator const &comm, int left, int right,
+                int send_left, int send_right, int recv_right, int recv_left,
+                int tag);
 
 public:
   void resize(boost::mpi::communicator const &comm,

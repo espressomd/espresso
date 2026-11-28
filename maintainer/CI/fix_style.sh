@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,6 +19,7 @@
 #
 
 cd "$(git rev-parse --show-toplevel)" || exit 1
+git update-index -q --refresh # refresh metadata of files with timestamp/owner changes
 
 if ! git diff-index --quiet HEAD -- && [ "${1}" != "-f" ]; then
     echo "Warning, your working tree is not clean. Please commit your changes."

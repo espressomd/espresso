@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -22,6 +22,7 @@
 #include <concepts>
 #include <cstddef>
 #include <limits>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 

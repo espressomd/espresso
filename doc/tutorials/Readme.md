@@ -8,7 +8,7 @@ physical systems.
 [comment]: # (Begin of tutorials landing page)
 
 [![Launch with Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
-[![Launch with Gitpod](https://img.shields.io/badge/launch-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/launch-Codespaces-579aca?logo=github)](https://codespaces.new/espressomd/espresso)
 
 ### Introductory tutorials
 
@@ -16,7 +16,7 @@ physical systems.
   Modelling of a single-component and a two-component Lennard-Jones liquid.  
   [Guide](lennard_jones/lennard_jones.ipynb)
 * **Error analysis**  
-  Statistical analysis of simulation results  
+  Statistical analysis of simulation results.  
   Guide
   [Part 1](error_analysis/error_analysis_part1.ipynb) |
   [Part 2](error_analysis/error_analysis_part2.ipynb)
@@ -39,7 +39,7 @@ physical systems.
   [Part 2](ferrofluid/ferrofluid_part2.ipynb) |
   [Part 3](ferrofluid/ferrofluid_part3.ipynb)
 * **Lattice-Boltzmann**  
-  Simulations including hydrodynamic interactions using the Lattice-Boltzmann method.  
+  Simulations including hydrodynamic interactions using the lattice-Boltzmann method.  
   Guide
   [Part 1](lattice_boltzmann/lattice_boltzmann_theory.ipynb) |
   [Part 2](lattice_boltzmann/lattice_boltzmann_poiseuille_flow.ipynb) |
@@ -53,6 +53,12 @@ physical systems.
 * **Machine-learned interatomic potential**  
   Atomistic simulations using the MACE-MP-0 model.  
   [Guide](mlip/mlip.ipynb)
+* **Machine-learned interatomic potentials with ESPResSo**  
+  Atomistic simulations of water with classical force fields and MLIPs.  
+  Guide
+  [Part 1](mlip-water/01_TIP4P_water.ipynb) |
+  [Part 2](mlip-water/02_MLIPs.ipynb) |
+  [Part 3](mlip-water/03_MLIP_within_ESPResSo.ipynb)
 
 ### Advanced tutorials
 
@@ -61,7 +67,10 @@ physical systems.
   [Guide](active_matter/active_matter.ipynb)
 * **Electrokinetics**  
   Modelling electrokinetics together with hydrodynamic interactions.  
-  [Guide](electrokinetics/electrokinetics.ipynb)
+  Guide
+  [Part 1](electrokinetics/electrokinetics_part1_advection_diffusion.ipynb) |
+  [Part 2](electrokinetics/electrokinetics_part2_electroosmotic_flow.ipynb) |
+  [Part 3](electrokinetics/electrokinetics_part3_reactive_flow.ipynb)
 * **Electrodes**  
   Modelling electrodes and measuring differential capacitance with the ELC method.  
   [Part 1](electrodes/electrodes_part1.ipynb) |
@@ -72,9 +81,12 @@ physical systems.
 * **Widom particle insertion method**  
   Measuring the excess chemical potential of a salt solution using the Widom particle insertion method.  
   [Guide](widom_insertion/widom_insertion.ipynb)
-* **Grand-Canonical Monte Carlo**
+* **Grand-canonical Monte Carlo**  
   Simulating a polyelectrolyte solution coupled to a reservoir of salt.  
   [Guide](grand_canonical_monte_carlo/grand_canonical_monte_carlo.ipynb)
+* **Boltzmann inversion**  
+  Systematic coarse-graining based on the Boltzmann inversion method.  
+  [Guide](boltzmann_inversion/boltzmann_inversion.ipynb)
 
 [comment]: # (End of tutorials landing page)
 
@@ -117,13 +129,16 @@ which walks you through the Jupyter interface.
 
 * [Introduction to ESPResSo](https://www.youtube.com/watch?v=aP4jvpD-D1w)
 * [How to run ESPResSo inside Visual Studio Code](https://www.youtube.com/watch?v=dlvF1Zk3AAs)
+* [Introduction to particle-based simulations](https://www.youtube.com/watch?v=5VSMyRhcYYo)
+* [Molecular modelling of polymers](https://www.youtube.com/watch?v=vSF5-eciwms)
+* [Charged soft matter](https://www.youtube.com/watch?v=wrnDg-3j2ik)
+* [Electrostatic algorithms](https://www.youtube.com/watch?v=YPryFf7MQTg)
+* [Ferrofluids](https://www.youtube.com/watch?v=wbL3EdVCbkI)
+* [Monte Carlo reaction methods](https://www.youtube.com/watch?v=MUG-PSaMFVM)
+* [The lattice-Boltzmann method](https://www.youtube.com/watch?v=jfk4feD7rFQ)
+* [The lattice electrokinetics method](https://www.youtube.com/watch?v=Ly0CcC6OOjs)
+* [Multi-phase models for the lattice-Boltzmann method](https://www.youtube.com/watch?v=ybU07g8Q3JM)
 * [Error Estimation in Time-Correlated Data](https://www.youtube.com/watch?v=I-HCxj9dUIU)
-* [Electrostatic Algorithms](https://www.youtube.com/watch?v=YPryFf7MQTg)
-* [Introduction to Charged Soft Matter](https://www.youtube.com/watch?v=wrnDg-3j2ik)
 * [Managing Simulation Data](https://www.youtube.com/watch?v=64rNmTpoS1c)
-* [Introduction to Ferrofluids](https://www.youtube.com/watch?v=wbL3EdVCbkI)
-* [Molecular Modelling of Polymers](https://www.youtube.com/watch?v=vSF5-eciwms)
-* [Simulating Chemical Reactions in ESPResSo](https://www.youtube.com/watch?v=MUG-PSaMFVM)
-* [Introduction to Lattice Boltzmann Method](https://www.youtube.com/watch?v=jfk4feD7rFQ)
 
 [comment]: # (End of videos landing page)

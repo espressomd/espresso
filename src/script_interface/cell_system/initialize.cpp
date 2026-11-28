@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 The ESPResSo project
+ * Copyright (C) 2015-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -26,6 +26,7 @@ namespace CellSystem {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<CellSystem>("CellSystem::CellSystem");
+  om->register_new<CheckpointerContext>("CellSystem::CheckpointerContext");
 }
 
 } // namespace CellSystem

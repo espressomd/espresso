@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -282,6 +282,9 @@ private:
   // compression functions
   compression_function compressA;
   compression_function compressB;
+
+  void compress_kernel(long lowest_level, long highest_level);
+  void correlate_kernel(long lowest_level, long highest_level);
 };
 
 } // namespace Accumulators

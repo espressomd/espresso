@@ -20,6 +20,7 @@ User's Guide
     inter_bonded.rst
     electrostatics.rst
     magnetostatics.rst
+    magnetodynamics.rst
     system_manipulation.rst
     constraints.rst
     lb.rst
@@ -46,13 +47,14 @@ Online resources
 * `Online documentation <https://espressomd.github.io/>`_
 * `Official website <https://espressomd.org/wordpress/>`_
 
-Python modules
---------------
+Python packages
+---------------
 
 .. toctree::
     :maxdepth: 1
 
-    modules.rst
+    espressomd.rst
+    object_in_fluid.rst
 
 Indices and tables
 ------------------

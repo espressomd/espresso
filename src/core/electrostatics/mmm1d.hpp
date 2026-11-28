@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -35,9 +35,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_ELECTROSTATICS
+#ifdef ESPRESSO_MMM1D
 
 #include "electrostatics/actor.hpp"
 
@@ -46,6 +46,7 @@
 #include <utils/Vector.hpp>
 
 #include <array>
+#include <vector>
 
 /** @brief Parameters for the MMM1D electrostatic interaction */
 struct CoulombMMM1D : public Coulomb::Actor<CoulombMMM1D> {
@@ -130,4 +131,4 @@ private:
   void sanity_checks_cell_structure() const;
 };
 
-#endif // ESPRESSO_ELECTROSTATICS
+#endif // ESPRESSO_MMM1D

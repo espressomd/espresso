@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-CLANG_FORMAT_VER=19.1
+CLANG_FORMAT_VER=22.1
 if hash clang-format-${CLANG_FORMAT_VER} 2>/dev/null; then
     CLANGFORMAT="$(which clang-format-${CLANG_FORMAT_VER})"
 elif hash clang-format-${CLANG_FORMAT_VER%.*} 2>/dev/null; then

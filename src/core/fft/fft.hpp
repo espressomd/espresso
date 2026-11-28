@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -197,6 +197,13 @@ public:
   auto const &get_mesh_size() const { return forw[3u].new_mesh; }
 
   auto const &get_mesh_start() const { return forw[3u].start; }
+
+#ifndef NDEBUG
+  /** Get a view to the FFT workspace buffer. For debugging purposes only. */
+  std::span<FloatType const> get_fft_workspace() const {
+    return {data_buf.begin(), static_cast<std::size_t>(forw[1].new_size)};
+  }
+#endif
 
 private:
   void forw_grid_comm(boost::mpi::communicator const &comm,

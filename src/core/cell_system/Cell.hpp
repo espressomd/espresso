@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -112,4 +112,15 @@ public:
    * @brief All neighbors of the cell.
    */
   neighbors_type &neighbors() { return m_neighbors; }
+
+  /**
+   * @brief Interior/boundary classification.
+   *
+   * A local cell is *boundary* iff at least one of its neighbors is a ghost
+   * cell.  Set by GhostComm::mark_boundary_cells() after neighbor setup.
+   * Default false (interior).
+   */
+  bool m_is_boundary = false;
+
+  bool is_boundary() const { return m_is_boundary; }
 };

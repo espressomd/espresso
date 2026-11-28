@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -46,7 +46,13 @@ TabulatedPotential::TabulatedPotential(double minval, double maxval,
       throw std::invalid_argument("TabulatedPotential parameter 'force' must "
                                   "have the same size as parameter 'energy'");
     }
-    invstepsize = static_cast<double>(force.size() - 1) / (maxval - minval);
+    // A single-point table (minval == maxval, force.size() == 1) is a
+    // supported, constant potential. Avoid the degenerate 0/0 == NaN by
+    // mirroring the minval == -1. sentinel branch below: invstepsize = 0
+    // makes the linear interpolation collapse to the single tabulated value.
+    invstepsize = (minval == maxval) ? 0.
+                                     : static_cast<double>(force.size() - 1) /
+                                           (maxval - minval);
   } else {
     invstepsize = 0.;
   }

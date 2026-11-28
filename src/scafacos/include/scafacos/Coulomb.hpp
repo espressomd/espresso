@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -47,7 +47,7 @@ struct Coulomb : public Scafacos {
    * @brief Delegate the short-range calculation.
    * By default, ESPResSo calculates the short-range forces and energies
    * if the chosen ScaFaCoS method support delegation. This decision can
-   * be overriden to obtain the result from a full ScaFaCos calculation.
+   * be overridden to obtain the result from a full ScaFaCos calculation.
    * @param delegate  Delegate short-range calculation to ESPResSo if true,
    *                  or to ScaFaCoS if false.
    */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -27,7 +27,7 @@
  *  Implementation in \ref integrate.cpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "PropagationMode.hpp"
 
@@ -54,9 +54,9 @@
 /**@}*/
 
 #ifdef ESPRESSO_WALBERLA
-void walberla_tau_sanity_checks(std::string method, double tau,
+void walberla_tau_sanity_checks(std::string const &method, double tau,
                                 double time_step);
-void walberla_agrid_sanity_checks(std::string method,
+void walberla_agrid_sanity_checks(std::string const &method,
                                   Utils::Vector3d const &geo_left,
                                   Utils::Vector3d const &geo_right,
                                   Utils::Vector3d const &lattice_left,

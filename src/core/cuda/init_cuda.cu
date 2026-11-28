@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -35,8 +35,8 @@
 
 /** \name minimally required compute capability. */
 /**@{*/
-static const int computeCapabilityMinMajor = 3;
-static const int computeCapabilityMinMinor = 0;
+static int constexpr computeCapabilityMinMajor = 3;
+static int constexpr computeCapabilityMinMinor = 0;
 /**@}*/
 
 void cuda_init() { CUDA_CHECK(cudaStreamCreate(&stream[0])) }

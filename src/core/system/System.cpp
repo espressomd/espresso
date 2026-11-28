@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 The ESPResSo project
+ * Copyright (C) 2014-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,13 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "System.hpp"
 #include "System.impl.hpp"
 
 #include "BoxGeometry.hpp"
+#include "GpuParticleData.hpp"
 #include "LocalBox.hpp"
+#include "Observable_stat.hpp"
 #include "PropagationMode.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -35,11 +37,16 @@
 #include "communication.hpp"
 #include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
+#include "ghosts.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "nonbonded_interactions/VerletCriterion.hpp"
 #include "npt.hpp"
 #include "particle_node.hpp"
 #include "short_range_cabana.hpp"
+#include "short_range_verlet.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "thermostat.hpp"
+#include "virtual_sites/com.hpp"
 #include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
@@ -48,6 +55,7 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 
 #include <algorithm>
+#include <cassert>
 #include <cstddef>
 #include <functional>
 #include <memory>
@@ -68,8 +76,9 @@ System::System(Private) {
   box_geo = std::make_shared<BoxGeometry>();
   local_geo = std::make_shared<LocalBox>();
   cell_structure = std::make_shared<CellStructure>(*box_geo);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->set_kokkos_handle(::kokkos_handle);
+#ifdef ESPRESSO_CUDA
+  gpu = std::make_shared<GpuParticleData>();
 #endif
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
@@ -88,6 +97,10 @@ System::System(Private) {
   auto_update_accumulators =
       std::make_shared<Accumulators::AutoUpdateAccumulators>();
   constraints = std::make_shared<Constraints::Constraints>();
+  steepest_descent = std::make_shared<SteepestDescent>();
+#ifdef ESPRESSO_STOKESIAN_DYNAMICS
+  stokesian_dynamics = std::make_shared<StokesianDynamics>();
+#endif
 #ifdef ESPRESSO_NPT
   nptiso = std::make_shared<NptIsoParameters>();
   npt_inst_pressure = std::make_shared<InstantaneousPressure>();
@@ -103,7 +116,6 @@ void System::initialize() {
   auto handle = shared_from_this();
   cell_structure->bind_system(handle);
   lees_edwards->bind_system(handle);
-  immersed_boundaries->bind_system(handle);
   bonded_ias->bind_system(handle);
   thermostat->bind_system(handle);
   nonbonded_ias->bind_system(handle);
@@ -115,8 +127,8 @@ void System::initialize() {
   auto_update_accumulators->bind_system(handle);
   constraints->bind_system(handle);
 #ifdef ESPRESSO_CUDA
-  gpu.bind_system(handle);
-  gpu.initialize();
+  gpu->bind_system(handle);
+  gpu->initialize();
 #endif
   lb.bind_system(handle);
   ek.bind_system(handle);
@@ -129,6 +141,11 @@ void set_system(std::shared_ptr<System> new_instance) {
 }
 
 System &get_system() { return *instance; }
+
+bool is_same_system(System const *const system) {
+  assert(system != nullptr);
+  return system == instance.get();
+}
 
 void System::set_time_step(double value) {
   if (value <= 0.)
@@ -165,7 +182,7 @@ void System::set_min_global_cut(double value) {
 void System::set_cell_structure_topology(CellStructureType topology) {
   if (topology == CellStructureType::REGULAR) {
     if (cell_structure->decomposition_type() == CellStructureType::REGULAR) {
-      // get fully connected info from exising regular decomposition
+      // get fully connected info from existing regular decomposition
       auto &old_regular_decomposition =
           dynamic_cast<RegularDecomposition const &>(
               std::as_const(*cell_structure).decomposition());
@@ -327,6 +344,7 @@ void System::on_lb_boundary_conditions_change() {
 void System::on_particle_local_change() {
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
   propagation->recalc_forces = true;
+  propagation->recalc_used_propagations = true;
 }
 
 void System::on_particle_change() {
@@ -342,12 +360,11 @@ void System::on_particle_change() {
   dipoles.on_particle_change();
 #endif
   propagation->recalc_forces = true;
+  propagation->recalc_used_propagations = true;
 
   /* the particle information is no longer valid */
   invalidate_fetch_cache();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->clear_local_properties();
-#endif
 }
 
 void System::on_particle_charge_change() {
@@ -358,17 +375,28 @@ void System::on_particle_charge_change() {
 
 void System::update_dependent_particles() {
 #ifdef ESPRESSO_VIRTUAL_SITES
+  if (propagation->recalc_used_propagations) {
+    update_used_propagations();
+  }
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
-  vs_relative_update_particles(*cell_structure, *box_geo);
+  if (propagation->used_propagations &
+      (PropagationMode::ROT_VS_RELATIVE | PropagationMode::ROT_VS_INDEPENDENT |
+       PropagationMode::TRANS_VS_RELATIVE)) {
+    vs_relative_update_particles(*cell_structure, *box_geo);
+  }
+#endif
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  if (propagation->used_propagations &
+      PropagationMode::TRANS_VS_CENTER_OF_MASS) {
+    vs_com_update_particles(*cell_structure, *box_geo);
+  }
 #endif
   cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 #endif
 
 #ifdef ESPRESSO_ELECTROSTATICS
   if (has_icc_enabled()) {
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     rebuild_aosoa();
-#endif
     update_icc_particles();
   }
 #endif
@@ -394,12 +422,9 @@ void System::on_observable_calc() {
 #endif
 
   clear_particle_node();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   rebuild_aosoa();
-#endif
 }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 void System::rebuild_aosoa() {
 #ifdef ESPRESSO_COLLISION_DETECTION
   auto const collision_detection_cutoff = collision_detection->cutoff();
@@ -407,17 +432,8 @@ void System::rebuild_aosoa() {
   auto const collision_detection_cutoff = inactive_cutoff;
 #endif
 
-  VerletCriterion<> const verlet_criterion{*this,
-                                           cell_structure->get_verlet_skin(),
-                                           get_interaction_range(),
-                                           coulomb.cutoff(),
-                                           dipoles.cutoff(),
-                                           collision_detection_cutoff};
-
-  update_cabana_state(*cell_structure, verlet_criterion,
-                      get_interaction_range(), propagation->integ_switch);
+  update_verlet_state(*this, collision_detection_cutoff);
 }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
 void System::on_lees_edwards_change() { lb.on_lees_edwards_change(); }
 
@@ -494,9 +510,7 @@ void System::on_integration_start() {
   }
 
   invalidate_fetch_cache();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   cell_structure->clear_local_properties();
-#endif
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   if (!Utils::Mpi::all_compare(::comm_cart, cell_structure->use_verlet_list)) {
@@ -524,6 +538,95 @@ void System::on_integration_start() {
 }
 
 /**
+ * @brief Return true when any active physics requires orientation of ghost
+ * particles.  Used by both @c get_global_ghost_flags (QUAT push) and
+ * @c get_force_reduce_ghost_flags (TORQUE reduce).
+ *
+ * Conservative: include a reader when in doubt.  Non-rotating plain LJ
+ * must yield false so that both bits stay OFF for that common case.
+ *
+ * Readers of ghost particle quat / director / calc_dip:
+ * - short_range_cabana commit_particle: quat -> director for Gay-Berne /
+ *   Dipoles pair kernels (ghost particles in AoSoA)
+ * - vs_relative_update_particles: p_ref.quat() where p_ref may be a ghost
+ * - LB particle coupling (swimmer): p.calc_director() on ghost particles
+ *   when ESPRESSO_ENGINE and LB are both active
+ * - HomogeneousMagneticField constraint: p.calc_dip() (local particles only,
+ *   does NOT read ghosts; included conservatively via dipole check)
+ * - dipolar solvers (dp3m, dds, dlc, scafacos): p.calc_dip() on
+ *   unique_particles which includes ghost particles that have no local
+ *   counterpart (see @ref CellStructure::set_index_map); covered by
+ *   the dipolar-solver-set condition
+ * - ShapeBasedConstraint / calc_non_central_force: reads p.quat() on LOCAL
+ *   particles only (Constraints iterate local_particles); safe without the
+ *   bit
+ * - Stoner-Wohlfarth integrate_magnetodynamics: calls p_ref->calc_director()
+ *   where p_ref comes from get_reference_particle / get_local_particle, which
+ *   CAN return a ghost; covered by the explicit #ifdef below
+ * - rotational integrators: operate on local particles only (OK)
+ * - ICC blocking reduce: resets force_and_torque on local particles and may
+ *   carry a zero-valued TORQUE payload on the wire when orientation physics is
+ *   concurrently active — harmless (bytes only, value is zero)
+ */
+#ifdef ESPRESSO_ROTATION
+static bool orientation_ghosts_needed(System const &sys) {
+  // Rotational propagation active: ghost quat needed for vs_relative position
+  // update and for any kernel that uses the director of a ghost particle.
+  if (sys.propagation->used_propagations &
+      (PropagationMode::ROT_EULER | PropagationMode::ROT_LANGEVIN |
+       PropagationMode::ROT_BROWNIAN | PropagationMode::ROT_STOKESIAN |
+       PropagationMode::ROT_VS_RELATIVE |
+       PropagationMode::ROT_VS_INDEPENDENT)) {
+    return true;
+  }
+
+  // Virtual sites relative uses p_ref.quat() where p_ref may be a ghost.
+  if (sys.propagation->used_propagations &
+      (PropagationMode::TRANS_VS_RELATIVE | PropagationMode::ROT_VS_RELATIVE |
+       PropagationMode::ROT_VS_INDEPENDENT)) {
+    return true;
+  }
+
+#ifdef ESPRESSO_DIPOLES
+  // Dipolar solver set: particles have a dipole moment derived from quat;
+  // short_range_cabana reads quat -> director for dipole pair kernels on ghosts
+  if (sys.dipoles.impl && sys.dipoles.impl->solver) {
+    return true;
+  }
+#endif
+
+#ifdef ESPRESSO_GAY_BERNE
+  // Gay-Berne anisotropic nonbonded interaction configured: short_range_cabana
+  // commits ghost quat -> director for the Cabana pair kernel.
+  if (sys.nonbonded_ias->pair_potential_active(PairPotential::GayBerne)) {
+    return true;
+  }
+#endif
+
+#ifdef ESPRESSO_ENGINE
+  // LB active with ENGINE compiled in: coupling loop includes ghost particles
+  // and calls p.calc_director() for swimmer_force_on_fluid particles.
+  if (sys.lb.is_solver_set()) {
+    return true;
+  }
+#endif
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  // Stoner-Wohlfarth integrate_magnetodynamics calls
+  // get_reference_particle / get_local_particle which can return a ghost, then
+  // reads p_ref->calc_director() on it.  SW requires the Langevin thermostat
+  // (enforced in integrate.cpp integrator_sanity_checks); use that as the
+  // cheapest reliable system-level runtime signal.
+  if (sys.thermostat->thermo_switch & THERMO_LANGEVIN) {
+    return true;
+  }
+#endif
+
+  return false;
+}
+#endif // ESPRESSO_ROTATION
+
+/**
  * @brief Returns the ghost flags required for running pair
  *        kernels for the global state, e.g. the force calculation.
  * @return Required data parts;
@@ -549,7 +652,23 @@ unsigned System::get_global_ghost_flags() const {
   }
 #endif
 
+#ifdef ESPRESSO_ROTATION
+  if (orientation_ghosts_needed(*this)) {
+    data_parts |= Cells::DATA_PART_QUAT;
+  }
+#endif
+
   return data_parts;
+}
+
+unsigned System::get_force_reduce_ghost_flags() const {
+  unsigned flags = GHOSTTRANS_FORCE;
+#ifdef ESPRESSO_ROTATION
+  if (orientation_ghosts_needed(*this)) {
+    flags |= GHOSTTRANS_TORQUE;
+  }
+#endif
+  return flags;
 }
 
 #ifdef ESPRESSO_NPT

@@ -559,7 +559,7 @@ in the correct order. Command
 
 ::
 
-    p1.add_bond((local_inter, p0.part_id, p2.part_id, p3.part_id))
+    p1.add_bond((local_inter, p0, p2, p3))
 
 creates a bond related to the triangles 012 and 123. The particle 0
 corresponds to point A1, particle 1 to C, particle 2 to B and particle 3
@@ -688,7 +688,7 @@ defined
 
 ::
 
-    p0.add_bond((global_force_interaction, p1.part_id, p2.part_id))
+    p0.add_bond((global_force_interaction, p1, p2))
 
 Triangle 012 must have correct orientation, that is the normal vector
 defined by a vector product :math:`01\times02` must point to the inside of

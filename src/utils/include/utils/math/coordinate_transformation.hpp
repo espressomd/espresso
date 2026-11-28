@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -36,6 +36,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <limits>
 
 namespace Utils {
 
@@ -147,7 +148,7 @@ inline Vector3d transform_coordinate_cylinder_to_cartesian(
 inline Vector3d transform_vector_cartesian_to_cylinder(Vector3d const &vec,
                                                        Vector3d const &axis,
                                                        Vector3d const &pos) {
-  static auto const z_axis = Vector3d{{0, 0, 1}};
+  auto constexpr z_axis = Vector3d{{0., 0., 1.}};
   auto const angle = angle_between(axis, z_axis);
   auto const rotation_axis = Utils::vector_product(axis, z_axis).normalize();
   auto const rotated_pos = vec_rotate(rotation_axis, angle, pos);

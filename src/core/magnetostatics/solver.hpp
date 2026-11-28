@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,9 +25,9 @@
 #include "actor/traits.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/matrix.hpp>
 
 #include <functional>
 #include <memory>
@@ -55,12 +55,9 @@ struct Solver {
   void on_cell_structure_change();
   void on_particle_change() { reinit_on_observable_calc = true; }
 
-  void calc_pressure_long_range() const;
-  void calc_long_range_force(ParticleRange const &particles) const;
-  double calc_energy_long_range(ParticleRange const &particles) const;
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  void calc_long_range_field(ParticleRange const &particles) const;
-#endif
+  Utils::Vector9d calc_pressure_long_range() const;
+  void calc_long_range_force() const;
+  double calc_energy_long_range() const;
   Solver();
 #else  // ESPRESSO_DIPOLES
   Solver() = default;
@@ -69,17 +66,20 @@ struct Solver {
 
   using ShortRangeForceKernel = std::function<ParticleForce(
       double, Utils::Vector3d const &, Utils::Vector3d const &,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      Utils::Vector3d &, Utils::Vector3d &,
+#endif
       Utils::Vector3d const &, double, double)>;
   using ShortRangeEnergyKernel =
-      std::function<double(Particle const &, Particle const &,
+      std::function<double(Utils::Vector3d const &, Utils::Vector3d const &,
                            Utils::Vector3d const &, double, double)>;
+  using ShortRangePressureKernel = std::function<Utils::Matrix<double, 3, 3>(
+      double, Utils::Vector3d const &, Utils::Vector3d const &,
+      Utils::Vector3d const &, double, double)>;
 
   inline std::optional<ShortRangeForceKernel> pair_force_kernel() const;
   inline std::optional<ShortRangeEnergyKernel> pair_energy_kernel() const;
+  inline std::optional<ShortRangePressureKernel> pair_pressure_kernel() const;
 };
-
-#ifdef ESPRESSO_DIPOLES
-Solver const &get_dipoles();
-#endif
 
 } // namespace Dipoles

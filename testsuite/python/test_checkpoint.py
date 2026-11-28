@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -24,6 +24,7 @@ import unittest_generator as utg
 import numpy as np
 import contextlib
 import pathlib
+import time
 import sys
 
 import espressomd
@@ -62,6 +63,9 @@ class CheckpointTest(ut.TestCase):
     checkpoint.load(0)
     checkpoint.save(1)
     n_nodes = system.cell_system.get_state()["n_nodes"]
+    # LB doesn't support domain decomposition along the shear direction
+    has_lb_lees_edwards = (n_nodes in (1, 2, 3) and
+                           system.cell_system.node_grid[0] == 1)
 
     @classmethod
     def setUpClass(cls):
@@ -138,7 +142,7 @@ class CheckpointTest(ut.TestCase):
         state = lbf.lattice.get_params()
         ref_ghost_layers = 2
         if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
-                'LB' not in modes or self.n_nodes in (1, 2, 3)):
+                'LB' not in modes or self.has_lb_lees_edwards):
             ref_ghost_layers = 1
         reference = {"agrid": 2.0, "n_ghost_layers": ref_ghost_layers,
                      "blocks_per_mpi_rank": [1, 1, 1]}
@@ -156,8 +160,10 @@ class CheckpointTest(ut.TestCase):
 
         self.assertTrue(lbf.is_active)
         if "LB.CPU" in modes:
+            self.assertFalse(lbf.gpu)
             self.assertFalse(lbf.single_precision)
         elif "LB.GPU" in modes:
+            self.assertTrue(lbf.gpu)
             self.assertTrue(lbf.single_precision)
 
         # check boundary objects
@@ -184,17 +190,32 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_species(self):
         lbf = system.lb
+        cpt_mode = 0 if "LB.ASCII" in modes else 1
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
+        ek_solver_class = espressomd.electrokinetics.EKNone
+        ek_solver_params_reference = {
+            "tau": system.time_step, "single_precision": False, "gpu": False}
+        if "LB.GPU" in modes and espressomd.gpu_available():
+            ek_solver_params_reference["gpu"] = True
+        if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:
+            ek_solver_class = espressomd.electrokinetics.EKFFT
+            ek_solver_params_reference["permittivity"] = 0.1
         if n_ghost_layers > 1:
-            cpt_mode = 0 if 'LB.ASCII' in modes else 1
+            cpt_mode = 0 if "LB.ASCII" in modes else 1
             cpt_path = str(self.checkpoint.root / "ek") + "{}.cpt"
 
             self.assertEqual(len(system.ekcontainer), 1)
             ek_species = system.ekcontainer[0]
+            ek_solver = system.ekcontainer.solver
             self.assertAlmostEqual(system.ekcontainer.tau, system.time_step,
                                    delta=1e-7)
-            self.assertIsInstance(system.ekcontainer.solver,
-                                  espressomd.electrokinetics.EKNone)
+            self.assertIsInstance(ek_solver, ek_solver_class)
+            ek_solver_params = ek_solver.get_params()
+            for key in ek_solver_params_reference:
+                self.assertIn(key, ek_solver_params)
+                np.testing.assert_allclose(np.copy(ek_solver_params[key]),
+                                           ek_solver_params_reference[key],
+                                           atol=1E-7, err_msg=f"{key} differs")
 
             # check exception mechanism with corrupted LB checkpoint files
             with self.assertRaisesRegex(RuntimeError, 'EOF found'):
@@ -216,6 +237,27 @@ class CheckpointTest(ut.TestCase):
 
             ek_species.load_checkpoint(cpt_path.format(""), cpt_mode)
 
+            if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+                cpt_path = str(self.checkpoint.root / "ek_none") + "{}.cpt"
+                with self.assertRaisesRegex(RuntimeError, 'EOF found'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-missing-data"), cpt_mode)
+                with self.assertRaisesRegex(RuntimeError, 'extra data found, expected EOF'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-extra-data"), cpt_mode)
+                if cpt_mode == 0:
+                    with self.assertRaisesRegex(RuntimeError, 'incorrectly formatted data'):
+                        ek_solver.load_checkpoint(
+                            cpt_path.format("-wrong-format"), cpt_mode)
+                    with self.assertRaisesRegex(RuntimeError, 'grid dimensions mismatch'):
+                        ek_solver.load_checkpoint(
+                            cpt_path.format("-wrong-boxdim"), cpt_mode)
+                with self.assertRaisesRegex(RuntimeError, 'could not open file'):
+                    ek_solver.load_checkpoint(
+                        cpt_path.format("-unknown"), cpt_mode)
+
+                ek_solver.load_checkpoint(cpt_path.format(""), cpt_mode)
+
             precision = 8 if "LB.WALBERLA" in modes else 5
             m = np.pi / 12
             nx = ek_species.lattice.shape[0]
@@ -224,12 +266,25 @@ class CheckpointTest(ut.TestCase):
             grid_3D = np.fromfunction(
                 lambda i, j, k: np.cos(i * m) * np.cos(j * m) * np.cos(k * m),
                 (nx, ny, nz), dtype=float)
-            for i in range(nx):
-                for j in range(ny):
-                    for k in range(nz):
-                        np.testing.assert_almost_equal(
-                            np.copy(ek_species[i, j, k].density),
-                            grid_3D[i, j, k], decimal=precision)
+            ref_density = np.copy(grid_3D)
+            ref_density[0, :, :] = 1.
+            ref_density[-1, :, :] = 2.
+            np.testing.assert_almost_equal(
+                np.copy(ek_species[:, :, :].density),
+                ref_density, decimal=precision)
+            np.testing.assert_almost_equal(
+                np.copy(ek_species[0, :, :].flux),
+                np.broadcast_to(1e-3 * np.array([1., 2., 3.]),
+                                ek_species[-1, :, :].flux.shape),
+                decimal=precision)
+            np.testing.assert_almost_equal(
+                np.copy(ek_species[-1, :, :].flux),
+                np.broadcast_to(1e-3 * np.array([4., 5., 6.]),
+                                ek_species[-1, :, :].flux.shape),
+                decimal=precision)
+            if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+                np.testing.assert_almost_equal(
+                    np.copy(ek_solver[:, :, :].potential), grid_3D / 4., decimal=precision)
 
             state = ek_species.get_params()
             reference = {
@@ -245,7 +300,7 @@ class CheckpointTest(ut.TestCase):
                 self.assertIn(key, state)
                 np.testing.assert_allclose(np.copy(state[key]), reference[key],
                                            atol=1E-7, err_msg=f"{key} differs")
-            # self.assertFalse(ek_species.is_active)
+            self.assertTrue(system.ekcontainer.is_active)
             self.assertFalse(ek_species.single_precision)
 
             def generator(value, shape):
@@ -268,7 +323,6 @@ class CheckpointTest(ut.TestCase):
                 slice2 = ek_species[-1, :, :]
                 slice3 = ek_species[1:-1, :, :]
                 # check boundary flag
-
                 np.testing.assert_equal(np.copy(slice1.is_boundary), True)
                 np.testing.assert_equal(np.copy(slice2.is_boundary), True)
                 np.testing.assert_equal(np.copy(slice3.is_boundary), False)
@@ -319,11 +373,12 @@ class CheckpointTest(ut.TestCase):
         self.assertFalse((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
         # check VTK objects are still synchronized with their LB objects
-        old_density = lbf[0, 0, 0].density
+        old_density = np.copy(lbf[:, :, :].density)
         new_density = 1.5 * old_density
-        lbf[0, 0, 0].density = new_density
+        lbf[:, :, :].density = new_density
         vtk_manual.write()
-        lbf[0, 0, 0].density = old_density
+        time.sleep(0.1)  # small delay for file system write latency
+        lbf[:, :, :].density = old_density
         self.assertTrue((vtk_root / filename.format(0)).exists())
         self.assertTrue((vtk_root / filename.format(1)).exists())
         self.assertFalse((vtk_root / filename.format(2)).exists())
@@ -331,20 +386,20 @@ class CheckpointTest(ut.TestCase):
             vtk_reader = espressomd.io.vtk.VTKReader()
             vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
             lb_density = vtk_data["density"]
-            self.assertAlmostEqual(
-                lb_density[0, 0, 0], new_density, delta=1e-4)
+            np.testing.assert_allclose(
+                lb_density[:, :, :], new_density, atol=1e-4, rtol=0.)
         (vtk_root / filename.format(1)).unlink(missing_ok=True)
         (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     @utx.skipIfMissingFeatures(["WALBERLA"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
-    def test_ek_vtk(self):
+    def test_ek_species_vtk(self):
         lbf = system.lb
         n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
         if n_ghost_layers > 1:
             ek_species = system.ekcontainer[0]
             vtk_suffix = config.test_name
-            key_auto = f"vtk_out/auto_ek_{vtk_suffix}"
+            key_auto = f"vtk_out/auto_ek_species_{vtk_suffix}"
             vtk_auto = ek_species.vtk_writers[0]
             self.assertIsInstance(
                 vtk_auto, espressomd.electrokinetics.VTKOutput)
@@ -354,7 +409,7 @@ class CheckpointTest(ut.TestCase):
             self.assertEqual(set(vtk_auto.observables), {"density"})
             self.assertIn(
                 f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(vtk_auto))
-            key_manual = f"vtk_out/manual_ek_{vtk_suffix}"
+            key_manual = f"vtk_out/manual_ek_species_{vtk_suffix}"
             vtk_manual = ek_species.vtk_writers[1]
             self.assertIsInstance(
                 vtk_manual, espressomd.electrokinetics.VTKOutput)
@@ -364,17 +419,19 @@ class CheckpointTest(ut.TestCase):
             self.assertIn(
                 f"write to '{key_manual}' on demand>", repr(vtk_manual))
             # check file numbering when resuming VTK write operations
-            vtk_root = pathlib.Path("vtk_out") / f"manual_ek_{vtk_suffix}"
+            vtk_root = pathlib.Path("vtk_out") / \
+                f"manual_ek_species_{vtk_suffix}"
             filename = "simulation_step_{}.vtu"
             self.assertTrue((vtk_root / filename.format(0)).exists())
             self.assertFalse((vtk_root / filename.format(1)).exists())
             self.assertFalse((vtk_root / filename.format(2)).exists())
             # check VTK objects are still synchronized with their EK objects
-            old_density = ek_species[0, 0, 0].density
+            old_density = np.copy(ek_species[:, :, :].density)
             new_density = 1.5 * old_density
-            ek_species[0, 0, 0].density = new_density
+            ek_species[:, :, :].density = new_density
             vtk_manual.write()
-            ek_species[0, 0, 0].density = old_density
+            time.sleep(0.1)  # small delay for file system write latency
+            ek_species[:, :, :].density = old_density
             self.assertTrue((vtk_root / filename.format(0)).exists())
             self.assertTrue((vtk_root / filename.format(1)).exists())
             self.assertFalse((vtk_root / filename.format(2)).exists())
@@ -382,10 +439,66 @@ class CheckpointTest(ut.TestCase):
                 vtk_reader = espressomd.io.vtk.VTKReader()
                 vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
                 ek_density = vtk_data["density"]
-                self.assertAlmostEqual(
-                    ek_density[0, 0, 0], new_density, delta=1e-5)
+                np.testing.assert_allclose(
+                    ek_density[:, :, :], new_density, atol=1e-5, rtol=0.)
             (vtk_root / filename.format(1)).unlink(missing_ok=True)
             (vtk_root / filename.format(2)).unlink(missing_ok=True)
+
+    @utx.skipIfMissingFeatures(["WALBERLA", "FFTW"])
+    @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
+    def test_ek_solver_vtk(self):
+        lbf = system.lb
+        n_ghost_layers = lbf.lattice.get_params()["n_ghost_layers"]
+        if n_ghost_layers > 1:
+            ek_solver = system.ekcontainer.solver
+            vtk_suffix = config.test_name
+            key_auto = f"vtk_out/auto_ek_poisson_{vtk_suffix}"
+            vtk_auto = ek_solver.vtk_writers[0]
+            self.assertIsInstance(
+                vtk_auto, espressomd.electrokinetics.VTKPoissonOutput)
+            self.assertEqual(vtk_auto.vtk_uid, key_auto)
+            self.assertEqual(vtk_auto.delta_N, 1)
+            self.assertTrue(vtk_auto.force_pvtu)
+            self.assertFalse(vtk_auto.enabled)
+            self.assertEqual(set(vtk_auto.observables), {"potential"})
+            self.assertIn(
+                f"write to '{key_auto}' every 1 EK steps (disabled)>", repr(vtk_auto))
+            key_manual = f"vtk_out/manual_ek_poisson_{vtk_suffix}"
+            vtk_manual = ek_solver.vtk_writers[1]
+            self.assertIsInstance(
+                vtk_manual, espressomd.electrokinetics.VTKPoissonOutput)
+            self.assertEqual(vtk_manual.vtk_uid, key_manual)
+            self.assertEqual(vtk_manual.delta_N, 0)
+            self.assertTrue(vtk_auto.force_pvtu)
+            self.assertEqual(set(vtk_manual.observables), {"potential"})
+            self.assertIn(
+                f"write to '{key_manual}' on demand>", repr(vtk_manual))
+            # check file numbering when resuming VTK write operations
+            vtk_root = pathlib.Path("vtk_out") / \
+                f"manual_ek_poisson_{vtk_suffix}"
+            filename = "simulation_step_{}.vtu"
+            self.assertTrue((vtk_root / filename.format(0)).exists())
+            self.assertFalse((vtk_root / filename.format(1)).exists())
+            self.assertFalse((vtk_root / filename.format(2)).exists())
+            # check VTK objects are still synchronized with their EK objects
+            if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+                old_potential = np.copy(ek_solver[:, :, :].potential)
+                new_potential = 1.5 * old_potential
+                ek_solver[:, :, :].potential = new_potential
+                vtk_manual.write()
+                time.sleep(0.1)  # small delay for file system write latency
+                ek_solver[:, :, :].potential = old_potential
+                self.assertTrue((vtk_root / filename.format(0)).exists())
+                self.assertTrue((vtk_root / filename.format(1)).exists())
+                self.assertFalse((vtk_root / filename.format(2)).exists())
+                if "espressomd.io.vtk" in sys.modules:
+                    vtk_reader = espressomd.io.vtk.VTKReader()
+                    vtk_data = vtk_reader.parse(vtk_root / filename.format(1))
+                    ek_potential = vtk_data["potential"]
+                    np.testing.assert_allclose(
+                        ek_potential[:, :, :], new_potential, atol=1e-5, rtol=0.)
+                (vtk_root / filename.format(1)).unlink(missing_ok=True)
+                (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
     def test_system_variables(self):
         cell_system_params = system.cell_system.get_state()
@@ -402,12 +515,12 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf('LB.GPU' in modes, 'Lees-Edwards not implemented for LB GPU')
     @ut.skipIf('INT.NPT' in modes, 'Lees-Edwards not compatible with NPT')
-    @ut.skipIf('LB' in modes and n_nodes not in (1, 2, 3),
+    @ut.skipIf('LB' in modes and not has_lb_lees_edwards,
                'Lees-Edwards not implemented for certain decompositions')
     def test_lees_edwards(self):
         lebc = system.lees_edwards
         protocol = lebc.protocol
-        self.assertEqual(lebc.shear_direction, "z")
+        self.assertEqual(lebc.shear_direction, "x")
         self.assertEqual(lebc.shear_plane_normal, "y")
         self.assertIsInstance(protocol, espressomd.lees_edwards.LinearShear)
         self.assertAlmostEqual(protocol.initial_pos_offset, 0.1, delta=1e-10)
@@ -426,6 +539,8 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(p2.type, 0)
         self.assertEqual(p3.type, 1)
         self.assertEqual(p4.type, 1)
+        self.assertEqual(p1.mol_id, 3)
+        self.assertEqual(p2.mol_id, 0)
         np.testing.assert_allclose(np.copy(p3.v), [0., 0., 0.])
         np.testing.assert_allclose(np.copy(p4.v), [-1., 2., -4.])
         np.testing.assert_allclose(p8.lees_edwards_offset, 0.2)
@@ -443,11 +558,11 @@ class CheckpointTest(ut.TestCase):
             np.testing.assert_allclose(p1.q, 1.)
             if has_drude:
                 # check Drude particles
-                p5 = system.part.by_id(5)
+                p9 = system.part.by_id(9)
                 np.testing.assert_allclose(p2.q, +0.118, atol=1e-3)
-                np.testing.assert_allclose(p5.q, -1.118, atol=1e-3)
+                np.testing.assert_allclose(p9.q, -1.118, atol=1e-3)
                 np.testing.assert_allclose(p2.mass, 0.4)
-                np.testing.assert_allclose(p5.mass, 0.6)
+                np.testing.assert_allclose(p9.mass, 0.6)
             else:
                 np.testing.assert_allclose(p2.q, -1.)
                 np.testing.assert_allclose(p2.mass, 1.)
@@ -544,7 +659,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.lb
         self.assertTrue(thmst.is_active)
         self.assertEqual(thmst.seed, 23)
-        self.assertEqual(thmst.philox_counter, 0)
+        self.assertEqual(thmst.philox_counter, 2)
         self.assertAlmostEqual(thmst.gamma, 2., delta=1e-10)
         self.assertAlmostEqual(system.thermostat.kT, 0., delta=1e-10)
 
@@ -619,7 +734,7 @@ class CheckpointTest(ut.TestCase):
             self.assertAlmostEqual(bond.gamma_com, 0.3, delta=1e-10)
             self.assertAlmostEqual(bond.temp_distance, 0.2, delta=1e-10)
             self.assertAlmostEqual(bond.gamma_distance, 0.5, delta=1e-10)
-            self.assertAlmostEqual(bond.r_cut, 2., delta=1e-10)
+            self.assertAlmostEqual(bond.r_cut, 1.8, delta=1e-10)
 
     def test_integrator(self):
         params = system.integrator.get_params()
@@ -685,7 +800,8 @@ class CheckpointTest(ut.TestCase):
             integ['integrator'],
             espressomd.integrate.StokesianDynamics)
         expected_params = {
-            'approximation_method': 'ft', 'radii': {0: 1.5}, 'viscosity': 0.5,
+            'approximation_method': 'ft', 'viscosity': 0.5,
+            'radii': {i: 1.5 + i / 10. for i in range(8)},
             'lubrication': False, 'pair_mobility': False, 'self_mobility': True}
         params = integ['integrator'].get_params()
         self.assertEqual(params, expected_params)
@@ -722,11 +838,19 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(p4.bonds[0][0].params, reference)
         self.assertAlmostEqual(
             system.bonded_inter[1].params, reference, delta=1e-1)
+        reference = {"bend": 5e-6, "phi0": 3.2}
+        self.assertEqual(p1.bonds[1][0].params, reference)
+        self.assertAlmostEqual(
+            system.bonded_inter[2].params, reference, delta=1e-6)
+        reference = {"mult": 3, "bend": 7e-6, "phase": 4.}
+        self.assertEqual(p1.bonds[2][0].params, reference)
+        self.assertAlmostEqual(
+            system.bonded_inter[3].params, reference, delta=1e-6)
         # all thermalized bonds should be identical
         if has_drude:
             reference = therm_params
-            self.assertEqual(p1.bonds[1][0].params, reference)
-            self.assertEqual(system.bonded_inter[2].params, reference)
+            self.assertEqual(p1.bonds[3][0].params, reference)
+            self.assertEqual(system.bonded_inter[4].params, reference)
             self.assertEqual(therm_bond2.params, reference)
         # immersed boundary bonds
         self.assertEqual(
@@ -772,11 +896,11 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(len(dh.drude_dict), 2)
         self.assertEqual(dh.core_type_list, [core_type])
         self.assertEqual(dh.drude_type_list, [drude_type])
-        self.assertEqual(dh.core_id_from_drude_id, {5: 1})
-        self.assertEqual(dh.drude_id_list, [5])
+        self.assertEqual(dh.core_id_from_drude_id, {9: 1})
+        self.assertEqual(dh.drude_id_list, [9])
 
-    @utx.skipIfMissingFeatures(['VIRTUAL_SITES', 'VIRTUAL_SITES_RELATIVE'])
-    def test_virtual_sites(self):
+    @utx.skipIfMissingFeatures(['VIRTUAL_SITES_RELATIVE'])
+    def test_virtual_sites_rel(self):
         Propagation = espressomd.propagation.Propagation
         p_real = system.part.by_id(0)
         p_virt = system.part.by_id(1)
@@ -791,6 +915,35 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(p_virt.vs_relative[1], np.sqrt(2.))
         np.testing.assert_allclose(
             np.copy(p_real.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
+
+    @utx.skipIfMissingFeatures(['VIRTUAL_SITES_CENTER_OF_MASS'])
+    def test_virtual_sites_com(self):
+        Propagation = espressomd.propagation.Propagation
+        p_real = system.part.by_id(0)
+        p_virt = system.part.by_id(8)
+        prop_flag = Propagation.TRANS_VS_CENTER_OF_MASS
+        self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
+        self.assertEqual(p_virt.propagation, prop_flag)
+        self.assertEqual(p_virt.mol_id, p_real.mol_id)
+
+    @utx.skipIfMissingFeatures(['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES'])
+    @ut.skipIf('THERM.LANGEVIN' not in modes, 'missing a suitable thermostat')
+    def test_thermal_stoner_wohlfarth_virtual_sites(self):
+        p_real, p_virt = system.part.by_ids([11, 12])
+        self.assertEqual(p_virt.magnetodynamics["is_enabled"],
+                         magnetodynamics_params.pop("is_enabled"))
+        for key, value in magnetodynamics_params.items():
+            np.testing.assert_allclose(p_virt.magnetodynamics[key], value)
+        Propagation = espressomd.propagation.Propagation
+        prop_flag = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+        self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)
+        self.assertEqual(p_virt.propagation, prop_flag)
+        self.assertEqual(p_real.vs_relative[0], -1)
+        self.assertEqual(p_virt.vs_relative[0], p_real.id)
+        self.assertEqual(p_real.vs_relative[1], 0.)
+        self.assertEqual(p_virt.vs_relative[1], 0.)
+        np.testing.assert_allclose(
+            np.copy(p_virt.vs_relative[2]), [1., 0., 0., 0.], atol=1e-10)
 
     def test_mean_variance_calculator(self):
         acc_mean_variance = system.auto_update_accumulators[0]
@@ -837,12 +990,18 @@ class CheckpointTest(ut.TestCase):
 
         with h5py.File(h5.file_path, 'r') as cur:
             # compare frame #0 against frame #1
-            def predicate(cur, key):
-                np.testing.assert_allclose(cur[key][0], cur[key][1],
+            def predicate(cur, key, sort=False):
+                if sort:
+                    s0 = np.argsort(cur["particles/atoms/id/value"][0])
+                    s1 = np.argsort(cur["particles/atoms/id/value"][1])
+                else:
+                    s0 = slice(None)
+                    s1 = slice(None)
+                np.testing.assert_allclose(cur[key][0][s0], cur[key][1][s1],
                                            err_msg=f"mismatch for '{key}'")
             for key in ('id', 'position', 'image', 'velocity',
                         'species', 'mass', 'charge', 'force'):
-                predicate(cur, f'particles/atoms/{key}/value')
+                predicate(cur, f'particles/atoms/{key}/value', sort=True)
             for key in ('offset', 'direction', 'normal'):
                 predicate(cur, f'particles/atoms/lees_edwards/{key}/value')
             predicate(cur, 'particles/atoms/box/edges/value')
@@ -881,14 +1040,13 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_p3m_mode, "Skipping test due to missing combination.")
     def test_p3m(self):
         actor = system.electrostatics.solver
-        self.assertIsInstance(actor, espressomd.electrostatics._P3MBase)
-        single_precision = isinstance(actor, espressomd.electrostatics.P3MGPU)
+        self.assertIsInstance(actor, espressomd.electrostatics.P3M)
         state = actor.get_params()
         reference = {'prefactor': 1.0, 'accuracy': 0.1, 'mesh': 3 * [10],
                      'cao': 1, 'alpha': 1.0, 'r_cut': 1.0, 'tune': False,
                      'timings': 15, 'check_neutrality': True,
-                     'tune_limits': [8, 12],
-                     'single_precision': single_precision,
+                     'tune_limits': [8, 12], 'gpu': 'P3M.GPU' in modes,
+                     'single_precision': 'P3M.GPU' in modes,
                      'charge_neutrality_tolerance': 1e-12}
         for key in reference:
             self.assertIn(key, state)
@@ -985,58 +1143,69 @@ class CheckpointTest(ut.TestCase):
         self.assertEqual(list(system.part.by_id(2).exclusions), [0, 1])
 
     def test_constraints(self):
-        n_contraints = 8
-        if espressomd.has_features("ELECTROSTATICS"):
-            n_contraints += 1
-        self.assertEqual(len(system.constraints), n_contraints)
-
-        c = system.constraints
         ref_shape = self.ref_box_l.astype(int) + 2
 
-        self.assertIsInstance(c[0].shape, espressomd.shapes.Sphere)
-        self.assertAlmostEqual(c[0].shape.radius, 0.1, delta=1E-10)
-        self.assertEqual(c[0].particle_type, 7)
+        n = 0
+        c = system.constraints[n]
+        self.assertIsInstance(c.shape, espressomd.shapes.Sphere)
+        self.assertAlmostEqual(c.shape.radius, 0.1, delta=1E-10)
+        self.assertEqual(c.particle_type, 7)
 
-        self.assertIsInstance(c[1].shape, espressomd.shapes.Wall)
-        np.testing.assert_allclose(np.copy(c[1].shape.normal),
+        n += 1
+        c = system.constraints[n]
+        self.assertIsInstance(c.shape, espressomd.shapes.Wall)
+        np.testing.assert_allclose(np.copy(c.shape.normal),
                                    [1. / np.sqrt(3)] * 3)
 
-        self.assertIsInstance(c[2], espressomd.constraints.Gravity)
-        np.testing.assert_allclose(np.copy(c[2].g), [1., 2., 3.])
+        n += 1
+        c = system.constraints[n]
+        self.assertIsInstance(c, espressomd.constraints.Gravity)
+        np.testing.assert_allclose(np.copy(c.g), [1., 2., 3.])
 
+        n += 1
+        c = system.constraints[n]
         self.assertIsInstance(
-            c[3], espressomd.constraints.HomogeneousMagneticField)
-        np.testing.assert_allclose(np.copy(c[3].H), [1., 2., 3.])
+            c, espressomd.constraints.HomogeneousMagneticField)
+        np.testing.assert_allclose(np.copy(c.H), [1., 2., 3.])
 
+        n += 1
+        c = system.constraints[n]
         self.assertIsInstance(
-            c[4], espressomd.constraints.HomogeneousFlowField)
-        np.testing.assert_allclose(np.copy(c[4].u), [1., 2., 3.])
-        self.assertAlmostEqual(c[4].gamma, 2.3, delta=1E-10)
+            c, espressomd.constraints.HomogeneousFlowField)
+        np.testing.assert_allclose(np.copy(c.u), [1., 2., 3.])
+        self.assertAlmostEqual(c.gamma, 2.3, delta=1E-10)
 
-        self.assertIsInstance(c[5], espressomd.constraints.PotentialField)
-        self.assertEqual(c[5].field.shape, tuple(list(ref_shape) + [1]))
-        self.assertAlmostEqual(c[5].default_scale, 1.6, delta=1E-10)
-        self.assertAlmostEqual(c[5].particle_scales[5], 6.0, delta=1E-10)
-        np.testing.assert_allclose(np.copy(c[5].origin), [-0.5, -0.5, -0.5])
-        np.testing.assert_allclose(np.copy(c[5].grid_spacing), np.ones(3))
-        ref_pot = espressomd.constraints.PotentialField(
-            field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6)
-        np.testing.assert_allclose(np.copy(c[5].field), np.copy(ref_pot.field),
-                                   atol=1e-10)
+        if np.prod(system.periodicity):
+            n += 1
+            c = system.constraints[n]
+            self.assertIsInstance(c, espressomd.constraints.PotentialField)
+            self.assertEqual(c.field.shape, tuple(list(ref_shape) + [1]))
+            self.assertAlmostEqual(c.default_scale, 1.6, delta=1E-10)
+            self.assertAlmostEqual(c.particle_scales, {5: 6.0}, delta=1E-10)
+            np.testing.assert_allclose(np.copy(c.origin), [-0.5, -0.5, -0.5])
+            np.testing.assert_allclose(np.copy(c.grid_spacing), np.ones(3))
+            ref_pot = espressomd.constraints.PotentialField(
+                field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6)
+            np.testing.assert_allclose(np.copy(c.field), np.copy(ref_pot.field),
+                                       atol=1e-10)
 
-        self.assertIsInstance(c[6], espressomd.constraints.ForceField)
-        self.assertEqual(c[6].field.shape, tuple(list(ref_shape) + [3]))
-        self.assertAlmostEqual(c[6].default_scale, 1.4, delta=1E-10)
-        np.testing.assert_allclose(np.copy(c[6].origin), [-0.5, -0.5, -0.5])
-        np.testing.assert_allclose(np.copy(c[6].grid_spacing), np.ones(3))
-        ref_vec = espressomd.constraints.ForceField(
-            field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4)
-        np.testing.assert_allclose(np.copy(c[6].field), np.copy(ref_vec.field),
-                                   atol=1e-10)
+            n += 1
+            c = system.constraints[n]
+            self.assertIsInstance(c, espressomd.constraints.ForceField)
+            self.assertEqual(c.field.shape, tuple(list(ref_shape) + [3]))
+            self.assertAlmostEqual(c.default_scale, 1.4, delta=1E-10)
+            np.testing.assert_allclose(np.copy(c.origin), [-0.5, -0.5, -0.5])
+            np.testing.assert_allclose(np.copy(c.grid_spacing), np.ones(3))
+            ref_vec = espressomd.constraints.ForceField(
+                field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4)
+            np.testing.assert_allclose(np.copy(c.field), np.copy(ref_vec.field),
+                                       atol=1e-10)
 
-        union = c[7].shape
+        n += 1
+        c = system.constraints[n]
+        union = c.shape
         self.assertIsInstance(union, espressomd.shapes.Union)
-        self.assertEqual(c[7].particle_type, 2)
+        self.assertEqual(c.particle_type, 2)
         self.assertEqual(len(union), 2)
         wall1, wall2 = union.call_method('get_elements')
         self.assertIsInstance(wall1, espressomd.shapes.Wall)
@@ -1049,13 +1218,16 @@ class CheckpointTest(ut.TestCase):
         np.testing.assert_allclose(wall2.dist, 1.5, atol=1e-10)
 
         if espressomd.has_features("ELECTROSTATICS"):
-            wave = c[n_contraints - 1]
+            n += 1
+            wave = system.constraints[n]
             self.assertIsInstance(
                 wave, espressomd.constraints.ElectricPlaneWave)
             np.testing.assert_allclose(np.copy(wave.E0), [1., -2., 3.])
             np.testing.assert_allclose(np.copy(wave.k), [-.1, .2, .3])
             self.assertAlmostEqual(wave.omega, 5., delta=1E-10)
             self.assertAlmostEqual(wave.phi, 1.4, delta=1E-10)
+
+        self.assertEqual(len(system.constraints), n + 1)
 
     @utx.skipIfMissingFeatures("WCA")
     @ut.skipIf(has_lb_mode, "LB not supported")

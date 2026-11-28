@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -36,13 +36,14 @@
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace Utils {
 namespace detail {
 
 template <typename T, std::size_t N> struct Storage {
-  T m_data[N];
+  T m_data[N] = {};
 
 private:
   friend boost::serialization::access;
@@ -173,15 +174,6 @@ template <typename T, std::size_t N> struct Array {
     }
   }
 
-  DEVICE_QUALIFIER static constexpr Array<T, N>
-  broadcast(const value_type &value) {
-    Array<T, N> ret{};
-    for (size_type i = 0; i != N; ++i) {
-      ret[i] = value;
-    }
-    return ret;
-  }
-
   static constexpr detail::ArrayFormatter formatter(char const *sep = " ") {
     return {sep};
   }
@@ -226,6 +218,11 @@ T const &get(Array<T, N> const &a) noexcept {
 
 } // namespace Utils
 
+// Tuple-like interface for structured bindings.
+// Specializing these for user-defined types is permitted by [namespace.std],
+// but Clang-Tidy 22 reports partial specializations as a false positive.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
+
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Array<T, N>> {
   static_assert(I < N, "Utils::Array index must be in range");
@@ -235,6 +232,8 @@ struct std::tuple_element<I, Utils::Array<T, N>> {
 template <class T, std::size_t N>
 struct std::tuple_size<Utils::Array<T, N>>
     : std::integral_constant<std::size_t, N> {};
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 UTILS_ARRAY_BOOST_MPI_T(Utils::detail::Storage, N)
 UTILS_ARRAY_BOOST_BIT_S(Utils::detail::Storage, N)

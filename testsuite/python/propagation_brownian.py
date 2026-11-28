@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -27,9 +27,10 @@ import numpy as np
 class BrownianThermostat(ut.TestCase):
 
     """Test Brownian Dynamics"""
-    system = espressomd.System(box_l=[1.0, 1.0, 1.0])
+    system = espressomd.System(box_l=[10., 10., 10.])
     system.cell_system.set_regular_decomposition(use_verlet_lists=True)
-    system.cell_system.skin = 0
+    system.cell_system.skin = 0.
+    system.min_global_cut = 2.
     system.periodicity = [False, False, False]
 
     def setUp(self):
@@ -266,6 +267,52 @@ class BrownianThermostat(ut.TestCase):
                 np.testing.assert_allclose(pos, ref_pos, rtol=1e-10)
                 np.testing.assert_allclose(vel, ref_vel, rtol=1e-10)
                 np.testing.assert_allclose(rot, ref_rot, rtol=1e-10)
+
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_body_lab_conversion(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = 1e-4
+        system.thermostat.set_brownian(
+            kT=0., gamma=5., gamma_rotation=5., seed=42)
+        system.integrator.set_brownian_dynamics()
+        ext_torque = np.array([1., -0.5, 2.])
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                            ext_torque=ext_torque)
+        for i in range(4):
+            system.integrator.run(1, recalc_forces=(i == 2))
+            omega_lab = np.copy(p.omega_lab)
+            ref = ext_torque / 5.
+            np.testing.assert_allclose(omega_lab, ref, rtol=1e-10)
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
+    def test_body_lab_vs_relative(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = 1e-4
+        system.thermostat.set_brownian(
+            kT=0., gamma=5., gamma_rotation=5., seed=42)
+        system.integrator.set_brownian_dynamics()
+        ext_force = np.array([1., -0.5, 2.])
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5)
+        p_vs = system.part.add(
+            pos=[0.5, 0.2, -0.3], rotation=3 * [True], ext_force=ext_force)
+        p_vs.vs_auto_relate_to(p)
+
+        # VS relative torques are applied between step 1 and step 2, hence they
+        # are calculated using the positions after the Brownian position update
+        # but before the Brownian rotation update
+        for i in range(4):
+            ref_torque0 = np.cross(np.copy(p_vs.pos - p.pos), ext_force)
+            system.integrator.run(1, recalc_forces=(i == 2))
+            torque_lab = np.copy(p.torque_lab)
+            ref_torque1 = np.cross(np.copy(p_vs.pos - p.pos), ext_force)
+            np.testing.assert_allclose(torque_lab, ref_torque1, rtol=1e-10)
+            omega_lab = np.copy(p.omega_lab)
+            ref_omega = ref_torque0 / 5.
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
 
 
 if __name__ == "__main__":

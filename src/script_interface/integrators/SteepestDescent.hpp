@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,7 +33,7 @@ namespace ScriptInterface {
 namespace Integrators {
 
 class SteepestDescent : public AutoParameters<SteepestDescent, Integrator> {
-  std::shared_ptr<::SteepestDescentParameters> m_instance;
+  std::shared_ptr<::SteepestDescent> m_instance;
 
 public:
   SteepestDescent();
@@ -42,9 +42,7 @@ public:
   Variant integrate(VariantMap const &params) override;
   void activate() override;
 
-  ::SteepestDescentParameters const &get_instance() const {
-    return *m_instance;
-  }
+  ::SteepestDescent const &get_instance() const { return *m_instance; }
 };
 
 } // namespace Integrators

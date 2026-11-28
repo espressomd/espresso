@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -182,7 +182,7 @@ def buckingham_force(r, a, b, c, d, cutoff, discont, shift):
 
 def soft_sphere_potential(r, a, n, cutoff, offset=0):
     V = 0.
-    if r < offset + cutoff:
+    if (r > offset) and (r < offset + cutoff):
         V = a * np.power(r - offset, -n)
     return V
 
@@ -267,6 +267,8 @@ class InteractionsNonBondedTest(ut.TestCase):
     axis /= np.linalg.norm(axis)
     step = axis * 0.01
     step_width = np.linalg.norm(step)
+    with np.printoptions(precision=14, floatmode="fixed", suppress=False):
+        print(f"reproducibility info: {start_pos=} {axis=}")
 
     def setUp(self):
         self.system.part.add(pos=self.start_pos, type=0)
@@ -277,15 +279,20 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.system.part.clear()
 
     # Required, since assertAlmostEqual does NOT check significant places
-    def assertFractionAlmostEqual(self, a, b, **args):
+    def assertFractionAlmostEqual(self, a, b):
         if abs(b) < 1E-8:
-            self.assertAlmostEqual(a, b, **args)
+            # case where b might be zero (division is unsafe) or very close to
+            # zero (will be rounded to zero anyway by assertAlmostEqual).
+            # Anything after the 8th decimal place is irrelevant when the force
+            # or energy is close to zero.
+            self.assertAlmostEqual(a, b)
         else:
-            self.assertAlmostEqual(a / b, 1., **args)
+            # case where dividing by b is safe
+            self.assertAlmostEqual(a / b, 1.)
 
     def assertItemsFractionAlmostEqual(self, a, b):
-        for i, ai in enumerate(a):
-            self.assertFractionAlmostEqual(ai, b[i])
+        for ai, bi in zip(a, b):
+            self.assertFractionAlmostEqual(ai, bi)
 
     # Test Generic Lennard-Jones Potential
     @utx.skipIfMissingFeatures("LENNARD_JONES_GENERIC")
@@ -484,12 +491,13 @@ class InteractionsNonBondedTest(ut.TestCase):
         self.run_test("soft_sphere",
                       {"a": 1.92,
                        "n": 3.03,
-                       "cutoff": 1.123,
-                       "offset": 0.123},
+                       "cutoff": 1.1,
+                       "offset": 0.2},
                       force_kernel=soft_sphere_force,
                       energy_kernel=soft_sphere_potential,
-                      n_steps=113,
-                      n_initial_steps=12)
+                      # avoid catastrophic cancellation at |r - r_off| < 1e-3
+                      n_initial_steps=1e-3,
+                      n_steps=113)
 
     # Test Hertzian Potential
     @utx.skipIfMissingFeatures("HERTZIAN")
@@ -630,28 +638,38 @@ class InteractionsNonBondedTest(ut.TestCase):
             # force equals minus the counter-force
             np.testing.assert_array_equal(f1_sim, -f2_sim)
             # compare force to reference force
-            for i in range(3):
-                self.assertAlmostEqual(f2_sim[i], f2_ref[i], delta=delta)
+            np.testing.assert_allclose(f2_sim, f2_ref, atol=delta, rtol=0.)
+            # Test pressure tensor
+            p_ref = np.einsum("i,j", r, f2_ref) / self.system.volume()
+            p_sim = self.system.analysis.pressure_tensor()["non_bonded"]
+            np.testing.assert_allclose(p_sim, p_ref, atol=delta, rtol=0.)
 
             # Calc torques
-            torque1_sim = p1.torque_lab
-            torque2_sim = p2.torque_lab
+            torque1_sim = np.copy(p1.torque_lab)
+            torque2_sim = np.copy(p2.torque_lab)
             torque1_ref = get_reference_torque(
                 gb_params, r, director1, director2)
             torque2_ref = get_reference_torque(
                 gb_params, r, director2, director1)
             # Test torques
-            for i in range(3):
-                self.assertAlmostEqual(
-                    torque1_sim[i],
-                    torque1_ref[i],
-                    delta=delta)
-                self.assertAlmostEqual(
-                    torque2_sim[i],
-                    torque2_ref[i],
-                    delta=delta)
+            np.testing.assert_allclose(
+                torque1_sim, torque1_ref, atol=delta, rtol=0.)
+            np.testing.assert_allclose(
+                torque2_sim, torque2_ref, atol=delta, rtol=0.)
+
+        # Test beyond cutoff
+        old_pos2 = np.copy(p2.pos)
+        p2.pos = p1.pos + [1.01 * cut, 0., 0.]
+        self.system.integrator.run(recalc_forces=True, steps=0)
+        np.testing.assert_array_equal(np.copy(p1.f), [0., 0., 0.])
+        np.testing.assert_array_equal(np.copy(p2.f), [0., 0., 0.])
+        np.testing.assert_array_equal(np.copy(p1.torque_lab), [0., 0., 0.])
+        np.testing.assert_array_equal(np.copy(p2.torque_lab), [0., 0., 0.])
+        np.testing.assert_array_equal(
+            self.system.analysis.pressure_tensor()["non_bonded"], 0.)
 
         # Test zero energy
+        p2.pos = old_pos2
         self.system.non_bonded_inter[0, 0].gay_berne.set_params(
             sig=sigma_0, cut=0, eps=0, k1=k_1, k2=k_2, mu=mu, nu=nu)
         self.system.integrator.run(0)
@@ -673,7 +691,7 @@ class InteractionsNonBondedTest(ut.TestCase):
         if "espressomd" in force_kernel_varnames:
             force_parameters["espressomd"] = espressomd
 
-        for _ in range(n_steps):
+        for _ in range(n_steps + 1):
             p1.pos = p1.pos + self.step
             d = np.linalg.norm(p1.pos - p0.pos)
             self.system.integrator.run(recalc_forces=True, steps=0)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
-#define CORE_EXTERNAL_FIELD_FIELDS_INTERPOLATED_HPP
 
-#include "utils/interpolation/bspline_3d.hpp"
-#include "utils/interpolation/bspline_3d_gradient.hpp"
-#include <utils/math/tensor_product.hpp>
+#pragma once
 
 #include "jacobian_type.hpp"
+
 #include <utils/Vector.hpp>
+#include <utils/interpolation/bspline_3d.hpp>
+#include <utils/interpolation/bspline_3d_gradient.hpp>
+#include <utils/math/tensor_product.hpp>
 
 /* Turn off range checks if release build. */
 #if defined(NDEBUG) && !defined(BOOST_DISABLE_ASSERTS)
@@ -124,7 +124,7 @@ public:
   }
 
   /*
-   * @brief Evaluate f at pos with the jacobian field value as argument.
+   * @brief Evaluate f at pos with the Jacobian field value as argument.
    */
   jacobian_type jacobian(const Utils::Vector3d &pos, double = {}) const {
     using Utils::Interpolation::bspline_3d_gradient_accumulate;
@@ -136,12 +136,13 @@ public:
 
   bool fits_in_box(const Utils::Vector3d &box) const {
     auto const box_shape = shape();
-    auto const grid_size = Utils::hadamard_product(m_grid_spacing, box_shape);
+    // Due to origin-shifting, we require an additional grid point
+    auto const usable_shape = box_shape - Utils::Vector3i::broadcast(1);
+    auto const grid_size =
+        Utils::hadamard_product(m_grid_spacing, usable_shape);
     return (m_origin < Utils::Vector3d::broadcast(0.)) &&
            ((m_origin + grid_size) >= box);
   }
 };
 } // namespace Fields
 } // namespace FieldCoupling
-
-#endif

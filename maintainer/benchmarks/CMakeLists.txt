@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -109,7 +109,7 @@ python_benchmark(FILE lj.py ARGUMENTS
 python_benchmark(FILE lj.py ARGUMENTS
                  "--particles_per_core=10000;--volume_fraction=0.02")
 python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
-                 "--particles_per_core=500;--mode=benchmark")
+                 "--particles_per_core=500")
 python_benchmark(
   FILE lj.py ARGUMENTS
   "--particles_per_core=1000;--volume_fraction=0.10;--bonds" RUN_WITH_MPI FALSE)
@@ -129,15 +129,19 @@ python_benchmark(
 python_benchmark(FILE ferrofluid.py ARGUMENTS "--particles_per_core=400")
 python_benchmark(FILE mc_acid_base_reservoir.py ARGUMENTS
                  "--particles_per_core=500" RUN_WITH_MPI FALSE)
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--single_precision")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=32")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--single_precision")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=64")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--single_precision")
-python_benchmark(FILE lb.py ARGUMENTS "--box_l=128")
+python_benchmark(FILE lb.py ARGUMENTS
+                 "--box_l=32;--particles_per_core=0;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=32;--particles_per_core=0")
+python_benchmark(FILE lb.py ARGUMENTS
+                 "--box_l=64;--particles_per_core=0;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=64;--particles_per_core=0")
+python_benchmark(FILE lb.py ARGUMENTS
+                 "--box_l=128;--particles_per_core=0;--single_precision")
+python_benchmark(FILE lb.py ARGUMENTS "--box_l=128;--particles_per_core=0")
 if(NOT ESPRESSO_BUILD_WITH_WALBERLA_USE_AVX)
-  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--single_precision")
-  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196")
+  python_benchmark(FILE lb.py ARGUMENTS
+                   "--box_l=196;--particles_per_core=0;--single_precision")
+  python_benchmark(FILE lb.py ARGUMENTS "--box_l=196;--particles_per_core=0")
 endif()
 
 add_custom_target(

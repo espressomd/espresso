@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,7 +33,11 @@ public:
                          VariantMap const &parameters) override;
 };
 
+/** @brief Throw an exception when a feature is missing or not recognized. */
 void check_features(std::vector<std::string> const &features);
+
+/** @brief Generate a message when a feature is missing or not recognized. */
+std::string check_features_msg(std::vector<std::string> const &features);
 
 } // namespace CodeInfo
 } // namespace ScriptInterface

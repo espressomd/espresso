@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -80,4 +80,25 @@ public:
   template <typename T> void acquire_lock(std::shared_ptr<T> resource) {
     m_resources.emplace(std::make_unique<ResourceLockImpl<T>>(resource));
   }
+};
+
+/**
+ * @brief Observer to monitor the lifetime of a shared resource.
+ *
+ * A shared resource whose lifetime isn't managed via a smart pointer
+ * can become a dangling reference. When a resource is centrally managed,
+ * e.g. via a singleton, the singleton interface can be adapted to keep
+ * track of the shared resources lifetime via an "observer" object
+ * that shares the same lifetime.
+ *
+ * This class wraps a type-erased non-owning observer that cannot be promoted
+ * to a shared handle.
+ */
+struct ResourceObserver {
+  template <typename T>
+  ResourceObserver(std::shared_ptr<T> const &status) : m_status(status) {}
+  bool is_valid() const { return m_status.use_count() != 0; }
+
+private:
+  std::weak_ptr<void> m_status;
 };

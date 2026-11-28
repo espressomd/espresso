@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -226,6 +226,7 @@ system.electrostatics.solver = coulomb
 # ### Set up the constant pH ensemble using the reaction ensemble module
 exclusion_range = PARTICLE_SIZE_REDUCED
 RE = espressomd.reaction_methods.ReactionEnsemble(
+    system=system,
     kT=KT_REDUCED,
     exclusion_range=exclusion_range,
     seed=77

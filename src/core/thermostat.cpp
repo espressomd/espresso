@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -22,20 +22,19 @@
  *  Implementation of \ref thermostat.hpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "bonded_interactions/thermalized_bond.hpp"
 #include "communication.hpp"
-#include "dpd.hpp"
 #include "errorhandling.hpp"
+#include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
-#include <variant>
-
 #include <ranges>
+#include <variant>
 
 void Thermostat::Thermostat::recalc_prefactors(double time_step) {
   if (thermalized_bond) {
@@ -49,7 +48,7 @@ void Thermostat::Thermostat::recalc_prefactors(double time_step) {
   }
 #ifdef ESPRESSO_DPD
   if (dpd) {
-    dpd_init(kT, time_step);
+    get_system().nonbonded_ias->dpd_init(kT, time_step);
   }
 #endif
 #ifdef ESPRESSO_NPT

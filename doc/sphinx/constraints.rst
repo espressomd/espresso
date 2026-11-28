@@ -80,7 +80,7 @@ invoke the :meth:`~espressomd.constraints.Constraints.add` method::
 All previously listed shapes can be added to the system constraints
 by passing an initialized shape object to :meth:`~espressomd.constraints.Constraints.add`, returning a constraint object ::
 
-    misshaped = Wall(dist=20, normal=[0.1, 0.0, 1])
+    myShape = Wall(dist=20, normal=[0.1, 0.0, 1])
     myConstraint = system.constraints.add(shape=myShape, particle_type=p_type)
 
 The extra argument ``particle_type`` specifies the non-bonded interaction to be used with
@@ -169,17 +169,10 @@ initial configurations.
 Available shapes
 ^^^^^^^^^^^^^^^^
 
-:class:`espressomd.shapes`
+:mod:`espressomd.shapes`
 
-Python syntax::
-
-    import espressomd.shapes
-    shape = espressomd.shapes.<SHAPE>
-
-``<SHAPE>`` can be any of the available shapes.
-
-The surface's geometry is defined via a few available shapes.
-The following shapes can be used as constraints.
+A shape-based constraint surface's geometry is defined by a shape object,
+or by a collection thereof (:ref:`Shape union`).
 
 .. warning::
    When using shapes with concave edges and corners, the fact that a particle
@@ -209,6 +202,17 @@ Pictured is an example constraint with a ``Wall`` shape created with ::
 
     wall = Wall(dist=20, normal=[0.1, 0.0, 1])
     system.constraints.add(shape=wall, particle_type=0)
+
+When placing two non-penetrable parallel walls in a box, e.g. to simulate a plate capacitor,
+their normal vectors must be collinear but opposite in direction.
+The distance calculation is affected by the sign of the normal vector, like so::
+
+    # two parallel plates oriented such that particles can only be found
+    # on the z-axis in the range [1.5, box_l - 1.5]
+    system.constraints.add(shape=espressomd.shapes.Wall(
+        normal=[0, 0, +1], dist=1.5), particle_type=1)
+    system.constraints.add(shape=espressomd.shapes.Wall(
+        normal=[0, 0, -1], dist=-(system.box_l - 1.5)), particle_type=1)
 
 For penetrable walls, if the ``only_positive`` flag is set to ``True``, interactions
 are only calculated if the particle is on the side of the wall in which the
@@ -463,6 +467,8 @@ Note: in the OpenGL visualizer, if the OpenGL Extrusion library is not available
 the shape surface will be rendered with dots.
 
 
+.. _Shape union:
+
 Union
 """""
 
@@ -471,7 +477,6 @@ Union
 A meta-shape which is the union of given shapes. Note that only the regions where
 all shapes have a "positive distance" (see :ref:`Available options`) can be used for the
 union. The distance to the union is defined as the minimum distance to any contained shape.
-This shape cannot be checkpointed when multiple MPI ranks are used.
 
 
 .. _Available options:

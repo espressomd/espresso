@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -60,7 +60,7 @@ enum H5MDOutputFields : unsigned int {
   H5MD_OUT_VEL = 8u,
   H5MD_OUT_FORCE = 16u,
   H5MD_OUT_MASS = 32u,
-  H5MD_OUT_CHARGE = 16u,
+  H5MD_OUT_CHARGE = 64u,
   H5MD_OUT_BONDS = 128u,
   H5MD_OUT_BOX_L = 256u,
   H5MD_OUT_LE_OFF = 512u,
@@ -170,6 +170,11 @@ public:
 
   /**
    * @brief Method to enforce flushing the buffer to disk.
+   * This pushes all buffers to the Virtual File Driver (VFD) layer.
+   * However, the file superblock, which contains the address space information
+   * (End of Allocation, EOA), won't be flushed. Therefore, the file won't
+   * necessarily be in a guaranteed consistent state for a read operation
+   * by another HDF5 parser. Only the @ref close() method can flush the EOA.
    */
   void flush();
 
@@ -234,8 +239,7 @@ private:
   boost::mpi::communicator m_comm;
   unsigned int m_fields;
   std::unique_ptr<HighFive::File> m_h5md_file;
-  std::unique_ptr<std::unordered_map<std::string, HighFive::DataSet>>
-      m_datasets;
+  std::unordered_map<std::string, HighFive::DataSet> m_datasets;
   Specification m_h5md_specification;
 };
 

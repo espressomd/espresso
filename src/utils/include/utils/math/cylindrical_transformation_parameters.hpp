@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,7 +24,8 @@
 #include <stdexcept>
 #include <string>
 
-#include <utils/math/orthonormal_vec.hpp>
+#include "utils/Vector.hpp"
+#include "utils/math/orthonormal_vec.hpp"
 
 namespace Utils {
 

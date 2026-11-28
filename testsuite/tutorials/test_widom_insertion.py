@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,7 @@
 #
 
 import unittest as ut
-import importlib_wrapper 
+import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(

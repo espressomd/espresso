@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017-2022 The ESPResSo project
+# Copyright (C) 2017-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -55,8 +55,8 @@ class CoulombCloudWallTune(ut.TestCase):
 
     @utx.skipIfMissingGPU()
     def test_p3m_gpu(self):
-        actor = espressomd.electrostatics.P3MGPU(
-            prefactor=1., accuracy=5e-4, tune=True)
+        actor = espressomd.electrostatics.P3M(
+            prefactor=1., accuracy=5e-4, tune=True, gpu=True)
         self.compare(actor)
 
 

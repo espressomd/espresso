@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,6 +20,7 @@ import unittest as ut
 import unittest_decorators as utx
 import numpy as np
 import espressomd
+import espressomd.code_info
 import tests_common
 
 
@@ -83,8 +84,7 @@ class IntegratorNPT:
         avpV_inst = 0
         # averaged virial pressure by get_instantaneous_pressure_virial()
         avp_inst_vir = 0
-        # large sample size needed due to precision loss in fast-math builds
-        n = 55000
+        n = 30000
         skip_p = 8
         ls = np.zeros(n)
         for t in range(n):
@@ -118,6 +118,8 @@ class IntegratorNPT:
         self.assertAlmostEqual(avpV_inst, 100., delta=1.)
 
 
+@ut.skipIf(espressomd.code_info._CodeInfo().call_method("has_fast_math"),
+           "cannot run with fast-math optimizations")
 @utx.skipIfMissingFeatures("NPT")
 class IntegratorNPT_Andersen(IntegratorNPT, ut.TestCase):
     barostat = "Andersen"

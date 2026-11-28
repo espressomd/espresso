@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -42,17 +42,25 @@
 inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
 ThermalizedBond::forces(Particle const &p1, Particle const &p2,
                         Utils::Vector3d const &dx) const {
+  return forces(p1.mass(), p2.mass(), p1.v(), p2.v(), p1.id(), p2.id(), dx);
+}
+
+inline std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
+ThermalizedBond::forces(double const mass1, double const mass2,
+                        Utils::Vector<double, 3> const vel1,
+                        Utils::Vector<double, 3> const vel2, int const id1,
+                        int const id2, Utils::Vector3d const &dx) const {
   // Bond broke?
   if (r_cut > 0.0 && dx.norm() > r_cut) {
     return {};
   }
 
-  auto const mass_tot = p1.mass() + p2.mass();
+  auto const mass_tot = mass1 + mass2;
   auto const mass_tot_inv = 1.0 / mass_tot;
   auto const sqrt_mass_tot = sqrt(mass_tot);
-  auto const sqrt_mass_red = sqrt(p1.mass() * p2.mass() / mass_tot);
-  auto const com_vel = mass_tot_inv * (p1.mass() * p1.v() + p2.mass() * p2.v());
-  auto const dist_vel = p2.v() - p1.v();
+  auto const sqrt_mass_red = sqrt(mass1 * mass2 / mass_tot);
+  auto const com_vel = mass_tot_inv * (mass1 * vel1 + mass2 * vel2);
+  auto const dist_vel = vel2 - vel1;
   auto const thermostat_view = m_thermostat.lock();
   assert(thermostat_view);
   auto const &thermalized_bond = *thermostat_view->thermalized_bond;
@@ -60,8 +68,7 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
   Utils::Vector3d force1{};
   Utils::Vector3d force2{};
   auto const noise = Random::noise_uniform<RNGSalt::THERMALIZED_BOND>(
-      thermalized_bond.rng_counter(), thermalized_bond.rng_seed(), p1.id(),
-      p2.id());
+      thermalized_bond.rng_counter(), thermalized_bond.rng_seed(), id1, id2);
 
   for (unsigned int i = 0u; i < 3u; ++i) {
     double force_lv_com, force_lv_dist;
@@ -82,8 +89,8 @@ ThermalizedBond::forces(Particle const &p1, Particle const &p2,
       force_lv_dist = -pref1_dist * dist_vel[i];
     }
     // Add forces
-    force1[i] = p1.mass() * mass_tot_inv * force_lv_com - force_lv_dist;
-    force2[i] = p2.mass() * mass_tot_inv * force_lv_com + force_lv_dist;
+    force1[i] = mass1 * mass_tot_inv * force_lv_com - force_lv_dist;
+    force2[i] = mass2 * mass_tot_inv * force_lv_com + force_lv_dist;
   }
 
   return std::make_tuple(force1, force2);

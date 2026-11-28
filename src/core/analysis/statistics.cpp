@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -30,8 +30,6 @@
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "errorhandling.hpp"
-#include "npt.hpp"
 #include "particle_reduction.hpp"
 #include "system/System.hpp"
 
@@ -176,6 +174,13 @@ Utils::Vector3d center_of_mass(System::System const &system, int p_type) {
   double mass = 1.; // placeholder value to avoid division by zero
   boost::mpi::reduce(::comm_cart, local_com, com, std::plus<>(), 0);
   boost::mpi::reduce(::comm_cart, local_mass, mass, std::plus<>(), 0);
+  auto invalid_mass = (mass == 0.);
+  boost::mpi::broadcast(::comm_cart, invalid_mass, 0);
+  if (invalid_mass) {
+    throw std::runtime_error(
+        "Cannot calculate the center of mass: no particle with non-zero mass "
+        "of the given type(s) was found");
+  }
   return com / mass;
 }
 
@@ -203,6 +208,11 @@ Utils::Vector9d gyration_tensor(System::System const &system,
 
   Utils::Vector9d mat{};
   if (::comm_cart.rank() == 0) {
+    if (buf_pos.empty()) {
+      throw std::runtime_error(
+          "Cannot calculate the gyration tensor: no particle of the given "
+          "type(s) was found");
+    }
     auto const center =
         std::accumulate(buf_pos.begin(), buf_pos.end(), Utils::Vector3d{}) /
         static_cast<double>(buf_pos.size());

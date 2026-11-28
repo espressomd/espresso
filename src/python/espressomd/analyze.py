@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -111,7 +111,8 @@ class Analysis(ScriptInterfaceHelper):
         ----------
         p_type : :obj:`int`
             Particle :attr:`~espressomd.particle_data.ParticleHandle.type`
-            for which to calculate the center of mass.
+            for which to calculate the center of mass, or ``-1`` for all
+            particles.
 
         Returns
         -------
@@ -324,6 +325,15 @@ class Analysis(ScriptInterfaceHelper):
             Where [0] contains the midpoints of the bins,
             and [1] contains the values of the minimal distance distribution function.
 
+    potential_energy()
+        Calculate the potential energy of the system, i.e. the total energy
+        minus the kinetic energy.
+
+        Returns
+        -------
+        :obj: `float`
+            Potential energy.
+
     """
     _so_name = "Analysis::Analysis"
     _so_creation_policy = "GLOBAL"
@@ -331,6 +341,7 @@ class Analysis(ScriptInterfaceHelper):
         "linear_momentum",
         "center_of_mass",
         "nbhood",
+        "potential_energy",
         "particle_neighbor_pids",
         "calc_re",
         "calc_rg",
@@ -398,7 +409,11 @@ class Analysis(ScriptInterfaceHelper):
               :math:`E^{\\mathrm{coulomb}}/(3V)`, see :cite:`brown95a`.
             * ``"coulomb", <i>``: Coulomb pressure from particle pairs
               (``i=0``), electrostatics solvers (``i=1``)
-            * ``"dipolar"``: not implemented
+            * ``"dipolar"``: dipolar pressure, how it is calculated depends
+              on the method. It is equivalent to 1/3 of the trace of the
+              dipolar pressure tensor.
+            * ``"dipolar", <i>``: dipolar pressure from particle pairs
+              (``i=0``), magnetostatics solvers (``i=1``)
             * ``"virtual_sites"``: Pressure contribution from virtual sites
             * ``"external_fields"``: external fields contribution
 
@@ -439,7 +454,10 @@ class Analysis(ScriptInterfaceHelper):
               depends on the method
             * ``"coulomb", <i>``: Maxwell pressure tensor from particle pairs
               (``i=0``), electrostatics solvers (``i=1``)
-            * ``"dipolar"``: not implemented
+            * ``"dipolar"``: dipolar pressure tensor, how it is calculated
+              depends on the method
+            * ``"dipolar", <i>``: dipolar pressure tensor from particle pairs
+              (``i=0``), magnetostatics solvers (``i=1``)
             * ``"virtual_sites"``: pressure tensor contribution from virtual sites
             * ``"external_fields"``: external fields contribution
 
@@ -448,11 +466,17 @@ class Analysis(ScriptInterfaceHelper):
         return self._generate_summary(observable, 9, False)
 
     def get_instantaneous_pressure(self):
+        """
+        Get the instantaneous pressure.
+        """
         assert_features("NPT")
         observable = self.call_method("get_instantaneous_pressure")
         return observable
 
     def get_instantaneous_pressure_virial(self):
+        """
+        Get the instantaneous virial pressure.
+        """
         assert_features("NPT")
         observable = self.call_method("get_instantaneous_pressure_virial")
         return observable
@@ -506,9 +530,13 @@ class Analysis(ScriptInterfaceHelper):
         observable = self.call_method("calculate_energy")
         return self._generate_summary(observable, 1, False)
 
-    def particle_energy(self, particle):
+    def particle_non_bonded_energy(self, particle):
         """
         Calculate the non-bonded energy of a single given particle.
+
+        This excludes the short-range part of electrostatics and magnetostatics
+        solvers, as well as corrections implemented as non-bonded interactions
+        (e.g. :ref:`Thole correction`).
 
         Parameters
         ----------
@@ -516,7 +544,7 @@ class Analysis(ScriptInterfaceHelper):
 
         Returns
         -------
-        :obj: `float`
+        :obj:`float`
             Non-bonded energy of that particle
 
         """
@@ -541,9 +569,19 @@ class Analysis(ScriptInterfaceHelper):
         return self.call_method("particle_bond_energy", pid=particle.id,
                                 bond_id=interaction._bond_id, partners=partners)
 
-    def dpd_stress(self):
+    def dpd_pressure(self):
+        """
+        Calculate the DPD interaction contribution to the pressure tensor.
+        It contains the dissipative and random (noise) contributions:
+        :math:`P^{\\nu\\mu} = V^{-1}\\sum_i \\sum_{j < i}
+        r_{i,j}^{\\nu} F_{i,j}^{\\mu}`
+        where :math:`F_{i,j}` is the DPD force (dissipative plus noise)
+        exerted by particle j on particle i, :math:`r_{i,j}` is their
+        distance vector, and :math:`V` is the box volume. This equals the
+        ``"dpd"`` contribution of :meth:`pressure_tensor`.
+        """
         assert_features("DPD")
-        return np.reshape(self.call_method("dpd_stress"), (3, 3))
+        return np.reshape(self.call_method("dpd_pressure"), (3, 3))
 
     def gyration_tensor(self, p_type=None):
         """

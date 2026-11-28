@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2025 The ESPResSo project
+# Copyright (C) 2018-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,27 +28,39 @@ if(ESPRESSO_BUILD_WITH_FFTW)
   target_compile_options(
     espresso_p3m_compiler_flags
     INTERFACE
-      $<$<COMPILE_LANGUAGE:CXX>:-Wno-float-conversion>
+      $<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,CrayClang,AppleClang,IntelLLVM>:-Wno-float-conversion>
       $<$<COMPILE_LANG_AND_ID:CXX,Clang,AppleClang,IntelLLVM>:-Wno-implicit-float-conversion>
   )
   target_link_libraries(
     espresso_p3m
-    PRIVATE
-      espresso::compiler_flags
-      espresso::p3m::compiler_flags
-      espresso::instrumentation
-      espresso::utils
-      espresso::config
-      Random123
-      Boost::mpi
-      MPI::MPI_CXX
-      Heffte::Heffte
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
-      $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>)
+    PRIVATE espresso::compiler_flags
+            espresso::p3m::compiler_flags
+            espresso::instrumentation
+            espresso::utils
+            espresso::config
+            Random123
+            Boost::mpi
+            MPI::MPI_CXX
+            Heffte::Heffte
+            OpenMP::OpenMP_CXX
+            $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+            Kokkos::kokkos
+            Cabana::Core)
   set_target_properties(espresso_p3m PROPERTIES POSITION_INDEPENDENT_CODE ON)
   target_link_libraries(espresso_core PRIVATE espresso_p3m)
   target_sources(
-    espresso_p3m PRIVATE common.cpp send_mesh.cpp TuningAlgorithm.cpp
-                         FFTBackendLegacy.cpp FFTBuffersLegacy.cpp)
+    espresso_p3m
+    PRIVATE common.cpp send_mesh.cpp TuningAlgorithm.cpp FFTBackendLegacy.cpp
+            FFTBuffersLegacy.cpp P3MFFTBackendFactory.cpp)
+  if(ESPRESSO_BUILD_WITH_KOKKOS_FFT)
+    target_link_libraries(espresso_p3m PRIVATE KokkosFFT::fft)
+    target_compile_definitions(espresso_p3m PRIVATE ESPRESSO_KOKKOS_FFT)
+  endif()
+  set_property(
+    SOURCE ../electrostatics/p3m.cpp ../magnetostatics/dp3m_heffte.cpp
+    APPEND
+    PROPERTY
+      COMPILE_OPTIONS
+      $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
+      $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 endif()

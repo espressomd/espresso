@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -70,4 +70,5 @@
 // Further features
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
+#define VIRTUAL_SITES_CENTER_OF_MASS
 #define COLLISION_DETECTION

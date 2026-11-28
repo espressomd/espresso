@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -62,14 +62,16 @@ public:
   [[nodiscard]] virtual std::optional<double>
   get_node_potential(Utils::Vector3i const &node,
                      bool consider_ghosts = false) = 0;
+  virtual bool set_node_potential(Utils::Vector3i const &node,
+                                  double potential) = 0;
 
   [[nodiscard]] virtual std::vector<double>
   get_slice_potential(Utils::Vector3i const &lower_corner,
                       Utils::Vector3i const &upper_corner) const = 0;
-
-  void register_vtk_field_writers(walberla::vtk::VTKOutput &,
-                                  LatticeModel::units_map const &,
-                                  int) override {}
+  virtual void set_slice_potential(Utils::Vector3i const &lower_corner,
+                                   Utils::Vector3i const &upper_corner,
+                                   std::vector<double> const &potential) = 0;
+  virtual void ghost_communication() = 0;
 
   virtual void setup_fft(bool use_gpu_aware) = 0;
 
@@ -77,7 +79,6 @@ public:
   [[nodiscard]] virtual bool is_double_precision() const noexcept = 0;
 
 protected:
-  void integrate_vtk_writers() override {}
   void register_vtk_field_filters(walberla::vtk::VTKOutput &) override {}
 };
 

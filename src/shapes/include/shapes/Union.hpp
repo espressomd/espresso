@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_UNION
-#define SHAPES_UNION
+#pragma once
 
 #include "Shape.hpp"
 
@@ -86,5 +85,3 @@ private:
 };
 
 } // namespace Shapes
-
-#endif

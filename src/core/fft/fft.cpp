@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -40,15 +40,14 @@
 
 #include <fftw3.h>
 
-#ifdef _OPENMP
 #include <omp.h>
-#endif
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <complex>
 #include <cstddef>
-#include <cstdio>
-#include <cstring>
+#include <limits>
 #include <optional>
 #include <span>
 #include <stdexcept>
@@ -681,19 +680,15 @@ int fft_data_struct<FloatType>::initialize_fft(
   /* === FFT Routines (Using FFTW / RFFTW package)=== */
   for (int i = 1; i < 4; i++) {
     if (init_tag) {
-#ifdef _OPENMP
 #pragma omp critical(fftw_destroy_plan_forward)
       forw[i].destroy_plan();
-#endif
     }
     forw[i].dir = FFTW_FORWARD;
-#ifdef _OPENMP
 #pragma omp critical(fftw_create_plan_forward)
     forw[i].plan_handle = fftw<FloatType>::plan_many_dft(
         1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data, nullptr, 1,
         forw[i].new_mesh[2], c_data, nullptr, 1, forw[i].new_mesh[2],
         forw[i].dir, FFTW_PATIENT);
-#endif
     assert(forw[i].plan_handle);
   }
 
@@ -701,19 +696,15 @@ int fft_data_struct<FloatType>::initialize_fft(
   /* this is needed because slightly different functions are used */
   for (int i = 1; i < 4; i++) {
     if (init_tag) {
-#ifdef _OPENMP
 #pragma omp critical(fftw_destroy_plan_backward)
       back[i].destroy_plan();
-#endif
     }
     back[i].dir = FFTW_BACKWARD;
-#ifdef _OPENMP
 #pragma omp critical(fftw_create_plan_backward)
     back[i].plan_handle = fftw<FloatType>::plan_many_dft(
         1, &forw[i].new_mesh[2], forw[i].n_ffts, c_data, nullptr, 1,
         forw[i].new_mesh[2], c_data, nullptr, 1, forw[i].new_mesh[2],
         back[i].dir, FFTW_PATIENT);
-#endif
     back[i].pack_function = pack_block_permute1;
     assert(back[i].plan_handle);
   }
@@ -801,8 +792,8 @@ template <typename FloatType> void fft_plan<FloatType>::destroy_plan() {
 }
 
 template <class FloatType>
-FloatType *allocator<FloatType>::allocate(const std::size_t n) const {
-  if (n == 0) {
+FloatType *allocator<FloatType>::allocate(std::size_t const n) const {
+  if (n == 0ul) {
     return nullptr;
   }
   if (n > std::numeric_limits<std::size_t>::max() / sizeof(FloatType)) {
@@ -823,6 +814,8 @@ void allocator<FloatType>::deallocate(FloatType *const p,
 
 template struct allocator<float>;
 template struct allocator<double>;
+template struct allocator<std::complex<float>>;
+template struct allocator<std::complex<double>>;
 
 template struct fft_plan<float>;
 template struct fft_plan<double>;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,10 +33,10 @@ public:
   std::vector<std::size_t> shape() const override { return {1u}; }
   std::vector<double>
   operator()(boost::mpi::communicator const &) const override {
-    auto const obs = System::get_system().calculate_pressure();
+    auto const &obs = System::get_system().calculate_pressure();
 
-    return {(obs->accumulate(0., 0u) + obs->accumulate(0., 4u) +
-             obs->accumulate(0., 8u)) /
+    return {(obs.accumulate(0., 0u) + obs.accumulate(0., 4u) +
+             obs.accumulate(0., 8u)) /
             3.};
   }
 };

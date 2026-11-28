@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,12 +16,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UTILS_DEMANGLE_HPP
-#define UTILS_DEMANGLE_HPP
+
+#pragma once
 
 #include <boost/core/demangle.hpp>
 
 #include <string>
+#include <typeinfo>
 
 namespace Utils {
 /**
@@ -37,5 +38,3 @@ template <class T> std::string demangle() {
   return boost::core::demangle(typeid(T).name());
 }
 } // namespace Utils
-
-#endif // UTILS_DEMANGLE_HPP

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -553,8 +553,8 @@ private:
     } else if (shape_name == "Initial") {
       flat = false;
     } else {
-      throw std::invalid_argument("Invalid value for parameter 'refShape': '" +
-                                  shape_name + "'");
+      std::string const context{"Invalid value for parameter 'refShape'"};
+      throw std::invalid_argument(context + ": '" + shape_name + "'");
     }
     auto bond = CoreBondedInteraction(
         get_value<int>(params, "ind1"), get_value<int>(params, "ind2"),

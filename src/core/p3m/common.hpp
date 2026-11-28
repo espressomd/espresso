@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -37,6 +37,7 @@
 #include <config/config.hpp>
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <algorithm>
 #include <array>
@@ -49,10 +50,15 @@ inline auto constexpr P3M_EPSILON_METALLIC = 0.0;
 
 #include "LocalBox.hpp"
 
+#include <Kokkos_Core.hpp>
+
 #include <cstddef>
+#include <exception>
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 /** @brief P3M kernel architecture. */
 enum class Arch { CPU, CUDA };
@@ -159,8 +165,8 @@ struct P3MParameters {
    * @ref P3MParameters::cao_cut "cao_cut".
    */
   void recalc_a_ai_cao_cut(Utils::Vector3d const &box_l) {
+    a = Utils::hadamard_division(box_l, mesh);
     ai = Utils::hadamard_division(mesh, box_l);
-    a = Utils::hadamard_division(Utils::Vector3d::broadcast(1.), ai);
     cao_cut = (static_cast<double>(cao) / 2.) * a;
   }
 
@@ -173,7 +179,19 @@ struct P3MParameters {
   }
 };
 
-/** @brief Properties of the local mesh. */
+/**
+ * @brief Properties of the local mesh and halo region.
+ * The thickness of the halo region depends on the following parameters:
+ * - The half-width of the charge-assignment stencil (cao_cut = cao/2*a).
+ *   A charge at position (0,0,0) is spread onto a cube of width cao, hence
+ *   the half-width must be padded on both sides of the local domain.
+ * - The Verlet list skin must be added extra, since particles are not resorted
+ *   at every time step, but rather when they moved more than one skin.
+ * - The ELC space layer is also needed when dielectric contrast is active,
+ *   since real charges within `space_layer` of the bottom wall induce image
+ *   charges outside the simulation box, hence the halo region is thicker
+ *   in the non-periodic direction.
+ */
 struct P3MLocalMesh {
   /** dimension (size) of local mesh including halo layers. */
   Utils::Vector3i dim;
@@ -251,6 +269,39 @@ struct TuningParameters {
   bool verbose;
 };
 
+/**
+ * @brief Adapt an influence function grid for real-to-complex FFTs.
+ * @param[in]     global_size   size of the global mesh grid
+ * @param[in]     local_size    size of the local mesh grid
+ * @param[in]     local_origin  offset of the local mesh grid
+ * @param[in,out] g_function    influence function grid to modify in-place
+ * @tparam        r2c_dir       direction of the reduced dimension
+ */
+template <unsigned int r2c_dir>
+void influence_function_r2c(auto &g_function, auto const &global_size,
+                            auto const &local_size, auto const &local_origin) {
+  auto const cutoff_right = global_size[r2c_dir] / 2 - local_origin[r2c_dir];
+  std::remove_cvref_t<decltype(g_function)> g_function_r2c;
+  g_function_r2c.reserve(g_function.size() / 2ul);
+  auto local_index = Utils::Vector3i::broadcast(0);
+  auto &short_dim = local_index[r2c_dir];
+  auto &nx = local_index[0u];
+  auto &ny = local_index[1u];
+  auto &nz = local_index[2u];
+  std::size_t index = 0u;
+  for (nx = 0; nx < local_size[0u]; ++nx) {
+    for (ny = 0; ny < local_size[1u]; ++ny) {
+      for (nz = 0; nz < local_size[2u]; ++nz) {
+        if (short_dim <= cutoff_right) {
+          g_function_r2c.emplace_back(g_function[index]);
+        }
+        ++index;
+      }
+    }
+  }
+  std::swap(g_function, g_function_r2c);
+}
+
 #endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 /** @brief Calculate indices that shift @ref P3MParameters::mesh by `mesh/2`.
@@ -277,3 +328,36 @@ std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
 
   return ret;
 }
+
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+template <Utils::MemoryOrder RSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
+          Utils::MemoryOrder KSpaceOrder = Utils::MemoryOrder::ROW_MAJOR,
+          bool UseR2C = false, unsigned int R2CDir = 2u>
+struct P3MFFTConfig {
+  /** @brief Data layout of the input real-space 3D matrix. */
+  using r_space_layout =
+      std::conditional_t<RSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
+  /** @brief Data layout of the output k-space 3D matrix. */
+  using k_space_layout =
+      std::conditional_t<KSpaceOrder == Utils::MemoryOrder::ROW_MAJOR,
+                         Kokkos::LayoutRight, Kokkos::LayoutLeft>;
+  /** @brief Data layout of the input real-space 3D matrix. */
+  static auto constexpr r_space_order = RSpaceOrder;
+  /** @brief Data layout of the output k-space 3D matrix. */
+  static auto constexpr k_space_order = KSpaceOrder;
+  /** @brief Use real-to-complex implementation. */
+  static auto constexpr use_r2c = UseR2C;
+  /** @brief Direction of the reduced dimension (if @c use_r2c is true). */
+  static auto constexpr r2c_dir = R2CDir;
+};
+
+class p3m_tuning_exception : public std::exception {
+  std::string m_msg;
+
+public:
+  p3m_tuning_exception(std::string msg) : m_msg{std::move(msg)} {}
+  char const *what() const noexcept override { return m_msg.c_str(); }
+};
+
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

@@ -1,0 +1,26 @@
+{
+  "image": "ghcr.io/espressomd/docker/fedora:d5ac9f0a0e44f3ade96f58672b311147851855d3",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "workbench.editorAssociations": {
+            "*.md": "vscode.markdown.preview.editor"
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter-renderers"
+      ]
+    },
+    "codespaces": {
+      "openFiles": [
+        ".devcontainer/Readme.md",
+        "doc/tutorials/Readme.md"
+      ]
+    }
+  },
+  "features": {}
+}

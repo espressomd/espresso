@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -27,11 +27,12 @@
  *  For more information see \ref rattle.cpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_BOND_CONSTRAINT
 
 #include "BoxGeometry.hpp"
+#include "ParticleRange.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 
@@ -45,9 +46,12 @@ void save_old_position(ParticleRange const &particles,
 /**
  * @brief Propagate velocity and position while using SHAKE algorithm for bond
  * constraint.
+ *
+ * Accumulate the per-bond-type RATTLE constraint virial into
+ * @ref BondedInteractionsMap::rigid_bond_virial "bonded_ias.rigid_bond_virial".
  */
 void correct_position_shake(CellStructure &cs, BoxGeometry const &box_geo,
-                            BondedInteractionsMap const &bonded_ias);
+                            BondedInteractionsMap &bonded_ias);
 
 /**
  * @brief Correction of current velocities using RATTLE algorithm.

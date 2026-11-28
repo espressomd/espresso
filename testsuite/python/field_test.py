@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -285,6 +285,20 @@ class FieldTest(ut.TestCase):
         with self.assertRaisesRegex(RuntimeError, err_msg):
             field = Field(field=grid[:, 2:, :], grid_spacing=h, gamma=1.)
             self.system.constraints.add(field)
+
+        xy_n = 3
+        box_l = np.array(self.system.box_l)
+        # put a wrong xy_spacing
+        xy_spacing = box_l[0] / (xy_n - 1)
+        z_spacing = 1.0
+        z_n = int(np.ceil(box_l[2] / z_spacing)) + 2
+        field_wrong = np.zeros((xy_n, xy_n, z_n, 3))
+        with self.assertRaisesRegex(RuntimeError, err_msg):
+            F = espressomd.constraints.ForceField(
+                field=field_wrong,
+                grid_spacing=[xy_spacing, xy_spacing, z_spacing],
+                default_scale=1.)
+            self.system.constraints.add(F)
 
         self.assertEqual(len(self.system.constraints), 0)
 

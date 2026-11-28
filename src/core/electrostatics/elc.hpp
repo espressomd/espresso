@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -41,14 +41,16 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "aosoa_pack.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -115,7 +117,6 @@ struct elc_data {
   /** The space that is finally left. */
   double space_box;
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
                                       std::size_t p1, std::size_t p2,
@@ -139,7 +140,6 @@ struct elc_data {
       kernel(q_eff, d);
     }
   }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   /// pairwise contributions from lower and upper layers
   void dielectric_layers_contribution(BoxGeometry const &box_geo,
@@ -206,7 +206,6 @@ struct ElectrostaticLayerCorrection
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
-    sanity_checks_dielectric_contrasts();
     /* Most ELC parameters do not depend on the P3M parameters,
      * but the P3M parameters depend on the ELC parameters during tuning,
      * therefore ELC needs to be tuned before P3M. */
@@ -257,7 +256,6 @@ struct ElectrostaticLayerCorrection
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
-    sanity_checks_dielectric_contrasts();
     visit_base_solver([](auto &actor) { actor->sanity_checks(); });
   }
 
@@ -273,7 +271,13 @@ struct ElectrostaticLayerCorrection
     return {};
   }
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
+  Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
+                             double dist) const {
+    return std::visit(
+        [&](auto &solver) { return solver->pair_force(q1q2, d, dist); },
+        base_solver);
+  }
+
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(std::size_t p1, std::size_t p2, auto &aosoa,
                                 double q1q2) const {
@@ -299,7 +303,6 @@ struct ElectrostaticLayerCorrection
     }
     return energy;
   }
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
   /** @brief Calculate short-range pair energy correction. */
   double pair_energy_correction(Utils::Vector3d const &pos1,
@@ -338,13 +341,15 @@ struct ElectrostaticLayerCorrection
       std::visit(
           [this, &pos1, &pos2, &p1f_asym, &p2f_asym, q1q2](auto &p3m_ptr) {
             auto const &p3m = *p3m_ptr;
+            // force on particle 1 exerted by the images of particle 2
             elc.dielectric_layers_contribution(
-                *m_box_geo, pos1, pos2, q1q2,
+                *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p1f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
+            // force on particle 2 exerted by the images of particle 1
             elc.dielectric_layers_contribution(
-                *m_box_geo, pos2, pos1, q1q2,
+                *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p2f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
@@ -353,8 +358,10 @@ struct ElectrostaticLayerCorrection
     }
   }
 
-  double long_range_energy(ParticleRange const &particles) const;
-  void add_long_range_forces(ParticleRange const &particles) const;
+  /** @brief Calculate long-range electrostatic energy with corrections. */
+  double long_range_energy() const;
+  /** @brief Accumulate long-range electrostatic forces with corrections. */
+  void add_long_range_forces() const;
 
 private:
   /** Check if a charged particle is in the gap region. */
@@ -362,10 +369,10 @@ private:
   double tune_far_cut() const;
   void adapt_solver();
   /** pairwise contributions from the lowest and top layers to the energy */
-  double dipole_energy(ParticleRange const &particles) const;
-  void add_dipole_force(ParticleRange const &particles) const;
-  double z_energy(ParticleRange const &particles) const;
-  void add_z_force(ParticleRange const &particles) const;
+  double dipole_energy() const;
+  void add_dipole_force() const;
+  double z_energy() const;
+  void add_z_force() const;
 
   void recalc_box_h();
   void recalc_far_cut() {
@@ -378,12 +385,11 @@ private:
 
   void sanity_checks_cell_structure() const {}
   void sanity_checks_periodicity() const;
-  void sanity_checks_dielectric_contrasts() const;
 
   /// the force calculation
-  void add_force(ParticleRange const &particles) const;
+  void add_force() const;
   /// the energy calculation
-  double calc_energy(ParticleRange const &particles) const;
+  double calc_energy() const;
 
   void visit_base_solver(auto &&visitor) const {
     std::visit(visitor, base_solver);

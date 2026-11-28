@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -20,6 +20,7 @@
 #pragma once
 
 #include <cstddef>
+#include <iterator>
 #include <memory>
 #include <random>
 #include <type_traits>
@@ -34,6 +35,7 @@ public:
   using value_type = const Value *;
   using size_type = typename map_type::size_type;
 
+  // NOLINTNEXTLINE(bugprone-random-generator-seed)
   Cache() {
     /* Default to maximal size of our map. */
     m_max_size = m_cache.max_size();
@@ -94,7 +96,7 @@ public:
   void invalidate() { m_cache.clear(); }
 
   /** @brief Query if k is contained in the cache. */
-  bool has(Key const &k) const { return m_cache.find(k) != m_cache.end(); }
+  bool has(Key const &k) const { return m_cache.contains(k); }
 
   /** @brief Number of elements currently cached. */
   size_type size() const { return m_cache.size(); }

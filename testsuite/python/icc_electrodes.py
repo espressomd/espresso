@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023-2025 The ESPResSo project
+# Copyright (C) 2023-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ import espressomd.electrostatic_extensions
 import numpy as np
 
 
-@utx.skipIfMissingFeatures(["ELECTROSTATICS", "EXTERNAL_FORCES"])
+@utx.skipIfMissingFeatures(["ELECTROSTATICS", "P3M", "EXTERNAL_FORCES"])
 class Test(ut.TestCase):
 
     def test_electrodes(self):

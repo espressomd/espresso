@@ -28,10 +28,9 @@ This means, however, that learning how to compile is a necessary evil.
 The build system of |es| uses CMake to compile
 software easily on a wide range of platforms.
 
-Users who only need a "default" installation of |es| and have an account
-on the `Gitpod <https://gitpod.io>`__ platform can build the software
-automatically in the cloud and skip this chapter. For more details on
-running |es| in Gitpod, go to section :ref:`Running in the cloud`.
+Users who only need a "default" installation of |es| and have a GitHub account
+can build the software automatically in the cloud and directly go to section
+:ref:`Using Codespaces`.
 
 Quickstart
 ----------
@@ -69,19 +68,31 @@ are required to be able to compile and use |es|:
 
     C++ compiler
         The C++ core of |es| needs to be built by a C++20-capable compiler.
+        The build system will identify the compiler toolchain version
+        and warn if it is unsupported.
+
+        When using Clang-based compiler toolchains with the GCC C++ library,
+        extra compiler and linker flags may be required for the compiler
+        toolchain to select a supported libstdc++ version.
+        On HPC clusters where the main compiler toolchain picks up
+        the operating system's default GCC version, the issue is sometimes
+        resolved by simply module loading both the main compiler toolchain
+        and a recent GCC compiler toolchain.
 
     Boost
         A number of advanced C++ features used by |es| are provided by Boost.
+        The Boost.MPI component is required. On HPC clusters where Boost is
+        packaged without Boost.MPI, one has to build Boost from sources.
 
     FFTW
         For some algorithms like |p3m|, |es| needs the FFTW library
         version 3 or later [5]_ for Fourier transforms, including header files.
-        |es| leverages heFFTe :cite:`ayala20a`.
+        |es| leverages heFFTe :cite:`ayala20a` and kokkos-fft :cite:`asahi25a`.
 
     CUDA
-        For some algorithms like |p3m|,
+        For some algorithms like |p3m| and lattice-Boltzmann,
         |es| provides GPU-accelerated implementations for NVIDIA GPUs.
-        We require CUDA 12.0 or later [6]_.
+        CUDA 12.4 or later [6]_ is required.
 
     MPI
         An MPI library that implements the MPI standard version 1.2 is required
@@ -102,8 +113,8 @@ are required to be able to compile and use |es|:
         "none" to disable binding (can cause performance loss).
 
     OpenMP
-        A compiler that implements the OpenMP standard version 5.0 is required
-        to run simulations with shared-memory parallelization.
+        A compiler toolchain that implements the OpenMP standard version 5.0
+        is required to run simulations with shared-memory parallelization.
         |es| leverages Kokkos :cite:`trott22a` and Cabana :cite:`slattery22a`.
 
     Python
@@ -141,13 +152,13 @@ are required to be able to compile and use |es|:
 Installing requirements on Ubuntu
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To compile |es| on Ubuntu 24.04 LTS, install the following build dependencies:
+To compile |es| on Ubuntu 26.04 LTS, install the following build dependencies:
 
 .. code-block:: bash
 
-    sudo apt install build-essential cmake cmake-curses-gui python3-dev openmpi-bin \
+    sudo apt install build-essential cmake cmake-curses-gui python3-dev cython3 openmpi-bin \
       libboost-all-dev libfftw3-dev libfftw3-mpi-dev libhdf5-dev libhdf5-openmpi-dev \
-      python3-pip libgsl-dev freeglut3-dev
+      python3-pip libgsl-dev freeglut3-dev libnlopt-cxx-dev
 
 To run |es|, install the following Python dependencies:
 
@@ -156,7 +167,7 @@ To run |es|, install the following Python dependencies:
     python3 -m venv espresso_env # here other virtual environment tools are also ok
     . espresso_env/bin/activate
     python3 -m pip install -c requirements.txt \
-      cmake cython numpy scipy packaging setuptools h5py
+      numpy scipy packaging setuptools h5py vtk
 
 These are the only hard requirements. In the following subsections,
 only optional dependencies will be discussed. Unless you need extra features,
@@ -180,12 +191,20 @@ paths before building the project, for example via environment variables:
 
 .. code-block:: bash
 
-    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-12.0"
+    export CUDA_TOOLKIT_ROOT_DIR="/usr/local/cuda-12.8"
     export PATH="${CUDA_TOOLKIT_ROOT_DIR}/bin${PATH:+:$PATH}"
     export LD_LIBRARY_PATH="${CUDA_TOOLKIT_ROOT_DIR}/lib64${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 
+or alternatively via CMake-specific environment variables
+(e.g. `ENV{CUDACXX} <https://cmake.org/cmake/help/v4.0/envvar/CUDACXX.html>`__,
+`ENV{CUDAARCHS} <https://cmake.org/cmake/help/v4.0/envvar/CUDAARCHS.html>`__,
+`ENV{CUDAHOSTCXX} <https://cmake.org/cmake/help/v4.0/envvar/CUDAHOSTCXX.html>`__)
+or options (e.g. `-D CUDAToolkit_ROOT <https://cmake.org/cmake/help/v4.0/module/FindCUDAToolkit.html>`__,
+`-D CMAKE_CUDA_HOST_COMPILER <https://cmake.org/cmake/help/v4.0/variable/CMAKE_CUDA_HOST_COMPILER.html>`__).
+
 Later in the installation instructions, you will see CMake commands of the form
-``cmake ..`` with optional arguments, such as ``cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
+``cmake ..`` with optional CUDA-related options and environment variables,
+such as ``CUDACXX=/usr/lib/nvidia-cuda-toolkit/bin/nvcc cmake .. -D ESPRESSO_BUILD_WITH_CUDA=ON``
 to activate CUDA. These commands may need to be adapted depending on which
 operating system and CUDA version you are using.
 
@@ -195,42 +214,86 @@ will generate device code for both sm_75 and sm_86 architectures.
 The CMake option ``ESPRESSO_CMAKE_CUDA_ARCHITECTURES`` achieves the same effect.
 Both take a semicolon-separated list of integers. There are online resources
 to help determine which architecture match specific hardware [12]_.
+Alternatively, run ``nvidia-smi --query-gpu=name,compute_cap`` to display the exact
+compute capability of your GPU, then multiply that value by 10 to get the architecture.
 The CMake option ``CMAKE_CUDA_ARCHITECTURES`` cannot be used to set CUDA
 architectures, because it has a default value that is too old for the
 minimally required CUDA version.
 
-On Ubuntu 24.04, the default GCC compiler may be too recent for nvcc.
-You can either use GCC 12:
+On Ubuntu 26.04, only GCC <= 13 can be used with nvcc 12.4.
+Alternatively, the Clang toolchain can be used.
+If the NVIDIA HPC SDK is installed, the NVHPC toolchain can be used with GCC 13,
+but the FFTW library must in that case be compiled with NVHPC too to avoid
+mixing the ``libgomp`` and ``libnvomp`` OpenMP runtime libraries.
 
-.. code-block:: bash
+.. tabs::
 
-    CC=gcc-12 CXX=g++-12 CUDACXX=/usr/local/cuda-12.0/bin/nvcc cmake .. \
-      -D ESPRESSO_BUILD_WITH_CUDA=ON \
-      -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
-      -D CMAKE_CUDA_FLAGS="--compiler-bindir=/usr/bin/g++-12"
+   .. group-tab:: GCC on Ubuntu 26.04
 
-or alternatively install Clang 19 as a replacement for nvcc and GCC:
+      .. code-block:: bash
 
-.. code-block:: bash
+         CC=gcc-15 CXX=g++-15 CUDAHOSTCXX=g++-13 CUDACXX=/usr/lib/nvidia-cuda-toolkit/bin/nvcc \
+           CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES_EXCLUDE=/usr/lib/gcc/x86_64-linux-gnu/13 cmake .. \
+           -D ESPRESSO_BUILD_WITH_CUDA=ON \
+           -D CUDAToolkit_ROOT=/usr/lib/nvidia-cuda-toolkit
 
-    CC=clang-19 CXX=clang++-19 CUDACXX=clang++-19 cmake .. \
-      -D ESPRESSO_BUILD_WITH_CUDA=ON \
-      -D CUDAToolkit_ROOT=/usr/local/cuda-12.0 \
-      -D CMAKE_CXX_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0" \
-      -D CMAKE_CUDA_FLAGS="-I/usr/include/x86_64-linux-gnu/c++/12 -I/usr/include/c++/12 --cuda-path=/usr/local/cuda-12.0"
+      with compiler dependencies:
+
+      .. code-block:: bash
+
+         sudo apt install \
+            gcc-13 g++-13 libstdc++-13-dev \
+            gcc-15 g++-15 libstdc++-15-dev
+
+   .. group-tab:: Clang on Ubuntu 26.04
+
+      .. code-block:: bash
+
+         CC=clang-22 CXX=clang++-22 CUDACXX=clang++-22 cmake .. \
+           -D ESPRESSO_BUILD_WITH_CUDA=ON \
+           -D CUDAToolkit_ROOT=/usr/lib/cuda \
+           -D CMAKE_CXX_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15" \
+           -D CMAKE_CUDA_FLAGS="--gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/15 --cuda-path=/usr/lib/cuda"
+
+      with compiler dependencies:
+
+      .. code-block:: bash
+
+         sudo apt install \
+            clang-22 clang-tidy-22 clang-format-22 llvm-22 libc++-22-dev \
+            libclang-rt-22-dev libomp-22-dev gcc-15 g++-15 libstdc++-15-dev
+
+   .. group-tab:: NVHPC on Ubuntu 26.04
+
+      .. code-block:: bash
+
+         CC=nvc CXX=nvc++ CUDACXX=nvcc CUDAHOSTCXX=nvc++ cmake .. \
+            -D ESPRESSO_BUILD_WITH_CUDA=ON \
+            -D CMAKE_CUDA_FLAGS="$(mpicc --showme:compile)" \
+            -D CMAKE_CXX_FLAGS="--gcc-toolchain=gcc-13"
+
+      with compiler dependencies:
+
+      .. code-block:: bash
+
+         sudo apt install gcc-13 g++-13 libstdc++-13-dev
+
+      To print which toolchains and libraries are loaded by NVHPC, run:
+
+      .. code-block:: bash
+
+          echo 'int main() {}' > mwe.cpp
+          nvc++ -v -std=c++20 mwe.cpp
 
 Please note that all CMake options and compiler flags that involve
 ``/usr/local/cuda-*`` need to be adapted to your CUDA environment.
 But they are only necessary on systems with multiple CUDA releases installed,
 and can be safely removed if you have only one CUDA release installed.
 
-Please also note that with Clang, you still need the GCC 12 toolchain,
-which can be set up with ``apt install gcc-12 g++-12 libstdc++-12-dev``.
+Please also note that with Clang, you still need a GCC toolchain.
 The extra compiler flags in the Clang CMake command above are needed to pin
-the search paths of Clang. By default, it searches trough the most recent
-GCC version, which is GCC 13 on Ubuntu 24.04. It is not possible to install
-the NVIDIA driver without GCC 13 due to a dependency resolution issue
-(``nvidia-dkms`` depends on ``dkms`` which depends on ``gcc-13``).
+the search paths of Clang. Clang would otherwise select the default GCC version,
+which is often GCC 15 on Ubuntu 26.04.
 
 .. _Setting up a Jupyter environment:
 
@@ -298,7 +361,7 @@ To install the ZnDraw visualizer:
 
 .. code-block:: bash
 
-    python3 -m pip install -c requirements.txt 'zndraw==0.4.6'
+    python3 -m pip install -c requirements.txt zndraw
 
 .. _Requirements for building the documentation:
 
@@ -310,7 +373,7 @@ To generate the Sphinx documentation, install the following packages:
 .. code-block:: bash
 
     python3 -m pip install -c requirements.txt \
-        sphinx sphinxcontrib-bibtex sphinx-toggleprompt
+        sphinx sphinxcontrib-bibtex sphinx-toggleprompt sphinx-tabs
 
 To generate the Doxygen documentation, install the following packages:
 
@@ -344,6 +407,11 @@ To run |es| on Windows, use the Linux subsystem (WSL). For that you need to
   to set up CUDA.
 * follow the instructions for :ref:`Installing requirements on Ubuntu`
 
+Note on file system performance: when using WSL, avoid cloning or building
+the repository on the mounted Windows file system (e.g., :file:`/mnt/c/Users/...`).
+This causes severe I/O performance degradation. Always clone and build within
+the Linux filesystem (e.g., :file:`/home/user/espresso`).
+
 .. _Installing requirements on macOS:
 
 Installing requirements on macOS
@@ -351,7 +419,9 @@ Installing requirements on macOS
 
 The first step is to install a C++ compiler, such as Xcode [10]_.
 Xcode is missing OpenMP, which is needed to enable shared-memory parallelization,
-but the "R for macOS Developers" project provides binaries [11]_.
+but binaries are available from Homebrew
+(formula `libomp <https://formulae.brew.sh/formula/libomp>`__)
+or from the "R for macOS Developers" project [11]_.
 
 To install libraries, a package manager will be needed.
 While our instructions below are specific to Homebrew,
@@ -445,7 +515,7 @@ The actual invocation is implementation-dependent, but in many cases, such as
 
     mpirun -n 4 ./pypresso script.py
 
-where ``4`` is the number of processors to be used.
+where ``4`` is the number of CPU cores to be used.
 
 
 .. _Features:
@@ -467,8 +537,8 @@ To activate ``FEATURE``, add the following line to the header file:
 
 Some features cannot be manually enabled; they are instead automatically
 enabled when a specific list of dependent features are enabled. For example,
-``DIPOLAR_DIRECT_SUM`` is automatically enabled when ``DIPOLES``, ``ROTATION``
-and ``CUDA`` are enabled. Please note that ``CUDA`` is an external feature
+``MMM1D`` is automatically enabled when ``ELECTROSTATICS``
+and ``GSL`` are enabled. Please note that ``GSL`` is an external feature
 and can only be enabled via a CMake option (see :ref:`External features`).
 
 
@@ -481,10 +551,6 @@ General features
 
    .. seealso:: :ref:`Electrostatics`
 
--  ``MMM1D_MACHINE_PREC``: This enables high-precision Bessel functions
-   for MMM1D on CPU. Comes with a 60% slow-down penalty. The low-precision
-   functions are enabled by default and are precise enough for most applications.
-
 -  ``DIPOLES`` This activates the dipole-moment property of particles and switches
    on various magnetostatics algorithms
 
@@ -492,10 +558,11 @@ General features
 
 -  ``SCAFACOS_DIPOLES`` This activates magnetostatics methods of ScaFaCoS.
 
--  ``DIPOLAR_DIRECT_SUM`` This activates the GPU implementation of the dipolar direct sum.
-
--  ``DIPOLE_FIELD_TRACKING`` This enables the CPU implementation of the dipolar direct sum
+-  ``DIPOLE_FIELD_TRACKING`` enable dipolar direct sum algorithms
    to calculate the total dipole field at particle positions.
+
+-  ``THERMAL_STONER_WOHLFARTH`` enable dipolar algorithms to integrates
+   vritual sites that implement the thermal Stoner–Wohlfarth model
 
 -  ``ROTATION`` Switch on rotational degrees of freedom for the particles, as well as
    the corresponding quaternion integrator.
@@ -658,13 +725,14 @@ using a CMake flag (see :ref:`Options and Variables`).
   :ref:`ScaFaCoS electrostatics`, :ref:`ScaFaCoS magnetostatics`).
 
 - ``GSL``: enables features relying on the GNU Scientific Library, e.g.
-  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension`.
+  :meth:`espressomd.cluster_analysis.Cluster.fractal_dimension` and
+  :class:`espressomd.electrostatics.MMM1D`.
+
+- ``NLOPT``: enable features relying on the nonlinear optimization library NLopt,
+  e.g. :ref:`Thermal_Stoner_Wohlfarth`.
 
 - ``STOKESIAN_DYNAMICS``: enable the Stokesian Dynamics propagator
   (see :ref:`Stokesian Dynamics`). Requires BLAS and LAPACK.
-
-- ``SHARED_MEMORY_PARALLELISM``: enable shared-memory parallelism
-  (OpenMP, Kokkos, Cabana)
 
 - ``CALIPER``, ``VALGRIND``, ``FPE``: enable various instrumentation tools
   (see :ref:`Instrumentation`)
@@ -829,7 +897,6 @@ The following options control features from external libraries:
 * ``ESPRESSO_BUILD_WITH_SCAFACOS``: Build with ScaFaCoS support.
 * ``ESPRESSO_BUILD_WITH_GSL``: Build with GSL support.
 * ``ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS`` Build with Stokesian Dynamics support.
-* ``ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM``: Build with shared-memory parallelism support (OpenMP, Cabana, Kokkos, etc.)
 * ``ESPRESSO_BUILD_WITH_WALBERLA``: Build with waLBerla support.
 * ``ESPRESSO_BUILD_WITH_WALBERLA_AVX``: Build waLBerla with AVX kernels instead of regular kernels.
 * ``ESPRESSO_BUILD_WITH_PYTHON``: Build with the Python interface.
@@ -901,19 +968,37 @@ The build type is controlled by ``-D CMAKE_BUILD_TYPE=<type>`` where
 * ``Debug``: for debugging in GDB
 * ``Coverage``: for code coverage
 
+In addition, third-party libraries may provide additional options that control performance.
+For example, ``-D Kokkos_ARCH_NATIVE=ON`` enables microarchitecture-specific optimizations,
+such as ``-march=native -mtune=native`` on x86 or ``-mcpu=native`` on ARM,
+in both the Kokkos library and |es|.
+These optimization flags are suitable for homogeneous computing environments,
+e.g. HPC clusters, but not for environments with heterogeneous computing resources,
+since different hardware may not share the same instruction set.
+
+Likewise, consider building libraries from sources with microarchitecture-specific
+SIMD features. For example on x86, P3M on CPU can get a few percents faster when
+FFTW is built with ``--enable-sse2 --enable-avx --enable-avx2 --enable-avx512``
+and |es| is built with ``-D CMAKE_CXX_FLAGS="-march=native"``.
+The x86 version of FFTW packaged on Ubuntu 26.04 only has SSE2 and AVX kernels.
+To check which SIMD features FFTW was built against, use this command:
+``nm -D /usr/lib/*-linux-gnu/libfftw3.so.3 | grep -oE '_(sse|avx|sve|neon)[a-z0-9_]*' | sort -u``.
+The P3M on GPU uses the CPU energy kernel with unaligned memory buffers;
+for a GPU build of |es|, use a FFTW version built without SIMD kernels.
+
 Cluster users and HPC developers may be interested in manually editing the
-``espresso_cpp_flags`` target in the top-level ``CMakeLists.txt`` file for
+``espresso_compiler_flags`` target in the top-level ``CMakeLists.txt`` file for
 finer control over compiler flags. The variable declaration is followed
 by a series of conditionals to enable or disable compiler-specific flags.
 Compiler flags passed to CMake via the ``-D CMAKE_CXX_FLAGS`` option
 (such as ``cmake . -D CMAKE_CXX_FLAGS="-ffast-math -fno-finite-math-only"``)
-will appear in the compiler command before the flags in ``espresso_cpp_flags``,
+will appear in the compiler command before the flags in ``espresso_compiler_flags``,
 and will therefore have lower precedence.
 
 Be aware that fast-math mode can break |es|. It is incompatible with the
 ``ADDITIONAL_CHECKS`` feature due to the loss of precision in the LB code
-on CPU. The Clang 10 compiler breaks field couplings with ``-ffast-math``.
-The Intel compiler enables the ``-fp-model fast=1`` flag by default;
+on CPU. The NpT Andersen barostat is very sensitive to ``-ffast-math``.
+The IntelLLVM compiler enables the ``-fp-model fast=1`` flag by default;
 it can be disabled by adding the ``-fp-model=strict`` flag.
 
 |es| currently doesn't fully support link-time optimization (LTO).

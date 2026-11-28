@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -78,6 +78,30 @@ BOOST_AUTO_TEST_CASE(simple_variance_check) {
   /* Standard deviation should be sqrt(var()) */
   BOOST_CHECK(std::fabs(avg.sig() - std::sqrt(avg.var())) <=
               std::numeric_limits<double>::epsilon());
+}
+
+BOOST_AUTO_TEST_CASE(clear_then_resample) {
+  Utils::Statistics::RunningAverage<double> avg;
+
+  /* Accumulate some samples whose variance and extrema differ from the
+   * post-clear data, so any stale state leaks into the re-sampled results. */
+  avg.add_sample(0.0);
+  avg.add_sample(10.0);
+
+  avg.clear();
+
+  BOOST_CHECK(avg.n() == 0);
+
+  /* Re-sample with a fresh data set {1, 3}: avg = 2, population variance
+   * = ((1-2)^2 + (3-2)^2) / 2 = 1, min = 1, max = 3. */
+  avg.add_sample(1.0);
+  avg.add_sample(3.0);
+
+  BOOST_CHECK(avg.n() == 2);
+  BOOST_CHECK_SMALL(avg.avg() - 2.0, 1e-12);
+  BOOST_CHECK_SMALL(avg.var() - 1.0, 1e-12);
+  BOOST_CHECK(avg.min() == 1.0);
+  BOOST_CHECK(avg.max() == 3.0);
 }
 
 BOOST_AUTO_TEST_CASE(mean_and_variance) {

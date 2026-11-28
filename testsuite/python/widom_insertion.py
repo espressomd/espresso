@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -73,7 +73,7 @@ class WidomInsertionTest(ut.TestCase):
     system.cell_system.skin = 0.4
 
     Widom = espressomd.reaction_methods.WidomInsertion(
-        kT=TEMPERATURE, seed=1)
+        kT=TEMPERATURE, seed=1, system=system)
 
     # Set the hidden particle type to the lowest possible number to speed
     # up the simulation

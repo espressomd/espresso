@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,16 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
+
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "cells.hpp"
 #include "errorhandling.hpp"
-#include "forces.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "rotation.hpp"
 
@@ -66,20 +67,13 @@ static Utils::Vector3d velocity(Particle const &p_ref, Particle const &p_vs) {
 
   // Get omega of real particle in space-fixed frame
   auto const omega_space_frame =
-      convert_vector_body_to_space(p_ref, p_ref.omega());
+      convert_vector_body_to_space(p_ref.quat(), p_ref.omega());
   // Obtain velocity from v = v_real particle + omega_real_particle * director
   return vector_product(omega_space_frame, d) + p_ref.v();
 }
 
-/**
- * @brief Get real particle tracked by a virtual site.
- *
- * @param cell_structure Cell structure.
- * @param p Virtual site.
- * @return Pointer to real particle.
- */
-static Particle *get_reference_particle(CellStructure &cell_structure,
-                                        Particle const &p) {
+Particle *get_reference_particle(CellStructure &cell_structure,
+                                 Particle const &p) {
   auto const &vs_rel = p.vs_relative();
   if (vs_rel.to_particle_id == -1) {
     runtimeErrorMsg() << "Particle with id " << p.id()
@@ -105,7 +99,7 @@ static auto constraint_stress(Particle const &p_ref, Particle const &p_vs) {
   /* The constraint force is minus the force on the particle, make it force
    * free. The counter force is translated by the connection vector to the
    * real particle, hence the virial stress is */
-  return tensor_product(-p_vs.force(), connection_vector(p_ref, p_vs));
+  return tensor_product(connection_vector(p_ref, p_vs), -p_vs.force());
 }
 
 static bool is_vs_relative_trans(Particle const &p) {
@@ -114,18 +108,30 @@ static bool is_vs_relative_trans(Particle const &p) {
 static bool is_vs_relative_rot(Particle const &p) {
   return p.propagation() & PropagationMode::ROT_VS_RELATIVE;
 }
-
-static bool is_vs_relative(Particle const &p) {
-  return (is_vs_relative_trans(p) or is_vs_relative_rot(p));
+static bool is_vs_independent_rot(Particle const &p) {
+  return p.propagation() & PropagationMode::ROT_VS_INDEPENDENT;
+}
+static bool is_vs_rot(Particle const &p) {
+  return (is_vs_relative_rot(p) or is_vs_independent_rot(p));
+}
+static bool is_vs(Particle const &p) {
+  return (is_vs_relative_trans(p) or is_vs_rot(p));
 }
 
 void vs_relative_update_particles(CellStructure &cell_structure,
                                   BoxGeometry const &box_geo) {
-  cell_structure.ghosts_update(Cells::DATA_PART_POSITION |
-                               Cells::DATA_PART_MOMENTUM);
+  cell_structure.ghosts_update(
+      Cells::DATA_PART_POSITION |
+      Cells::DATA_PART_MOMENTUM
+#ifdef ESPRESSO_ROTATION
+      // Orientation of the reference particle is needed
+      // for vs_relative position/orientation update
+      | Cells::DATA_PART_QUAT
+#endif
+  );
 
   cell_structure.for_each_local_particle([&](Particle &p) {
-    if (!is_vs_relative(p)) {
+    if (!is_vs(p)) {
       return;
     }
 
@@ -165,27 +171,29 @@ void vs_relative_update_particles(CellStructure &cell_structure,
 void vs_relative_back_transfer_forces_and_torques(
     CellStructure &cell_structure) {
   cell_structure.ghosts_reduce_forces();
-
-  init_forces_ghosts(cell_structure);
+  cell_structure.ghosts_reset_forces();
 
   // Iterate over all the particles in the local cells
-  cell_structure.for_each_local_particle([&](Particle &p) {
-    if (!is_vs_relative(p))
-      return;
+  cell_structure.for_each_local_particle(
+      [&](Particle &p) {
+        if (!is_vs(p))
+          return;
 
-    auto *p_ref_ptr = get_reference_particle(cell_structure, p);
-    assert(p_ref_ptr != nullptr);
+        auto *p_ref_ptr = get_reference_particle(cell_structure, p);
+        assert(p_ref_ptr != nullptr);
 
-    auto &p_ref = *p_ref_ptr;
-    if (is_vs_relative_trans(p)) {
-      p_ref.force() += p.force();
-      p_ref.torque() += vector_product(connection_vector(p_ref, p), p.force());
-    }
+        auto &p_ref = *p_ref_ptr;
+        if (is_vs_relative_trans(p)) {
+          p_ref.force() += p.force();
+          p_ref.torque() +=
+              vector_product(connection_vector(p_ref, p), p.force());
+        }
 
-    if (is_vs_relative_rot(p)) {
-      p_ref.torque() += p.torque();
-    }
-  });
+        if (is_vs_rot(p)) {
+          p_ref.torque() += p.torque();
+        }
+      },
+      /* parallel */ false);
 }
 
 // Rigid body contribution to scalar pressure and pressure tensor

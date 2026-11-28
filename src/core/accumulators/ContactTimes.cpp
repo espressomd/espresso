@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -30,13 +30,13 @@
 
 namespace Accumulators {
 void ContactTimes::update(boost::mpi::communicator const &comm) {
-  if (comm.rank() != 0) {
-    return;
-  }
   auto const &system = System::get_system();
   auto time = system.get_sim_time();
   auto dt = system.get_time_step();
   auto dists = m_obs->operator()(comm);
+  if (comm.rank() != 0) {
+    return;
+  }
 
   // Initialize the bookkeeping vectors
   if (contacts.empty()) {

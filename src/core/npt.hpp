@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -59,9 +59,9 @@ struct NptIsoParameters {
   double p_ext = 0.;
   /** conjugate momentum of volume */
   double p_epsilon = 0.;
-  /** the coefficient of propagater of position for MTK equation*/
+  /** the coefficient of propagation of position for MTK equation */
   double half_dt_inv_piston = 0.;
-  /** the coefficient of propagater of momentum for MTK equation*/
+  /** the coefficient of propagation of momentum for MTK equation */
   double half_dt_inv_piston_and_Nf = 0.;
   /** geometry information for the NpT integrator. Holds the vector
    *  \< dir, dir, dir \> where a positive value for dir indicates that

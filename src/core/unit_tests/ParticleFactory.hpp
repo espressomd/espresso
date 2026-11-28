@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -38,13 +38,11 @@ struct ParticleFactory {
   void create_particle(Utils::Vector3d const &pos, int p_id, int type) {
     ::make_new_particle(p_id, pos);
     set_particle_property(p_id, &Particle::type, type);
-    on_particle_type_change(p_id, type_tracking::new_part, type);
     particle_cache.emplace_back(p_id);
   }
 
   void set_particle_type(int p_id, int type) const {
     set_particle_property(p_id, &Particle::type, type);
-    on_particle_type_change(p_id, type_tracking::any_type, type);
   }
 
   void set_particle_v(int p_id, Utils::Vector3d const &vel) const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,10 +19,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_NOWHERE_HPP
-#define SHAPES_NOWHERE_HPP
+#pragma once
 
 #include "Shape.hpp"
+
+#include <utils/Vector.hpp>
 
 #include <limits>
 
@@ -42,5 +43,3 @@ public:
 };
 
 } /* namespace Shapes */
-
-#endif

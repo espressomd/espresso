@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -99,7 +99,7 @@ class Rhomboid(Shape, ScriptInterfaceHelper):
 class Slitpore(Shape, ScriptInterfaceHelper):
     """
 
-    .. figure:: figures/slitpore.png
+    .. figure:: /figures/slitpore.png
        :alt: Schematic for the Slitpore shape with labeled geometrical parameters.
        :align: center
        :height: 8.00000cm
@@ -231,8 +231,10 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
 
     Attributes
     ----------
-    cyl_transform_params : :class:`espressomd.math.CylindricalTransformationParameters`, 
-        Parameters of the spacial orientation of the frustum. Contained must be parameters for ``center`` and ``axis``. ``orientation`` has no effect, unless ``central_angle != 0``
+    cyl_transform_params : :class:`espressomd.math.CylindricalTransformationParameters`,
+        Parameters of the spatial orientation of the frustum.
+        Must contain parameters for ``center`` and ``axis``;
+        ``orientation`` has no effect, unless ``central_angle != 0``.
     r1: :obj:`float`
         Radius r1.
     r2: :obj:`float`
@@ -242,13 +244,15 @@ class HollowConicalFrustum(Shape, ScriptInterfaceHelper):
     thickness: float
         The thickness of the frustum. Also determines the rounding radius of the edges
     direction: :obj:`int`, optional
-        Surface orientation, for +1 the normal points
-        out of the mantel, for -1 it points inside of the shape. Defaults to 1
+        Surface orientation, for +1 the normal points out of the mantel,
+        for -1 it points inside of the shape. Defaults to 1.
     central_angle: :obj:`float`, optional
-        A ``central_angle`` creates an opening in the frustum along the side, centered symmetrically around the ``direction`` of ``cyl_transform_params``. Must be between ``0`` and ``2 pi``. Defaults to 0.
+        A ``central_angle`` creates an opening in the frustum along the side,
+        centered symmetrically around the ``direction`` of ``cyl_transform_params``.
+        Must be between ``0`` and ``2 pi``. Defaults to 0.
 
 
-    .. image:: figures/conical_frustum.png
+    .. image:: /figures/conical_frustum.png
     """
     _so_name = "Shapes::HollowConicalFrustum"
 

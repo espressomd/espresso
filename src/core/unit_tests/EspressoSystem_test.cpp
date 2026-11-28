@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE System test
+#define BOOST_TEST_MODULE "System test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -64,7 +64,7 @@ boost::test_tools::assertion_result has_gpu(boost::unit_test::test_unit_id) {
 
 BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
                         *boost::unit_test::precondition(has_gpu)) {
-  // smoke test: querying GPU awarenesss should not fail
+  // smoke test: querying GPU awareness should not fail
   ::communication_environment->is_mpi_gpu_aware();
 #ifdef ESPRESSO_CUDA
   auto const rank = boost::mpi::communicator().rank();
@@ -72,7 +72,7 @@ BOOST_FIXTURE_TEST_CASE(check_with_gpu, ParticleFactory,
   auto system = ::System::System::create();
   System::set_system(system);
   system->set_cell_structure_topology(CellStructureType::REGULAR);
-  auto &gpu = system->gpu;
+  auto &gpu = *system->gpu;
 
   // check uninitialized device pointers
   BOOST_CHECK_EQUAL(gpu.get_energy_device(), nullptr);

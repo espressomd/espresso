@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,6 +25,7 @@
 #include "Cluster.hpp"
 #include "Particle.hpp"
 
+#include <cassert>
 #include <map>
 #include <memory>
 
@@ -33,7 +34,6 @@ namespace ClusterAnalysis {
 /** @brief Holds the result and parameters of a cluster analysis */
 class ClusterStructure {
 public:
-  ClusterStructure();
   /** @brief Map holding the individual clusters. The key is an integer cluster
    * id */
   std::map<int, std::shared_ptr<Cluster>> clusters;
@@ -47,7 +47,9 @@ public:
    * bonded interaction */
   void run_for_bonded_particles();
   /** Is particle p part of a cluster */
-  bool part_of_cluster(const Particle &p);
+  bool part_of_cluster(Particle const &p) const {
+    return cluster_id.contains(p.id());
+  }
   /** Sets the pair criterion which decides if two particles are neighbors */
   void
   set_pair_criterion(std::shared_ptr<PairCriteria::PairCriterion> const &c) {
@@ -63,9 +65,14 @@ public:
   }
 
 private:
-  /** @brief Clusters that turn out to be the same during the analysis process
+  /**
+   * @brief Cluster id graph.
+   * Clusters that turn out to be the same during the analysis process
    * (i.e., if two particles are neighbors that already belong to different
-   * clusters
+   * clusters) are automatically merged and mapped to a new id.
+   * Additional merges create additional nodes. Traverse this graph
+   * recursively with @c find_id_for to determine the final id
+   * of a cluster that was merged multiple times.
    */
   std::map<int, int> m_cluster_identities;
 
@@ -77,10 +84,9 @@ private:
   /** Merge clusters and populate their structures */
   void merge_clusters();
   /** @brief Follow a chain of cluster identities during analysis */
-  inline int find_id_for(int x);
+  inline int find_id_for(int x) const;
   /** @brief Get next free cluster id */
   inline int get_next_free_cluster_id();
-  void sanity_checks() const;
   auto get_box_geo() const {
     auto ptr = m_box_geo.lock();
     assert(ptr);

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -191,7 +191,7 @@ class ArrayPropertyTest(ArrayCommon):
 
     @utx.skipIfMissingFeatures("WALBERLA")
     def test_lb(self):
-        lbf = espressomd.lb.LBFluidWalberla(
+        lbf = espressomd.lb.LBFluid(
             agrid=0.5, density=1., kinematic_viscosity=1., tau=0.01)
         self.system.lb = lbf
 

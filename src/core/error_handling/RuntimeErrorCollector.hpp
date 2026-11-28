@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 The ESPResSo project
+ * Copyright (C) 2014-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,7 +24,6 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <mutex>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -58,7 +57,7 @@ public:
    * @param level Severity filter.
    * @return Number of messages that match the filter.
    */
-  int count(RuntimeError::ErrorLevel level);
+  int count_local(RuntimeError::ErrorLevel level);
 
   /**
    * @brief Reset error messages.

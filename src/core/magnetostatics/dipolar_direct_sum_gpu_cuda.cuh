@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,9 +19,9 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
+#if defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)
 
 void DipolarDirectSum_kernel_wrapper_energy(float k, unsigned int n,
                                             float const *pos, float const *dip,
@@ -33,4 +33,4 @@ void DipolarDirectSum_kernel_wrapper_force(float k, unsigned int n,
                                            float *torque, float box_l[3],
                                            int periodic[3], int n_replicas);
 
-#endif // ESPRESSO_DIPOLAR_DIRECT_SUM
+#endif // defined(ESPRESSO_DIPOLES) and defined(ESPRESSO_CUDA)

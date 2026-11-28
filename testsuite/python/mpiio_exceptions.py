@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -19,6 +19,7 @@
 
 import espressomd
 import espressomd.io
+import espressomd.code_info
 
 import unittest as ut
 import os
@@ -54,6 +55,8 @@ class MPIIOMockGenerator:
         return filepath, filepath_derived
 
 
+@ut.skipIf(espressomd.code_info.toolchain()["CMAKE_CXX_COMPILER_ID"] == "NVHPC",
+           "NVHPC toolchain is not supported")
 class MPIIOTest(ut.TestCase):
     """
     Test class for the MPI-IO core functionality.

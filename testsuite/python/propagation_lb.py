@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -177,7 +177,7 @@ class LBThermostatCommon:
         np.testing.assert_almost_equal(np.copy(central_coupled.f), [-2, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual_coupled.f), [-1, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual_decoupled.f), [0, 0, 0])
-        # vs relative: setup with overriden forces
+        # vs relative: setup with overridden forces
         np.testing.assert_almost_equal(np.copy(central_recouple.f), [-3, 0, 0])
         np.testing.assert_almost_equal(np.copy(virtual_coupler.f), [-3, 0, 0])
 
@@ -269,31 +269,31 @@ class LBThermostatCommon:
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBWalberlaThermostatDoublePrecisionCPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     lb_geom_progression = 10
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 class LBWalberlaThermostatSinglePrecisionCPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     lb_geom_progression = 10
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBWalberlaThermostatDoublePrecisionGPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
     lb_geom_progression = 9
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBWalberlaThermostatSinglePrecisionGPU(LBThermostatCommon, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     lb_geom_progression = 9
 
 

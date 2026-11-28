@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -43,8 +43,6 @@
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/math.hpp"
-
-#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/AS_erfc_part.hpp>
@@ -129,7 +127,7 @@ public:
   /** Assign the physical charges using the tabulated charge assignment
    * function.
    */
-  virtual void charge_assign(ParticleRange const &particles) = 0;
+  virtual void charge_assign() = 0;
 
   /**
    * @brief Assign a single charge into the current charge grid.
@@ -141,7 +139,7 @@ public:
   virtual void assign_charge(double q, Utils::Vector3d const &real_pos,
                              bool skip_cache) = 0;
 
-  virtual void prepare_fft_mesh(bool reset_weights) = 0;
+  virtual void prepare_fft_mesh(bool reset_weights, bool zero_rs) = 0;
 
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
@@ -181,13 +179,13 @@ public:
   }
 
   /** Compute the k-space part of the pressure tensor */
-  virtual Utils::Vector9d long_range_pressure(ParticleRange const &) = 0;
+  virtual Utils::Vector9d long_range_pressure() = 0;
 
   /** Compute the k-space part of energies. */
-  virtual double long_range_energy(ParticleRange const &) = 0;
+  virtual double long_range_energy() = 0;
 
   /** Compute the k-space part of forces. */
-  virtual void add_long_range_forces(ParticleRange const &) = 0;
+  virtual void add_long_range_forces() = 0;
 
 protected:
   virtual void calc_influence_function_force() = 0;

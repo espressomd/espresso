@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -129,7 +129,7 @@ class LBCouetteFlowWalberla(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in double-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False}
 
 
@@ -138,7 +138,7 @@ class LBCouetteFlowWalberlaSinglePrecision(LBCouetteFlowCommon, ut.TestCase):
 
     """Test for the Walberla implementation of the LB in single-precision."""
 
-    lb_class = espressomd.lb.LBFluidWalberla
+    lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": True}
 
 

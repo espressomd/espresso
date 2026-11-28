@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 #include <cmath>
 
@@ -47,13 +47,9 @@ namespace pystencils {
 
 namespace internal_de8af14df5055eb4add5a44e06cbe9b5 {
 static FUNC_PREFIX void updatevelfrompdfdoubleprecision_updatevelfrompdfdoubleprecision(double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs, double *RESTRICT _data_velocity, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_0, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_0, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_velocity_0, int64_t const _stride_velocity_1, int64_t const _stride_velocity_2, int64_t const _stride_velocity_3) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         for (int64_t ctr_0 = 1; ctr_0 < _size_force_0 - 1; ctr_0 += 1) {

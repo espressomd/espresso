@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 The ESPResSo project
+# Copyright (C) 2019-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -57,12 +57,16 @@ class Test:
         self.system.cell_system.set_regular_decomposition(
             use_verlet_lists=True)
         self.system.periodicity = [True, True, True]
+        # add a neutral particle before the two charges to make sure neutral
+        # particles aren't skipped in the multithreaded charge assignment loop
+        self.system.part.add(pos=self.system.box_l / 2., q=0.)
         self.system.part.add(pos=self.system.box_l / 2., q=self.q[0])
         self.system.part.add(pos=self.system.box_l / 2. + [0, 0, self.distance],
                              q=-self.q[0])
         prefactor = 2.0
-        p3m = self.p3m_class(prefactor=prefactor, accuracy=self.accuracy,
-                             mesh=[58, 58, 70], cao=4)
+        p3m = espressomd.electrostatics.P3M(
+            prefactor=prefactor, accuracy=self.accuracy,
+            mesh=[58, 58, 70], cao=4, **self.p3m_params)
         elc = espressomd.electrostatics.ELC(actor=p3m,
                                             gap_size=self.elc_gap,
                                             maxPWerror=self.accuracy,
@@ -84,7 +88,7 @@ class Test:
                                    rtol=self.rtol)
 
     def scan(self):
-        p1, p2 = self.system.part.all()
+        _, p1, p2 = self.system.part.all()
         elc_forces = np.empty((len(self.q), len(self.zPos)))
         elc_energy = np.empty(elc_forces.shape)
         for chargeIndex, charge in enumerate(self.q):
@@ -105,16 +109,8 @@ class Test:
 @utx.skipIfMissingFeatures(["P3M"])
 class TestCPU(Test, ut.TestCase):
 
-    p3m_class = espressomd.electrostatics.P3M
+    p3m_params = {"gpu": False}
     rtol = 1e-7
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["P3M"])
-class TestGPU(Test, ut.TestCase):
-
-    p3m_class = espressomd.electrostatics.P3MGPU
-    rtol = 5e-6
 
 
 if __name__ == "__main__":

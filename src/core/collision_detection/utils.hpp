@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2024 The ESPResSo project
+ * Copyright (C) 2011-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -94,6 +94,7 @@ inline void add_bind_centers(std::vector<CollisionPair> &collision_queue,
     // Once we change bond storage, some syncing has to be done.
     assert(use_one_sided_bond_storage);
     ::add_bond(system, bond_id, {c.first, c.second});
+    system.cell_structure->add_new_bond(bond_id, {c.first, c.second});
   }
 }
 

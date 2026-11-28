@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -30,6 +30,15 @@
 #endif
 
 #include "config/config-features.hpp"
+
+#include <version>
+
+#if defined(_GLIBCXX_RELEASE)
+static_assert(_GLIBCXX_RELEASE >= 13, "unsupported libstdc++ version");
+#endif
+#if defined(_LIBCPP_VERSION)
+static_assert(_LIBCPP_VERSION / 10000 >= 19, "unsupported libc++ version");
+#endif
 
 /**
  * @brief Precision below which a double-precision float is assumed to be zero.

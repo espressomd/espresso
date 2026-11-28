@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The ESPResSo project
+# Copyright (C) 2023-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,21 +23,29 @@ import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
     "@TUTORIALS_DIR@/grand_canonical_monte_carlo/grand_canonical_monte_carlo.py",
-    p3m_params={"mesh": 10, "cao": 6, "r_cut": 8.22})
+    p3m_params={"mesh": 20, "cao": 4, "r_cut": 5.1})
 
 
 @skipIfMissingFeatures
 class Tutorial(ut.TestCase):
 
-    def test(self):
+    def test_ideal_case(self):
         ratios = tutorial.c_monomer.magnitude / \
             (2. * tutorial.salt_concentration_si.magnitude)
-        ref_xi = tutorial.analytical_solution(ratios)
-        sim_xi_minus = tutorial.partition_coefficients_negatives_array
-        sim_xi_plus = tutorial.universal_partion_coefficient_positive
+        sim_xi_minus = tutorial.partition_coefficients_negative_ideal_array
+        sim_xi_plus = tutorial.universal_partition_coefficients_positive_ideal
+        ref_xi_minus = tutorial.analytical_solution(ratios)
+        # large fluctuations are expected at low particle numbers
+        np.testing.assert_allclose(
+            np.log(sim_xi_minus), np.log(ref_xi_minus), rtol=0.25)
         np.testing.assert_allclose(
             sim_xi_minus, sim_xi_plus, rtol=1e-5, atol=1e-5)
-        np.testing.assert_allclose(sim_xi_minus / ref_xi, 2., rtol=0., atol=2.)
+
+    def test_interacting_case(self):
+        sim_xi_minus = tutorial.partition_coefficients_negative_array
+        sim_xi_plus = tutorial.universal_partition_coefficients_positive
+        np.testing.assert_allclose(
+            sim_xi_minus, sim_xi_plus, rtol=1e-5, atol=1e-5)
 
 
 if __name__ == "__main__":

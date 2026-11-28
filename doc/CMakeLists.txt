@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2022 The ESPResSo project
+# Copyright (C) 2015-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,9 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-add_subdirectory(doxygen)
-add_subdirectory(sphinx)
 add_subdirectory(logo)
-add_subdirectory(tutorials)
-
-add_custom_target(doc DEPENDS logo doxygen tutorials)
+add_subdirectory(doxygen)
+add_custom_target(doc DEPENDS logo doxygen)
+if(ESPRESSO_BUILD_WITH_PYTHON)
+  add_subdirectory(sphinx)
+  add_subdirectory(tutorials)
+  add_dependencies(doc tutorials)
+endif()

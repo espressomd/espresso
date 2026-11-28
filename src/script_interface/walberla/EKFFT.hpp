@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -35,39 +35,67 @@
 
 #include <script_interface/ScriptInterface.hpp>
 #include <script_interface/auto_parameters/AutoParameters.hpp>
+#include <script_interface/code_info/CodeInfo.hpp>
+
+#include <instrumentation/fe_trap.hpp>
 
 #include <utils/math/int_pow.hpp>
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace ScriptInterface::walberla {
 
 class EKFFT : public EKPoissonSolver {
 protected:
   std::unique_ptr<ResourceManager> m_resources_lock;
-  std::shared_ptr<LatticeWalberla> m_lattice;
   double m_conv_permittivity;
+  bool m_gpu;
   bool m_single_precision;
 
-public:
+protected:
   void make_instance(VariantMap const &args) override {
     // unit conversions
     auto const agrid = get_value<double>(m_lattice->get_parameter("agrid"));
-    m_conv_permittivity = Utils::int_pow<2>(agrid);
+    auto const tau = get_value<double>(args, "tau");
+    m_tau = tau;
+    m_conv_permittivity = Utils::int_pow<3>(agrid) / Utils::int_pow<2>(tau);
+    set_potential_conversion(agrid, tau);
     auto const permittivity =
         get_value<double>(args, "permittivity") * m_conv_permittivity;
-
-    m_instance = ::walberla::new_ek_poisson_fft(
-        m_lattice->lattice(), permittivity, m_single_precision);
-    m_instance->setup_fft(false);
+    auto *make_new_instance = &::walberla::new_ek_poisson_fft;
+    if (m_gpu) {
+      std::vector<std::string> required_features;
+      required_features.emplace_back("CUDA");
+      CodeInfo::check_features(required_features);
+#ifdef ESPRESSO_CUDA
+      make_new_instance = &::walberla::new_ek_poisson_fft_cuda;
+#endif
+    }
+    m_instance = make_new_instance(m_lattice->lattice(), permittivity,
+                                   m_single_precision);
+    {
+#ifdef ESPRESSO_FPE
+      // cuFFT builds device kernels using CUDA-JIT
+      // (https://docs.nvidia.com/cuda/archive/13.1.1/cufft/#plan-initialization-time)
+      // please note this operation is not guaranteed to succeed for all
+      // mesh sizes, and in rare cases, it can send the SIGFPE signal
+      auto const trap_pause = fe_trap::make_shared_pause_scoped();
+#endif
+      auto const use_gpu_aware =
+          m_gpu and ::communication_environment->is_mpi_gpu_aware();
+      m_instance->setup_fft(use_gpu_aware);
+    }
   }
 
+public:
   void do_construct(VariantMap const &args) override {
-    m_single_precision = get_value_or<bool>(args, "single_precision", false);
+    m_gpu = get_value_or<bool>(args, "gpu", false);
+    m_single_precision = get_value_or<bool>(args, "single_precision", m_gpu);
     m_lattice = get_value<decltype(m_lattice)>(args, "lattice");
     m_vtk_writers =
         get_value_or<decltype(m_vtk_writers)>(args, "vtk_writers", {});
-
     make_instance(args), m_resources_lock = std::make_unique<ResourceManager>();
     // MPI communicator is needed to destroy the FFT plans
     m_resources_lock->acquire_lock(::communication_environment->get_mpi_env());
@@ -78,6 +106,7 @@ public:
 
   EKFFT() {
     add_parameters({
+        {"tau", AutoParameter::read_only, [this]() { return m_tau; }},
         {"permittivity",
          [this](Variant const &v) {
            m_instance->set_permittivity(get_value<double>(v) *
@@ -88,9 +117,12 @@ public:
          }},
         {"single_precision", AutoParameter::read_only,
          [this]() { return m_single_precision; }},
+        {"gpu", AutoParameter::read_only, [this]() { return m_gpu; }},
         {"lattice", AutoParameter::read_only, [this]() { return m_lattice; }},
         {"shape", AutoParameter::read_only,
          [this]() { return m_instance->get_lattice().get_grid_dimensions(); }},
+        {"vtk_writers", AutoParameter::read_only,
+         [this]() { return serialize_vtk_writers(); }},
     });
   }
 

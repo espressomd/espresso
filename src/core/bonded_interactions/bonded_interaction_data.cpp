@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,13 +19,10 @@
 
 #include "bonded_interaction_data.hpp"
 
-#include "BoxGeometry.hpp"
-#include "cell_system/CellStructure.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"
 #include "rigid_bond.hpp"
 #include "system/System.hpp"
 #include "thermalized_bond.hpp"
-#include "thermostat.hpp"
 
 #include <algorithm>
 #include <numeric>

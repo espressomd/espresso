@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -59,10 +59,8 @@
 extern int this_node;
 /** The communicator */
 extern boost::mpi::communicator comm_cart;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 struct KokkosHandle;
 extern std::shared_ptr<KokkosHandle> kokkos_handle;
-#endif
 
 class CommunicationEnvironment {
   std::shared_ptr<boost::mpi::environment> m_mpi_env;
@@ -88,6 +86,7 @@ struct Communicator {
   int &this_node;
   /** @brief The MPI world size. */
   int size;
+  bool locked_for_checkpointing;
 
   Communicator();
   void init_comm_cart();

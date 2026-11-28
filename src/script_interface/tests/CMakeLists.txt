@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2024 The ESPResSo project
+# Copyright (C) 2020-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -47,15 +47,9 @@ espresso_unit_test(SRC ObjectMap_test.cpp DEPENDS espresso::script_interface
 espresso_unit_test(SRC Accumulators_test.cpp DEPENDS espresso::script_interface
                    espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 espresso_unit_test(SRC Constraints_test.cpp DEPENDS espresso::script_interface
-                   espresso::core)
+                   espresso::core Boost::mpi MPI::MPI_CXX NUM_PROC 1)
 espresso_unit_test(SRC Actors_test.cpp DEPENDS espresso::script_interface
                    espresso::core)
-espresso_unit_test(
-  SRC ConstantpHEnsemble_test.cpp DEPENDS espresso::core
-  espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
-espresso_unit_test(
-  SRC ReactionEnsemble_test.cpp DEPENDS espresso::core
-  espresso::script_interface Boost::mpi MPI::MPI_CXX NUM_PROC 2)
 espresso_unit_test(
   SRC ParticleSlice_test.cpp DEPENDS espresso::core espresso::script_interface
   Boost::mpi MPI::MPI_CXX NUM_PROC 1)

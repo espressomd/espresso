@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -31,9 +31,13 @@
  *  freedom if ROTATION is compiled in.
  */
 
-#include "rotation.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ROTATION
+
+#include "rotation.hpp"
+
+#include "ParticleRange.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mask.hpp>
@@ -164,16 +168,16 @@ void convert_torque_propagate_omega(Particle &p, double time_step) {
   p.omega() += hadamard_division(0.5 * time_step * p.torque(), p.rinertia());
 
   // zeroth estimate of omega
-  Utils::Vector3d omega_0 = p.omega();
+  auto const omega_0 = p.omega();
 
   /* if the tensor of inertia is isotropic, the following refinement is not
      needed.
      Otherwise repeat this loop 2-3 times depending on the required accuracy
    */
 
-  const double rinertia_diff_01 = p.rinertia()[0] - p.rinertia()[1];
-  const double rinertia_diff_12 = p.rinertia()[1] - p.rinertia()[2];
-  const double rinertia_diff_20 = p.rinertia()[2] - p.rinertia()[0];
+  auto const rinertia_diff_01 = p.rinertia()[0] - p.rinertia()[1];
+  auto const rinertia_diff_12 = p.rinertia()[1] - p.rinertia()[2];
+  auto const rinertia_diff_20 = p.rinertia()[2] - p.rinertia()[0];
   for (int times = 0; times <= 5; times++) {
     Utils::Vector3d Wd;
 
@@ -182,14 +186,6 @@ void convert_torque_propagate_omega(Particle &p, double time_step) {
     Wd[2] = p.omega()[0] * p.omega()[1] * rinertia_diff_01 / p.rinertia()[2];
 
     p.omega() = omega_0 + (0.5 * time_step) * Wd;
-  }
-}
-
-void convert_initial_torques(const ParticleRange &particles) {
-  for (auto &p : particles) {
-    if (!p.can_rotate())
-      continue;
-    convert_torque_to_body_frame_apply_fix(p);
   }
 }
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The ESPResSo project
+# Copyright (C) 2023-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -56,7 +56,7 @@ def N2_loop(particle, slice_prop):
 class Test(ut.TestCase):
     """
     Check the total dipole field for a magnetic LJ fluid (500 particles,
-    density approx 0.002, mu^2=1, no PBC).
+    density approx 0.002, mu^2=1, with and without PBC).
     """
     system = espressomd.System(box_l=[1.0, 1.0, 1.0])
     data = np.loadtxt(tests_common.data_path("lj_system.dat"))
@@ -95,7 +95,7 @@ class Test(ut.TestCase):
         system.part.all().dip = dip_mom
 
     def test_dds(self):
-        solver = espressomd.magnetostatics.DipolarDirectSumCpu(prefactor=1.)
+        solver = espressomd.magnetostatics.DipolarDirectSum(prefactor=1.)
         self.system.magnetostatics.solver = solver
         self.system.integrator.run(steps=0)
         slice_data = [(x.id, x.pos, x.dip) for x in self.system.part.all()]
@@ -115,17 +115,30 @@ class Test(ut.TestCase):
         self.assertGreater(np.linalg.norm(rel_diff), 10)
 
     @utx.skipIfMissingGPU()
-    @utx.skipIfMissingFeatures(["DIPOLAR_DIRECT_SUM"])
+    @utx.skipIfMissingFeatures(["CUDA"])
     def test_dds_gpu(self):
         for replicas in [0, 1]:
-            solver = espressomd.magnetostatics.DipolarDirectSumGpu(
-                prefactor=1., n_replicas=replicas)
+            solver = espressomd.magnetostatics.DipolarDirectSum(
+                prefactor=1., n_replicas=replicas, gpu=True)
             self.system.magnetostatics.solver = solver
             self.system.integrator.run(steps=1)
             for p in self.system.part.all():
                 np.testing.assert_allclose(
                     np.copy(p.torque_lab), np.cross(p.dip, p.dip_fld),
                     rtol=1e-9, atol=1e-5)
+
+    @utx.skipIfMissingFeatures(["DP3M"])
+    def test_dp3m(self):
+        self.system.periodicity = [True, True, True]
+        # check the surface term (non-metallic epsilon) affects dipole fields
+        solver = espressomd.magnetostatics.DipolarP3M(
+            prefactor=1., accuracy=1e-8, mesh=28, cao=7, epsilon=1.)
+        self.system.magnetostatics.solver = solver
+        self.system.integrator.run(steps=1)
+        for p in self.system.part.all():
+            np.testing.assert_allclose(
+                np.copy(p.torque_lab), np.cross(p.dip, p.dip_fld),
+                rtol=1e-10, atol=1e-10)
 
 
 if __name__ == "__main__":

@@ -319,7 +319,10 @@ The following tutorials are available:
 * :file:`active_matter`: Modelling of self-propelling particles.
 * :file:`electrokinetics`: Modelling electrokinetics together with hydrodynamic interactions.
 * :file:`constant_pH`: Modelling the titration of a weak acid using the constant pH method
-* :file:`widom_insertion`: Measuring the excess chemical potential of a salt solution using the Widom particle insertion method
+* :file:`widom_insertion`: Measuring the excess chemical potential of a salt solution using the Widom particle insertion method :cite:`widom63a`
+* :file:`grand_canonical_monte_carlo`: Simulating in the Grand-canonical ensemble with the Grand-canonical Monte Carlo method (GCMC) :cite:`landsgesell20b`
+* :file:`mlip`: Atomistic simulations using machine-learned interatomic potentials and the MACE-MP-0 model :cite:`batatia22a,batatia25a`
+* :file:`mlip-water`: Modelling water using the TIP4P model :cite:`abascal05a` and machine-learning interatomic potentials with Apax :cite:`schafer25a`
 
 The executed notebooks with solutions and plots are periodically deployed
 online to the `GitHub Pages <https://espressomd.github.io/tutorials.html>`__.
@@ -453,11 +456,11 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +================================+========================+==================+============+
 |             **Integrators**, **Thermostats**, **Barostats**                             |
 +--------------------------------+------------------------+------------------+------------+
-| Velocity-Verlet Integrator     | Core                   | Core             | Yes        |
+| Velocity-Verlet Integrator     | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Langevin Thermostat            | Core                   | Core             | Yes        |
+| Langevin Thermostat            | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Isotropic NpT                  | Experimental           | None             | Yes        |
+| Isotropic NpT                  | Single                 | None             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Quaternion Integrator          | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
@@ -465,9 +468,9 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 |                                **Interactions**                                         |
 +--------------------------------+------------------------+------------------+------------+
-| Short-range Interactions       | Core                   | Core             | Yes        |
+| Short-range Interactions       | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| Constraints                    | Core                   | Core             | Yes        |
+| Constraints                    | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Relative Virtual Sites         | Good                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
@@ -477,13 +480,13 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 |                              **Coulomb Interaction**                                    |
 +--------------------------------+------------------------+------------------+------------+
-| P3M                            | Core                   | Core             | Yes        |
+| P3M                            | Core                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | P3M on GPU                     | Single                 | Single           | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Dipolar P3M                    | Group                  | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| MMM1D                          | Single                 | Good             | No         |
+| MMM1D                          | Single                 | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | ELC                            | Good                   | Good             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
@@ -491,15 +494,13 @@ report so to the developers using the instructions in :ref:`Contributing`.
 +--------------------------------+------------------------+------------------+------------+
 |                         **Hydrodynamic Interaction**                                    |
 +--------------------------------+------------------------+------------------+------------+
-| Lattice-Boltzmann              | Core                   | Core             | Yes        |
-+--------------------------------+------------------------+------------------+------------+
-| Lattice-Boltzmann on GPU       | Group                  | Core             | Yes        |
+| Lattice-Boltzmann              | Core                   | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 |                              **Input/Output**                                           |
 +--------------------------------+------------------------+------------------+------------+
 | VTF output                     | Core                   | Core             | Yes        |
 +--------------------------------+------------------------+------------------+------------+
-| VTK output                     | Group                  | Group            | No         |
+| VTK output                     | Group                  | Group            | Yes        |
 +--------------------------------+------------------------+------------------+------------+
 | Checkpointing                  | Experimental           | Experimental     | Yes        |
 +--------------------------------+------------------------+------------------+------------+
@@ -604,21 +605,39 @@ guidelines:
 
 * No guarantees are made with respect to the C++ bindings in the simulation core.
 
+* No guarantees are made with regards to the API of maintainer scripts, samples,
+  and test cases, since they are intended for developers and are not installed with |es|
+
 These guidelines are meant to satisfy Semantic Versioning 2.0.0 [1]_ and :pep:`440`.
 Commits between releases are considered *development* and do not have a meaningful
 version number; even though package repositories outside of the Python ecosystem
 sometimes customize version numbers with extra metadata to label development commits,
 such as in ``1.1.5-dev`` or ``1.1.5.git8b603b12``, |es| doesn't offer a mechanism for it.
 
+No guarantees are made regarding the bitwise reproducibility of simulation trajectories.
+Although thermostats are based on fully deterministic random number generators,
+many parts of the simulation engine leverage dynamic task scheduling and unsorted
+containers to improve performance, making the order of operations non-deterministic.
+This can introduce very small round-off errors in floating-point operations,
+leading eventually to diverging trajectories. This issue isn't specific to |es|
+and can be found in other molecular dynamics engines :cite:`craven25a`.
+In addition, some tuning algorithms propagate the system during the benchmark loops,
+which can cause significant deviations in the trajectories in a couple of time steps.
+
 .. _How to cite ESPResSo:
 
 How to cite |es|
 ^^^^^^^^^^^^^^^^
 
-Please cite :cite:t:`weik19a` (BibTeX key ``weik19a`` in :file:`doc/bibliography.bib`)
+Please cite both :cite:t:`weeber24a` and :cite:t:`weik19a`
+(BibTeX keys ``weeber24a`` and ``weik19a`` in :file:`doc/bibliography.bib`)
 for |es| 4.0 and later, or both :cite:t:`arnold13a` and :cite:t:`limbach06a`
 (BibTeX keys ``arnold13a`` and ``limbach06a`` in :file:`doc/bibliography.bib`)
-for |es| 2.0 to 3.3. To find the version number, use the following command:
+for |es| 2.0 to 3.3.
+Starting with |es| 5.0, please also cite the exact release published in
+the `Zenodo dataset "ESPResSo" <https://doi.org/10.5281/zenodo.18791182>`_.
+
+To find the version number, use the following command:
 
 .. code-block:: bash
 
@@ -632,11 +651,18 @@ publications, using the BibTeX entries indicated in this user guide.
 
 A complete citation would look like this:
 
-    Simulations were carried out with ESPResSo 4.2.2[24] using the ICC\*
+    Simulations were carried out with ESPResSo 5.0.1[22,23,24] using the ICC\*
     algorithm[25].
 
     | ____________
 
+    | [22] J.-N. Grad, F. Weik, A. Reinauer, *et al.* ESPResSo, version 5.0.1.
+      Zenodo, Feb 2026. doi:\ `10.5281/zenodo.20450775 <https://doi.org/10.5281/zenodo.20450775>`_.
+    | [23] R. Weeber, J.-N. Grad, D. Beyer *et al.* ESPResSo, a versatile
+      open-source software package for simulating soft matter systems.
+      In M. Yáñez and R. J. Boyd, eds, *Comprehensive Computational Chemistry*,
+      vol. 3, pages 578--601. Elsevier, Oxford, 1st edition, 2024.
+      doi:\ `10.1016/B978-0-12-821978-2.00103-3 <https://doi.org/10.1016/B978-0-12-821978-2.00103-3>`_.
     | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
       extensible software package for simulating soft matter systems.
       *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
@@ -649,21 +675,35 @@ A complete citation would look like this:
 If you developed code for |es| and made it available in a publicly accessible repository,
 consider providing a permanent URL, such as a commit revision or a git tag:
 
-    The method was implemented for ESPResSo 4.2.2[24] and its source code is
+    The method was implemented for ESPResSo 4.2.2[23,24] and its source code is
     available online\ :superscript:`note 1`.
 
     | ____________
 
     | :superscript:`note 1` https://github.com/username/espresso/releases/tag/implemented-algorithm
 
-    | [24] F. Weik, R. Weeber, K. Szuttor *et al.* ESPResSo 4.0 -- an
-      extensible software package for simulating soft matter systems.
-      *Eur. Phys. J. Spec. Top.* **227**, 1789--1816 (2019).
-      doi:\ `10.1140/epjst/e2019-800186-9 <https://doi.org/10.1140/epjst/e2019-800186-9>`_.
-
 The URL of a branch can be ambiguous, since extra commits can be pushed in the future,
 for example to fix a bug, thus creating confusion as to which commit was actually
 used to produce the paper data.
+
+.. _Licensing:
+
+Licensing
+^^^^^^^^^
+
+|es| is free software: you can redistribute it and/or modify it under the terms
+of the GNU General Public License as published by the Free Software Foundation,
+either `version 3 of the License (GNU GPLv3) <https://www.gnu.org/licenses/gpl-3.0.html>`__,
+or (at your option) any later version (:spdx:`GPL-3.0-or-later`).
+
+|es| contains code that is not provided under the GNU GPLv3, but is governed
+by other open source license terms which are compatible with the GNU GPLv3,
+including, but not limited to, Apache License 2.0 (:spdx:`Apache-2.0`),
+Revised BSD License (:spdx:`BSD-3-Clause`),
+and FSF All Permissive License (:spdx:`FSFAP`).
+Such third party codes feature a header containing the license
+(or a link to its full text) and a list of the copyright holders.
+When distributing modified versions of |es|, the terms of these licenses also apply.
 
 ____
 

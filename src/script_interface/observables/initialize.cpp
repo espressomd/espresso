@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2022 The ESPResSo project
+ * Copyright (C) 2015-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -151,7 +151,7 @@ void initialize(Utils::Factory<ObjectHandle> *om) {
   REGISTER_PAIRWISE_DISTANCES(PairwiseDistances);
 
 #ifdef ESPRESSO_DPD
-  REGISTER(DPDStress)
+  REGISTER(DPDPressure)
 #endif
   REGISTER(LBFluidPressureTensor);
   REGISTER_CYLPID_PROFILE_OBS(

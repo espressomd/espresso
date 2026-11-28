@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -44,6 +44,10 @@ public:
         {{"cut_off",
           [this](Variant const &v) { m_c->set_cut_off(get_value<double>(v)); },
           [this]() { return m_c->get_cut_off(); }}});
+  }
+
+  void do_construct(VariantMap const &params) override {
+    m_c->set_cut_off(get_value<double>(params, "cut_off"));
   }
 
   std::shared_ptr<::PairCriteria::PairCriterion>

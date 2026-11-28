@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -176,6 +176,12 @@ Cluster::fractal_dimension([[maybe_unused]] double dr) {
     auto const current_rg = radius_of_gyration_subcluster(subcluster_ids);
     log_pcounts.push_back(log(static_cast<double>(subcluster_ids.size())));
     log_diameters.push_back(log(current_rg * 2.0));
+  }
+  if (log_diameters.size() < 2) {
+    throw std::runtime_error(
+        "The fractal dimension of a cluster with fewer than two distinct "
+        "radial shells (e.g. a 2-particle cluster) is undefined. Provide a "
+        "larger cluster or a smaller dr.");
   }
   double c0, c1, cov00, cov01, cov11, sumsq;
   gsl_fit_linear(log_diameters.data(), 1, log_pcounts.data(), 1,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,11 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
-// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34,
+// sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 3247aa7395049ca5bfb69d34d55e45db19fa439c
 
 #pragma once
+
+#include <waLBerlaDefinitions.h>
 
 #include "ReactionKernelBulk_1_double_precision.h"
 #include "ReactionKernelBulk_1_single_precision.h"
@@ -38,7 +40,7 @@
 #include "ReactionKernelBulk_5_double_precision.h"
 #include "ReactionKernelBulk_5_single_precision.h"
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 
 #include "ReactionKernelBulk_1_double_precision_CUDA.h"
 #include "ReactionKernelBulk_1_single_precision_CUDA.h"
@@ -169,7 +171,7 @@ auto get_kernel(const std::vector<std::shared_ptr<Reactant>> &reactants,
   return get_kernel_impl<float>(reactants, args...);
 }
 
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 
 template <typename FloatType = double, std::size_t N = 1>
 struct KernelTraitGPU {

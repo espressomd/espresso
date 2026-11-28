@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <functional>
 #include <stdexcept>
 
 void System::System::synchronize_npt_state() {
@@ -65,7 +66,7 @@ void NptIsoParameters::coulomb_dipole_sanity_checks(
 NptIsoParameters::NptIsoParameters(double ext_pressure, double piston,
                                    Utils::Vector<bool, 3> const &rescale,
                                    bool cubic_box)
-    : piston{piston}, inv_piston{piston}, p_ext{ext_pressure},
+    : piston{piston}, inv_piston{1. / piston}, p_ext{ext_pressure},
       cubic_box{cubic_box} {
 
   if (ext_pressure < 0.0) {
@@ -107,12 +108,11 @@ void System::System::npt_ensemble_init(bool recalc_forces) {
     npt_inst_pressure->p_vel = Utils::Vector3d{};
   }
 
-  auto const particle_number =
-      ::System::get_system().cell_structure->local_particles().size();
+  auto const particle_number = cell_structure->local_particles().size();
   nptiso->particle_number =
       boost::mpi::all_reduce(::comm_cart, particle_number, std::plus<>());
 
-  auto const dt = ::System::get_system().get_time_step();
+  auto const dt = get_time_step();
   nptiso->half_dt_inv_piston = 0.5 * dt * nptiso->inv_piston;
   nptiso->half_dt_inv_piston_and_Nf = -nptiso->half_dt_inv_piston;
   if (particle_number > 1) {

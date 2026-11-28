@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -40,6 +40,7 @@ import espressomd.shapes
 import espressomd.constraints
 import espressomd.bond_breakage
 import espressomd.reaction_methods
+import espressomd.propagation
 
 
 config = utg.TestGenerator()
@@ -56,6 +57,8 @@ system.force_cap = 1e8
 system.min_global_cut = 2.0
 system.max_oif_objects = 5
 n_nodes = system.cell_system.get_state()["n_nodes"]
+if 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
+    system.periodicity = [False, False, False]
 
 # create checkpoint folder
 config.cleanup_old_checkpoint()
@@ -63,35 +66,35 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
 
 # Lees-Edwards boundary conditions
+# (LB doesn't support domain decomposition along the shear direction)
 le_active = False
 if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
-        'LB' not in modes or n_nodes in (1, 2, 3)):
+        'LB' not in modes or (n_nodes in (1, 2, 3) and
+                              system.cell_system.node_grid[0] == 1)):
     le_active = True
     protocol = espressomd.lees_edwards.LinearShear(
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
-        shear_direction="z", shear_plane_normal="y", protocol=protocol)
+        shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
 lbf_class = None
 lb_lattice = None
 if espressomd.has_features('WALBERLA') and 'LB.WALBERLA' in modes:
-    if 'LB.GPU' in modes and espressomd.gpu_available():
-        lbf_class = espressomd.lb.LBFluidWalberlaGPU
-    elif 'LB.CPU' in modes:
-        lbf_class = espressomd.lb.LBFluidWalberla
+    if 'LB.CPU' in modes or 'LB.GPU' in modes and espressomd.gpu_available():
+        lbf_class = espressomd.lb.LBFluid
     if le_active:
         lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 1}
     else:
         lb_lattice_kwargs = {'agrid': 2.0, 'n_ghost_layers': 2}
-    lb_lattice = espressomd.lb.LatticeWalberla(**lb_lattice_kwargs)
+    lb_lattice = espressomd.lb.Lattice(**lb_lattice_kwargs)
     lb_lattice_kwargs['blocks_per_mpi_rank'] = [1, 1, 2]
-    lb_lattice_blocks_per_mpi = espressomd.lb.LatticeWalberla(
+    lb_lattice_blocks_per_mpi = espressomd.lb.Lattice(
         **lb_lattice_kwargs)
 if lbf_class:
-    lbf_cpt_mode = 0 if 'LB.ASCII' in modes else 1
+    cpt_mode = 0 if 'LB.ASCII' in modes else 1
     lbf = lbf_class(
         lattice=lb_lattice, kinematic_viscosity=1.3, density=1.5,
-        tau=system.time_step)
+        tau=system.time_step, gpu='LB.GPU' in modes)
     wall1 = espressomd.shapes.Wall(normal=(1, 0, 0), dist=1.0)
     wall2 = espressomd.shapes.Wall(normal=(-1, 0, 0),
                                    dist=-(system.box_l[0] - 1.0))
@@ -99,11 +102,19 @@ if lbf_class:
     lbf.add_boundary_from_shape(wall2, (0, 0, 0))
 
     if not le_active:
-        ek_solver = espressomd.electrokinetics.EKNone(lattice=lb_lattice)
+        ek_solver_class = espressomd.electrokinetics.EKNone
+        ek_params = {"single_precision": False, "gpu": False}
+        if "LB.GPU" in modes and espressomd.gpu_available():
+            ek_params["gpu"] = True
+        ek_solver_params = {"tau": system.time_step, **ek_params}
+        if espressomd.has_features("WALBERLA_FFT") and cpt_mode == 1:
+            ek_solver_class = espressomd.electrokinetics.EKFFT
+            ek_solver_params["permittivity"] = 0.1
+        ek_solver = ek_solver_class(lattice=lb_lattice, **ek_solver_params)
         ek_species = espressomd.electrokinetics.EKSpecies(
             lattice=lb_lattice, density=1.5, kT=2.0, diffusion=0.2, valency=0.1,
             advection=False, friction_coupling=False, ext_efield=[0.1, 0.2, 0.3],
-            single_precision=False, tau=system.time_step)
+            tau=system.time_step, **ek_params)
         ekcontainer = espressomd.electrokinetics.EKContainer(
             solver=ek_solver, tau=ek_species.tau)
         ekcontainer.add(ek_species)
@@ -120,7 +131,8 @@ if lbf_class:
             shape=wall2, value=2.,
             boundary_type=espressomd.electrokinetics.DensityBoundary)
 
-p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0])
+Propagation = espressomd.propagation.Propagation
+p1 = system.part.add(id=0, pos=[1.0, 1.0, 1.0], mol_id=3)
 p2 = system.part.add(id=1, pos=[1.0, 1.0, 2.0])
 
 if espressomd.has_features('ELECTROSTATICS'):
@@ -131,9 +143,6 @@ if espressomd.has_features('DIPOLES'):
     p1.dip = (1.3, 2.1, -6)
     p2.dip = (7.3, 6.1, -4)
 
-if espressomd.has_features('EXCLUSIONS'):
-    system.part.add(id=2, pos=[2.0, 2.0, 2.0], exclusions=[0, 1])
-
 # place particles at the interface between 2 MPI nodes
 p3 = system.part.add(id=3, pos=system.box_l / 2.0 - 1.0, type=1)
 p4 = system.part.add(id=4, pos=system.box_l / 2.0 + 1.0, type=1)
@@ -142,17 +151,14 @@ system.comfixed.types = [0, 2]
 p_slice = system.part.by_ids([4, 1])
 
 if espressomd.has_features('P3M') and ('P3M' in modes or 'ELC' in modes):
-    if espressomd.gpu_available() and 'P3M.GPU' in modes:
-        ActorP3M = espressomd.electrostatics.P3MGPU
-    else:
-        ActorP3M = espressomd.electrostatics.P3M
-    p3m = ActorP3M(
+    p3m = espressomd.electrostatics.P3M(
         prefactor=1.0,
         accuracy=0.1,
         mesh=10,
         cao=1,
         alpha=1.0,
         r_cut=1.0,
+        gpu=espressomd.gpu_available() and 'P3M.GPU' in modes,
         timings=15,
         tune_limits=[8, 12],
         tune=False)
@@ -204,17 +210,18 @@ system.constraints.add(
     espressomd.constraints.HomogeneousMagneticField(H=[1., 2., 3.]))
 system.constraints.add(
     espressomd.constraints.HomogeneousFlowField(u=[1., 2., 3.], gamma=2.3))
-pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
-    system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
-checkpoint.register("pot_field_data")
-system.constraints.add(espressomd.constraints.PotentialField(
-    field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
-    particle_scales={5: 6.0}))
-vec_field_data = espressomd.constraints.ForceField.field_from_fn(
-    system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
-checkpoint.register("vec_field_data")
-system.constraints.add(espressomd.constraints.ForceField(
-    field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
+if np.prod(system.periodicity):
+    pot_field_data = espressomd.constraints.ElectricPotential.field_from_fn(
+        system.box_l, np.ones(3), lambda x: np.linalg.norm(10 * np.ones(3) - x))
+    checkpoint.register("pot_field_data")
+    system.constraints.add(espressomd.constraints.PotentialField(
+        field=pot_field_data, grid_spacing=np.ones(3), default_scale=1.6,
+        particle_scales={5: 6.0}))
+    vec_field_data = espressomd.constraints.ForceField.field_from_fn(
+        system.box_l, np.ones(3), lambda x: 10 * np.ones(3) - x)
+    checkpoint.register("vec_field_data")
+    system.constraints.add(espressomd.constraints.ForceField(
+        field=vec_field_data, grid_spacing=np.ones(3), default_scale=1.4))
 union = espressomd.shapes.Union()
 union.add([espressomd.shapes.Wall(normal=[1., 0., 0.], dist=0.5),
            espressomd.shapes.Wall(normal=[0., 1., 0.], dist=1.5)])
@@ -234,7 +241,6 @@ if 'LB' not in modes:
     elif 'THERM.DPD' in modes and espressomd.has_features('DPD'):
         system.thermostat.set_dpd(kT=1.0, seed=42)
     elif 'THERM.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [False, False, False]
         system.thermostat.set_stokesian(kT=1.0, seed=42)
     # set integrator
     if 'INT.NPT' in modes and espressomd.has_features('NPT'):
@@ -248,9 +254,9 @@ if 'LB' not in modes:
     elif 'INT.BD' in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
-        system.periodicity = [False, False, False]
         system.integrator.set_stokesian_dynamics(
-            approximation_method='ft', viscosity=0.5, radii={0: 1.5},
+            approximation_method='ft', viscosity=0.5,
+            radii={i: 1.5 + i / 10. for i in range(8)},
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):
@@ -280,14 +286,22 @@ harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=1.0)
 system.bonded_inter.add(harmonic_bond)
 strong_harmonic_bond = espressomd.interactions.HarmonicBond(r_0=0.0, k=5e5)
 system.bonded_inter.add(strong_harmonic_bond)
+angle_bond = espressomd.interactions.AngleCosine(bend=5e-6, phi0=3.2)
+system.bonded_inter.add(angle_bond)
+dihe_bond = espressomd.interactions.Dihedral(mult=3, bend=7e-6, phase=4.)
+system.bonded_inter.add(dihe_bond)
+p7 = system.part.add(id=2, pos=[2.0, 2.0, 2.1])
+p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
 p2.add_bond((harmonic_bond, p1))
+p2.add_bond((angle_bond, p1, p7))
+p2.add_bond((dihe_bond, p1, p7, p8))
 if 'THERM.LB' in modes or 'THERM.LANGEVIN' in modes:
     # create Drude particles
     system.thermostat.set_thermalized_bond(seed=3)
     system.thermostat.thermalized_bond.call_method(
         "override_philox_counter", counter=5)
     therm_params = dict(temp_com=0.1, temp_distance=0.2, gamma_com=0.3,
-                        gamma_distance=0.5, r_cut=2.)
+                        gamma_distance=0.5, r_cut=1.8)
     therm_bond1 = espressomd.interactions.ThermalizedBond(**therm_params)
     therm_bond2 = espressomd.interactions.ThermalizedBond(**therm_params)
     system.bonded_inter.add(therm_bond1)
@@ -312,6 +326,23 @@ system.bonded_inter.add(ibm_tribend_bond)
 break_spec = espressomd.bond_breakage.BreakageSpec(
     breakage_length=5., action_type="delete_bond")
 system.bond_breakage[strong_harmonic_bond._bond_id] = break_spec
+
+# create Stoner-Wohlfarth particles
+if 'THERM.LANGEVIN' in modes and espressomd.has_features(
+        ['THERMAL_STONER_WOHLFARTH', 'EXTERNAL_FORCES']):
+    magnetodynamics_params = {
+        "is_enabled": True, "anisotropy_field_inv": 0.175,
+        "sat_mag": 1.75, "anisotropy_energy": 5.,
+        "sw_dt_incr": 3e-9, "sw_tau0_inv": 1e8}
+    checkpoint.register("magnetodynamics_params")
+    p_tsw1 = system.part.add(id=11, pos=[1, 1, 1], director=[1, 0, 0],
+                             rotation=(False, False, False),
+                             fix=(True, True, True))
+    p_tsw2 = system.part.add(
+        id=12, pos=p_tsw1.pos, dip=[1, 2, 3], rotation=[False, False, False],
+        magnetodynamics=magnetodynamics_params)
+    p_tsw2.vs_auto_relate_to(p_tsw1)
+    p_tsw2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
 checkpoint.register("system")
 checkpoint.register("ibm_volcons_bond")
@@ -388,6 +419,7 @@ if lbf_class:
     system.lb = lbf
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
+        system.thermostat.lb.call_method("override_philox_counter", counter=2)
     if not le_active:
         system.ekcontainer = ekcontainer
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
@@ -401,12 +433,17 @@ if lbf_class:
         'abc,d->abcd', grid_3D, np.arange(1, 4))
     # save LB checkpoint file
     lbf_cpt_path = checkpoint.root / "lb.cpt"
-    lbf.save_checkpoint(str(lbf_cpt_path), lbf_cpt_mode)
+    lbf.save_checkpoint(str(lbf_cpt_path), cpt_mode)
     if not le_active:
         # save EK checkpoint file
         ek_species[:, :, :].density = grid_3D
+        if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+            ek_solver[:, :, :].potential = 0.25 * grid_3D
         ek_cpt_path = checkpoint.root / "ek.cpt"
-        ek_species.save_checkpoint(str(ek_cpt_path), lbf_cpt_mode)
+        ek_species.save_checkpoint(str(ek_cpt_path), cpt_mode)
+        if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+            ek_none_cpt_path = checkpoint.root / "ek_none.cpt"
+            ek_solver.save_checkpoint(str(ek_none_cpt_path), cpt_mode)
     # setup VTK folder
     vtk_suffix = config.test_name
     vtk_root = pathlib.Path("vtk_out")
@@ -417,36 +454,52 @@ if lbf_class:
     config.recursive_unlink(vtk_root / lb_vtk_manual_id)
     lb_vtk_auto = espressomd.lb.VTKOutput(
         identifier=lb_vtk_auto_id, delta_N=1, force_pvtu=False,
-        observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
+        observables=["density", "velocity_vector"], base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_auto)
     lb_vtk_auto.disable()
     lb_vtk_manual = espressomd.lb.VTKOutput(
         identifier=lb_vtk_manual_id, delta_N=0, force_pvtu=True,
-        observables=('density',), base_folder=str(vtk_root))
+        observables=["density"], base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_manual)
     lb_vtk_manual.write()
     if not le_active:
         # create EK VTK callbacks
-        ek_vtk_auto_id = f"auto_ek_{vtk_suffix}"
-        ek_vtk_manual_id = f"manual_ek_{vtk_suffix}"
-        config.recursive_unlink(vtk_root / ek_vtk_auto_id)
-        config.recursive_unlink(vtk_root / ek_vtk_manual_id)
-        ek_vtk_auto = espressomd.electrokinetics.VTKOutput(
-            identifier=ek_vtk_auto_id,
-            observables=('density',), delta_N=1, base_folder=str(vtk_root))
-        ek_species.add_vtk_writer(vtk=ek_vtk_auto)
-        ek_vtk_auto.disable()
-        ek_vtk_manual = espressomd.electrokinetics.VTKOutput(
-            identifier=ek_vtk_manual_id,
-            observables=('density',), delta_N=0, base_folder=str(vtk_root))
-        ek_species.add_vtk_writer(vtk=ek_vtk_manual)
-        ek_vtk_manual.write()
+        ek_vtk_species_auto_id = f"auto_ek_species_{vtk_suffix}"
+        ek_vtk_species_manual_id = f"manual_ek_species_{vtk_suffix}"
+        ek_vtk_poisson_auto_id = f"auto_ek_poisson_{vtk_suffix}"
+        ek_vtk_poisson_manual_id = f"manual_ek_poisson_{vtk_suffix}"
+        config.recursive_unlink(vtk_root / ek_vtk_species_auto_id)
+        config.recursive_unlink(vtk_root / ek_vtk_species_manual_id)
+        config.recursive_unlink(vtk_root / ek_vtk_poisson_auto_id)
+        config.recursive_unlink(vtk_root / ek_vtk_poisson_manual_id)
+        ek_vtk_species_auto = espressomd.electrokinetics.VTKOutput(
+            identifier=ek_vtk_species_auto_id, observables=["density"],
+            delta_N=1, base_folder=str(vtk_root))
+        ek_species.add_vtk_writer(vtk=ek_vtk_species_auto)
+        ek_vtk_species_auto.disable()
+        ek_vtk_species_manual = espressomd.electrokinetics.VTKOutput(
+            identifier=ek_vtk_species_manual_id, observables=["density"],
+            delta_N=0, base_folder=str(vtk_root))
+        ek_species.add_vtk_writer(vtk=ek_vtk_species_manual)
+        ek_vtk_species_manual.write()
+        if espressomd.has_features("FFTW"):
+            ek_vtk_poisson_auto = espressomd.electrokinetics.VTKPoissonOutput(
+                identifier=ek_vtk_poisson_auto_id, observables=["potential"],
+                force_pvtu=True, delta_N=1, base_folder=str(vtk_root))
+            ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_auto)
+            ek_vtk_poisson_auto.disable()
+            ek_vtk_poisson_manual = espressomd.electrokinetics.VTKPoissonOutput(
+                identifier=ek_vtk_poisson_manual_id, observables=["potential"],
+                force_pvtu=True, delta_N=0, base_folder=str(vtk_root))
+            ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_manual)
+            ek_vtk_poisson_manual.write()
 
 
 # set various properties
-p8 = system.part.add(id=8, pos=[2.0] * 3 + system.box_l)
 p8.lees_edwards_offset = 0.2
 p4.v = [-1., 2., -4.]
+if espressomd.has_features('EXCLUSIONS'):
+    p7.exclusions = [0, 1]
 if espressomd.has_features('MASS'):
     p3.mass = 1.5
 if espressomd.has_features('ROTATION'):
@@ -477,6 +530,8 @@ if espressomd.has_features(["ENGINE", "VIRTUAL_SITES_RELATIVE"]) and lbf_class:
     p4.swimming = {"v_swim": 0.02, "is_engine_force_on_fluid": True}
 if espressomd.has_features('LB_ELECTROHYDRODYNAMICS') and lbf_class:
     p8.mu_E = [-0.1, 0.2, -0.3]
+if espressomd.has_features(["VIRTUAL_SITES_CENTER_OF_MASS"]):
+    p8.vs_com_relate_to(p1)
 
 # h5md output
 if espressomd.has_features("H5MD"):
@@ -511,6 +566,10 @@ class TestCheckpoint(ut.TestCase):
         if lbf_class:
             self.assertTrue(lbf_cpt_path.is_file(),
                             "LB checkpoint file not created")
+            if not le_active and isinstance(
+                    ek_solver, espressomd.electrokinetics.EKNone):
+                self.assertTrue(ek_none_cpt_path.is_file(),
+                                "EKNone checkpoint file not created")
 
         # only objects at global scope can be checkpointed
         with self.assertRaisesRegex(KeyError, "The given object 'local_obj' was not found in the current scope"):
@@ -532,7 +591,7 @@ class TestCheckpoint(ut.TestCase):
         lbf_cpt_root = lbf_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = lbf_cpt_root / "unknown_dir" / "lb.cpt"
-            lbf.save_checkpoint(invalid_path, lbf_cpt_mode)
+            lbf.save_checkpoint(invalid_path, cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
             lbf.save_checkpoint(lbf_cpt_root / "lb_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
@@ -554,7 +613,7 @@ class TestCheckpoint(ut.TestCase):
         # write checkpoint file with extra data
         with open(cpt_path.format("-extra-data"), "wb") as f:
             f.write(lbf_cpt_data + lbf_cpt_data[-8:])
-        if lbf_cpt_mode == 0:
+        if cpt_mode == 0:
             boxsize, popsize, data = lbf_cpt_data.split(b"\n", 2)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
@@ -566,8 +625,8 @@ class TestCheckpoint(ut.TestCase):
             with open(cpt_path.format("-wrong-popsize"), "wb") as f:
                 f.write(boxsize + b"\n" + b"2" + popsize + b"\n" + data)
 
-    @ut.skipIf(lbf_class is None, "Skipping test due to missing mode.")
-    @ut.skipIf(le_active, "Skipping test due to Lees-Edwards enforces only one ghost layer.")
+    @ut.skipIf(lbf_class is None, "missing LB mode.")
+    @ut.skipIf(le_active, "Lees-Edwards enforces only one ghost layer.")
     def test_ek_checkpointing_exceptions(self):
         '''
         Check the EK checkpointing exception mechanism. Write corrupted
@@ -578,7 +637,7 @@ class TestCheckpoint(ut.TestCase):
         ek_cpt_root = ek_cpt_path.parent
         with self.assertRaisesRegex(RuntimeError, "could not open file"):
             invalid_path = ek_cpt_root / "unknown_dir" / "ek.cpt"
-            ek_species.save_checkpoint(invalid_path, lbf_cpt_mode)
+            ek_species.save_checkpoint(invalid_path, cpt_mode)
         with self.assertRaisesRegex(RuntimeError, "unit test error"):
             ek_species.save_checkpoint(ek_cpt_root / "ek_err.cpt", -1)
         with self.assertRaisesRegex(RuntimeError, "could not write to"):
@@ -597,7 +656,7 @@ class TestCheckpoint(ut.TestCase):
         # write checkpoint file with extra data
         with open(cpt_path.format("-extra-data"), "wb") as f:
             f.write(ek_cpt_data + ek_cpt_data[-8:])
-        if lbf_cpt_mode == 0:
+        if cpt_mode == 0:
             boxsize, data = ek_cpt_data.split(b"\n", 1)
             # write checkpoint file with incorrectly formatted data
             with open(cpt_path.format("-wrong-format"), "wb") as f:
@@ -605,6 +664,32 @@ class TestCheckpoint(ut.TestCase):
             # write checkpoint file with different box dimensions
             with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
                 f.write(b"2" + boxsize + b"\n" + data)
+
+        if isinstance(ek_solver, espressomd.electrokinetics.EKNone):
+            with self.assertRaisesRegex(RuntimeError, "could not open file"):
+                invalid_path = ek_cpt_root / "unknown_dir" / "ek_none.cpt"
+                ek_solver.save_checkpoint(invalid_path, cpt_mode)
+            with self.assertRaisesRegex(RuntimeError, "unit test error"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -1)
+            with self.assertRaisesRegex(RuntimeError, "could not write to"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -2)
+            with self.assertRaisesRegex(ValueError, "Unknown mode -3"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", -3)
+            with self.assertRaisesRegex(ValueError, "Unknown mode 2"):
+                ek_solver.save_checkpoint(ek_cpt_root / "ek_none_err.cpt", 2)
+
+            ek_none_cpt_data = ek_none_cpt_path.read_bytes()
+            cpt_path = str(checkpoint.root / "ek_none") + "{}.cpt"
+            with open(cpt_path.format("-missing-data"), "wb") as f:
+                f.write(ek_none_cpt_data[:len(ek_none_cpt_data) // 2])
+            with open(cpt_path.format("-extra-data"), "wb") as f:
+                f.write(ek_none_cpt_data + ek_none_cpt_data[-8:])
+            if cpt_mode == 0:
+                boxsize, data = ek_none_cpt_data.split(b"\n", 1)
+                with open(cpt_path.format("-wrong-format"), "wb") as f:
+                    f.write(boxsize + b"\n" + b"\ntext string\n" + data)
+                with open(cpt_path.format("-wrong-boxdim"), "wb") as f:
+                    f.write(b"2" + boxsize + b"\n" + data)
 
     def test_generator_recursive_unlink(self):
         with tempfile.TemporaryDirectory() as tmp_directory:
@@ -620,9 +705,10 @@ class TestCheckpoint(ut.TestCase):
                                 f"Path '{path}' should be a folder")
 
     def test_reaction_methods_sanity_check(self):
-        with self.assertRaisesRegex(RuntimeError, "Reaction methods do not support checkpointing"):
-            widom = espressomd.reaction_methods.WidomInsertion(kT=1, seed=1)
-            widom._serialize()
+        with self.assertRaisesRegex(NotImplementedError, "Reaction methods do not support checkpointing"):
+            widom = espressomd.reaction_methods.WidomInsertion(
+                kT=1, seed=1, system=system)
+            widom.__reduce__()
 
 
 if __name__ == '__main__':

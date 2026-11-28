@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,12 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Particle serialization test
+#define BOOST_TEST_MODULE "Particle serialization test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <config/config.hpp>
+
 #include "Particle.hpp"
-#include "config/config.hpp"
 
 #include <utils/demangle.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
@@ -141,9 +142,9 @@ struct NotSerializable {};
 
 class BitwiseSerializable {
   int const a = 1;
-  long double b = 2.l;
+  double b = 2.;
   int const c = 3;
-  long double d = 4.l;
+  double d = 4.;
 
   friend boost::serialization::access;
   template <class Archive> void serialize(Archive &ar, long int) {

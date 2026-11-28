@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Field coupling test for fields
+#define BOOST_TEST_MODULE "Field coupling test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -45,6 +45,7 @@ BOOST_AUTO_TEST_CASE(jacobian_type_test) {
   using FieldCoupling::Fields::detail::jacobian_type;
 
   static_assert(std::is_same_v<jacobian_type<double, 1>, Utils::Vector3d>);
+  static_assert(std::is_same_v<jacobian_type<float, 1>, Utils::Vector3f>);
   static_assert(
       std::is_same_v<jacobian_type<double, 2>, Utils::Matrix<double, 2, 3>>);
   BOOST_TEST_PASSPOINT();

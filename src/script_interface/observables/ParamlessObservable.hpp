@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,17 +19,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
-#define SCRIPT_INTERFACE_OBSERVABLES_PARAMLESSOBSERVABLE_HPP
+#pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "script_interface/ScriptInterface.hpp"
 
 #include "Observable.hpp"
-#ifdef ESPRESSO_DPD
-#include "core/observables/DPDStress.hpp"
-#endif
+#include "core/observables/DPDPressure.hpp"
 #include "core/observables/EnergyObservable.hpp"
 #include "core/observables/LBFluidPressureTensor.hpp"
 #include "core/observables/Observable.hpp"
@@ -67,10 +64,8 @@ NEW_PARAMLESS_OBSERVABLE(Pressure)
 NEW_PARAMLESS_OBSERVABLE(PressureTensor)
 NEW_PARAMLESS_OBSERVABLE(LBFluidPressureTensor)
 #ifdef ESPRESSO_DPD
-NEW_PARAMLESS_OBSERVABLE(DPDStress)
+NEW_PARAMLESS_OBSERVABLE(DPDPressure)
 #endif
 
 } /* namespace Observables */
 } /* namespace ScriptInterface */
-
-#endif

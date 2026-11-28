@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -40,7 +40,8 @@
 #include <vector>
 
 namespace detail {
-inline bool get_nth_bit(uint8_t const bitfield, unsigned int const bit_idx) {
+constexpr inline bool get_nth_bit(uint8_t const bitfield,
+                                  unsigned int const bit_idx) {
   return bitfield & (1u << bit_idx);
 }
 } // namespace detail
@@ -60,6 +61,43 @@ struct ParticleParametersSwimming {
   }
 };
 #endif
+
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+/** Properties for thermal Stoner-Wohlfarth magnetodynamics. */
+struct ThermalStonerWohlfarthParameters {
+  /**
+   * Flag to distinguish virtual particles carrying the dipole moment in
+   * the thermal Stoner-Wohlfarth model from other types of virtual sites.
+   */
+  bool is_enabled = false;
+  /** angle between the director and dipole moment of a Stoner-Wohlfarth
+   * particle */
+  double phi0 = 0.;
+  /** saturation magnetisation of a polarizable particle */
+  double sat_mag = 0.;
+  /**
+   * @brief Inverse anisotropy field in reduced units.
+   * anisotropy field = 2.*K1/(mu0 * Ms) in [A / m] where K1 is the magnetic
+   * anisotropy constant [kg / (m s^2)].
+   */
+  double ani_fld_inv = 0.;
+  /**
+   * @brief Magnetic anisotropy energy (K1 * V) in units of energy.
+   * Related to ani_param from Eq.3 in @cite mostarac25a
+   * by: ani_param = ani_energy / kT
+   */
+  double ani_energy = 0.;
+  /** Browns attempt frequency. Prefactor from Eq.9 in @cite mostarac25a.  */
+  double tau0_inv = 0.;
+  /** time units parameter for the kinetic Monte Carlo step */
+  double dt_incr = 0.;
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar & is_enabled & phi0 & sat_mag & ani_fld_inv & ani_energy & tau0_inv &
+        dt_incr;
+  }
+};
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
@@ -188,7 +226,7 @@ struct ParticleProperties {
   /** External force. */
   Utils::Vector3d ext_force = {0., 0., 0.};
 #ifdef ESPRESSO_ROTATION
-  /** External torque. */
+  /** External torque in lab frame. */
   Utils::Vector3d ext_torque = {0., 0., 0.};
 #endif // ESPRESSO_ROTATION
 #endif // ESPRESSO_EXTERNAL_FORCES
@@ -197,12 +235,15 @@ struct ParticleProperties {
   ParticleParametersSwimming swim;
 #endif
 
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  ThermalStonerWohlfarthParameters magnetodynamics;
+#endif
+
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
     ar & identity;
     ar & mol_id;
     ar & type;
     ar & propagation;
-
 #ifdef ESPRESSO_MASS
     ar & mass;
 #endif
@@ -215,7 +256,6 @@ struct ParticleProperties {
 #ifdef ESPRESSO_ELECTROSTATICS
     ar & q;
 #endif
-
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
     ar & mu_E;
 #endif
@@ -228,7 +268,6 @@ struct ParticleProperties {
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
     ar & vs_relative;
 #endif
-
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
     ar & gamma;
 #ifdef ESPRESSO_ROTATION
@@ -242,9 +281,11 @@ struct ParticleProperties {
     ar & ext_torque;
 #endif
 #endif // ESPRESSO_EXTERNAL_FORCES
-
 #ifdef ESPRESSO_ENGINE
     ar & swim;
+#endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    ar & magnetodynamics;
 #endif
   }
 };
@@ -262,7 +303,7 @@ struct ParticlePosition {
   /** quaternion to define particle orientation */
   Utils::Quaternion<double> quat = Utils::Quaternion<double>::identity();
   /** unit director calculated from the quaternion */
-  Utils::Vector3d calc_director() const {
+  constexpr Utils::Vector3d calc_director() const {
     return Utils::convert_quaternion_to_director(quat);
   }
 #endif
@@ -316,7 +357,7 @@ struct ParticleForce {
   Utils::Vector3d f = {0., 0., 0.};
 
 #ifdef ESPRESSO_ROTATION
-  /** torque. */
+  /** torque in lab frame. */
   Utils::Vector3d torque = {0., 0., 0.};
 #endif
 
@@ -411,58 +452,65 @@ private:
 #endif
 
 public:
-  auto const &id() const { return p.identity; }
-  auto &id() { return p.identity; }
-  auto const &mol_id() const { return p.mol_id; }
-  auto &mol_id() { return p.mol_id; }
-  auto const &type() const { return p.type; }
-  auto &type() { return p.type; }
+  constexpr auto const &id() const { return p.identity; }
+  constexpr auto &id() { return p.identity; }
+  constexpr auto const &mol_id() const { return p.mol_id; }
+  constexpr auto &mol_id() { return p.mol_id; }
+  constexpr auto const &type() const { return p.type; }
+  constexpr auto &type() { return p.type; }
 
-  auto const &propagation() const { return p.propagation; }
-  auto &propagation() { return p.propagation; }
+  constexpr auto const &propagation() const { return p.propagation; }
+  constexpr auto &propagation() { return p.propagation; }
 
-  bool operator==(Particle const &rhs) const { return id() == rhs.id(); }
+  constexpr bool operator==(Particle const &rhs) const {
+    return id() == rhs.id();
+  }
 
-  bool operator!=(Particle const &rhs) const { return id() != rhs.id(); }
+  constexpr bool operator!=(Particle const &rhs) const {
+    return id() != rhs.id();
+  }
 
-  auto const &bonds() const { return bl; }
-  auto &bonds() { return bl; }
+  constexpr auto const &bonds() const { return bl; }
+  constexpr auto &bonds() { return bl; }
 
-  auto const &pos() const { return r.p; }
-  auto &pos() { return r.p; }
-  auto const &v() const { return m.v; }
-  auto &v() { return m.v; }
-  auto const &force() const { return f.f; }
-  auto &force() { return f.f; }
-  auto const &force_and_torque() const { return f; }
-  auto &force_and_torque() { return f; }
+  constexpr auto const &pos() const { return r.p; }
+  constexpr auto &pos() { return r.p; }
+  constexpr auto const &v() const { return m.v; }
+  constexpr auto &v() { return m.v; }
+  constexpr auto const &force() const { return f.f; }
+  constexpr auto &force() { return f.f; }
+  constexpr auto const &force_and_torque() const { return f; }
+  constexpr auto &force_and_torque() { return f; }
 
-  bool is_ghost() const { return l.ghost; }
-  void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
-  auto &pos_at_last_verlet_update() { return l.p_old; }
-  auto const &pos_at_last_verlet_update() const { return l.p_old; }
-  auto const &image_box() const { return r.i; }
-  auto &image_box() { return r.i; }
-  auto const &lees_edwards_offset() const { return l.lees_edwards_offset; }
-  auto &lees_edwards_offset() { return l.lees_edwards_offset; }
-  auto const &lees_edwards_flag() const { return l.lees_edwards_flag; }
-  auto &lees_edwards_flag() { return l.lees_edwards_flag; }
+  constexpr bool is_ghost() const { return l.ghost; }
+  constexpr void set_ghost(bool const ghost_flag) { l.ghost = ghost_flag; }
+  constexpr auto &pos_at_last_verlet_update() { return l.p_old; }
+  constexpr auto const &pos_at_last_verlet_update() const { return l.p_old; }
+  constexpr auto const &image_box() const { return r.i; }
+  constexpr auto &image_box() { return r.i; }
+  constexpr auto const &lees_edwards_offset() const {
+    return l.lees_edwards_offset;
+  }
+  constexpr auto &lees_edwards_offset() { return l.lees_edwards_offset; }
+  constexpr auto const &lees_edwards_flag() const {
+    return l.lees_edwards_flag;
+  }
+  constexpr auto &lees_edwards_flag() { return l.lees_edwards_flag; }
 
+  constexpr auto const &mass() const { return p.mass; }
 #ifdef ESPRESSO_MASS
-  auto const &mass() const { return p.mass; }
-  auto &mass() { return p.mass; }
-#else
-  constexpr auto &mass() const { return p.mass; }
+  constexpr auto &mass() { return p.mass; }
 #endif
 #ifdef ESPRESSO_ROTATION
-  auto const &rotation() const { return p.rotation; }
-  auto &rotation() { return p.rotation; }
-  bool can_rotate() const { return static_cast<bool>(p.rotation); }
-  bool can_rotate_around(unsigned int const axis) const {
+  constexpr auto const &rotation() const { return p.rotation; }
+  constexpr auto &rotation() { return p.rotation; }
+  constexpr bool can_rotate() const { return static_cast<bool>(p.rotation); }
+  constexpr bool can_rotate_around(unsigned int const axis) const {
     assert(axis <= 2u);
     return detail::get_nth_bit(p.rotation, axis);
   }
-  void set_can_rotate_around(unsigned int const axis, bool const rot_flag) {
+  constexpr void set_can_rotate_around(unsigned int const axis,
+                                       bool const rot_flag) {
     assert(axis <= 2u);
     if (rot_flag) {
       p.rotation |= static_cast<uint8_t>(1u << axis);
@@ -470,80 +518,125 @@ public:
       p.rotation &= static_cast<uint8_t>(~(1u << axis));
     }
   }
-  void set_can_rotate_all_axes() { p.rotation = static_cast<uint8_t>(0b111u); }
-  void set_cannot_rotate_all_axes() {
+  constexpr void set_can_rotate_all_axes() {
+    p.rotation = static_cast<uint8_t>(0b111u);
+  }
+  constexpr void set_cannot_rotate_all_axes() {
     p.rotation = static_cast<uint8_t>(0b000u);
   }
-  auto const &quat() const { return r.quat; }
-  auto &quat() { return r.quat; }
-  auto const &torque() const { return f.torque; }
-  auto &torque() { return f.torque; }
-  auto const &omega() const { return m.omega; }
-  auto &omega() { return m.omega; }
+  constexpr auto const &quat() const { return r.quat; }
+  constexpr auto &quat() { return r.quat; }
+  constexpr auto const &torque() const { return f.torque; }
+  constexpr auto &torque() { return f.torque; }
+  constexpr auto const &omega() const { return m.omega; }
+  constexpr auto &omega() { return m.omega; }
 #ifdef ESPRESSO_EXTERNAL_FORCES
-  auto const &ext_torque() const { return p.ext_torque; }
-  auto &ext_torque() { return p.ext_torque; }
+  constexpr auto const &ext_torque() const { return p.ext_torque; }
+  constexpr auto &ext_torque() { return p.ext_torque; }
 #endif // ESPRESSO_EXTERNAL_FORCES
-  auto calc_director() const { return r.calc_director(); }
+  constexpr auto calc_director() const { return r.calc_director(); }
 #else  // ESPRESSO_ROTATION
-  auto can_rotate() const { return false; }
-  auto can_rotate_around(unsigned int const) const { return false; }
+  constexpr auto can_rotate() const { return false; }
+  constexpr auto can_rotate_around(unsigned int const) const { return false; }
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_DIPOLES
-  auto const &dipm() const { return p.dipm; }
-  auto &dipm() { return p.dipm; }
-  auto calc_dip() const { return calc_director() * dipm(); }
+  constexpr auto const &dipm() const { return p.dipm; }
+  constexpr auto &dipm() { return p.dipm; }
+  constexpr auto calc_dip() const { return calc_director() * dipm(); }
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  constexpr auto const &stoner_wohlfarth_is_enabled() const {
+    return p.magnetodynamics.is_enabled;
+  }
+  constexpr auto &stoner_wohlfarth_is_enabled() {
+    return p.magnetodynamics.is_enabled;
+  }
+  constexpr auto const &stoner_wohlfarth_phi_0() const {
+    return p.magnetodynamics.phi0;
+  }
+  constexpr auto &stoner_wohlfarth_phi_0() { return p.magnetodynamics.phi0; }
+  constexpr auto const &saturation_magnetization() const {
+    return p.magnetodynamics.sat_mag;
+  }
+  constexpr auto &saturation_magnetization() {
+    return p.magnetodynamics.sat_mag;
+  }
+  constexpr auto const &magnetic_anisotropy_field_inv() const {
+    return p.magnetodynamics.ani_fld_inv;
+  }
+  constexpr auto &magnetic_anisotropy_field_inv() {
+    return p.magnetodynamics.ani_fld_inv;
+  }
+  constexpr auto const &magnetic_anisotropy_energy() const {
+    return p.magnetodynamics.ani_energy;
+  }
+  constexpr auto &magnetic_anisotropy_energy() {
+    return p.magnetodynamics.ani_energy;
+  }
+  constexpr auto const &stoner_wohlfarth_tau0_inv() const {
+    return p.magnetodynamics.tau0_inv;
+  }
+  constexpr auto &stoner_wohlfarth_tau0_inv() {
+    return p.magnetodynamics.tau0_inv;
+  }
+  constexpr auto const &stoner_wohlfarth_dt_incr() const {
+    return p.magnetodynamics.dt_incr;
+  }
+  constexpr auto &stoner_wohlfarth_dt_incr() {
+    return p.magnetodynamics.dt_incr;
+  }
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  auto const &dip_fld() const { return p.dip_fld; }
-  auto &dip_fld() { return p.dip_fld; }
+  constexpr auto const &dip_fld() const { return p.dip_fld; }
+  constexpr auto &dip_fld() { return p.dip_fld; }
 #endif
+  constexpr auto const &rinertia() const { return p.rinertia; }
 #ifdef ESPRESSO_ROTATIONAL_INERTIA
-  auto const &rinertia() const { return p.rinertia; }
-  auto &rinertia() { return p.rinertia; }
-#else
-  constexpr auto &rinertia() const { return p.rinertia; }
+  constexpr auto &rinertia() { return p.rinertia; }
 #endif
+  constexpr auto const &q() const { return p.q; }
 #ifdef ESPRESSO_ELECTROSTATICS
-  auto const &q() const { return p.q; }
-  auto &q() { return p.q; }
-#else
-  constexpr auto &q() const { return p.q; }
+  constexpr auto &q() { return p.q; }
 #endif
 #ifdef ESPRESSO_LB_ELECTROHYDRODYNAMICS
-  auto const &mu_E() const { return p.mu_E; }
-  auto &mu_E() { return p.mu_E; }
+  constexpr auto const &mu_E() const { return p.mu_E; }
+  constexpr auto &mu_E() { return p.mu_E; }
 #endif
 #ifdef ESPRESSO_VIRTUAL_SITES
-  auto is_virtual() const {
+  constexpr auto is_virtual() const {
     return (p.propagation & (PropagationMode::TRANS_VS_RELATIVE |
+                             PropagationMode::TRANS_VS_CENTER_OF_MASS |
                              PropagationMode::ROT_VS_RELATIVE |
+                             PropagationMode::ROT_VS_INDEPENDENT |
                              PropagationMode::TRANS_LB_TRACER)) != 0;
   }
 #else
   constexpr auto is_virtual() const { return false; }
 #endif // ESPRESSO_VIRTUAL_SITES
 #ifdef ESPRESSO_VIRTUAL_SITES_RELATIVE
-  auto const &vs_relative() const { return p.vs_relative; }
-  auto &vs_relative() { return p.vs_relative; }
+  constexpr auto const &vs_relative() const { return p.vs_relative; }
+  constexpr auto &vs_relative() { return p.vs_relative; }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 #ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  auto const &gamma() const { return p.gamma; }
-  auto &gamma() { return p.gamma; }
+  constexpr auto const &gamma() const { return p.gamma; }
+  constexpr auto &gamma() { return p.gamma; }
 #ifdef ESPRESSO_ROTATION
-  auto const &gamma_rot() const { return p.gamma_rot; }
-  auto &gamma_rot() { return p.gamma_rot; }
+  constexpr auto const &gamma_rot() const { return p.gamma_rot; }
+  constexpr auto &gamma_rot() { return p.gamma_rot; }
 #endif // ESPRESSO_ROTATION
 #endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 #ifdef ESPRESSO_EXTERNAL_FORCES
-  auto const &fixed() const { return p.ext_flag; }
-  auto &fixed() { return p.ext_flag; }
-  bool has_fixed_coordinates() const { return static_cast<bool>(p.ext_flag); }
-  bool is_fixed_along(unsigned int const axis) const {
+  constexpr auto const &fixed() const { return p.ext_flag; }
+  constexpr auto &fixed() { return p.ext_flag; }
+  constexpr bool has_fixed_coordinates() const {
+    return static_cast<bool>(p.ext_flag);
+  }
+  constexpr bool is_fixed_along(unsigned int const axis) const {
     assert(axis <= 2u);
     return detail::get_nth_bit(p.ext_flag, axis);
   }
-  void set_fixed_along(int const axis, bool const fixed_flag) {
+  constexpr void set_fixed_along(unsigned int const axis,
+                                 bool const fixed_flag) {
     // set new flag
     if (fixed_flag) {
       p.ext_flag |= static_cast<uint8_t>(1u << axis);
@@ -551,23 +644,23 @@ public:
       p.ext_flag &= static_cast<uint8_t>(~(1u << axis));
     }
   }
-  auto const &ext_force() const { return p.ext_force; }
-  auto &ext_force() { return p.ext_force; }
+  constexpr auto const &ext_force() const { return p.ext_force; }
+  constexpr auto &ext_force() { return p.ext_force; }
 #else  // ESPRESSO_EXTERNAL_FORCES
   constexpr bool has_fixed_coordinates() const { return false; }
   constexpr bool is_fixed_along(unsigned int const) const { return false; }
 #endif // ESPRESSO_EXTERNAL_FORCES
 #ifdef ESPRESSO_ENGINE
-  auto const &swimming() const { return p.swim; }
-  auto &swimming() { return p.swim; }
+  constexpr auto const &swimming() const { return p.swim; }
+  constexpr auto &swimming() { return p.swim; }
 #endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
-  auto const &pos_last_time_step() const { return r.p_last_timestep; }
-  auto &pos_last_time_step() { return r.p_last_timestep; }
-  auto const &rattle_params() const { return rattle; }
-  auto &rattle_params() { return rattle; }
-  auto const &rattle_correction() const { return rattle.correction; }
-  auto &rattle_correction() { return rattle.correction; }
+  constexpr auto const &pos_last_time_step() const { return r.p_last_timestep; }
+  constexpr auto &pos_last_time_step() { return r.p_last_timestep; }
+  constexpr auto const &rattle_params() const { return rattle; }
+  constexpr auto &rattle_params() { return rattle; }
+  constexpr auto const &rattle_correction() const { return rattle.correction; }
+  constexpr auto &rattle_correction() { return rattle.correction; }
 #endif
 
 #ifdef ESPRESSO_EXCLUSIONS
@@ -597,6 +690,10 @@ BOOST_CLASS_IMPLEMENTATION(Particle, object_serializable)
 #ifdef ESPRESSO_ENGINE
 BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+BOOST_CLASS_IMPLEMENTATION(ThermalStonerWohlfarthParameters,
+                           object_serializable)
+#endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
@@ -612,6 +709,9 @@ BOOST_CLASS_IMPLEMENTATION(decltype(ParticleProperties::vs_relative),
 
 #ifdef ESPRESSO_ENGINE
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
+#endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+BOOST_IS_BITWISE_SERIALIZABLE(ThermalStonerWohlfarthParameters)
 #endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2024 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 # Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -22,7 +22,10 @@
 include(espresso_unit_test)
 
 espresso_unit_test(SRC Vector_test.cpp DEPENDS espresso::utils)
-if("cxx_std_23" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+if(NOT CMAKE_CXX_COMPILER_ID STREQUAL NVHPC AND "cxx_std_23" IN_LIST
+                                                CMAKE_CXX_COMPILE_FEATURES
+   AND (NOT CMAKE_CXX_COMPILER_ID STREQUAL IntelLLVM
+        OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 2024.0.0))
   target_compile_features(Vector_test PUBLIC cxx_std_23)
 endif()
 espresso_unit_test(SRC Factory_test.cpp DEPENDS espresso::utils)
@@ -32,7 +35,6 @@ espresso_unit_test(SRC histogram_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC accumulator_test.cpp DEPENDS espresso::utils
                    Boost::serialization)
 espresso_unit_test(SRC int_pow_test.cpp DEPENDS espresso::utils)
-espresso_unit_test(SRC sgn_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC AS_erfc_part_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC permute_ifield_test.cpp DEPENDS espresso::utils)
 espresso_unit_test(SRC vec_rotate_test.cpp DEPENDS espresso::utils)

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,7 +25,7 @@ from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
 from .code_features import assert_features, has_features
-from .script_interface import script_interface_register, ScriptInterfaceHelper
+from .script_interface import script_interface_register, ScriptInterfaceHelper, fast_tiling
 from .propagation import Propagation
 
 
@@ -258,8 +258,6 @@ class ParticleHandle(ScriptInterfaceHelper):
            This needs the feature ``EXTERNAL_FORCES``.
 
     fix: (3,) array_like of :obj:`bool`
-        Fixes the particle motion in the specified cartesian directions.
-
         Fixes the particle in space. It is possible to fix motion in the
         x-, y-, or z-direction independently. For example::
 
@@ -351,7 +349,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         Examples
         --------
         >>> import espressomd
-        >>> # swimming withut hydrodynamics
+        >>> # swimming without hydrodynamics
         >>> system = espressomd.System(box_l=[10, 10, 10])
         >>> partcl = system.part.add(pos=[1, 0, 0], swimming={'f_swim': 0.03})
         >>> # swimming with hydrodynamics
@@ -430,7 +428,7 @@ class ParticleHandle(ScriptInterfaceHelper):
         return pdict
 
     def __str__(self):
-        res = collections.OrderedDict()
+        res = {}
         # Id and pos first, then the rest
         res["id"] = self.id
         res["pos"] = self.pos
@@ -442,8 +440,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             else:
                 res[attr] = tmp
 
-        # Get rid of OrderedDict in output
-        return str(res).replace("OrderedDict(", "ParticleHandle(")
+        return f"{self.__class__.__name__}({res})"
 
     def add_exclusion(self, partner):
         """
@@ -589,6 +586,7 @@ class ParticleHandle(ScriptInterfaceHelper):
             equations of motion and Langevin's equations of rotation.
 
         """
+        assert_features("VIRTUAL_SITES_RELATIVE")
         if isinstance(rel_to, ParticleHandle):
             rel_to = rel_to.id
         else:
@@ -604,6 +602,28 @@ class ParticleHandle(ScriptInterfaceHelper):
                     self.propagation |= Propagation.ROT_LANGEVIN | Propagation.TRANS_LANGEVIN
                 else:
                     self.propagation |= Propagation.ROT_LANGEVIN
+
+    def vs_com_relate_to(self, rel_to):
+        """
+        Setup this particle as virtual site tracking the center of mass of the
+        particles constituting the molecule in argument ``rel_to``.
+
+        .. note::
+           This needs the feature ``VIRTUAL_SITES_CENTER_OF_MASS``
+
+        Parameters
+        -----------
+        rel_to : :obj:`int` or :obj:`ParticleHandle`
+            Molecule to relate to (either molecule id or particle object from that molecule).
+
+        """
+        assert_features("VIRTUAL_SITES_CENTER_OF_MASS")
+        if isinstance(rel_to, ParticleHandle):
+            rel_to = rel_to.mol_id
+        else:
+            check_type_or_throw_except(
+                rel_to, 1, int, "Argument of 'vs_com_relate_to' has to be of type ParticleHandle or int")
+        self.call_method("vs_com_relate_to", molid=rel_to)
 
     def _bond_sanity_checks(self, bond):
         if self.id in bond[1:]:
@@ -1320,7 +1340,8 @@ class ParticleList(ScriptInterfaceHelper):
 
 
 def set_slice_one_for_all(p_slice, attribute, value):
-    set_slice_one_for_each(p_slice, attribute, [value] * len(p_slice))
+    set_slice_one_for_each(
+        p_slice, attribute, fast_tiling(value, len(p_slice)))
 
 
 def set_slice_one_for_each(p_slice, attribute, values):
@@ -1450,16 +1471,14 @@ def _add_particle_slice_properties():
             values = []
             for part in particle_slice._id_gen():
                 values.append(getattr(part, attribute))
-        else:
-            values = particle_slice.call_method(
-                "get_param_parallel", name=attribute)
-            if attribute == "propagation":
-                values = np.array([Propagation(value)
-                                  for value in values], dtype=object)
-            else:
-                values = np.stack(values)
-
-        return values
+            return values
+        values = particle_slice.call_method(
+            "get_param_parallel", name=attribute)
+        if attribute == "propagation":
+            return np.array([Propagation(v) for v in values], dtype=object)
+        if isinstance(values, np.ndarray):
+            return values
+        return np.stack(values)
 
     for attribute_name in sorted(particle_attributes):
         if attribute_name in dir(ParticleSlice):

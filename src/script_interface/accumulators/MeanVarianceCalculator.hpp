@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -44,9 +44,12 @@ public:
     set_from_args(m_obs, params, "obs");
 
     if (m_obs)
-      m_accumulator = std::make_shared<::Accumulators::MeanVarianceCalculator>(
-          get_core_system_pointer(params),
-          get_value_or<int>(params, "delta_N", 1), m_obs->observable());
+      ObjectHandle::context()->parallel_try_catch([&]() {
+        m_accumulator =
+            std::make_shared<::Accumulators::MeanVarianceCalculator>(
+                get_core_system_pointer(params),
+                get_value_or<int>(params, "delta_N", 1), m_obs->observable());
+      });
   }
 
   std::shared_ptr<::Accumulators::MeanVarianceCalculator>

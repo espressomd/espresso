@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -35,7 +35,6 @@
 #include <functional>
 #include <ranges>
 #include <span>
-#include <utility>
 #include <variant>
 #include <vector>
 

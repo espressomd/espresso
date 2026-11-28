@@ -1,0 +1,264 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: ESPResSo
+type: software
+version: 5.0.0
+license: GPL-3.0-or-later
+repository-code: "https://github.com/espressomd/espresso"
+identifiers:
+  - type: doi
+    value: 10.1016/B978-0-12-821978-2.00103-3
+    description: The software paper
+keywords:
+  - soft matter
+  - process engineering
+  - molecular dynamics
+  - computational fluid dynamics
+  - lattice-Boltzmann
+  - electrostatics
+  - magnetostatics
+  - electrokinetics
+  - Monte Carlo
+authors:
+  - given-names: Jean-Noël
+    family-names: Grad
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0002-5821-4912"
+  - given-names: Florian
+    family-names: Weik
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0003-0567-4509"
+  - given-names: Alexander
+    family-names: Reinauer
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0009-0004-5753-0077"
+  - given-names: Hideki
+    family-names: Kobayashi
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0002-4024-1752"
+  - given-names: Ingo
+    family-names: Tischler
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0001-8986-7679"
+  - given-names: Pablo M.
+    family-names: Blanco
+    affiliation: Department of Chemistry, Physics, Environmental and Soil Sciences, University of Lleida – AGROTECNIO-CERCA Center, Lleida, Spain
+    orcid: "https://orcid.org/0000-0002-7603-8617"
+  - given-names: Deniz
+    family-names: Mostarac
+    affiliation: School of Chemistry, University of Edinburgh, Edinburgh, United Kingdom
+    orcid: "https://orcid.org/0000-0003-4084-6046"
+  - given-names: Sebastian
+    family-names: Bindgen
+    affiliation: Soft Matter, Rheology and Technology, Department of Chemical Engineering, KU Leuven, Leuven, Belgium
+    orcid: "https://orcid.org/0000-0002-5861-0990"
+  - given-names: David
+    family-names: Beyer
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0001-6066-8043"
+  - given-names: Julian
+    family-names: Hoßbach
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0009-0009-1458-9374"
+  - given-names: Michael
+    family-names: Kuron
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0002-3231-3330"
+  - given-names: Paul
+    family-names: Hohenberger
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+  - given-names: Niklas
+    family-names: Müller
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+  - given-names: Riccardo
+    family-names: Frenner
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+  - given-names: Yashas
+    family-names: Gandhi
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0002-9220-761X"
+  - given-names: Mariano E.
+    family-names: Brito
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0001-5548-7889"
+  - given-names: Samuel
+    family-names: Tovey
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0001-9537-8361"
+  - given-names: Rudolf
+    family-names: Weeber
+    affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+    orcid: "https://orcid.org/0000-0003-1128-2093"
+preferred-citation:
+  authors:
+    - given-names: Rudolf
+      family-names: Weeber
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0000-0003-1128-2093"
+    - given-names: Jean-Noël
+      family-names: Grad
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0000-0002-5821-4912"
+    - given-names: David
+      family-names: Beyer
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0000-0001-6066-8043"
+    - given-names: Pablo M.
+      family-names: Blanco
+      affiliation: Institute of Theoretical and Computational Chemistry, University of Barcelona, Barcelona, Spain
+      orcid: "https://orcid.org/0000-0002-7603-8617"
+    - given-names: Patrick
+      family-names: Kreissl
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0000-0002-0228-9034"
+    - given-names: Alexander
+      family-names: Reinauer
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0009-0004-5753-0077"
+    - given-names: Ingo
+      family-names: Tischler
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0000-0001-8986-7679"
+    - given-names: Peter
+      family-names: Košovan
+      affiliation: Department of Physical and Macromolecular Chemistry, Charles University, Prague, Czech Republic
+      orcid: "https://orcid.org/0000-0002-6708-3344"
+    - given-names: Christian
+      family-names: Holm
+      affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      orcid: "https://orcid.org/0000-0003-2739-310X"
+  editors:
+    - given-names: Manuel
+      family-names: Yáñez
+      affiliation: University of the Basque Country, Spain
+    - given-names: Russell J.
+      family-names: Boyd
+      affiliation: Dalhousie University, Halifax, Canada
+  doi: 10.1016/B978-0-12-821978-2.00103-3
+  type: article
+  title: "ESPResSo, a versatile open-source software package for simulating soft matter systems"
+  year: 2024
+  volume: 3
+  number-volumes: 4
+  journal: "Comprehensive Computational Chemistry"
+  start: 578
+  end: 601
+  edition: 1
+  isbn: 978-0-12-823256-9
+  publisher:
+    name: Elsevier
+    address: Oxford
+references:
+  - authors:
+      - given-names: Florian
+        family-names: Weik
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0003-0567-4509"
+      - given-names: Rudolf
+        family-names: Weeber
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0003-1128-2093"
+      - family-names: Szuttor
+        given-names: Kai
+        orcid: "https://orcid.org/0000-0002-8496-0150"
+      - given-names: Breitsprecher
+        family-names: Konrad
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+      - given-names: Joost
+        family-names: Graaf
+        name-particle: de
+        affiliation: Institute for Theoretical Physics, Utrecht University, Utrecht, The Netherlands
+        orcid: "https://orcid.org/0000-0002-8781-7368"
+      - given-names: Michael
+        family-names: Kuron
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0002-3231-3330"
+      - given-names: Jonas
+        family-names: Landsgesell
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0002-9315-8522"
+      - given-names: Henri
+        family-names: Menke
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0001-5245-5400"
+      - given-names: David
+        family-names: Sean
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0002-9264-2267"
+      - given-names: Christian
+        family-names: Holm
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0003-2739-310X"
+    doi: 10.1140/epjst/e2019-800186-9
+    type: article
+    journal: "The European Physical Journal Special Topics"
+    title: "ESPResSo 4.0 – an extensible software package for simulating soft matter systems"
+    year: 2019
+    month: 3
+    volume: 227
+    issue: 14
+    issue-title: "Particle Methods in Natural Science and Engineering"
+    start: 1789
+    end: 1816
+    issn: 1951-6401
+    publisher:
+      name: "EDP Sciences, Springer-Verlag GmbH"
+      address: Germany
+  - authors:
+      - given-names: Rudolf
+        family-names: Weeber
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0003-1128-2093"
+      - given-names: Jean-Noël
+        family-names: Grad
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0002-5821-4912"
+      - given-names: David
+        family-names: Beyer
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0001-6066-8043"
+      - given-names: Pablo M.
+        family-names: Blanco
+        affiliation: Institute of Theoretical and Computational Chemistry, University of Barcelona, Barcelona, Spain
+        orcid: "https://orcid.org/0000-0002-7603-8617"
+      - given-names: Patrick
+        family-names: Kreissl
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0002-0228-9034"
+      - given-names: Alexander
+        family-names: Reinauer
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0009-0004-5753-0077"
+      - given-names: Ingo
+        family-names: Tischler
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0001-8986-7679"
+      - given-names: Peter
+        family-names: Košovan
+        affiliation: Department of Physical and Macromolecular Chemistry, Charles University, Prague, Czech Republic
+        orcid: "https://orcid.org/0000-0002-6708-3344"
+      - given-names: Christian
+        family-names: Holm
+        affiliation: Institute for Computational Physics, University of Stuttgart, Stuttgart, Germany
+        orcid: "https://orcid.org/0000-0003-2739-310X"
+    editors:
+      - given-names: Manuel
+        family-names: Yáñez
+        affiliation: University of the Basque Country, Spain
+      - given-names: Russell J.
+        family-names: Boyd
+        affiliation: Dalhousie University, Halifax, Canada
+    doi: 10.1016/B978-0-12-821978-2.00103-3
+    type: article
+    title: "ESPResSo, a versatile open-source software package for simulating soft matter systems"
+    year: 2024
+    volume: 3
+    number-volumes: 4
+    journal: "Comprehensive Computational Chemistry"
+    start: 578
+    end: 601
+    edition: 1
+    isbn: 978-0-12-823256-9
+    publisher:
+      name: Elsevier
+      address: Oxford

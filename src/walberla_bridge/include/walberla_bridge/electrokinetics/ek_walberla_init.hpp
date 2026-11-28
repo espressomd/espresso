@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -69,6 +69,10 @@ std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_none(std::shared_ptr<LatticeWalberla> const &lattice,
                     bool single_precision);
+
+std::shared_ptr<walberla::PoissonSolver>
+new_ek_poisson_none_cuda(std::shared_ptr<LatticeWalberla> const &lattice,
+                         bool single_precision);
 
 std::shared_ptr<walberla::PoissonSolver>
 new_ek_poisson_fft(std::shared_ptr<LatticeWalberla> const &lattice,

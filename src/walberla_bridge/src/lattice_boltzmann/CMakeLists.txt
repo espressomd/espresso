@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -20,7 +20,17 @@
 add_subdirectory(generated_kernels)
 
 target_sources(espresso_walberla PRIVATE lb_walberla_init.cpp)
+set_property(
+  SOURCE lb_walberla_init.cpp TARGET_DIRECTORY espresso_walberla APPEND
+  PROPERTY COMPILE_OPTIONS $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 
-if(ESPRESSO_BUILD_WITH_CUDA AND WALBERLA_BUILD_WITH_CUDA)
+if(ESPRESSO_BUILD_WITH_CUDA)
   target_sources(espresso_walberla PRIVATE lb_walberla_init.cu)
+  set_property(
+    SOURCE lb_walberla_init.cu TARGET_DIRECTORY espresso_walberla
+    APPEND
+    PROPERTY
+      COMPILE_OPTIONS
+      $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},GNU>>:-Xcompiler=-fno-analyzer>
+  )
 endif()

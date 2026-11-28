@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The ESPResSo project
+ * Copyright (C) 2024-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -74,9 +74,7 @@ public:
 
   void communicateLocal(IBlock const *sender, IBlock *receiver,
                         stencil::Direction dir) override {
-#ifdef _OPENMP
 #pragma omp critical
-#endif
     {
       mpi::SendBuffer sBuffer;
       packDataImpl(sender, dir, sBuffer);

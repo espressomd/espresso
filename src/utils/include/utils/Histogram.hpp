@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2022 The ESPResSo project
+ * Copyright (C) 2016-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,7 @@
 
 #pragma once
 
+#include <boost/array.hpp>
 #include <boost/multi_array.hpp>
 
 #include <algorithm>

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -76,7 +76,7 @@ system.lees_edwards.set_boundary_conditions(
     protocol=espressomd.lees_edwards.LinearShear(
         shear_velocity=v, initial_pos_offset=0.0, time_0=0.0))
 
-lbf = espressomd.lb.LBFluidWalberla(
+lbf = espressomd.lb.LBFluid(
     agrid=1., density=1., kinematic_viscosity=nu, tau=1.)
 system.lb = lbf
 

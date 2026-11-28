@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -26,17 +26,17 @@
  *  \ref icc.hpp.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_ELECTROSTATICS
 
 #include "icc.hpp"
 
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "PropagationMode.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
+#include "cell_system/for_each_particle.hpp"
 #include "communication.hpp"
 #include "electrostatics/coulomb.hpp"
 #include "electrostatics/coulomb_inline.hpp"
@@ -49,10 +49,8 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/operations.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
-#include <omp.h>
-#endif
+#include <Kokkos_ScatterView.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -78,9 +76,7 @@ static void force_calc_icc(
   auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  cell_structure.reset_local_force();
-#endif
+  cell_structure.reset_local_force_buffers();
 
   // calc ICC forces
   cell_structure.non_bonded_loop(
@@ -121,11 +117,10 @@ void ICCStar::iteration() {
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
-  auto const &local_force = cell_structure.get_local_force();
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
+  auto &local_force = cell_structure.get_local_force();
+  auto scatter_force = system.cell_structure->get_scatter_force();
 
   auto global_max_rel_diff = 0.;
 
@@ -134,23 +129,19 @@ void ICCStar::iteration() {
 
     // calculate electrostatic forces (SR+LR) excluding self-interactions
     force_calc_icc(cell_structure, kernel, elc_kernel);
-    system.coulomb.calc_long_range_force(particles);
+    system.coulomb.calc_long_range_force();
     cell_structure.ghosts_reduce_forces();
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // force reduction
-    int num_threads = execution_space().concurrency();
-    kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
+    Kokkos::Experimental::contribute(local_force, scatter_force);
+    kokkos_parallel_range_for<execution_space>(
         "reduction", std::size_t{0}, unique_particles.size(),
-        [&local_force, &unique_particles, num_threads](std::size_t const i) {
+        [&local_force, &unique_particles](std::size_t const i) {
           auto &force = unique_particles.at(i)->force();
-          for (int tid = 0; tid < num_threads; ++tid) {
-            force[0] += local_force(i, tid, 0);
-            force[1] += local_force(i, tid, 1);
-            force[2] += local_force(i, tid, 2);
-          }
+          force[0] += local_force(i, 0);
+          force[1] += local_force(i, 1);
+          force[2] += local_force(i, 2);
         });
     Kokkos::fence();
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
 
     auto max_rel_diff = 0.;
 
@@ -218,10 +209,8 @@ void ICCStar::iteration() {
 
     /* Update charges on ghosts. */
     cell_structure.ghosts_update(Cells::DATA_PART_PROPERTIES);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     // refresh local properties
     update_aosoa_charges(cell_structure);
-#endif
 
     icc_cfg.citeration++;
 
@@ -231,6 +220,11 @@ void ICCStar::iteration() {
     if (global_max_rel_diff < icc_cfg.convergence)
       break;
   }
+
+  // The iterations above scattered coulomb forces into the local force
+  // buffers; leave them zeroed so the force calculation that follows this
+  // charge update does not accumulate on top of stale contributions.
+  cell_structure.reset_local_force_buffers();
 
   if (global_max_rel_diff > icc_cfg.convergence) {
     runtimeErrorMsg()
@@ -280,7 +274,7 @@ struct SanityChecksICC {
 #ifdef ESPRESSO_CUDA
   void operator()(std::shared_ptr<CoulombP3M> const &p) const {
     if (p->is_gpu()) {
-      throw std::runtime_error("ICC does not work with P3MGPU");
+      throw std::runtime_error("ICC does not work with P3M on GPU");
     }
   }
 #endif // ESPRESSO_CUDA

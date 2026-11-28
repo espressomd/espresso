@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,38 +19,71 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "Observable_stat.hpp"
+#include "Particle.hpp"
+#include "bond_energy_kokkos.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "constraints/Constraints.hpp"
+#include "energy_cabana.hpp"
 #include "energy_inline.hpp"
+#include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
+#include "nonbonded_interactions/VerletCriterion.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
+#include "short_range_cabana.hpp"
 #include "short_range_loop.hpp"
+#include "short_range_verlet.hpp"
+#include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 
+#ifdef ESPRESSO_CALIPER
+#include "caliper_utils.hpp"
+#endif
+
+#include <cmath>
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <span>
+#include <vector>
+
+struct EnergyObservable {
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  std::unique_ptr<Observable_stat> observable;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local;
+};
 
 namespace System {
 
-std::shared_ptr<Observable_stat> System::calculate_energy() {
+Observable_stat const &System::calculate_energy() {
 
-  auto obs_energy_ptr = std::make_shared<Observable_stat>(
-      1ul, static_cast<std::size_t>(bonded_ias->get_next_key()),
-      nonbonded_ias->get_max_seen_particle_type());
-
-  if (long_range_interactions_sanity_checks()) {
-    return obs_energy_ptr;
+  if (not m_obs_energy) {
+    auto const n_threads = EnergyObservable::execution_space{}.concurrency();
+    m_obs_energy = std::make_shared<EnergyObservable>();
+    m_obs_energy->observable = std::make_unique<Observable_stat>(1ul, 0ul, 0);
+    m_obs_energy->local =
+        decltype(m_obs_energy->local)("local_energy", n_threads, 1ul);
   }
 
-  auto &obs_energy = *obs_energy_ptr;
+  auto &local_energy = m_obs_energy->local;
+  auto &obs_energy = *m_obs_energy->observable;
+  obs_energy.reset(static_cast<std::size_t>(bonded_ias->get_next_key()),
+                   nonbonded_ias->get_max_seen_particle_type());
+
+  if (long_range_interactions_sanity_checks()) {
+    return obs_energy;
+  }
+
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
-  gpu.clear_energy_on_device();
-  gpu.update();
+  gpu->clear_energy_on_device();
+  gpu->update();
 #endif
   on_observable_calc();
 
@@ -64,44 +97,90 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   auto const coulomb_kernel = coulomb.pair_energy_kernel();
   auto const dipoles_kernel = dipoles.pair_energy_kernel();
 
-  short_range_loop(
-      [this, coulomb_kernel_ptr = get_ptr(coulomb_kernel), &obs_energy](
-          Particle const &p1, int bond_id, std::span<Particle *> partners) {
-        auto const &iaparams = *bonded_ias->at(bond_id);
-        auto const result = calc_bonded_energy(iaparams, p1, partners, *box_geo,
-                                               coulomb_kernel_ptr);
-        if (result) {
-          obs_energy.bonded_contribution(bond_id)[0] += result.value();
-          return false;
-        }
-        return true;
-      },
-      [coulomb_kernel_ptr = get_ptr(coulomb_kernel),
-       dipoles_kernel_ptr = get_ptr(dipoles_kernel), this,
-       &obs_energy](Particle const &p1, Particle const &p2, Distance const &d) {
-        auto const &ia_params =
-            nonbonded_ias->get_ia_param(p1.type(), p2.type());
-        add_non_bonded_pair_energy(p1, p2, d.vec21, sqrt(d.dist2), d.dist2,
-                                   ia_params, *bonded_ias, coulomb_kernel_ptr,
-                                   dipoles_kernel_ptr, obs_energy);
-      },
-      *cell_structure, maximal_cutoff(), bonded_ias->maximal_cutoff());
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_BEGIN("cabana_short_range");
+#endif
+  // Factory instead of an eager criterion: construction fills an O(n_types^2)
+  // cutoff table, so it only runs on the link-cell fallback path.
+  auto const make_verlet_criterion = [&] {
+    return VerletCriterion<>{*this,
+                             cell_structure->get_verlet_skin(),
+                             get_interaction_range(),
+                             coulomb.cutoff(),
+                             dipoles.cutoff(),
+                             inactive_cutoff};
+  };
+  update_verlet_state(*this, inactive_cutoff);
+
+  EnergyBinLayout layout{
+      static_cast<std::size_t>(bonded_ias->get_next_key()),
+      std::size_t(nonbonded_ias->get_max_seen_particle_type() + 1)};
+
+  using exec = Kokkos::DefaultHostExecutionSpace;
+  if (local_energy.extent(1) != layout.total) {
+    Kokkos::realloc(Kokkos::WithoutInitializing, local_energy,
+                    exec{}.concurrency(), layout.total);
+  }
+  kokkos_deep_copy(exec{}, local_energy, 0.);
+
+  auto const &unique_particles = cell_structure->get_unique_particles();
+  auto const n_particles = unique_particles.size();
+  Kokkos::View<int *, Kokkos::LayoutRight, exec> mol_id("mol_id", n_particles);
+  for (std::size_t i = 0; i < n_particles; ++i) {
+    mol_id(i) = unique_particles[i]->mol_id();
+  }
+
+  // Non Bonded energies
+  EnergyKernel pair_e_kernel{*bonded_ias,
+                             *nonbonded_ias,
+                             coulomb,
+                             get_ptr(coulomb_kernel),
+                             get_ptr(dipoles_kernel),
+                             *box_geo,
+                             cell_structure->get_unique_particles(),
+                             local_energy,
+                             layout,
+                             cell_structure->get_aosoa(),
+                             mol_id,
+                             maximal_cutoff()};
+
+  // Bonded energies: write a BondsEnergyKernelData + *BondsEnergyKernel
+  auto &bs = cell_structure->bond_state();
+  BondsEnergyKernelData bonds_e_data{*bonded_ias, *box_geo, local_energy,
+                                     layout, cell_structure->get_aosoa()};
+  PairBondsEnergyKernel pair_be_kernel{bonds_e_data, bs.pair_list, bs.pair_ids,
+                                       get_ptr(coulomb_kernel)};
+  AngleBondsEnergyKernel angle_be_kernel{bonds_e_data, bs.angle_list,
+                                         bs.angle_ids};
+  DihedralBondsEnergyKernel dih_be_kernel{bonds_e_data, bs.dihedral_list,
+                                          bs.dihedral_ids};
+
+  cabana_short_range(pair_be_kernel, angle_be_kernel, dih_be_kernel,
+                     pair_e_kernel, *cell_structure, get_interaction_range(),
+                     bonded_ias->maximal_cutoff(), make_verlet_criterion,
+                     propagation->integ_switch);
+
+  reduce_cabana_energy(local_energy, layout, obs_energy, *bonded_ias,
+                       nonbonded_ias->get_max_seen_particle_type() + 1);
+#ifdef ESPRESSO_CALIPER
+  ESPRESSO_CALI_MARK_END("cabana_short_range");
+#endif
 
 #ifdef ESPRESSO_ELECTROSTATICS
   /* calculate k-space part of electrostatic interaction. */
-  obs_energy.coulomb[1] = coulomb.calc_energy_long_range(local_parts);
+  obs_energy.coulomb[1] = coulomb.calc_energy_long_range();
 #endif
 
 #ifdef ESPRESSO_DIPOLES
   /* calculate k-space part of magnetostatic interaction. */
-  obs_energy.dipolar[1] = dipoles.calc_energy_long_range(local_parts);
+  obs_energy.dipolar[1] = dipoles.calc_energy_long_range();
 #endif
 
   constraints->add_energy(local_parts, get_sim_time(), obs_energy);
 
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
-  auto const energy_host = gpu.copy_energy_to_host();
+  auto const energy_host = gpu->copy_energy_to_host();
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
   if (!obs_energy.dipolar.empty())
@@ -109,7 +188,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 #endif
 
   obs_energy.mpi_reduce();
-  return obs_energy_ptr;
+  return obs_energy;
   // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
@@ -121,9 +200,8 @@ double System::particle_short_range_energy_contribution(int pid) {
   auto ret = 0.0;
   if (auto const p = cell_structure->get_local_particle(pid)) {
     auto const coulomb_kernel = coulomb.pair_energy_kernel();
-    auto kernel = [coulomb_kernel_ptr = get_ptr(coulomb_kernel), &ret,
-                   this](Particle const &p, Particle const &p1,
-                         Utils::Vector3d const &vec) {
+    auto kernel = [&ret, this](Particle const &p, Particle const &p1,
+                               Utils::Vector3d const &vec) {
 #ifdef ESPRESSO_EXCLUSIONS
       if (not do_nonbonded(p, p1))
         return;
@@ -131,7 +209,7 @@ double System::particle_short_range_energy_contribution(int pid) {
       auto const &ia_params = nonbonded_ias->get_ia_param(p.type(), p1.type());
       // Add energy for current particle pair to result
       ret += calc_non_bonded_pair_energy(p, p1, ia_params, vec, vec.norm(),
-                                         *bonded_ias, coulomb_kernel_ptr);
+                                         *bonded_ias, coulomb, nullptr);
     };
     cell_structure->run_on_particle_short_range_neighbors(*p, kernel);
   }

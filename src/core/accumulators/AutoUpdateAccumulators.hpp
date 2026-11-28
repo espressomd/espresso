@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2024 The ESPResSo project
+ * Copyright (C) 2016-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -22,6 +22,8 @@
 #include "AccumulatorBase.hpp"
 
 #include "system/Leaf.hpp"
+
+#include <vector>
 
 namespace Accumulators {
 

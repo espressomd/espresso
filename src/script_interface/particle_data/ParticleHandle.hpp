@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "cell_system/CellStructure.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/Particle.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
 #include "core/system/System.hpp"
 
@@ -157,6 +157,7 @@ class ParticleHandle : public AutoParameters<ParticleHandle> {
 
   template <class F> void set_particle_property(F const &fun) const;
 
+  void set_exclusions(Variant const &value);
   std::size_t setup_hidden_args(VariantMap const &params);
 
 public:

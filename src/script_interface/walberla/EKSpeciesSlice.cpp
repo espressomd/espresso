@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,6 +25,8 @@
 #include "errorhandling.hpp"
 
 #include "LatticeSlice.impl.hpp"
+
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <stdexcept>
 #include <string>
@@ -52,6 +54,11 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
       });
     }
     return m_shape_val.at(name);
+  }
+
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { ek_throw_if_expired(m_mpi_cart_comm_observer); });
   }
 
   // slice getter/setter callback
@@ -86,16 +93,7 @@ Variant EKSpeciesSlice::do_call_method(std::string const &name,
                 1. / m_conv_flux);
   }
   if (name == "set_flux_at_boundary") {
-    context()->parallel_try_catch([&]() {
-      if (get_lattice().get_ghost_layers() < 2) {
-        if (context()->get_comm().size() > 1) {
-          throw std::runtime_error("The number of ghostlayers should be > 1 "
-                                   "when using flux boundaries and mpi.");
-        }
-        runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
-                               "using flux boundaries and mpi.";
-      }
-    });
+    m_ek_sip->flux_boundary_ghost_layer_size_sanity_check();
     return call(&LatticeModel::set_slice_flux_boundary, {1}, m_conv_flux);
   }
   if (name == "get_density_at_boundary") {

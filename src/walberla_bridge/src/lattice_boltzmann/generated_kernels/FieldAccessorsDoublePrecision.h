@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  * Copyright (C) 2020 The waLBerla project
  *
  * This file is part of ESPResSo.
@@ -18,9 +18,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// kernel generated with pystencils v1.3.7, lbmpy v1.3.7+4.gc7d65a7, sympy
-// v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
-// 0aab9c0af2335b1f6fec75deae06e514ccb233ab
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34,
+// sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 /*
  * Lattice field accessors.

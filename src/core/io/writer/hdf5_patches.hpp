@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The ESPResSo project
+ * Copyright (C) 2025-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -29,6 +29,8 @@
 #endif
 #endif // not defined(_H5public_H)
 
+#if not defined(H5_USE_BOOST)
 #define H5_USE_BOOST
+#endif
 
 #include <H5public.h>

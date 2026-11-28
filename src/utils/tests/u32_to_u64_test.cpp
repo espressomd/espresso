@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 The ESPResSo project
+ * Copyright (C) 2018-2026 The ESPResSo project
  *
  * ESPResSo is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,18 +22,8 @@
 #include "utils/u32_to_u64.hpp"
 
 #include <cstdint>
-#include <utility>
 
 BOOST_AUTO_TEST_CASE(u32_to_u64) {
   constexpr const uint64_t expected = (uint64_t{4ul} << 32) | (11ul);
   BOOST_CHECK(expected == Utils::u32_to_u64(4u, 11u));
-}
-
-BOOST_AUTO_TEST_CASE(u64_to_u32) {
-  constexpr const uint64_t expected_low = 11u;
-  constexpr const uint64_t expected_high = 4u;
-  constexpr const uint64_t val = (expected_high << 32) | (expected_low);
-
-  BOOST_CHECK((std::pair<uint32_t, uint32_t>{expected_high, expected_low} ==
-               Utils::u64_to_u32(val)));
 }

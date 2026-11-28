@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2015-2024 The ESPResSo project
+# Copyright (C) 2015-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,7 +17,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-find_package(Doxygen)
 if(DOXYGEN_FOUND)
   add_custom_command(
     OUTPUT doxy-features

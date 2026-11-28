@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 The ESPResSo project
+ * Copyright (C) 2020-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -27,31 +27,31 @@
 #include <memory>
 #include <string>
 
-std::shared_ptr<VTKHandle>
-LatticeModel::create_vtk(int delta_N, int initial_count, int flag_observables,
-                         units_map const &units_conversion,
-                         std::string const &identifier,
-                         std::string const &base_folder,
-                         std::string const &prefix, bool force_pvtu) {
+std::shared_ptr<VTKHandle> LatticeModel::create_vtk(
+    int delta_N, int initial_count, int flag_observables,
+    units_map const &units_conversion, std::string const &identifier,
+    std::string const &base_folder, std::string const &prefix, bool force_pvtu,
+    bool include_boundaries) {
 
   using walberla::uint_c;
 
   // VTKOutput object must be unique
   auto const vtk_uid = base_folder + "/" + identifier;
-  if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end() or
-      m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+  if (m_vtk_auto.contains(vtk_uid) or m_vtk_manual.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "already exists");
   }
 
   // instantiate VTKOutput object
-  auto const &blocks = get_lattice().get_blocks();
+  auto const blocks = get_lattice().get_blocks();
   auto const write_freq = (delta_N) ? static_cast<unsigned int>(delta_N) : 1u;
   auto vtk_obj = walberla::vtk::createVTKOutput_BlockData(
       blocks, identifier, uint_c(write_freq), uint_c(0), force_pvtu,
       base_folder, prefix, true, true, true, true, uint_c(initial_count));
 
   // add filters
-  register_vtk_field_filters(*vtk_obj);
+  if (not include_boundaries) {
+    register_vtk_field_filters(*vtk_obj);
+  }
 
   // add writers
   register_vtk_field_writers(*vtk_obj, units_conversion, flag_observables);
@@ -66,10 +66,10 @@ LatticeModel::create_vtk(int delta_N, int initial_count, int flag_observables,
 }
 
 void LatticeModel::write_vtk(std::string const &vtk_uid) {
-  if (m_vtk_auto.find(vtk_uid) != m_vtk_auto.end()) {
+  if (m_vtk_auto.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "is an automatic observable");
   }
-  if (m_vtk_manual.find(vtk_uid) == m_vtk_manual.end()) {
+  if (not m_vtk_manual.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "doesn't exist");
   }
   auto &vtk_handle = m_vtk_manual[vtk_uid];
@@ -78,10 +78,10 @@ void LatticeModel::write_vtk(std::string const &vtk_uid) {
 }
 
 void LatticeModel::switch_vtk(std::string const &vtk_uid, bool status) {
-  if (m_vtk_manual.find(vtk_uid) != m_vtk_manual.end()) {
+  if (m_vtk_manual.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "is a manual observable");
   }
-  if (m_vtk_auto.find(vtk_uid) == m_vtk_auto.end()) {
+  if (not m_vtk_auto.contains(vtk_uid)) {
     throw vtk_runtime_error(vtk_uid, "doesn't exist");
   }
   m_vtk_auto[vtk_uid]->enabled = status;

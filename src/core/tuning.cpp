@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -36,10 +36,9 @@
 #include <mpi.h>
 
 #include <algorithm>
-#include <functional>
 #include <string>
 
-std::string TuningFailed::get_first_error() const {
+std::string TuningFailed::get_first_error() {
   using namespace ErrorHandling;
   auto const queued_warnings = mpi_gather_runtime_errors_all(this_node == 0);
   auto message = std::string("tuning failed: an exception was thrown while "

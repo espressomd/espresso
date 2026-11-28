@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -58,12 +58,16 @@ BOOST_AUTO_TEST_CASE(type_traits) {
   static_assert(not Utils::detail::use_serialize<int>::value);
 
   static_assert(Utils::is_statically_serializable<OpVec>::value);
+#if !defined(__NVCOMPILER)
   static_assert(Utils::detail::use_memcpy<OpVec>::value);
   static_assert(not Utils::detail::use_serialize<OpVec>::value);
+#endif
 
   static_assert(Utils::is_statically_serializable<NonTrivial>::value);
+#if !defined(__NVCOMPILER)
   static_assert(Utils::detail::use_memcpy<NonTrivial>::value);
   static_assert(not Utils::detail::use_serialize<NonTrivial>::value);
+#endif
 
   BOOST_TEST_PASSPOINT();
 }

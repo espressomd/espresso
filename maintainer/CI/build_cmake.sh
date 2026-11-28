@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2016-2024 The ESPResSo project
+# Copyright (C) 2016-2026 The ESPResSo project
 # Copyright (C) 2014 Olaf Lenz
 #
 # Copying and distribution of this file, with or without modification,
@@ -104,10 +104,9 @@ set_default_value with_coverage false
 set_default_value with_coverage_python ${with_coverage}
 set_default_value with_ubsan false
 set_default_value with_asan false
-set_default_value with_static_analysis false
+set_default_value with_clang_tidy false
 set_default_value with_caliper false
 set_default_value with_fpe false
-set_default_value with_shared_memory_parallelism false
 set_default_value myconfig "default"
 set_default_value build_procs ${default_build_procs}
 set_default_value check_procs ${default_check_procs}
@@ -127,11 +126,15 @@ set_default_value with_hdf5 true
 set_default_value with_fftw true
 set_default_value with_gsl true
 set_default_value with_scafacos false
+set_default_value with_nlopt false
 set_default_value with_walberla false
 set_default_value with_walberla_avx false
 set_default_value with_stokesian_dynamics false
 set_default_value test_timeout 500
 set_default_value hide_gpu false
+
+# accumulate CMake params in a Bash array to preserve whitespace characters
+declare -a cmake_param_list
 
 if [ "${make_check_unit_tests}" = true ] || [ "${make_check_python}" = true ] || [ "${make_check_tutorials}" = true ] || [ "${make_check_samples}" = true ] || [ "${make_check_benchmarks}" = true ]; then
     run_checks=true
@@ -143,44 +146,62 @@ if [ "${with_coverage}" = true ]; then
     build_type="Coverage"
 fi
 
+cmake_param_list+=(
+  ${cmake_params}
+  -D CMAKE_BUILD_TYPE=${build_type}
+  -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests
+  -D CMAKE_CXX_EXTENSIONS=OFF
+  -D ESPRESSO_INSIDE_DOCKER:BOOL=ON
+  -D ESPRESSO_WARNINGS_ARE_ERRORS:BOOL=ON
+  -D ESPRESSO_CTEST_ARGS:STRING="-j${check_procs}"
+  -D ESPRESSO_TEST_TIMEOUT:STRING=${test_timeout}
+  -D ESPRESSO_BUILD_BENCHMARKS:BOOL=${make_check_benchmarks}
+  -D ESPRESSO_BUILD_WITH_CCACHE:BOOL=${with_ccache}
+  -D ESPRESSO_BUILD_WITH_CALIPER:BOOL=${with_caliper}
+  -D ESPRESSO_BUILD_WITH_FPE:BOOL=${with_fpe}
+  -D ESPRESSO_BUILD_WITH_HDF5:BOOL=${with_hdf5}
+  -D ESPRESSO_BUILD_WITH_FFTW:BOOL=${with_fftw}
+  -D ESPRESSO_BUILD_WITH_GSL:BOOL=${with_gsl}
+  -D ESPRESSO_BUILD_WITH_SCAFACOS:BOOL=${with_scafacos}
+  -D ESPRESSO_BUILD_WITH_NLOPT:BOOL=${with_nlopt}
+  -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS:BOOL=${with_stokesian_dynamics}
+  -D ESPRESSO_BUILD_WITH_WALBERLA:BOOL=${with_walberla}
+  -D ESPRESSO_BUILD_WITH_WALBERLA_AVX:BOOL=${with_walberla_avx}
+  -D ESPRESSO_BUILD_WITH_COVERAGE:BOOL=${with_coverage}
+  -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON:BOOL=${with_coverage_python}
+  -D ESPRESSO_BUILD_WITH_ASAN:BOOL=${with_asan}
+  -D ESPRESSO_BUILD_WITH_UBSAN:BOOL=${with_ubsan}
+  -D ESPRESSO_BUILD_WITH_CLANG_TIDY:BOOL=${with_clang_tidy}
+  -D ESPRESSO_BUILD_WITH_CUDA:BOOL=${with_cuda}
+)
+
 if [ "${with_fast_math}" = true ]; then
-    cmake_param_protected="-DCMAKE_CXX_FLAGS=-ffast-math"
+  cmake_param_list+=(-D CMAKE_CXX_FLAGS=-ffast-math)
 fi
-
-cmake_params="-D CMAKE_BUILD_TYPE=${build_type} -D ESPRESSO_WARNINGS_ARE_ERRORS=ON ${cmake_params}"
-cmake_params="${cmake_params} -D CMAKE_INSTALL_PREFIX=/tmp/espresso-unit-tests -D ESPRESSO_INSIDE_DOCKER=ON"
-cmake_params="${cmake_params} -D ESPRESSO_CTEST_ARGS:STRING=-j${check_procs} -D ESPRESSO_TEST_TIMEOUT=${test_timeout}"
-
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_BENCHMARKS=${make_check_benchmarks}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CCACHE=${with_ccache}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CALIPER=${with_caliper}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FPE=${with_fpe}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM=${with_shared_memory_parallelism}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_HDF5=${with_hdf5}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_FFTW=${with_fftw}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_GSL=${with_gsl}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_SCAFACOS=${with_scafacos}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_STOKESIAN_DYNAMICS=${with_stokesian_dynamics}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA=${with_walberla}"
-
-if [ "${with_walberla}" = true ]; then
-  if [ "${with_walberla_avx}" = true ]; then
-    cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_WALBERLA_AVX=ON"
-  fi
-fi
-
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE=${with_coverage}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_COVERAGE_PYTHON=${with_coverage_python}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_ASAN=${with_asan}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_UBSAN=${with_ubsan}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CLANG_TIDY=${with_static_analysis}"
-cmake_params="${cmake_params} -D ESPRESSO_BUILD_WITH_CUDA=${with_cuda}"
 
 if [ "${with_cuda}" = true ]; then
-    cmake_params="${cmake_params} -D CUDAToolkit_ROOT=/usr/lib/cuda"
+    cmake_param_list+=(-D CUDAToolkit_ROOT=/usr/lib/cuda)
+    cmake_param_list+=(-D Kokkos_CUDA_DIR=/usr/lib/cuda)
     if [ "${CUDACXX}" = "" ] && [ "${CXX}" != "" ]; then
-        cmake_params="${cmake_params} -D CMAKE_CUDA_FLAGS='--compiler-bindir=$(which "${CXX}")'"
+        cmake_param_list+=(-D CMAKE_CUDA_HOST_COMPILER="${CXX}")
     fi
+fi
+
+if [[ "${OSTYPE}" == "darwin"* ]]; then
+  # detect libomp on macOS (see https://gitlab.kitware.com/cmake/cmake/-/issues/24097)
+  cmake_param_list+=(
+    -D OpenMP_C_FLAG="-Xclang -fopenmp"
+    -D OpenMP_CXX_FLAG="-Xclang -fopenmp"
+    -D OpenMP_C_LIB_NAMES=libomp
+    -D OpenMP_CXX_LIB_NAMES=libomp
+    -D OpenMP_C_INCLUDE_DIR=/opt/homebrew/opt/libomp/include
+    -D OpenMP_CXX_INCLUDE_DIR=/opt/homebrew/opt/libomp/include
+    -D OpenMP_libomp_LIBRARY=/opt/homebrew/opt/libomp/lib/libomp.dylib
+  )
+  # skip libomp runtime checks on macOS (GitHub runner image contains multiple versions of libomp)
+  export KMP_DUPLICATE_LIB_OK=TRUE
+  # use 1 thread by default in the Python testsuite
+  sed -i "" "s/set(TEST_NUM_THREADS 2)/set(TEST_NUM_THREADS 1)/" ${srcdir}/testsuite/python/CMakeLists.txt
 fi
 
 # show system characteristics
@@ -199,6 +220,7 @@ echo ""
 
 builddir="${srcdir}/build"
 
+echo "variables:"
 outp srcdir builddir \
     make_check_unit_tests make_check_python make_check_tutorials make_check_samples make_check_benchmarks \
     cmake_params \
@@ -215,22 +237,15 @@ cd "${builddir}"
 
 # load modules
 if [ -f "/etc/os-release" ]; then
-    if grep -qP 'NAME="(openSUSE|SLES|SLED)' /etc/os-release; then
-        . /etc/profile.d/modules.sh
-        module load gnu-openmpi
+    if grep -q 'NAME="Ubuntu"' /etc/os-release; then
+        export OMPI_MCA_opal_abort_print_stack=1
     elif grep -qP 'NAME="(Fedora|Red Hat Enterprise) Linux"' /etc/os-release; then
         for f in /etc/profile.d/*module*.sh; do
             . "${f}"
         done
         module load mpi
-    elif grep -q 'NAME="Ubuntu"' /etc/os-release; then
-        default_gcov="$(which "gcov")"
-        custom_gcov="$(which "${GCOV:-gcov}")"
-        if [ ! "${custom_gcov}" = "${default_gcov}" ] && [ -d "${HOME}/.local/var/lib/alternatives" ]; then
-            update-alternatives --altdir "${HOME}/.local/etc/alternatives" \
-                                --admindir "${HOME}/.local/var/lib/alternatives" \
-                                --install "${HOME}/.local/bin/gcov" "gcov" "${custom_gcov}" 10
-        fi
+        # Fedora's Kokkos is missing feature ENABLE_IMPL_VIEW_LEGACY
+        sed -i "/find_package(Kokkos/d" ${srcdir}/CMakeLists.txt
     fi
 fi
 
@@ -252,11 +267,21 @@ else
     fi
 fi
 
-if [ -z "${cmake_param_protected}" ]; then
-  cmake -G Ninja "${srcdir}" ${cmake_params} || exit 1
-else
-  cmake -G Ninja "${srcdir}" ${cmake_params} "${cmake_param_protected}" || exit 1
-fi
+# print cmake command, one parameter per line (line length is limited to 1024 chars on macOS)
+echo "cmake -G Ninja \\"
+for arg in "${cmake_param_list[@]}"; do
+  if [[ "${arg}" = *" "* ]]; then
+    echo -n " \"${arg}\""
+  else
+    echo -n " ${arg}"
+  fi
+  if [ ! "${arg}" = "-D" ]; then
+    echo " \\"
+  fi
+done
+echo "  ${srcdir}"
+
+cmake -G Ninja "${srcdir}" "${cmake_param_list[@]}" || exit 1
 end "CONFIGURE"
 
 # BUILD
@@ -351,14 +376,15 @@ fi
 if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
     start "COVERAGE"
     cd "${builddir}"
+    rm -f _deps/highfive-src/.github/workflows/coverage.yml
 
     # import codecov key
     gpg --import "${CODECOV_PUBLIC_KEY}"
 
     # download uploader and signatures
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM
-    curl -OSs https://uploader.codecov.io/latest/linux/codecov.SHA256SUM.sig
+    curl -OSs https://cli.codecov.io/latest/linux/codecov
+    curl -OSs https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+    curl -OSs https://cli.codecov.io/latest/linux/codecov.SHA256SUM.sig
 
     # check uploader integrity, exit script in case of failure
     gpg --verify codecov.SHA256SUM.sig codecov.SHA256SUM
@@ -367,19 +393,22 @@ if [ "${with_coverage}" = true ] || [ "${with_coverage_python}" = true ]; then
 
     codecov_opts=""
     if [ "${with_coverage}" = true ]; then
-        echo "Running lcov and gcov..."
-        codecov_opts="${codecov_opts} --gcov"
+        echo "Running lcov..."
         "${srcdir}/maintainer/CI/run_lcov.sh" coverage.info
+        codecov_opts="${codecov_opts} -f coverage.info"
     fi
     if [ "${with_coverage_python}" = true ]; then
         echo "Running python3-coverage..."
         python3 -m coverage combine testsuite/python testsuite/tutorials testsuite/samples testsuite/benchmarks testsuite/scripts
         python3 -m coverage xml
+        codecov_opts="${codecov_opts} -f coverage.xml"
     fi
+    echo "Checking Codecov availability..."
+    curl -sS -o /dev/null https://ingest.codecov.io
     echo "Uploading to Codecov..."
     for codecov_trial in 1 2 3; do
         codecov_errno="0"
-        ./codecov ${codecov_opts} -t "${CODECOV_TOKEN}" --nonZero || codecov_errno="${?}"
+        ./codecov upload-coverage ${codecov_opts} --network-root-folder "${srcdir}" -t "${CODECOV_TOKEN}" --git-service github --disable-file-fixes --disable-search --plugin noop --fail-on-error || codecov_errno="${?}"
         if [ "${codecov_errno}" = "0" ]; then
             break
         fi

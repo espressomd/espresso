@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -35,8 +35,6 @@
 #include "electrostatics/reaction_field.hpp"
 #include "electrostatics/scafacos.hpp"
 
-#include <cstddef>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -54,7 +52,9 @@ using ElectrostaticsActor =
                  std::shared_ptr<CoulombP3M>,
                  std::shared_ptr<ElectrostaticLayerCorrection>,
 #endif // ESPRESSO_P3M
+#ifdef ESPRESSO_MMM1D
                  std::shared_ptr<CoulombMMM1D>,
+#endif // ESPRESSO_MMM1D
 #ifdef ESPRESSO_SCAFACOS
                  std::shared_ptr<CoulombScafacos>,
 #endif // ESPRESSO_SCAFACOS
@@ -81,7 +81,9 @@ struct has_pressure<ElectrostaticLayerCorrection> : std::false_type {};
 #ifdef ESPRESSO_SCAFACOS
 template <> struct has_pressure<CoulombScafacos> : std::false_type {};
 #endif // ESPRESSO_SCAFACOS
+#ifdef ESPRESSO_MMM1D
 template <> struct has_pressure<CoulombMMM1D> : std::false_type {};
+#endif // ESPRESSO_MMM1D
 
 } // namespace traits
 } // namespace Coulomb

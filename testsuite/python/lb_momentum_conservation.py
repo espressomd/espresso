@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -105,8 +105,8 @@ class TestLBMomentumConservation:
 class TestLBMomentumConservationRegularDoublePrecisionWalberlaCPU(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 1.2e-4
 
     def set_cellsystem(self):
@@ -119,8 +119,8 @@ class TestLBMomentumConservationRegularDoublePrecisionWalberlaCPU(
 class TestLBMomentumConservationRegularSinglePrecisionWalberlaCPU(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 6.5e-4
 
     def set_cellsystem(self):
@@ -134,8 +134,8 @@ class TestLBMomentumConservationRegularSinglePrecisionWalberlaCPU(
 class TestLBMomentumConservationRegularSinglePrecisionWalberlaGPU(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     atol = 6.5e-4
 
     def set_cellsystem(self):
@@ -146,8 +146,8 @@ class TestLBMomentumConservationRegularSinglePrecisionWalberlaGPU(
 class TestLBCPUMomentumConservationHybridNSquareWalberla(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 1.2e-4
 
     def set_cellsystem(self):
@@ -159,8 +159,8 @@ class TestLBCPUMomentumConservationHybridNSquareWalberla(
 class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 6.5e-4
 
     def set_cellsystem(self):
@@ -172,8 +172,8 @@ class TestLBCPUMomentumConservationHybridNSquareWalberlaSinglePrecision(
 class TestLBCPUMomentumConservationHybridRegularWalberla(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 1.2e-4
 
     def set_cellsystem(self):
@@ -185,8 +185,8 @@ class TestLBCPUMomentumConservationHybridRegularWalberla(
 class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 6.5e-4
 
     def set_cellsystem(self):
@@ -198,8 +198,8 @@ class TestLBCPUMomentumConservationHybridRegularWalberlaSinglePrecision(
 class TestLBMomentumConservationNSquareWalberla(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 1.2e-4
 
     def set_cellsystem(self):
@@ -210,8 +210,8 @@ class TestLBMomentumConservationNSquareWalberla(
 class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 6.5e-4
 
     def set_cellsystem(self):
@@ -224,8 +224,9 @@ class TestLBMomentumConservationNSquareWalberlaSinglePrecision(
 class TestLBMomentumConservationRegularDoublePrecisionWalberlaBlocksCPU(
         TestLBMomentumConservation, ut.TestCase):
 
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_params = {"single_precision": False, "blocks_per_mpi_rank": [2, 2, 2]}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False,
+                 "blocks_per_mpi_rank": [2, 2, 2]}
     atol = 1.2e-4
 
     def set_cellsystem(self):

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -43,7 +43,7 @@ class LBBoundaryVelocityTest(ut.TestCase):
         self.system.lb = None
 
     def setUp(self):
-        self.lb_fluid = espressomd.lb.LBFluidWalberla(**self.lb_params)
+        self.lb_fluid = espressomd.lb.LBFluid(**self.lb_params)
         self.system.lb = self.lb_fluid
 
     def check_wall_slip(self, v_boundary, atol):

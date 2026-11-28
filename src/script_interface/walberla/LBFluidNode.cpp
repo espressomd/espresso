@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -23,6 +23,8 @@
 
 #include "LBFluidNode.hpp"
 
+#include <walberla_bridge/utils/ResourceManager.hpp>
+
 #include <utils/Vector.hpp>
 #include <utils/matrix.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -31,6 +33,7 @@
 #include <boost/mpi/communicator.hpp>
 
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -44,6 +47,10 @@ static bool is_boundary_all_reduce(boost::mpi::communicator const &comm,
 
 Variant LBFluidNode::do_call_method(std::string const &name,
                                     VariantMap const &params) {
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { lb_throw_if_expired(m_mpi_cart_comm_observer); });
+  }
   if (name == "set_velocity_at_boundary") {
     if (is_none(params.at("value"))) {
       m_lb_fluid->remove_node_from_boundary(m_index);
@@ -82,6 +89,13 @@ Variant LBFluidNode::do_call_method(std::string const &name,
   }
   if (name == "set_population") {
     auto const pop = get_value<std::vector<double>>(params, "value");
+    context()->parallel_try_catch([&]() {
+      if (pop.size() != m_lb_fluid->stencil_size()) {
+        throw std::runtime_error("Population must have exactly " +
+                                 std::to_string(m_lb_fluid->stencil_size()) +
+                                 " elements");
+      }
+    });
     m_lb_fluid->set_node_population(m_index, pop);
     m_lb_fluid->ghost_communication();
     return {};

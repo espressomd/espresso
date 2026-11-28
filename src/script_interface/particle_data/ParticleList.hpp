@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,12 +33,6 @@ namespace Particles {
 class ParticleList : public System::Leaf {
   std::weak_ptr<CellSystem::CellSystem> m_cell_structure;
   std::weak_ptr<Interactions::BondedInteractions> m_bonded_ias;
-
-  auto get_cell_structure() {
-    auto ptr = m_cell_structure.lock();
-    assert(ptr != nullptr);
-    return ptr;
-  }
 
 public:
   Variant do_call_method(std::string const &name,

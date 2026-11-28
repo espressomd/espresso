@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 The ESPResSo project
+ * Copyright (C) 2018-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Utils::Array test
+#define BOOST_TEST_MODULE "Utils::Array test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -88,14 +88,6 @@ BOOST_AUTO_TEST_CASE(fill) {
   }
 }
 
-BOOST_AUTO_TEST_CASE(broadcast) {
-  constexpr auto a = Array<int, 3>::broadcast(5);
-  static_assert(a[0] == 5);
-  static_assert(a[1] == 5);
-  static_assert(a[2] == 5);
-  BOOST_TEST_PASSPOINT();
-}
-
 BOOST_AUTO_TEST_CASE(serialization) {
   Array<double, 24> a;
   std::iota(std::begin(a), std::end(a), 0);
@@ -121,7 +113,7 @@ BOOST_AUTO_TEST_CASE(tuple_protocol) {
 
   static_assert(std::is_same_v<std::tuple_element_t<0, A>, int>);
   static_assert(std::is_same_v<std::tuple_element_t<1, A>, int>);
-  static_assert(A{}.size() == std::tuple_size<A>::value);
+  static_assert(A{}.size() == std::tuple_size_v<A>);
 
   BOOST_CHECK_EQUAL(get<1>(A{{{1, 2, 3, 4}}}), 2);
   BOOST_CHECK_EQUAL(get<1>(A{{1, 2, 3, 4}}), 2);

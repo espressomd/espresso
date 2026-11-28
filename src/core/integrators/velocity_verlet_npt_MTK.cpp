@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,17 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_NPT
 #include "velocity_verlet_npt.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
-#include "ParticleRange.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "errorhandling.hpp"
+#include "system/System.hpp"
 #include "thermostats/npt_inline.hpp"
 
 #include <utils/Vector.hpp>
@@ -36,8 +36,6 @@
 
 #include <cmath>
 #include <functional>
-
-static constexpr Utils::Vector3i nptgeom_dir{{1, 2, 4}};
 
 /**
  * @brief Scale and communicate instantaneous NpT pressure and
@@ -114,7 +112,7 @@ velocity_verlet_npt_propagate_pos_MTK(NptIsoParameters &nptiso,
 }
 
 /**
- * @brief propagete positions and the volume and add thermal fluctuation.
+ * @brief propagate positions and the volume and add thermal fluctuation.
  * A and V are the position and volume propagators for half-time step.
  * O is the propagator corresponding to Ornstein-Uhlenbeck process
  * representing the stochastic thermostat.
@@ -150,12 +148,12 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
     }
   }
 
-  /* 1st propagatation Volume with dt/2
+  /* 1st propagation: volume with dt/2
    * @f$ V(t+0.5*dt) = \exp(0.5 * dt * 3 * p_{\epsilon} / W) * V(t) @f$,
    * stochastic reservoirs for conjugate momentum for V
    * @f$ p_{\epsilon} = p_{epsilon}(t) \exp(- \gamma_V dt / W)
    *                    + \sqrt{k_B T (1 - \exp(-2 \gamma_V dt / W)}N(0,1) @f$,
-   * 2nd propagatation Volume with dt/2
+   * 2nd propagation: volume with dt/2
    * @f$ V(t+dt) = \exp(0.5 * dt * 3 * p_{\epsilon} / W) * V(t+0.5*dt) @f$,
    */
   if (::this_node == 0) {
@@ -164,7 +162,7 @@ static void velocity_verlet_npt_propagate_AVOVA_MTK(
     nptiso.p_epsilon = propagate_thermV_nptiso(npt_iso, nptiso.p_epsilon);
     nptiso.volume *=
         std::exp(1.5 * nptiso.inv_piston * nptiso.p_epsilon * time_step);
-    L_new = pow(nptiso.volume, 1.0 / nptiso.dimension);
+    L_new = std::pow(nptiso.volume, 1.0 / nptiso.dimension);
   }
 
   /* 2nd propagation pos and pos_MTK*/
@@ -209,7 +207,7 @@ velocity_verlet_npt_propagate_vel_MTK(NptIsoParameters const &nptiso,
   for (auto &p : particles) {
     for (auto j = 0u; j < 3u; ++j) {
       if (!p.is_fixed_along(j)) {
-        if (nptiso.geometry & ::nptgeom_dir[j]) {
+        if (nptiso.geometry & NptIsoParameters::nptgeom_dir[j]) {
           p.v()[j] *= propagater;
           npt_inst_pressure.p_vel[j] += Utils::sqr(p.v()[j]) * p.mass();
         }

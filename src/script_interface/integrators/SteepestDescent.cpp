@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -64,13 +64,12 @@ void SteepestDescent::do_construct(VariantMap const &params) {
   auto const max_d = get_value<double>(params, "max_displacement");
 
   context()->parallel_try_catch([&]() {
-    m_instance =
-        std::make_shared<::SteepestDescentParameters>(f_max, gamma, max_d);
+    m_instance = std::make_shared<::SteepestDescent>(f_max, gamma, max_d);
   });
 }
 
 void SteepestDescent::activate() {
-  register_integrator(get_instance());
+  get_system().steepest_descent = m_instance;
   get_system().propagation->set_integ_switch(INTEG_METHOD_STEEPEST_DESCENT);
 }
 

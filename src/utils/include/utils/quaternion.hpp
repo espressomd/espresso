@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -85,13 +85,13 @@ public:
    * @param i Element index.
    * @return Value of element @p i.
    */
-  value_type operator[](std::size_t i) const { return m_data[i]; }
+  constexpr value_type operator[](std::size_t i) const { return m_data[i]; }
   /**
    * @brief Element access (non const).
    * @param i Element index.
    * @return Value of element @p i.
    */
-  reference operator[](std::size_t i) { return m_data[i]; }
+  constexpr reference operator[](std::size_t i) { return m_data[i]; }
 
   /**
    * @brief Retrieve the norm of the quaternion.

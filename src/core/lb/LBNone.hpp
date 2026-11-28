@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "system/Leaf.hpp"
+
 #include "utils.hpp"
 
 #include <functional>
@@ -31,7 +33,7 @@ class System;
 
 namespace LB {
 
-struct LBNone {
+struct LBNone : public System::Leaf<LBNone> {
   void propagate() { throw NoLBActive{}; }
   void ghost_communication() { throw NoLBActive{}; }
   void ghost_communication_pdf() { throw NoLBActive{}; }

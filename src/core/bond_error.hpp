@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -18,25 +18,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_BOND_ERROR_HPP
-#define ESPRESSO_BOND_ERROR_HPP
+
+#pragma once
 
 #include <exception>
 #include <span>
 
 void bond_broken_error(int id, std::span<const int> partner_ids);
 
+void bond_resolution_error(std::span<const int> partner_ids);
+
 /**
  * Exception indicating that a particle id
  * could not be resolved.
  */
-struct BondResolutionError : std::exception {};
+struct BondResolutionError : std::exception {}; // LCOV_EXCL_LINE
 
 /**
  * Exception indicating that a bond type
  * was unknown.
  */
-struct BondUnknownTypeError : std::exception {};
+struct BondUnknownTypeError : std::exception {}; // LCOV_EXCL_LINE
 
 /**
  * Exception indicating that a bond with an
@@ -47,5 +49,3 @@ struct BondInvalidSizeError : std::exception {
 
   int size;
 };
-
-#endif // ESPRESSO_BOND_ERROR_HPP

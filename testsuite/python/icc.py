@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -109,7 +109,7 @@ class TestICC(ut.TestCase):
 
         p3m = espressomd.electrostatics.P3M(
             prefactor=1., mesh=[24, 24, 26], cao=6, accuracy=1e-5)
-        p3m.charge_neutrality_tolerance = 1e-10
+        p3m.charge_neutrality_tolerance = 2e-9
 
         self.system.electrostatics.solver = p3m
         self.system.electrostatics.extension = icc

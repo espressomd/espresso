@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,6 +21,7 @@
 #include "BoxGeometry.hpp"
 #include "Constraint.hpp"
 #include "Observable_stat.hpp"
+#include "ParticleRange.hpp"
 #include "system/System.hpp"
 
 #include <cassert>

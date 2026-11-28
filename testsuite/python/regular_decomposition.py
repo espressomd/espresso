@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,6 +21,7 @@ import unittest_decorators as utx
 import espressomd
 import numpy as np
 import itertools
+import tests_common
 
 np.random.seed(42)
 
@@ -140,29 +141,31 @@ class RegularDecomposition(ut.TestCase):
         indices = [np.array((i, j, k)) for i in range(N)
                    for j in range(N) for k in range(N)]
 
-        def id_for_idx(idx): return (
-            idx[0] % N) * N * N + (idx[1] % N) * N + idx[2] % N
+        def id_for_idx(idx):
+            return int((idx[0] % N) * N * N + (idx[1] % N) * N + idx[2] % N)
 
         ids = [id_for_idx(idx) for idx in indices]
         dx = system.box_l / N
         positions = [idx * dx for idx in indices]
         system.part.add(id=ids, pos=positions)
         particles = {i: system.part.by_id(i) for i in ids}
+        pos_folded = {pid: p.pos_folded for pid, p in particles.items()}
 
-        def distance(id1, id2):
-            return system.distance(
-                particles[id1], particles[id2])
-        distances = {tuple(i): distance(*i)
-                     for i in itertools.combinations(ids, 2)}
+        vec_matrix = {
+            (pid1, pid2): system.distance_vec(pos_folded[pid1], pos_folded[pid2])
+            for pid1, pid2 in itertools.combinations(ids, 2)}
+        dist_sq_matrix = {k: np.dot(v, v) for k, v in vec_matrix.items()}
 
         max_range = np.amax(system.box_l) / N
+        max_range_sq = max_range**2
         two_cells = 2 * np.amax(system.cell_system.get_state()["cell_size"])
         two_cells_2d = two_cells * np.sqrt(2)
         two_cells_3d = two_cells * np.sqrt(3)
         assert np.all(system.box_l / 2 > two_cells)
 
         # next neighbors
-        must_find_nn = [i for i, d in distances.items() if d <= max_range]
+        must_find_nn = [
+            pid for pid, dist_sq in dist_sq_matrix.items() if dist_sq <= max_range_sq]
 
         # Fully connected neighbors
         indices_lower_boundary = [
@@ -178,18 +181,17 @@ class RegularDecomposition(ut.TestCase):
             # pair loop
             p1 = particles[pair[0]]
             p2 = particles[pair[1]]
-            d = system.distance_vec(p1, p2)
-            # if not accross periodic boundary: particles must be in cells
+            # if not across periodic boundary: particles must be in cells
             # sharing at least one corner
-            if np.abs(
-                    p1.pos - p2.pos)[fc_normal_coord] < system.box_l[fc_normal_coord] / 2:
-                self.assertLess(np.linalg.norm(d), two_cells_3d)
-            # If across a the fully connected boundary
-            # substract the distance in the fully connected direciont (all are
-            # valid
+            d_abs = np.abs(p1.pos - p2.pos)
+            if d_abs[fc_normal_coord] < system.box_l[fc_normal_coord] / 2:
+                self.assertLess(dist_sq_matrix[pair], two_cells_3d**2)
+            # If across a fully connected boundary, subtract the distance
+            # in the fully connected direction (all are valid)
+            d = vec_matrix[pair]
             d_trans = d - d * fc_dir
             # in the other TWO directions, cells have to share a corner
-            self.assertLess(np.linalg.norm(d_trans), two_cells_2d)
+            self.assertLess(np.dot(d_trans, d_trans), two_cells_2d**2)
 
         # Use the cell system trace to get all pairs
         # as opposed to get_pairs() this does not have a distance check
@@ -208,6 +210,224 @@ class RegularDecomposition(ut.TestCase):
 
         # check that all required pairs have been seen
         self.assertEqual(must_find, set([]))
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_fully_connected_boundary_two_particles(self):
+        """Place two particles on opposite sides of the fully connected
+        normal direction (z) with random positions along the fully connected
+        direction (y) and x=0. Check that the pair is always discovered
+        by the non-bonded loop trace."""
+        system = self.system
+        system.part.clear()
+        if system.cell_system.node_grid[1] != 1:
+            ng = system.cell_system.node_grid
+            system.cell_system.node_grid = [ng[0], 1, ng[2] * ng[1]]
+
+        # Use an asymmetric box: box_l[y] > box_l[z] so that there are
+        # more cells along the fully connected direction (y) than along
+        # the boundary normal (z).
+        system.box_l = [50.0, 50.0, 30.0]
+        system.cell_system.set_regular_decomposition(
+            fully_connected_boundary=dict(direction="y", boundary="z"))
+
+        skin = 0.4
+        system.cell_system.skin = skin
+        cutoff = 2 * skin + 0.01
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            sigma=1, epsilon=1, cutoff=cutoff, shift="auto")
+
+        rng = np.random.RandomState(seed=1234)
+
+        for i in range(1000):
+            system.part.clear()
+            # Random y positions (fully connected direction)
+            y1 = rng.uniform(0, system.box_l[1])
+            y2 = rng.uniform(0, system.box_l[1])
+            # Opposite sides of z (fully connected normal direction)
+            z1 = rng.uniform(0, skin)
+            z2 = rng.uniform(system.box_l[2] - skin, system.box_l[2])
+            # x = 0 (3rd direction)
+            system.part.add(id=0, pos=[0, y1, z1])
+            system.part.add(id=1, pos=[0, y2, z2])
+
+            cs_pairs = system.cell_system.non_bonded_loop_trace()
+            found = set()
+            for id1, id2, *_rest in cs_pairs:
+                found.add(tuple(sorted((id1, id2))))
+            self.assertIn(
+                (0, 1), found,
+                msg=f"Pair not found for positions {[0, y1, z1]} "
+                f"and {[0, y2, z2]} (iteration {i})")
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_fully_connected_boundary_at_boundary(self):
+        """Place two particles on opposite sides of the fully connected
+        normal direction (y) with random positions along the fully connected
+        direction (z) and x=0. Uses direction='z', boundary='y' so that
+        the linear index ordering exposes the at_boundary check bug:
+        at_boundary uses global_size[coord] (a ghost index) instead of
+        global_size[coord]-1 (the last real cell), so only the lower
+        boundary gets fully connected neighbors.
+
+        The column-major linear index x + sx*(y + sy*z) gives z the
+        highest weight. When the y=0 particle has lower z, it has the
+        lower linear index and discovers the pair via its red (higher
+        index) neighbors where FC is active. When the y=box_l particle
+        has the lower z, the pair must be discovered from the y=box_l
+        side, which requires the upper boundary to also have FC."""
+        system = self.system
+        system.part.clear()
+        system.box_l = [50.0, 50.0, 50.0]
+        if system.cell_system.node_grid[2] != 1:
+            ng = system.cell_system.node_grid
+            system.cell_system.node_grid = [ng[0] * ng[2], ng[1], 1]
+
+        system.cell_system.set_regular_decomposition(
+            fully_connected_boundary=dict(direction="z", boundary="y"))
+
+        skin = 0.4
+        system.cell_system.skin = skin
+        cutoff = 2 * skin + 0.01
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            sigma=1, epsilon=1, cutoff=cutoff, shift="auto")
+
+        def get_pairs():
+            cs_pairs = system.cell_system.non_bonded_loop_trace()
+            found = set()
+            for id1, id2, *_rest in cs_pairs:
+                found.add(tuple(sorted((id1, id2))))
+            return found
+
+        rng = np.random.RandomState(seed=1234)
+
+        for i in range(1000):
+            z1 = rng.uniform(0, system.box_l[2])
+            z2 = rng.uniform(0, system.box_l[2])
+            y_bot = rng.uniform(0, skin)
+            y_top = rng.uniform(system.box_l[1] - skin, system.box_l[1])
+            z_lo, z_hi = min(z1, z2), max(z1, z2)
+
+            # Check bottom boundary FC: y=0 particle at lower z gives it
+            # the lower linear index, so the pair is discovered from the
+            # y=0 (bottom) cell's red neighbor list.
+            system.part.clear()
+            system.part.add(id=0, pos=[0, y_bot, z_lo])
+            system.part.add(id=1, pos=[0, y_top, z_hi])
+            self.assertIn(
+                (0, 1), get_pairs(),
+                msg=f"Bottom boundary: pair not found for "
+                f"{[0, y_bot, z_lo]} and {[0, y_top, z_hi]} "
+                f"(iteration {i})")
+
+            # Check top boundary FC: y=box_l particle at lower z gives it
+            # the lower linear index, so the pair is discovered from the
+            # y=box_l (top) cell's red neighbor list.
+            system.part.clear()
+            system.part.add(id=0, pos=[0, y_bot, z_hi])
+            system.part.add(id=1, pos=[0, y_top, z_lo])
+            self.assertIn(
+                (0, 1), get_pairs(),
+                msg=f"Top boundary: pair not found for "
+                f"{[0, y_bot, z_hi]} and {[0, y_top, z_lo]} "
+                f"(iteration {i})")
+
+    def restore_system_state(self, min_global_cut, skin, periodicity, box_l):
+        system = self.system
+        system.part.clear()
+        system.non_bonded_inter.reset()
+        system.periodicity = periodicity
+        system.box_l = box_l
+        system.min_global_cut = min_global_cut
+        system.cell_system.skin = skin
+
+    @utx.skipIfMissingFeatures("LENNARD_JONES")
+    def test_small_cell_grids(self):
+        """Check the cell pairing on systems with only one to four cells per
+        direction in the global cell grid, where several images of a cell
+        can be in the neighborhood of another cell: pairs must be found
+        exactly once and the forces must match the all-pairs (N-square)
+        result."""
+        system = self.system
+        # restore the global state even if an assertion fails
+        self.addCleanup(self.restore_system_state, system.min_global_cut,
+                        system.cell_system.skin, system.periodicity,
+                        system.box_l)
+        system.part.clear()
+        system.non_bonded_inter.reset()
+        system.min_global_cut = 0.
+        system.cell_system.skin = 0.4
+        system.non_bonded_inter[0, 0].lennard_jones.set_params(
+            epsilon=1., sigma=1., cutoff=2.5, shift="auto")
+        rng = np.random.default_rng(seed=42)
+        int_range = 2.9
+        node_grid = np.array(system.cell_system.node_grid)
+        # with the interaction range 2.9, a box length of 2.95, 6, 9, 12
+        # gives 1, 2, 3, 4 cells per direction in the global cell grid;
+        # with several MPI ranks it is split over the node grid, boxes
+        # with a local box smaller than the interaction range are skipped
+        cases = [([6., 6., 6.], 3 * [True]),
+                 ([9., 9., 9.], 3 * [True]),
+                 ([6., 9., 12.], 3 * [True]),
+                 ([6.5, 6.5, 9.5], 3 * [True]),
+                 ([12., 6., 9.], 3 * [True]),
+                 ([9., 12., 6.], 3 * [True]),
+                 ([2.95, 6., 12.], 3 * [True]),
+                 ([12., 9., 6.], [True, False, True]),
+                 ([6., 9., 12.], [False, False, False])]
+        n_cases = 0
+        for box_l, periodicity in cases:
+            if np.any(np.array(box_l) / node_grid < int_range):
+                continue
+            n_cases += 1
+            system.part.clear()
+            system.periodicity = periodicity
+            system.box_l = box_l
+            system.cell_system.set_regular_decomposition(
+                use_verlet_lists=True)
+            # jittered simple cubic lattice at density ~0.6
+            n = np.maximum(
+                1, (np.array(box_l) * 0.6**(1. / 3.)).astype(int))
+            grid = np.meshgrid(*[(np.arange(k) + 0.5) * (l / k)
+                                 for k, l in zip(n, box_l)], indexing="ij")
+            pos = np.reshape(grid, (3, -1)).T
+            pos += rng.uniform(-0.1, 0.1, pos.shape)
+            system.part.add(pos=pos)
+            tests_common.check_non_bonded_loop_trace(self, system)
+            system.integrator.run(0, recalc_forces=True)
+            f_rd = np.copy(system.part.all().f)
+            system.cell_system.set_regular_decomposition(
+                use_verlet_lists=False)
+            system.integrator.run(0, recalc_forces=True)
+            f_rd_cells = np.copy(system.part.all().f)
+            system.cell_system.set_n_square()
+            system.integrator.run(0, recalc_forces=True)
+            f_n2 = np.copy(system.part.all().f)
+            np.testing.assert_allclose(f_rd, f_n2, rtol=0., atol=1e-10)
+            np.testing.assert_allclose(f_rd_cells, f_n2, rtol=0., atol=1e-10)
+        self.assertGreater(n_cases, 0)
+
+    def test_fully_connected_boundary_periodicity_check(self):
+        """Check that setting up a fully connected boundary raises an error
+        when the boundary normal direction is non-periodic."""
+        system = self.system
+        system.part.clear()
+        old_periodicity = list(system.periodicity)
+        # Ensure node_grid is compatible with fc direction="y"
+        # (y must have 1 rank) so the node_grid check passes first
+        if system.cell_system.node_grid[1] != 1:
+            ng = system.cell_system.node_grid
+            system.cell_system.node_grid = [ng[0], 1, ng[1] * ng[2]]
+        try:
+            system.periodicity = [True, True, False]
+            with self.assertRaisesRegex(
+                    RuntimeError,
+                    "fully connected boundary requires periodicity"):
+                system.cell_system.set_regular_decomposition(
+                    fully_connected_boundary=dict(
+                        direction="y", boundary="z"))
+        finally:
+            system.periodicity = old_periodicity
+            system.cell_system.set_regular_decomposition()
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Copyright (C) 2021-2024 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #

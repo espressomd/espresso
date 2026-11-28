@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,6 +33,7 @@
 #include <field/AddToStorage.h>
 #include <field/FlagField.h>
 #include <field/FlagUID.h>
+#include <waLBerlaDefinitions.h>
 
 #include <utils/Vector.hpp>
 
@@ -58,19 +59,19 @@ public:
   FlagUID const Boundary_flag{"boundary"};
 
   using FlagField = field::FlagField<uint8_t>;
-#if defined(__CUDACC__)
-  using IndexVectors =
-      std::conditional<Architecture == lbmpy::Arch::CPU,
-                       detail::ReactionKernelIndexedSelector::KernelTrait<>::
-                           ReactionKernelIndexed::IndexVectors,
-                       detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
-                           ReactionKernelIndexedGPU::IndexVectors>::type;
-  using IndexInfo =
-      std::conditional<Architecture == lbmpy::Arch::CPU,
-                       detail::ReactionKernelIndexedSelector::KernelTrait<>::
-                           ReactionKernelIndexed::IndexInfo,
-                       detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
-                           ReactionKernelIndexedGPU::IndexInfo>::type;
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
+  using IndexVectors = std::conditional_t<
+      Architecture == lbmpy::Arch::CPU,
+      detail::ReactionKernelIndexedSelector::KernelTrait<>::
+          ReactionKernelIndexed::IndexVectors,
+      detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
+          ReactionKernelIndexedGPU::IndexVectors>;
+  using IndexInfo = std::conditional_t<
+      Architecture == lbmpy::Arch::CPU,
+      detail::ReactionKernelIndexedSelector::KernelTrait<>::
+          ReactionKernelIndexed::IndexInfo,
+      detail::ReactionKernelIndexedSelector::KernelTraitGPU<>::
+          ReactionKernelIndexedGPU::IndexInfo>;
 #else
   using IndexVectors = detail::ReactionKernelIndexedSelector::KernelTrait<>::
       ReactionKernelIndexed::IndexVectors;
@@ -130,7 +131,7 @@ public:
       kernel = detail::ReactionKernelIndexedSelector::get_kernel(
           get_reactants(), get_coefficient(), m_indexvector_id);
     } else {
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
       kernel = detail::ReactionKernelIndexedSelector::get_kernel_gpu(
           get_reactants(), get_coefficient(), m_indexvector_id);
 #endif
@@ -163,6 +164,66 @@ public:
     }
     return std::nullopt;
   }
+
+  [[nodiscard]] std::vector<int>
+  get_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                        Utils::Vector3i const &upper_corner) const override {
+    std::vector<int> out;
+    auto const &lattice = *get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      out.assign(ci->numCells(), 0);
+      for (auto const &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
+          auto const *flag_field =
+              block.template getData<FlagField>(m_flagfield_id);
+          auto const boundary_flag = flag_field->getFlag(Boundary_flag);
+          copy_block_buffer(
+              *bci, *ci, block_offset, lower_corner,
+              [&out, flag_field, boundary_flag,
+               &block_offset](unsigned const, unsigned const local_index,
+                              Utils::Vector3i const &node) {
+                auto const cell = to_cell(node - block_offset);
+                out[local_index] =
+                    flag_field->isFlagSet(cell, boundary_flag) ? 1 : 0;
+              });
+        }
+      }
+    }
+    return out;
+  }
+
+  void set_slice_is_boundary(Utils::Vector3i const &lower_corner,
+                             Utils::Vector3i const &upper_corner,
+                             std::vector<int> const &is_boundary) override {
+    auto const &lattice = *get_lattice();
+    if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+      for (auto &block : *lattice.get_blocks()) {
+        auto const block_offset = lattice.get_block_corner(block, true);
+        if (auto const bci = get_block_interval(
+                lattice, lower_corner, upper_corner, block_offset, block)) {
+          auto *flag_field = block.template getData<FlagField>(m_flagfield_id);
+          auto const boundary_flag = flag_field->getFlag(Boundary_flag);
+          copy_block_buffer(*bci, *ci, block_offset, lower_corner,
+                            [flag_field, boundary_flag, &is_boundary,
+                             &block_offset](unsigned const,
+                                            unsigned const local_index,
+                                            Utils::Vector3i const &node) {
+                              auto const cell = to_cell(node - block_offset);
+                              if (is_boundary[local_index] != 0) {
+                                flag_field->addFlag(cell, boundary_flag);
+                              } else {
+                                flag_field->removeFlag(cell, boundary_flag);
+                              }
+                            });
+        }
+      }
+      m_pending_changes = true;
+    }
+  }
+
+  void ghost_communication() override { boundary_update(); }
 
   void boundary_update() {
     if (m_pending_changes) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -27,8 +27,10 @@
 
 #include "electrostatics/p3m.hpp"
 
-#include "ParticleRange.hpp"
 #include "communication.hpp"
+#include "fft/vector.hpp"
+#include "kokkos_helpers.hpp"
+#include "p3m/P3MFFTBackend.hpp"
 #include "p3m/common.hpp"
 #include "p3m/data_struct.hpp"
 #include "p3m/interpolation.hpp"
@@ -37,22 +39,36 @@
 #include <utils/Vector.hpp>
 #include <utils/index.hpp>
 
+#include <Kokkos_Core.hpp>
+#include <omp.h>
+
 #include <algorithm>
+#include <array>
+#include <cassert>
 #include <complex>
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
-template <typename FloatType> class P3MFFT;
+template <typename FloatType, Arch Architecture, class FFTConfig> class P3MFFT;
 
-template <typename FloatType>
-struct CoulombP3MState : public P3MStateCommon<FloatType> {
-  using P3MStateCommon<FloatType>::P3MStateCommon;
-
-  constexpr static auto memory_order = Utils::MemoryOrder::ROW_MAJOR;
+/**
+ * @brief Base class for the electrostatics P3M algorithm.
+ * Contains a handle to the FFT backend, information about the local
+ * mesh, the differential operator, and various buffers.
+ */
+template <typename FloatType, Arch Architecture, class FFTConfig>
+struct CoulombP3MState : public P3MStateCommon<FloatType, Architecture> {
+  using P3MStateCommon<FloatType, Architecture>::P3MStateCommon;
+  using value_type = FloatType;
+  using ComplexType = std::complex<value_type>;
+  using memory_space = Kokkos::HostSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
+  using r_space_layout = FFTConfig::r_space_layout;
+  using k_space_layout = FFTConfig::k_space_layout;
 
   /** number of charged particles. */
   std::size_t sum_qpart = 0;
@@ -63,16 +79,23 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
 
   p3m_interpolation_cache inter_weights;
 
-  /* fields */
-  std::vector<FloatType> rs_charge_density;
-  std::vector<std::complex<FloatType>> ks_charge_density;
-  std::array<std::vector<FloatType>, 3> rs_E_fields;
-  std::vector<std::complex<FloatType>> ks_E_fields_storage;
-  std::vector<std::complex<FloatType>> rs_E_fields_no_halo;
+  /** charge density in real-space with halo */
+  fft::vector<FloatType> rs_charge_density;
+  /** charge density in k-space without halo */
+  fft::vector<ComplexType> ks_charge_density;
+  /** electric fields in real-space with halo */
+  std::array<fft::vector<FloatType>, 3> rs_E_fields;
+  /** electric fields in k-space without halo */
+  std::array<std::span<ComplexType>, 3> ks_E_fields;
+  fft::vector<ComplexType> ks_E_fields_batched;
+  /** electric fields in real-space without halo */
+  std::array<std::span<FloatType>, 3> rs_E_fields_no_halo;
+  fft::vector<FloatType> rs_E_fields_no_halo_batched;
   p3m_send_mesh<FloatType> halo_comm;
-  std::shared_ptr<P3MFFT<FloatType>> fft;
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-  Kokkos::View<FloatType **, Kokkos::LayoutRight, Kokkos::HostSpace>
+  // FFT reciprocal-space transform, hidden behind the backend interface so the
+  // solver is agnostic to heFFTe vs kokkos-fft (see init_cpu_kernels).
+  std::shared_ptr<P3MFFTBackend<FloatType, FFTConfig>> fft;
+  Kokkos::View<FloatType **, r_space_layout, Kokkos::HostSpace>
       rs_charge_density_kokkos;
 
   void init_labels() {
@@ -80,26 +103,24 @@ struct CoulombP3MState : public P3MStateCommon<FloatType> {
     rs_charge_density_kokkos = decltype(rs_charge_density_kokkos)(
         "CoulombP3MState::rs_charge_density_kokkos", 0, 0);
   }
-#endif
 };
 
 #ifdef ESPRESSO_CUDA
 struct P3MGpuParams;
 #endif
 
-template <typename FloatType, Arch Architecture>
+template <typename FloatType, Arch Architecture, class FFTConfig>
 struct CoulombP3MImpl : public CoulombP3M {
   ~CoulombP3MImpl() override = default;
 
-  using CoulombP3MStateClass = CoulombP3MState<FloatType>;
+  using CoulombP3MStateClass =
+      CoulombP3MState<FloatType, Architecture, FFTConfig>;
   /** @brief Coulomb P3M parameters. */
-  CoulombP3MState<FloatType> &p3m;
+  CoulombP3MStateClass &p3m;
 
 private:
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
   // kokkos handle must outlive kokkos data structures from other class members
   std::shared_ptr<KokkosHandle> m_kokkos_handle;
-#endif
   std::unique_ptr<CoulombP3MStateClass> p3m_state_ptr;
   TuningParameters tuning;
   bool m_is_tuned;
@@ -116,10 +137,8 @@ public:
   CoulombP3MImpl(std::unique_ptr<CoulombP3MStateClass> &&p3m_state,
                  TuningParameters tuning_params, double prefactor)
       : CoulombP3M(p3m_state->params), p3m{*p3m_state},
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-        m_kokkos_handle{::kokkos_handle},
-#endif
-        p3m_state_ptr{std::move(p3m_state)}, tuning{std::move(tuning_params)} {
+        m_kokkos_handle{::kokkos_handle}, p3m_state_ptr{std::move(p3m_state)},
+        tuning{std::move(tuning_params)} {
 
     if (tuning.timings <= 0) {
       throw std::domain_error("Parameter 'timings' must be > 0");
@@ -127,9 +146,7 @@ public:
     m_is_tuned = not p3m.params.tuning;
     p3m.params.tuning = false;
     set_prefactor(prefactor);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
     p3m.init_labels();
-#endif
   }
 
   void init() override {
@@ -179,52 +196,50 @@ public:
 #endif
   }
 
-  double long_range_energy(ParticleRange const &particles) override {
-    return long_range_kernel(false, true, particles);
-  }
+  double long_range_energy() override { return long_range_kernel(false, true); }
 
-  void add_long_range_forces(ParticleRange const &particles) override {
+  void add_long_range_forces() override {
     if constexpr (Architecture == Arch::CPU) {
-      long_range_kernel(true, false, particles);
+      long_range_kernel(true, false);
     }
 #ifdef ESPRESSO_CUDA
     if constexpr (Architecture == Arch::CUDA) {
-      add_long_range_forces_gpu(particles);
+      add_long_range_forces_gpu();
     }
 #endif
   }
 
-  Utils::Vector9d long_range_pressure(ParticleRange const &particles) override;
+  Utils::Vector9d long_range_pressure() override;
 
-  void charge_assign(ParticleRange const &particles) override;
+  void charge_assign() override;
   void assign_charge(double q, Utils::Vector3d const &real_pos,
                      bool skip_cache) override;
-  void prepare_fft_mesh(bool reset_weights) override {
+  void prepare_fft_mesh(bool reset_weights, bool zero_rs) override {
     if (reset_weights) {
       p3m.inter_weights.reset(p3m.params.cao);
     }
     p3m.rs_charge_density.resize(p3m.local_mesh.size);
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-    using execution_space = Kokkos::DefaultExecutionSpace;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     auto const num_threads = execution_space().concurrency();
     Kokkos::realloc(Kokkos::WithoutInitializing, p3m.rs_charge_density_kokkos,
                     num_threads, p3m.local_mesh.size);
-    Kokkos::deep_copy(p3m.rs_charge_density_kokkos, FloatType{0});
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM
-    std::ranges::fill(p3m.rs_charge_density, FloatType{});
+    kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
+                     FloatType{0});
+    if (num_threads > 1 or zero_rs) {
+      std::ranges::fill(p3m.rs_charge_density, FloatType{0});
+    }
   }
 
 protected:
   /** Compute the k-space part of forces and energies. */
-  double long_range_kernel(bool force_flag, bool energy_flag,
-                           ParticleRange const &particles);
+  double long_range_kernel(bool force_flag, bool energy_flag);
   void calc_influence_function_force() override;
   void calc_influence_function_energy() override;
   void scaleby_box_l() override;
   void init_cpu_kernels();
 #ifdef ESPRESSO_CUDA
   void init_gpu_kernels();
-  void add_long_range_forces_gpu(ParticleRange const &particles);
+  void add_long_range_forces_gpu();
   std::shared_ptr<P3MGpuParams> m_gpu_data = nullptr;
   void request_gpu() const;
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -44,7 +44,7 @@ public:
     auto const coulomb_kernel = m_system.coulomb.pair_energy_kernel();
 
     auto const energy = calc_non_bonded_pair_energy(
-        p1, p2, ia_params, d, d.norm(), *m_system.bonded_ias,
+        p1, p2, ia_params, d, d.norm(), *m_system.bonded_ias, m_system.coulomb,
         get_ptr(coulomb_kernel));
 
     return energy >= m_cut_off;

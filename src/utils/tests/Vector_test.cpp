@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,7 +19,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Vector test
+#define BOOST_TEST_MODULE "Vector test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -128,6 +128,13 @@ BOOST_AUTO_TEST_CASE(normalize) {
   v.normalize();
 
   BOOST_CHECK_CLOSE(v.norm2(), 1.0, tol);
+
+  auto const zero = Utils::Vector3d{0., 0., 0.};
+  auto const n = zero.normalized();
+  for (auto const &component : n) {
+    BOOST_REQUIRE(std::isfinite(component));
+    BOOST_CHECK_EQUAL(component, 0.);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(comparison_operators) {
@@ -223,6 +230,14 @@ BOOST_AUTO_TEST_CASE(broadcast) {
   for (auto const &e : fives) {
     BOOST_CHECK(5 == e);
   }
+}
+
+BOOST_AUTO_TEST_CASE(broadcast_constexpr) {
+  constexpr auto a = Vector<int, 3>::broadcast(5);
+  static_assert(a[0] == 5);
+  static_assert(a[1] == 5);
+  static_assert(a[2] == 5);
+  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(swap) {
@@ -338,7 +353,7 @@ BOOST_AUTO_TEST_CASE(conversion) {
 
   // check span conversion
   {
-    auto const view = static_cast<std::span<double, 3>>(orig);
+    auto const view = static_cast<std::span<const double, 3>>(orig);
     BOOST_TEST(view.data() == orig.data());
     BOOST_TEST(view.size() == orig.size());
   }
@@ -363,7 +378,7 @@ BOOST_AUTO_TEST_CASE(tuple_protocol) {
 
   static_assert(std::is_same_v<std::tuple_element_t<0, A>, int>);
   static_assert(std::is_same_v<std::tuple_element_t<1, A>, int>);
-  static_assert(A{}.size() == std::tuple_size<A>::value);
+  static_assert(A{}.size() == std::tuple_size_v<A>);
 
   BOOST_CHECK_EQUAL(get<1>(A{{1, 2, 3, 4}}), 2);
 }

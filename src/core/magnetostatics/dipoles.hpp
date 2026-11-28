@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -28,7 +28,6 @@
 #include "magnetostatics/solver.hpp"
 
 #include "magnetostatics/dipolar_direct_sum.hpp"
-#include "magnetostatics/dipolar_direct_sum_gpu.hpp"
 #include "magnetostatics/dlc.hpp"
 #include "magnetostatics/dp3m.hpp"
 #include "magnetostatics/scafacos.hpp"
@@ -45,9 +44,6 @@ namespace Dipoles {
 
 using MagnetostaticsActor =
     std::variant<std::shared_ptr<DipolarDirectSum>,
-#ifdef ESPRESSO_DIPOLAR_DIRECT_SUM
-                 std::shared_ptr<DipolarDirectSumGpu>,
-#endif
 #ifdef ESPRESSO_DP3M
                  std::shared_ptr<DipolarP3M>,
 #endif
@@ -61,6 +57,17 @@ struct Solver::Implementation {
   std::optional<MagnetostaticsActor> solver;
   Implementation() : solver{} {}
 };
+
+namespace traits {
+
+template <class T> struct has_pressure : std::false_type {};
+template <> struct has_pressure<DipolarDirectSum> : std::true_type {};
+#ifdef ESPRESSO_DP3M
+template <> struct has_pressure<DipolarP3M> : std::true_type {};
+#endif
+// DLC: false_type for now
+
+} // namespace traits
 
 } // namespace Dipoles
 

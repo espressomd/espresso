@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,15 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Particle struct. */
-
-#define BOOST_TEST_MODULE Particle test
+#define BOOST_TEST_MODULE "Particle struct test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
+#include <config/config.hpp>
+
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
-#include "config/config.hpp"
 
 #include <utils/compact_vector.hpp>
 #include <utils/serialization/memcpy_archive.hpp>
@@ -251,43 +250,115 @@ BOOST_AUTO_TEST_CASE(rattle_constructors) {
 }
 #endif // ESPRESSO_BOND_CONSTRAINT
 
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+
+void check_particle_tsw(ThermalStonerWohlfarthParameters const &out,
+                        ThermalStonerWohlfarthParameters const &ref) {
+  BOOST_TEST(out.is_enabled == ref.is_enabled);
+  BOOST_TEST(out.phi0 == ref.phi0);
+  BOOST_TEST(out.sat_mag == ref.sat_mag);
+  BOOST_TEST(out.ani_fld_inv == ref.ani_fld_inv);
+  BOOST_TEST(out.ani_energy == ref.ani_energy);
+  BOOST_TEST(out.tau0_inv == ref.tau0_inv);
+  BOOST_TEST(out.dt_incr == ref.dt_incr);
+}
+
+BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<ThermalStonerWohlfarthParameters>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(ThermalStonerWohlfarthParameters));
+
+  std::vector<char> buf(expected_size);
+
+  auto pr = ThermalStonerWohlfarthParameters{.is_enabled = false,
+                                             .phi0 = 1.,
+                                             .sat_mag = 2.,
+                                             .ani_fld_inv = 3.,
+                                             .ani_energy = 4.,
+                                             .tau0_inv = 5.,
+                                             .dt_incr = 6.};
+
+  {
+    auto oa = Utils::MemcpyOArchive{buf};
+
+    oa << pr;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{buf};
+    ThermalStonerWohlfarthParameters out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_tsw(out, pr);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
+  auto pr = ThermalStonerWohlfarthParameters{.is_enabled = false,
+                                             .phi0 = 1.,
+                                             .sat_mag = 2.,
+                                             .ani_fld_inv = 3.,
+                                             .ani_energy = 4.,
+                                             .tau0_inv = 5.,
+                                             .dt_incr = 6.};
+
+  // check copy constructor
+  {
+    ThermalStonerWohlfarthParameters out(pr);
+    check_particle_tsw(out, pr);
+  }
+
+  // check copy assignment operator
+  {
+    ThermalStonerWohlfarthParameters out; // avoid copy elision
+    out = pr;
+    check_particle_tsw(out, pr);
+  }
+}
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();
 
   // check default values
   BOOST_CHECK(not p.has_fixed_coordinates());
   BOOST_CHECK(not p.can_rotate());
-  BOOST_CHECK(not p.is_fixed_along(1));
-  BOOST_CHECK(not p.can_rotate_around(1));
+  BOOST_CHECK(not p.is_fixed_along(1u));
+  BOOST_CHECK(not p.can_rotate_around(1u));
 
   // check setting of one axis
 #ifdef ESPRESSO_EXTERNAL_FORCES
-  p.set_fixed_along(1, true);
-  BOOST_CHECK(p.is_fixed_along(1));
+  p.set_fixed_along(1u, true);
+  BOOST_CHECK(p.is_fixed_along(1u));
   BOOST_CHECK(p.has_fixed_coordinates());
 #endif
 #ifdef ESPRESSO_ROTATION
-  p.set_can_rotate_around(1, true);
-  BOOST_CHECK(p.can_rotate_around(1));
+  p.set_can_rotate_around(1u, true);
+  BOOST_CHECK(p.can_rotate_around(1u));
   BOOST_CHECK(p.can_rotate());
 #endif
 
   // check that unsetting is properly registered
 #ifdef ESPRESSO_EXTERNAL_FORCES
-  p.set_fixed_along(1, false);
+  p.set_fixed_along(1u, false);
   BOOST_CHECK(not p.has_fixed_coordinates());
 #endif
 #ifdef ESPRESSO_ROTATION
-  p.set_can_rotate_around(1, false);
+  p.set_can_rotate_around(1u, false);
   BOOST_CHECK(not p.can_rotate());
 #endif
 
   // check setting of all flags at once
 #ifdef ESPRESSO_ROTATION
   p.set_can_rotate_all_axes();
-  BOOST_CHECK(p.can_rotate_around(0));
-  BOOST_CHECK(p.can_rotate_around(1));
-  BOOST_CHECK(p.can_rotate_around(2));
+  BOOST_CHECK(p.can_rotate_around(0u));
+  BOOST_CHECK(p.can_rotate_around(1u));
+  BOOST_CHECK(p.can_rotate_around(2u));
   p.set_cannot_rotate_all_axes();
   BOOST_CHECK(not p.can_rotate());
 #endif

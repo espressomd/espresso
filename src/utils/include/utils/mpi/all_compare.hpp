@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,8 @@
 
 #ifndef UTILS_MPI_ALL_COMPARED_HPP
 #define UTILS_MPI_ALL_COMPARED_HPP
+
+#include <functional>
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>

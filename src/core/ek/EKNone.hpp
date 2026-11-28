@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,8 @@
 
 #pragma once
 
+#include "system/Leaf.hpp"
+
 #include "utils.hpp"
 
 namespace System {
@@ -27,7 +29,7 @@ class System;
 
 namespace EK {
 
-struct EKNone {
+struct EKNone : public System::Leaf<EKNone> {
   bool is_ready_for_propagation() const { throw NoEKActive{}; }
   void propagate() { throw NoEKActive{}; }
   double get_tau() const { throw NoEKActive{}; }

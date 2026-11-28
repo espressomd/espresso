@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2025 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -17,22 +17,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import itertools
 import numpy as np
 import unittest as ut
 import unittest_decorators as utx
 
 import espressomd
-import espressomd.shapes
 import espressomd.electrokinetics
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
 class EKDiffusiveFlux:
-    BOX_L = [5., 5., 5.]
-    AGRID = 1.0
-    DIFFUSION_COEFFICIENT = 0.25
+    BOX_L = [14.325, 14.325, 14.325]
+    AGRID = 2.865
+    DENSITY = 1
+    DIFFUSION_COEFFICIENT = 0.68
     TIMESTEPS = 1
-    TAU = 1.0
+    TAU = 1.815
 
     system = espressomd.System(box_l=BOX_L)
     system.time_step = TAU
@@ -47,85 +48,66 @@ class EKDiffusiveFlux:
         the flux.
         """
 
-        density = 1.0
-        kT = 1.0
+        kT = 19.332
 
-        lattice = self.ek_lattice_class(n_ghost_layers=1, agrid=self.AGRID)
+        lattice = espressomd.electrokinetics.Lattice(
+            n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = self.ek_species_class(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, kT=kT, valency=0.,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
             advection=False, tau=self.TAU, **self.ek_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU, **self.ek_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
         center = np.array([2] * 3)
-        ekspecies[center].density = density
+        ekspecies[center].density = 1.0
 
         self.system.integrator.run(1)
 
+        atol = 3e-9 if self.ek_params["single_precision"] else 7e-12
+
         offset = np.array([-1, 0, 1])
         normalization_factor = 1.0 + 2. * np.sqrt(2) + 4.0 / 3.0 * np.sqrt(3)
-        for x in offset:
-            for y in offset:
-                for z in offset:
-                    direction = np.array([x, y, z])
-                    local_flux = np.array(ekspecies[direction + center].flux)
-                    dist = np.linalg.norm(direction)
-                    if (dist > 0):
-                        ref_flux = direction / normalization_factor * \
-                            self.DIFFUSION_COEFFICIENT / dist / 2.0
-                        np.testing.assert_allclose(
-                            local_flux, ref_flux, rtol=1.0E-5)
-                    else:
-                        np.testing.assert_allclose(
-                            local_flux, np.zeros(3), atol=1.0E-8)
+        fluxes = np.copy(ekspecies[:, :, :].flux)
+        for direction in itertools.product(offset, repeat=3):
+            local_flux = fluxes[*(direction + center)]
+            dist = np.linalg.norm(direction)
+            if dist > 0:
+                ref_flux = direction / normalization_factor * \
+                    self.DIFFUSION_COEFFICIENT / dist / 2.0 / self.AGRID
+                np.testing.assert_allclose(
+                    local_flux, ref_flux, rtol=0.0, atol=atol)
+            else:
+                np.testing.assert_allclose(
+                    local_flux, np.zeros(3), rtol=0.0, atol=2 * atol)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberla(EKDiffusiveFlux, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in double-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": False}
+class EKTestWalberlaDoublePrecisionCPU(EKDiffusiveFlux, ut.TestCase):
+    ek_params = {"single_precision": False, "gpu": False}
 
 
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT"])
-class EKTestWalberlaSinglePrecision(EKDiffusiveFlux, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in single-precision."""
-
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpecies
-    ek_params = {"single_precision": True}
+class EKTestWalberlaSinglePrecisionCPU(EKDiffusiveFlux, ut.TestCase):
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
-class EKTestWalberlaGPU(EKDiffusiveFlux, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in double-precision GPU."""
-
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_params = {"single_precision": False}
+class EKTestWalberlaDoublePrecisionGPU(EKDiffusiveFlux, ut.TestCase):
+    ek_params = {"single_precision": False, "gpu": True}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "WALBERLA_FFT", "CUDA"])
 class EKTestWalberlaSinglePrecisionGPU(EKDiffusiveFlux, ut.TestCase):
-
-    """Test for the waLBerla implementation of the EK in single-precision GPU."""
-
-    ek_lattice_class = espressomd.electrokinetics.LatticeWalberla
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
-    ek_params = {"single_precision": True}
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

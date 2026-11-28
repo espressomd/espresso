@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,7 +18,6 @@
 #
 
 import numpy as np
-import collections
 
 # pylint: disable=unused-import
 from . import accumulators
@@ -29,11 +28,13 @@ from . import cuda_init
 from . import collision_detection
 from . import comfixed
 from . import constraints
+from . import electrokinetics
 from . import electrostatics
 from . import magnetostatics
 from . import galilei
 from . import interactions
 from . import integrate
+from . import lb
 from . import lees_edwards
 from . import particle_data
 from . import thermostat
@@ -65,6 +66,8 @@ class System(ScriptInterfaceHelper):
     non_bonded_inter: :class:`espressomd.interactions.NonBondedInteractions`
     part: :class:`espressomd.particle_data.ParticleList`
     thermostat: :class:`espressomd.thermostat.Thermostat`
+    ekcontainer: :class:`espressomd.electrokinetics.EKContainer`
+        EK system (diffusion-advection-reaction models).
     box_l: (3,) array_like of :obj:`float`
         Dimensions of the simulation box.
     periodicity: (3,) array_like of :obj:`bool`
@@ -75,20 +78,6 @@ class System(ScriptInterfaceHelper):
 
     Methods
     -------
-    setup_type_map()
-        For using ESPResSo conveniently for simulations in the grand canonical
-        ensemble, or other purposes, when particles of certain types are created
-        and deleted frequently. Particle ids can be stored in lists for each
-        individual type and so random ids of particles of a certain type can be
-        drawn. If you want ESPResSo to keep track of particle ids of a certain type
-        you have to initialize the method by calling the setup function. After that
-        ESPResSo will keep track of particle ids of that type.
-
-        Parameters
-        ----------
-        type_list : array_like of :obj:`int`
-            Types to track.
-
     number_of_particles()
         Count the number of particles of a given type.
 
@@ -101,12 +90,6 @@ class System(ScriptInterfaceHelper):
         -------
         :obj:`int`
             The number of particles which have the given type.
-
-        Raises
-        ------
-        RuntimeError
-            If the particle ``type`` is not currently tracked by the system.
-            To select which particle types are tracked, call :meth:`setup_type_map`.
 
     rotate_system()
         Rotate the particles in the system about the center of mass.
@@ -127,7 +110,6 @@ class System(ScriptInterfaceHelper):
     _so_name = "System::System"
     _so_creation_policy = "GLOBAL"
     _so_bind_methods = (
-        "setup_type_map",
         "number_of_particles",
         "rotate_system")
 
@@ -139,15 +121,10 @@ class System(ScriptInterfaceHelper):
             super().__init__(_regular_constructor=True, **kwargs)
             if has_features("CUDA"):
                 self.cuda_init_handle = cuda_init.CudaInitHandle()
-            if has_features("WALBERLA"):
-                self._lb = None
-                self._ekcontainer = None
 
             # lock class
             self.call_method("lock_system_creation")
             self._setup_atexit()
-
-        self._ase_interface = None
 
     def _setup_atexit(self):
         import atexit
@@ -168,27 +145,12 @@ class System(ScriptInterfaceHelper):
         return so
 
     def __getstate__(self):
-        checkpointable_properties = []
-        if has_features("WALBERLA"):
-            checkpointable_properties += ["_lb", "_ekcontainer"]
-
-        odict = collections.OrderedDict()
-        for property_name in checkpointable_properties:
-            odict[property_name] = System.__getattribute__(self, property_name)
-        return odict
+        return {}
 
     def __setstate__(self, params):
         # initialize Python-only members
         for property_name in params.keys():
             System.__setattr__(self, property_name, params[property_name])
-        # note: several members can only be instantiated once
-        if has_features("WALBERLA"):
-            if self._lb is not None:
-                lb, self._lb = self._lb, None
-                self.lb = lb
-            if self._ekcontainer is not None:
-                ekcontainer, self._ekcontainer = self._ekcontainer, None
-                self.ekcontainer = ekcontainer
         self.call_method("lock_system_creation")
 
     @property
@@ -257,53 +219,15 @@ class System(ScriptInterfaceHelper):
     @property
     def lb(self):
         """
-        LB solver.
+        Lattice-Boltzmann method.
 
+        Type: :class:`espressomd.lb.LBFluid`
         """
-        assert_features("WALBERLA")
-        return self._lb
+        return self.lbcontainer.solver
 
     @lb.setter
     def lb(self, lb):
-        assert_features("WALBERLA")
-        if lb != self._lb:
-            if self._lb is not None:
-                self._lb.call_method("deactivate")
-                self._lb = None
-            if lb is not None:
-                lb.call_method("activate")
-                self._lb = lb
-
-    @property
-    def ase(self):
-        return self._ase_interface
-
-    @ase.setter
-    def ase(self, ase):
-        ase.register_system(self)
-        self._ase_interface = ase
-
-    @property
-    def ekcontainer(self):
-        """
-        EK system (diffusion-advection-reaction models).
-
-        Type: :class:`espressomd.electrokinetics.EKContainer`
-
-        """
-        assert_features("WALBERLA")
-        return self._ekcontainer
-
-    @ekcontainer.setter
-    def ekcontainer(self, ekcontainer):
-        assert_features("WALBERLA")
-        if ekcontainer != self._ekcontainer:
-            if self._ekcontainer is not None:
-                self._ekcontainer.call_method("deactivate")
-                self._ekcontainer = None
-            if ekcontainer is not None:
-                ekcontainer.call_method("activate")
-                self._ekcontainer = ekcontainer
+        self.lbcontainer.solver = lb
 
     def change_volume_and_rescale_particles(self, d_new, dir="xyz"):
         """Change box size and rescale particle coordinates.
@@ -314,7 +238,7 @@ class System(ScriptInterfaceHelper):
             New box length
         dir : :obj:`str`, optional
             Coordinate to work on, ``"x"``, ``"y"``, ``"z"`` or ``"xyz"`` for isotropic.
-            Isotropic assumes a cubic box.
+            Isotropic makes the box cubic.
 
         """
 
@@ -400,3 +324,7 @@ class System(ScriptInterfaceHelper):
         """
         assert_features("EXCLUSIONS")
         self.part.auto_exclusions(distance=distance)
+
+    def setup_type_map(self, *args, **kwargs):  # pylint: disable=unused-argument
+        raise NotImplementedError(
+            "system.setup_type_map() was removed in release 5.1")

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -165,6 +165,8 @@ public:
     }
     m_ekreaction = m_ekreaction_impl;
   }
+
+  [[nodiscard]] auto get_impl() const { return m_ekreaction_impl; }
 
   [[nodiscard]] Variant do_call_method(std::string const &method,
                                        VariantMap const &parameters) override {

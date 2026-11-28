@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The ESPResSo project
+ * Copyright (C) 2025-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -52,7 +52,10 @@
 
 #include <utils/Vector.hpp>
 
+#include <waLBerlaDefinitions.h>
+
 #include <memory>
+#include <stdexcept>
 
 namespace walberla {
 
@@ -62,6 +65,9 @@ new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
                     Utils::Vector3d ext_efield, double density, bool advection,
                     bool friction_coupling, bool single_precision,
                     bool thermalized, unsigned int seed) {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  throw std::runtime_error("waLBerla was compiled without CUDA support");
+#else
   if (single_precision) {
     return std::make_shared<EKinWalberlaImpl<13, float, lbmpy::Arch::GPU>>(
         lattice, diffusion, kT, valency, ext_efield, density, advection,
@@ -71,22 +77,31 @@ new_ek_walberla_gpu(std::shared_ptr<LatticeWalberla> const &lattice,
   return std::make_shared<EKinWalberlaImpl<13, double, lbmpy::Arch::GPU>>(
       lattice, diffusion, kT, valency, ext_efield, density, advection,
       friction_coupling, thermalized, seed);
+#endif
 }
 
 std::shared_ptr<EKReactionBase> new_ek_reaction_bulk_gpu(
     std::shared_ptr<LatticeWalberla> const &lattice,
     typename EKReactionBase::reactants_type const &reactants,
     double coefficient) {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  throw std::runtime_error("waLBerla was compiled without CUDA support");
+#else
   return std::make_shared<EKReactionImplBulk<lbmpy::Arch::GPU>>(
       lattice, reactants, coefficient);
+#endif
 }
 
 std::shared_ptr<EKReactionBaseIndexed> new_ek_reaction_indexed_gpu(
     std::shared_ptr<LatticeWalberla> const &lattice,
     typename EKReactionBase::reactants_type const &reactants,
     double coefficient) {
+#if not defined(WALBERLA_BUILD_WITH_CUDA)
+  throw std::runtime_error("waLBerla was compiled without CUDA support");
+#else
   return std::make_shared<EKReactionImplIndexed<lbmpy::Arch::GPU>>(
       lattice, reactants, coefficient);
+#endif
 }
 
 } // namespace walberla

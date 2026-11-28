@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,14 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SCRIPT_INTERFACE_PARALLEL_EXCEPTION_HANDLER_HPP
-#define ESPRESSO_SCRIPT_INTERFACE_PARALLEL_EXCEPTION_HANDLER_HPP
+
+#pragma once
 
 #include "core/errorhandling.hpp"
 
 #include <boost/mpi/communicator.hpp>
 
-#include <stdexcept>
+#include <exception>
 #include <string>
 #include <utility>
 
@@ -55,7 +55,7 @@ namespace ScriptInterface {
  * is otherwise silently ignored. On the main rank, the thrown exception is
  * converted to a Python exception.
  */
-class ParallelExceptionHandler {
+class ParallelExceptionHandler { // LCOV_EXCL_LINE
 public:
   ParallelExceptionHandler(boost::mpi::communicator comm)
       : m_comm(std::move(comm)) {}
@@ -85,5 +85,3 @@ private:
   boost::mpi::communicator m_comm;
 };
 } // namespace ScriptInterface
-
-#endif

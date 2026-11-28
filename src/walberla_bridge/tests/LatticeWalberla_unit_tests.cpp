@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 The ESPResSo project
+ * Copyright (C) 2020-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(exceptions) {
   }
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   MPI_Init(&argc, &argv);
   int n_nodes;
 

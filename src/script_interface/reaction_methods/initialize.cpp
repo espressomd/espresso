@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,21 +19,17 @@
 
 #include "initialize.hpp"
 
-#include "SingleReaction.hpp"
+#include "ExclusionRadius.hpp"
 
-#include "ConstantpHEnsemble.hpp"
-#include "ReactionEnsemble.hpp"
-#include "WidomInsertion.hpp"
+#include "ReactionAlgorithm.hpp"
 
 #include "script_interface/ScriptInterface.hpp"
 
 namespace ScriptInterface {
 namespace ReactionMethods {
 void initialize(Utils::Factory<ObjectHandle> *om) {
-  om->register_new<SingleReaction>("ReactionMethods::SingleReaction");
-  om->register_new<WidomInsertion>("ReactionMethods::WidomInsertion");
-  om->register_new<ReactionEnsemble>("ReactionMethods::ReactionEnsemble");
-  om->register_new<ConstantpHEnsemble>("ReactionMethods::ConstantpHEnsemble");
+  om->register_new<ExclusionRadius>("ReactionMethods::ExclusionRadius");
+  om->register_new<ReactionAlgorithm>("ReactionMethods::ReactionAlgorithm");
 }
 } // namespace ReactionMethods
 } // namespace ScriptInterface

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -24,6 +24,7 @@
 #include <utils/Vector.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <vector>
 

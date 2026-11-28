@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The ESPResSo project
+ * Copyright (C) 2025-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,13 +21,19 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
-
 #include <Cabana_VerletList.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+
+template <class MemorySpace, class ListAlgorithm, class Layout, class BuildTag>
+class CustomVerletList;
+namespace Cabana {
+template <class MemorySpace, class AlgorithmTag, class BuildTag>
+class NeighborList<
+    CustomVerletList<MemorySpace, AlgorithmTag, VerletLayout2D, BuildTag>>;
+}
 
 // ONLY FOR 2D LAYOUT, OTHERWISE NEIGHBOR LIST INTERFACE IMPLEMENTATION WILL
 // CAUSE PROBLEMS (NOT IMPLEMENTED)
@@ -53,19 +59,18 @@ public:
   bool overflow = false;
 
   // Method to initialize _data without filling neighbors
-  KOKKOS_INLINE_FUNCTION
-  void initializeData(std::size_t const num_particles,
-                      std::size_t const max_neigh) {
+  inline void initializeData(std::size_t const num_particles,
+                             std::size_t const max_neigh) {
     counts = Kokkos::View<int *, MemorySpace>("num_neighbors", num_particles);
     neighbors = Kokkos::View<int **, Kokkos::LayoutRight, MemorySpace>(
-        Kokkos::ViewAllocateWithoutInitializing("neighbors"), num_particles,
-        max_neigh);
+        Kokkos::view_alloc(MemorySpace{}, Kokkos::WithoutInitializing,
+                           "neighbors"),
+        num_particles, max_neigh);
   }
 
   // Method to realloc _data
-  KOKKOS_INLINE_FUNCTION
-  void reallocData(std::size_t const num_particles,
-                   std::size_t const max_neigh) {
+  inline void reallocData(std::size_t const num_particles,
+                          std::size_t const max_neigh) {
     Kokkos::realloc(counts, num_particles);
     Kokkos::realloc(Kokkos::WithoutInitializing, neighbors, num_particles,
                     max_neigh);
@@ -126,7 +131,7 @@ public:
   KOKKOS_INLINE_FUNCTION
   void sortNeighbors() {
     Kokkos::parallel_for("custom_verlet_list::sort_neighbors",
-                         Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(
+                         Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(
                              std::size_t{0}, counts.size()),
                          [&](std::size_t const i) {
                            auto const count = counts(i);
@@ -165,8 +170,8 @@ public:
     Kokkos::Max<int> max_reduce(max_counts);
     Kokkos::parallel_reduce(
         "custom_verlet_list::reduce_max",
-        Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(std::size_t{0},
-                                                           counts.size()),
+        Kokkos::RangePolicy<Kokkos::DefaultHostExecutionSpace>(std::size_t{0},
+                                                               counts.size()),
         [&](std::size_t const i, int &value) {
           if (counts(i) > value)
             value = counts(i);
@@ -205,8 +210,7 @@ public:
   //! Get the maximum number of neighbors per particle.
   KOKKOS_INLINE_FUNCTION
   static std::size_t maxNeighbor(list_type const &list) {
-    // Stored during neighbor search.
-    return list.max_n;
+    return list.neighbors.extent(1);
   }
 
   //! Get the number of neighbors for a given particle index.
@@ -225,5 +229,3 @@ public:
     return list.neighbors(particle_index, count);
   }
 };
-
-#endif // ESPRESSO_SHARED_MEMORY_PARALLELISM

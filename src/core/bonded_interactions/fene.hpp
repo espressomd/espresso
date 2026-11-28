@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -97,7 +97,7 @@ inline std::optional<double> FeneBond::energy(Utils::Vector3d const &dx) const {
   double const dr = dx.norm() - r0;
 
   /* check bond stretching */
-  if (dr >= drmax) {
+  if (std::abs(dr) >= drmax) {
     return {};
   }
 

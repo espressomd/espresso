@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -37,8 +37,18 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/multi_array.hpp>
 
+#if defined(__GNUC__) or defined(__GNUG__)
+// ignore false positive: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=119388
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+#if __has_include(<highfive/boost.hpp>)
 #include <highfive/boost.hpp>
+#endif
 #include <highfive/highfive.hpp>
+#if defined(__GNUC__) or defined(__GNUG__)
+#pragma GCC diagnostic pop
+#endif
 
 #include <mpi.h>
 
@@ -178,7 +188,7 @@ void File::init_file() {
 }
 
 void File::load_datasets() {
-  auto &datasets = *m_datasets;
+  auto &datasets = m_datasets;
   for (auto const &ds : m_h5md_specification.get_datasets()) {
     if (ds.is_link)
       continue;
@@ -211,7 +221,7 @@ static std::vector<std::size_t> create_dims(hsize_t rank, hsize_t data_dim) {
     return {0ul, data_dim};
   }
   assert(rank == 1ul);
-  return {data_dim};
+  return {0ul};
 }
 
 static std::vector<std::size_t> create_maxdims(hsize_t rank, hsize_t data_dim,
@@ -240,7 +250,7 @@ static std::vector<hsize_t> create_chunk_dims(hsize_t rank, hsize_t data_dim,
 }
 
 void File::create_datasets() {
-  auto &datasets = *m_datasets;
+  auto &datasets = m_datasets;
   for (auto const &ds : m_h5md_specification.get_datasets()) {
     if (ds.is_link)
       continue;
@@ -291,7 +301,7 @@ static void write_attributes(HighFive::File &h5md_file) {
 }
 
 void File::write_units() {
-  auto &datasets = *m_datasets;
+  auto &datasets = m_datasets;
   if (!mass_unit().empty() and (m_fields & H5MD_OUT_MASS)) {
     datasets.at("/particles/atoms/mass/value")
         .createAttribute("unit", mass_unit());
@@ -359,6 +369,12 @@ void File::create_file() {
 }
 
 void File::close() {
+  // release datasets first, since they reference the open file
+  m_datasets.clear();
+  // close the file in parallel (this also flushes the superblock)
+  m_h5md_file.reset();
+  // wait for all ranks to be successful before deleting the backup file
+  m_comm.barrier();
   if (m_comm.rank() == 0) {
     std::filesystem::remove(m_backup_path);
   }
@@ -550,7 +566,7 @@ static void write_le_normal(LeesEdwardsBC const &lebc,
 
 void File::write(const ParticleRange &particles, double time, int step,
                  BoxGeometry const &box_geo) {
-  auto &datasets = *m_datasets;
+  auto &datasets = m_datasets;
   if (m_fields & H5MD_OUT_BOX_L) {
     write_box(box_geo, datasets.at("/particles/atoms/box/edges/value"));
   }
@@ -582,14 +598,16 @@ void File::write(const ParticleRange &particles, double time, int step,
                                 detail::make_serializer(&Particle::id));
 
   {
-    HighFive::DataSet &dataset = datasets.at("/particles/atoms/id/value");
-    auto const extents = dataset.getSpace().getDimensions();
+    auto const time_ext =
+        datasets.at("/particles/atoms/id/time").getSpace().getDimensions()[0];
     write_dataset(std::vector<double>{time},
                   datasets.at("/particles/atoms/id/time"), Vector1s{1},
-                  Vector1s{extents[0]}, Vector1s{1});
+                  Vector1s{time_ext}, Vector1s{1});
+    auto const step_ext =
+        datasets.at("/particles/atoms/id/step").getSpace().getDimensions()[0];
     write_dataset(std::vector<int>{step},
                   datasets.at("/particles/atoms/id/step"), Vector1s{1},
-                  Vector1s{extents[0]}, Vector1s{1});
+                  Vector1s{step_ext}, Vector1s{1});
   }
 
   if (m_fields & H5MD_OUT_TYPE) {
@@ -655,7 +673,7 @@ void File::write_connectivity(const ParticleRange &particles) {
   }
 
   auto const n_bonds_local = static_cast<int>(bond.shape()[1]);
-  auto &datasets = *m_datasets;
+  auto &datasets = m_datasets;
   int prefix_bonds = 0;
   BOOST_MPI_CHECK_RESULT(
       MPI_Exscan, (&n_bonds_local, &prefix_bonds, 1, MPI_INT, MPI_SUM, m_comm));
@@ -697,8 +715,7 @@ File::File(std::filesystem::path file_path, std::filesystem::path script_path,
       m_velocity_unit(std::move(velocity_unit)),
       m_charge_unit(std::move(charge_unit)), m_chunk_size(chunk_size),
       m_comm(boost::mpi::communicator()),
-      m_fields(fields_list_to_bitfield(output_fields)),
-      m_datasets(std::make_unique<decltype(m_datasets)::element_type>()),
+      m_fields(fields_list_to_bitfield(output_fields)), m_datasets(),
       m_h5md_specification(m_fields) {
   if (chunk_size <= 0) {
     throw std::domain_error("Parameter 'chunk_size' must be > 0");
@@ -707,7 +724,11 @@ File::File(std::filesystem::path file_path, std::filesystem::path script_path,
   init_file();
 }
 
-File::~File() = default;
+File::~File() {
+  if (m_h5md_file) {
+    close();
+  }
+}
 
 } /* namespace H5md */
 } /* namespace Writer */

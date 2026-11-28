@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,14 +17,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "lb/particle_coupling.hpp"
+#include <config/config.hpp>
+
 #include "BoxGeometry.hpp"
 #include "LocalBox.hpp"
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "config/config.hpp"
 #include "errorhandling.hpp"
+#include "lb/particle_coupling.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
@@ -35,29 +36,28 @@
 #include <boost/mpi.hpp>
 
 #ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
+#include "caliper_utils.hpp"
 #endif
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
 #include <ranges>
-#include <stdexcept>
 #include <vector>
 
 static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p,
                                                            double lb_gamma) {
-#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
-  auto const &partcl_gamma = p.gamma();
 #ifdef ESPRESSO_PARTICLE_ANISOTROPY
   auto const default_gamma = Thermostat::GammaType::broadcast(lb_gamma);
 #else
   auto const default_gamma = lb_gamma;
 #endif // ESPRESSO_PARTICLE_ANISOTROPY
-  return Thermostat::handle_particle_gamma(partcl_gamma, default_gamma);
+#ifdef ESPRESSO_THERMOSTAT_PER_PARTICLE
+  return Thermostat::handle_particle_gamma(p.gamma(), default_gamma);
 #else
-  return lb_gamma;
+  return default_gamma;
 #endif // ESPRESSO_THERMOSTAT_PER_PARTICLE
 }
 
@@ -305,10 +305,13 @@ void ParticleCoupling::kernel(std::vector<Particle *> const &particles) {
       ++it_positions_velocity_coupling;
     }
 
-    auto force_on_fluid = -force_on_particle;
+    // the coupling runs at every MD step, but the accumulated force on the
+    // fluid is only applied once per LB step: weight it by dt / tau
+    auto force_on_fluid = -force_on_particle * m_md_to_lb_time_step_ratio;
 #ifdef ESPRESSO_ENGINE
     if (coupling_mode == swimmer_force_on_fluid) {
-      force_on_fluid = p.calc_director() * p.swimming().f_swim;
+      force_on_fluid =
+          p.calc_director() * p.swimming().f_swim * m_md_to_lb_time_step_ratio;
     }
 #endif
 
@@ -347,7 +350,7 @@ static void lb_coupling_sanity_checks(Particle const &p) {
 
 void System::System::lb_couple_particles() {
 #ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
+  ESPRESSO_CALI_MARK_FUNCTION;
 #endif
   assert(thermostat->lb != nullptr);
   if (thermostat->lb->couple_to_md) {
@@ -357,7 +360,8 @@ void System::System::lb_couple_particles() {
     }
     auto const real_particles = cell_structure->local_particles();
     auto const ghost_particles = cell_structure->ghost_particles();
-    LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo};
+    LB::ParticleCoupling coupling{*thermostat->lb, lb, *box_geo, *local_geo,
+                                  get_time_step()};
     LB::CouplingBookkeeping bookkeeping{*cell_structure};
     lb.ghost_communication_vel();
     std::vector<Particle *> particles{};

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2009-2022 The ESPResSo project
+# Copyright (C) 2009-2026 The ESPResSo project
 # Copyright (C) 2009,2010
 #   Max-Planck-Institute for Polymer Research, Theory Group
 #
@@ -29,7 +29,10 @@ add_library(
   energy.cpp
   errorhandling.cpp
   forces.cpp
-  ghosts.cpp
+  forces_init.cpp
+  ghosts/HaloExchange.cpp
+  ghosts/HaloPlanValidator.cpp
+  ghosts/particle_packing.cpp
   integrate.cpp
   npt.cpp
   particle_node.cpp
@@ -38,6 +41,7 @@ add_library(
   propagation.cpp
   rattle.cpp
   rotation.cpp
+  short_range_verlet.cpp
   Observable_stat.cpp
   thermostat.cpp
   tuning.cpp
@@ -46,6 +50,7 @@ add_library(
   system/GpuParticleData.cpp
   system/System.cpp
   PartCfg.cpp
+  ExclusionRadius.cpp
   TabulatedPotential.cpp)
 add_library(espresso::core ALIAS espresso_core)
 espresso_set_common_target_properties(espresso_core)
@@ -67,20 +72,23 @@ if(ESPRESSO_BUILD_WITH_CUDA)
             ${CMAKE_CURRENT_SOURCE_DIR}/magnetostatics)
 endif()
 
+if(ESPRESSO_BUILD_WITH_NLOPT)
+  target_include_directories(espresso_core PRIVATE "${nlopt_SOURCE_DIR}/src")
+endif()
+
+espresso_set_kokkos_properties_on_source_files(espresso_core)
 install(TARGETS espresso_core
         LIBRARY DESTINATION ${ESPRESSO_INSTALL_PYTHON}/espressomd)
 
 target_link_libraries(
   espresso_core
-  PRIVATE
-    espresso::config
-    espresso::utils::mpi
-    espresso::shapes
-    espresso::compiler_flags
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:OpenMP::OpenMP_CXX>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Kokkos::kokkos>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM}>:Cabana::Core>
-    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+  PUBLIC Cabana::Core Kokkos::kokkos OpenMP::OpenMP_CXX
+         $<$<BOOL:${ESPRESSO_BUILD_WITH_CUDA}>:OpenMP::OpenMP_CUDA>
+  PRIVATE espresso::config espresso::utils::mpi espresso::shapes
+          espresso::compiler_flags
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_NLOPT}>:nlopt>
+          $<$<BOOL:${ESPRESSO_BUILD_WITH_GSL}>:GSL::gsl>
   PUBLIC espresso::utils MPI::MPI_CXX Random123 espresso::particle_observables
          Boost::serialization Boost::mpi espresso::instrumentation)
 
@@ -111,7 +119,6 @@ add_subdirectory(magnetostatics)
 add_subdirectory(nonbonded_interactions)
 add_subdirectory(object-in-fluid)
 add_subdirectory(observables)
-add_subdirectory(reaction_methods)
 add_subdirectory(scafacos)
 add_subdirectory(stokesian_dynamics)
 add_subdirectory(virtual_sites)
@@ -122,7 +129,23 @@ endif()
 
 if(ESPRESSO_BUILD_WITH_HDF5 AND ESPRESSO_BUILD_WITH_COVERAGE
    AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  set_source_files_properties(
-    io/writer/h5md_core.cpp PROPERTIES COMPILE_OPTIONS -felide-constructors
-                                       DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  set_property(SOURCE io/writer/h5md_core.cpp APPEND
+               PROPERTY COMPILE_OPTIONS -felide-constructors)
+endif()
+# silence inconsistent host/device qualifiers in Boost accumulators and combine
+set_property(
+  SOURCE electrostatics/coulomb.cpp observables/RDF.cpp APPEND
+  PROPERTY COMPILE_OPTIONS
+           $<$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>:--diag-suppress=20014>)
+set_property(
+  SOURCE electrostatics/coulomb.cpp
+  APPEND
+  PROPERTY
+    COMPILE_OPTIONS
+    $<$<AND:$<COMPILE_LANG_AND_ID:CUDA,NVIDIA>,$<STREQUAL:${CMAKE_CUDA_HOST_COMPILER_ID},NVHPC>>:--diag_suppress=code_is_unreachable>
+)
+
+espresso_set_kokkos_properties_on_source_files(espresso_core)
+if(ESPRESSO_BUILD_WITH_FFTW)
+  espresso_set_kokkos_properties_on_source_files(espresso_p3m)
 endif()

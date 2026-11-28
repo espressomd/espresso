@@ -17,9 +17,9 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy
-// v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from
-// waLBerla commit 191cf58b16b96d1d2f050dcbd9e88443995b2222
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34,
+// sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit
+// 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 #pragma once
 #include "core/DataTypes.h"
@@ -40,8 +40,6 @@
 
 #ifdef __GNUC__
 #define RESTRICT __restrict__
-#elif _MSC_VER
-#define RESTRICT __restrict
 #else
 #define RESTRICT
 #endif
@@ -98,8 +96,12 @@ public:
 
     IndexInfo *pointerGpu(Type t) { return gpuVectors_[t]; }
     void syncGPU() {
-      for (auto &gpuVec : gpuVectors_)
-        WALBERLA_GPU_CHECK(gpuFree(gpuVec));
+      for (auto &gpuVec : gpuVectors_) {
+        if (gpuVec) {
+          WALBERLA_GPU_CHECK(gpuFree(gpuVec));
+          gpuVec = nullptr;
+        }
+      }
       gpuVectors_.resize(cpuVectors_.size());
 
       WALBERLA_ASSERT_EQUAL(cpuVectors_.size(), NUM_TYPES);
@@ -170,8 +172,8 @@ public:
   void fillFromFlagField(const std::shared_ptr<StructuredBlockForest> &blocks,
                          ConstBlockDataID flagFieldID, FlagUID boundaryFlagUID,
                          FlagUID domainFlagUID) {
-    for (auto blockIt = blocks->begin(); blockIt != blocks->end(); ++blockIt)
-      fillFromFlagField<FlagField_T>(blocks, &*blockIt, flagFieldID,
+    for (auto &block : *blocks)
+      fillFromFlagField<FlagField_T>(blocks, &block, flagFieldID,
                                      boundaryFlagUID, domainFlagUID);
   }
 

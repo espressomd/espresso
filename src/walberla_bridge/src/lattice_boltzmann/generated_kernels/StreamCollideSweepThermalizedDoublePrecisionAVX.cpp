@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 272d4a09ec35da50685afc9586645e1b9984b423
 
 #include <cmath>
 
@@ -25,9 +25,9 @@
 #include "core/DataTypes.h"
 #include "core/Macros.h"
 
-#include <immintrin.h>
-
 #include "philox_rand.h"
+
+#include <immintrin.h>
 
 #define FUNC_PREFIX
 
@@ -51,9 +51,7 @@ namespace pystencils {
 
 namespace internal_b312c2da0affb0ff73dd81300a784e62 {
 static FUNC_PREFIX void streamcollidesweepthermalizeddoubleprecisionavx_streamcollidesweepthermalizeddoubleprecisionavx(double *RESTRICT const _data_force, double *RESTRICT const _data_pdfs, double *RESTRICT _data_pdfs_tmp, int64_t const _size_force_0, int64_t const _size_force_1, int64_t const _size_force_2, int64_t const _stride_force_1, int64_t const _stride_force_2, int64_t const _stride_force_3, int64_t const _stride_pdfs_1, int64_t const _stride_pdfs_2, int64_t const _stride_pdfs_3, int64_t const _stride_pdfs_tmp_1, int64_t const _stride_pdfs_tmp_2, int64_t const _stride_pdfs_tmp_3, uint32_t block_offset_0, uint32_t block_offset_1, uint32_t block_offset_2, double kT, double omega_bulk, double omega_even, double omega_odd, double omega_shear, uint32_t seed, uint32_t time_step) {
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
     const double xi_20 = omega_bulk * 0.5;
     const double xi_47 = omega_shear * 0.041666666666666664;
@@ -71,9 +69,7 @@ static FUNC_PREFIX void streamcollidesweepthermalizeddoubleprecisionavx_streamco
     const double xi_226 = omega_odd * 0.125;
     const double rr_0 = 0.0;
     const double xi_45 = rr_0 * 0.041666666666666664;
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_2 = 1; ctr_2 < _size_force_2 - 1; ctr_2 += 1) {
       for (int64_t ctr_1 = 1; ctr_1 < _size_force_1 - 1; ctr_1 += 1) {
         {
@@ -786,16 +782,16 @@ void StreamCollideSweepThermalizedDoublePrecisionAVX::run(IBlock *block) {
     }
   }
 
-  auto &omega_even = this->omega_even_;
-  auto &time_step = this->time_step_;
-  auto &kT = this->kT_;
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &omega_shear = this->omega_shear_;
   auto &seed = this->seed_;
+  auto &kT = this->kT_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &block_offset_2 = this->block_offset_2_;
-  auto &block_offset_0 = this->block_offset_0_;
+  auto &omega_even = this->omega_even_;
+  auto &omega_shear = this->omega_shear_;
   auto &omega_odd = this->omega_odd_;
+  auto &block_offset_2 = this->block_offset_2_;
+  auto &time_step = this->time_step_;
+  auto &block_offset_0 = this->block_offset_0_;
+  auto &block_offset_1 = this->block_offset_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(-1, -int_c(force->nrOfGhostLayers()))
   double *RESTRICT const _data_force = force->dataAt(-1, -1, -1, 0);
   WALBERLA_ASSERT_EQUAL(force->layout(), field::fzyx)
@@ -857,16 +853,16 @@ void StreamCollideSweepThermalizedDoublePrecisionAVX::runOnCellInterval(const sh
     }
   }
 
-  auto &omega_even = this->omega_even_;
-  auto &time_step = this->time_step_;
-  auto &kT = this->kT_;
-  auto &block_offset_1 = this->block_offset_1_;
-  auto &omega_shear = this->omega_shear_;
   auto &seed = this->seed_;
+  auto &kT = this->kT_;
   auto &omega_bulk = this->omega_bulk_;
-  auto &block_offset_2 = this->block_offset_2_;
-  auto &block_offset_0 = this->block_offset_0_;
+  auto &omega_even = this->omega_even_;
+  auto &omega_shear = this->omega_shear_;
   auto &omega_odd = this->omega_odd_;
+  auto &block_offset_2 = this->block_offset_2_;
+  auto &time_step = this->time_step_;
+  auto &block_offset_0 = this->block_offset_0_;
+  auto &block_offset_1 = this->block_offset_1_;
   WALBERLA_ASSERT_GREATER_EQUAL(ci.xMin() - 1, -int_c(force->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.yMin() - 1, -int_c(force->nrOfGhostLayers()))
   WALBERLA_ASSERT_GREATER_EQUAL(ci.zMin() - 1, -int_c(force->nrOfGhostLayers()))

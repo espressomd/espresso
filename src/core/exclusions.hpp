@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -40,7 +40,7 @@ inline bool do_nonbonded(Particle const &p1, Particle const &p2) {
       p1.exclusions(), [p2_id = p2.id()](int id) { return id == p2_id; });
   bool p2_p1 = std::ranges::none_of(
       p2.exclusions(), [p1_id = p1.id()](int id) { return id == p1_id; });
-  return (p1_p2 or p2_p1);
+  return (p1_p2 and p2_p1);
 }
 
 /** Remove exclusion from particle if possible */

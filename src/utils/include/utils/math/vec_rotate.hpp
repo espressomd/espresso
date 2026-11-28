@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,7 @@
 #ifndef UTILS_VEC_ROTATE_HPP
 #define UTILS_VEC_ROTATE_HPP
 
+#include <boost/qvm/quat_operations.hpp>
 #include <boost/qvm/quat_vec_operations.hpp>
 
 #include "utils/Vector.hpp"
@@ -26,7 +27,7 @@
 #include "utils/quaternion.hpp"
 
 #include <cmath>
-#include <tuple>
+#include <limits>
 
 namespace Utils {
 /**

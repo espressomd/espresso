@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 The ESPResSo project
+ * Copyright (C) 2014-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -48,6 +48,5 @@ std::string RuntimeError::format() const {
 
   return ostr.str();
 }
-void RuntimeError::print() const { std::cerr << format() << std::endl; }
 
 } // namespace ErrorHandling

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -67,9 +67,15 @@ struct IBMTribend {
 
   /** Calculate the forces
    *  The equations can be found in Appendix C of @cite kruger12a.
-   *  @return forces on @p p1, @p p2, @p p3, @p p4
+   *  @param[in] box_geo         box geometry.
+   *  @param[in] pos1            The position of particle 1.
+   *  @param[in] pos2            The position of particle 2.
+   *  @param[in] pos3            The position of particle 3.
+   *  @param[in] pos4            The position of particle 4.
+   *  @return Forces on particles 1, 2, 3, 4, in that order.
    */
   std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-  calc_forces(BoxGeometry const &box_geo, Particle const &p1,
-              Particle const &p2, Particle const &p3, Particle const &p4) const;
+  calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
+              Utils::Vector3d const &pos2, Utils::Vector3d const &pos3,
+              Utils::Vector3d const &pos4) const;
 };

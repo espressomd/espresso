@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -32,6 +32,9 @@
 #ifdef SCAFACOS
 #define SCAFACOS_DIPOLES
 #endif
+#ifdef NLOPT
+#define THERMAL_STONER_WOHLFARTH
+#endif
 #define DIPOLE_FIELD_TRACKING
 
 #define ENGINE
@@ -62,6 +65,7 @@
 
 #define VIRTUAL_SITES_RELATIVE
 #define VIRTUAL_SITES_INERTIALESS_TRACERS
+#define VIRTUAL_SITES_CENTER_OF_MASS
 #define COLLISION_DETECTION
 
 #define ADDITIONAL_CHECKS

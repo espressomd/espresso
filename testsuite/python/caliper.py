@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2023 The ESPResSo project
+# Copyright (C) 2023-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -25,39 +25,79 @@ import pathlib
 import sys
 import os
 
-HAS_CABANA = espressomd.has_features(["SHARED_MEMORY_PARALLELISM"])
 
 EXPECTED_LABELS = """
 integrate
-  {update_cabana}
+  update_ghosts_and_resort_particle
+    resort_particles
+    ghosts_count
+      ghost/pack
+      ghost/post
+      ghost/wait
+      ghost/unpack
+    ghosts_update
+      ghost/pack
+      ghost/post
+      ghost/wait
+      ghost/unpack
+  update_cabana_state
   Initial Force Calculation
+    update_ghosts_and_resort_particle
+      ghosts_update
+        ghost/pack
+        ghost/post
+        ghost/wait
+        ghost/unpack
     calculate_forces
-      {gpu_to}
-      {update_cabana}
+      copy_particles_to_GPU
+      update_cabana_state
       init_forces_and_thermostat
       calc_long_range_forces
-      {short_range}
-      {gpu_from}
+      cabana_short_range
+      copy_forces_from_GPU
+      ghosts_reduce_forces
+        ghost/pack
+        ghost/post
+        ghost/wait
+        ghost/unpack
   Integration loop
     integrator_step_1
     resort_particles_if_needed
+    update_ghosts_and_resort_particle
+      resort_particles
+      ghosts_count
+        ghost/pack
+        ghost/post
+        ghost/wait
+        ghost/unpack
+      ghosts_update
+        ghost/pack
+        ghost/post
+        ghost/wait
+        ghost/unpack
     calculate_forces
-      {gpu_to}
-      {update_cabana}
+      copy_particles_to_GPU
+      update_cabana_state
       init_forces_and_thermostat
       calc_long_range_forces
-      {short_range}
-      {gpu_from}
+      cabana_short_range
+      copy_forces_from_GPU
+      ghosts_reduce_forces
+        ghost/pack
+        ghost/post
+        ghost/wait
+        ghost/unpack
     integrator_step_2
 calc_energies
-  {update_cabana}
-  short_range_loop
-""".format(
-    update_cabana='update_cabana_state' if HAS_CABANA else '',
-    short_range='cabana_short_range' if HAS_CABANA else 'serial_short_range',
-    gpu_to='copy_particles_to_GPU',
-    gpu_from='copy_forces_from_GPU'
-)
+  update_ghosts_and_resort_particle
+    ghosts_update
+      ghost/pack
+      ghost/post
+      ghost/wait
+      ghost/unpack
+  update_cabana_state
+  cabana_short_range
+"""
 
 
 @utx.skipIfMissingFeatures(["CALIPER"])
@@ -69,7 +109,7 @@ class Test(ut.TestCase):
         script = str(pathlib.Path(__file__).parent / "caliper_child.py")
         my_env = os.environ.copy()
         my_env["CALI_CONFIG"] = "runtime-report"
-        process = subprocess.Popen([sys.executable, script],
+        process = subprocess.Popen(["mpirun", "-n", "2", sys.executable, script],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
                                    env=my_env)
@@ -79,10 +119,11 @@ class Test(ut.TestCase):
             if not line.startswith("WARNING:"):
                 lines = lines[i:]
                 break
-        header = "Path\tMin time/rank\tMax time/rank\tAvg time/rank\tTime %"
+        header = "Path\tMin time/rank\tAvg time/rank\tMax time/rank\tTime %"
         self.assertEqual(lines[0].split(), header.split(),
                          msg=f"Caliper summary should start with '{header}'")
-        labels = [line[:36].rstrip() for line in lines[1:]]
+        cutoff = lines[0].index("Min time/rank Avg")
+        labels = [line[:cutoff].rstrip() for line in lines[1:]]
         labels_ref = [x.rstrip() for x in EXPECTED_LABELS.strip().split("\n")
                       if x.rstrip() and ("GPU" not in x.upper() or has_cuda)]
         for l in labels_ref: assert l in labels, f"Label {l} not in profile"

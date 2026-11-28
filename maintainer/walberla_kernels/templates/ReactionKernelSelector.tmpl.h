@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2023 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,11 +19,13 @@
 
 #pragma once
 
+#include <waLBerlaDefinitions.h>
+
 {% for i in range(1, max_num_reactants + 1) %}
 #include "{{class_name}}_{{i}}_{{precision_suffix[True]}}.h"
 #include "{{class_name}}_{{i}}_{{precision_suffix[False]}}.h"
 {% endfor %}
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 {% for i in range(1, max_num_reactants + 1) %}
 #include "{{class_name}}_{{i}}_{{precision_suffix[True]}}_CUDA.h"
 #include "{{class_name}}_{{i}}_{{precision_suffix[False]}}_CUDA.h"
@@ -48,7 +50,7 @@ namespace {{class_name}}Selector {
 {% if gpu_suffix == "GPU" %}
 {% set cuda_suffix = "_CUDA" %}
 {% set helper_suffix = "_gpu" %}
-#if defined(__CUDACC__)
+#if defined(__CUDACC__) and defined(WALBERLA_BUILD_WITH_CUDA)
 {% endif %}
 
 template <typename FloatType = double, std::size_t N = 1> struct KernelTrait{{gpu_suffix}} {

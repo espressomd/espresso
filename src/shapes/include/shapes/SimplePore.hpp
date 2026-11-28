@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,10 +17,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHAPES_SIMPLE_PORE_HPP
-#define SHAPES_SIMPLE_PORE_HPP
+#pragma once
 
 #include "Shape.hpp"
+
 #include <utils/Vector.hpp>
 
 #include <utility>
@@ -100,5 +100,3 @@ public:
                       Utils::Vector3d &vec) const override;
 };
 } // namespace Shapes
-
-#endif

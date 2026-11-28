@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #include "electrostatics/solver.hpp"
 
@@ -25,27 +25,23 @@
 
 #include "electrostatics/coulomb.hpp"
 
-#include "ParticleRange.hpp"
 #include "actor/visit_try_catch.hpp"
 #include "actor/visitors.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
-#include "electrostatics/icc.hpp"
 #include "errorhandling.hpp"
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/demangle.hpp>
+#include <utils/mpi/gather_buffer.hpp>
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/sum_kahan.hpp>
 #include <boost/mpi/collectives/broadcast.hpp>
-#include <boost/mpi/collectives/gather.hpp>
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
-#include <cstdio>
 #include <iomanip>
 #include <limits>
 #include <memory>
@@ -61,8 +57,6 @@ Solver::Solver() {
   impl = std::make_unique<Implementation>();
   reinit_on_observable_calc = false;
 }
-
-Solver const &get_coulomb() { return System::get_system().coulomb; }
 
 void Solver::sanity_checks() const {
   if (impl->solver) {
@@ -104,12 +98,9 @@ void Solver::on_cell_structure_change() {
 }
 
 struct LongRangePressure {
-  explicit LongRangePressure(ParticleRange const &particles)
-      : m_particles{particles} {}
-
 #ifdef ESPRESSO_P3M
   auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    return actor->long_range_pressure(m_particles);
+    return actor->long_range_pressure();
   }
 #endif // ESPRESSO_P3M
 
@@ -128,15 +119,11 @@ struct LongRangePressure {
                         << "electrostatics method " << Utils::demangle<T>();
     return Utils::Vector9d{};
   }
-
-private:
-  ParticleRange const &m_particles;
 };
 
-Utils::Vector9d
-Solver::calc_pressure_long_range(ParticleRange const &particles) const {
+Utils::Vector9d Solver::calc_pressure_long_range() const {
   if (impl->solver) {
-    return std::visit(LongRangePressure(particles), *impl->solver);
+    return std::visit(LongRangePressure{}, *impl->solver);
   }
   return {};
 }
@@ -152,9 +139,11 @@ struct ShortRangeCutoff {
                     std::visit(*this, actor->base_solver));
   }
 #endif // ESPRESSO_P3M
+#ifdef ESPRESSO_MMM1D
   auto operator()(std::shared_ptr<CoulombMMM1D> const &) const {
     return std::numeric_limits<double>::infinity();
   }
+#endif
 #ifdef ESPRESSO_SCAFACOS
   auto operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
     return actor->get_r_cut();
@@ -199,68 +188,40 @@ void Solver::on_observable_calc() {
 }
 
 struct LongRangeForce {
-  explicit LongRangeForce(ParticleRange const &particles)
-      : m_particles(particles) {}
-
-#ifdef ESPRESSO_P3M
-  void operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    actor->add_long_range_forces(m_particles);
-  }
-  void
-  operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
-    actor->add_long_range_forces(m_particles);
-  }
-#endif // ESPRESSO_P3M
-#ifdef ESPRESSO_SCAFACOS
-  void operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
+  template <class Solver>
+  void operator()(std::shared_ptr<Solver> const &actor) const {
     actor->add_long_range_forces();
   }
-#endif
   /* Several algorithms only provide near-field kernels */
+#ifdef ESPRESSO_MMM1D
   void operator()(std::shared_ptr<CoulombMMM1D> const &) const {}
+#endif
   void operator()(std::shared_ptr<DebyeHueckel> const &) const {}
   void operator()(std::shared_ptr<ReactionField> const &) const {}
-
-private:
-  ParticleRange const &m_particles;
 };
 
 struct LongRangeEnergy {
-  explicit LongRangeEnergy(ParticleRange const &particles)
-      : m_particles(particles) {}
-
-#ifdef ESPRESSO_P3M
-  auto operator()(std::shared_ptr<CoulombP3M> const &actor) const {
-    return actor->long_range_energy(m_particles);
-  }
-  auto
-  operator()(std::shared_ptr<ElectrostaticLayerCorrection> const &actor) const {
-    return actor->long_range_energy(m_particles);
-  }
-#endif // ESPRESSO_P3M
-#ifdef ESPRESSO_SCAFACOS
-  auto operator()(std::shared_ptr<CoulombScafacos> const &actor) const {
+  template <class Solver>
+  auto operator()(std::shared_ptr<Solver> const &actor) const {
     return actor->long_range_energy();
   }
-#endif
   /* Several algorithms only provide near-field kernels */
+#ifdef ESPRESSO_MMM1D
   auto operator()(std::shared_ptr<CoulombMMM1D> const &) const { return 0.; }
+#endif
   auto operator()(std::shared_ptr<DebyeHueckel> const &) const { return 0.; }
   auto operator()(std::shared_ptr<ReactionField> const &) const { return 0.; }
-
-private:
-  ParticleRange const &m_particles;
 };
 
-void Solver::calc_long_range_force(ParticleRange const &particles) const {
+void Solver::calc_long_range_force() const {
   if (impl->solver) {
-    std::visit(LongRangeForce(particles), *impl->solver);
+    std::visit(LongRangeForce{}, *impl->solver);
   }
 }
 
-double Solver::calc_energy_long_range(ParticleRange const &particles) const {
+double Solver::calc_energy_long_range() const {
   if (impl->solver) {
-    return std::visit(LongRangeEnergy(particles), *impl->solver);
+    return std::visit(LongRangeEnergy{}, *impl->solver);
   }
   return 0.;
 }
@@ -286,20 +247,15 @@ static auto calc_charge_excess_ratio(std::vector<double> const &charges) {
 void check_charge_neutrality(System::System const &system,
                              double relative_tolerance) {
   // collect non-zero particle charges from all nodes
-  std::vector<double> local_charges;
+  std::vector<double> charges;
   for (auto const &p : system.cell_structure->local_particles()) {
-    local_charges.push_back(p.q());
+    charges.emplace_back(p.q());
   }
-  std::vector<std::vector<double>> node_charges;
-  boost::mpi::gather(comm_cart, local_charges, node_charges, 0);
+  Utils::Mpi::gather_buffer(charges, comm_cart);
 
   // run Kahan sum on charges
   auto excess_ratio = 0.;
   if (this_node == 0) {
-    auto charges = std::move(local_charges);
-    for (auto it = ++node_charges.begin(); it != node_charges.end(); ++it) {
-      charges.insert(charges.end(), it->begin(), it->end());
-    }
     excess_ratio = calc_charge_excess_ratio(charges);
   }
   boost::mpi::broadcast(comm_cart, excess_ratio, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 The ESPResSo project
+ * Copyright (C) 2025-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -27,7 +27,7 @@ bool add_bond(System::System &system, int bond_id,
   Particle *p = system.cell_structure->get_local_particle(particle_ids[0]);
   if (p) {
     // The bond view is stored in the bond list of the primary particle.
-    // Thus the bond views's partner list only contains the other particle id.
+    // Thus the bond views' partner list only contains the other particle id.
     BondView bond(bond_id, {particle_ids.data() + 1, particle_ids.size() - 1});
     p->bonds().insert(bond);
     return true;

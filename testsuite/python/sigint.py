@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 The ESPResSo project
+# Copyright (C) 2019-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -23,6 +23,7 @@ import time
 import sys
 import pathlib
 import os
+import espressomd.code_info
 
 
 EXPECTED_TRACEBACK_ENDING = r""" in handle_sigint
@@ -30,6 +31,8 @@ EXPECTED_TRACEBACK_ENDING = r""" in handle_sigint
 KeyboardInterrupt\s*$"""
 
 
+@ut.skipIf(espressomd.code_info.toolchain()["CMAKE_CXX_COMPILER_ID"] == "NVHPC",
+           "NVHPC toolchain is not supported")
 class SigintTest(ut.TestCase):
 
     script = str(pathlib.Path(__file__).parent / 'sigint_child.py')

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_REACTION_METHODS_INITIALIZE_HPP
-#define SCRIPT_INTERFACE_REACTION_METHODS_INITIALIZE_HPP
+#pragma once
 
 #include <script_interface/ObjectHandle.hpp>
 #include <utils/Factory.hpp>
@@ -28,5 +27,3 @@ namespace ReactionMethods {
 void initialize(Utils::Factory<ObjectHandle> *om);
 } // namespace ReactionMethods
 } // namespace ScriptInterface
-
-#endif

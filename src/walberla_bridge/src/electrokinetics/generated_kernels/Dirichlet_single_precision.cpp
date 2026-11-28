@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 3247aa7395049ca5bfb69d34d55e45db19fa439c
 
 #include "Dirichlet_single_precision.h"
 #include "core/DataTypes.h"
@@ -37,7 +37,7 @@ namespace pystencils {
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__clang__)
 #pragma push
 #ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
 #pragma nv_diag_suppress 177
@@ -48,18 +48,16 @@ namespace pystencils {
 // NOLINTBEGIN(readability-non-const-parameter*)
 namespace internal_43f4eae176e72ad2d9db0f0468064c30 {
 static FUNC_PREFIX void dirichlet_single_precision_boundary_Dirichlet_single_precision(float *RESTRICT _data_field, uint8_t *RESTRICT const _data_indexVector, int64_t const _stride_field_0, int64_t const _stride_field_1, int64_t const _stride_field_2, int32_t indexVectorSize) {
-  for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
-    const int32_t x = *((int32_t *)(&_data_indexVector[20 * ctr_0]));
-    const int32_t y = *((int32_t *)(&_data_indexVector[20 * ctr_0 + 4]));
-    const int32_t z = *((int32_t *)(&_data_indexVector[20 * ctr_0 + 8]));
+#pragma omp parallel
+  {
+#pragma omp for schedule(static)
+    for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
+      const int32_t x = *((int32_t *)(&_data_indexVector[20 * ctr_0]));
+      const int32_t y = *((int32_t *)(&_data_indexVector[20 * ctr_0 + 4]));
+      const int32_t z = *((int32_t *)(&_data_indexVector[20 * ctr_0 + 8]));
 
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
-    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
-
-    const int32_t dir = *((int32_t *)(&_data_indexVector[20 * ctr_0 + 12]));
-    _data_field[_stride_field_0 * x + _stride_field_1 * y + _stride_field_2 * z] = *((float *)(&_data_indexVector[20 * ctr_0 + 16]));
+      _data_field[_stride_field_0 * x + _stride_field_1 * y + _stride_field_2 * z] = *((float *)(&_data_indexVector[20 * ctr_0 + 16]));
+    }
   }
 }
 } // namespace internal_43f4eae176e72ad2d9db0f0468064c30
@@ -69,7 +67,7 @@ static FUNC_PREFIX void dirichlet_single_precision_boundary_Dirichlet_single_pre
 #pragma GCC diagnostic pop
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__clang__)
 #pragma pop
 #endif
 

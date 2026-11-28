@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -56,6 +56,8 @@ private:
   std::shared_ptr<boost::mpi::environment> m_mpi_env_lock;
   std::shared_ptr<::Writer::H5md::File> m_h5md;
   std::vector<std::string> m_output_fields;
+  bool is_file_closed;
+  void sanity_check_is_file_closed(std::string const &name) const;
 };
 
 } // namespace Writer

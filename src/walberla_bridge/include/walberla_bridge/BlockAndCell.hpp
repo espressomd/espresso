@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 The ESPResSo project
+ * Copyright (C) 2020-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -102,7 +102,7 @@ inline std::optional<BlockAndCell>
 get_block_and_cell(::LatticeWalberla const &lattice,
                    signed_integral_vector auto const &node,
                    bool consider_ghost_layers) {
-  auto const &blocks = lattice.get_blocks();
+  auto const blocks = lattice.get_blocks();
   auto n_ghost_layers = 0u;
   if (consider_ghost_layers) {
     n_ghost_layers = lattice.get_ghost_layers();
@@ -213,10 +213,9 @@ get_block_interval(::LatticeWalberla const &lattice,
  * @param lower_corner  Lower corner of the 3D slice
  * @param kernel        Function to execute on the two data buffers
  */
-template <typename Kernel>
 void copy_block_buffer(CellInterval const &bci, CellInterval const &ci,
                        Utils::Vector3i const &block_offset,
-                       Utils::Vector3i const &lower_corner, Kernel &&kernel) {
+                       Utils::Vector3i const &lower_corner, auto &&kernel) {
   auto const local_grid = to_vector3i(ci.max() - ci.min() + Cell(1, 1, 1));
   auto const block_grid = to_vector3i(bci.max() - bci.min() + Cell(1, 1, 1));
   auto const lower_cell = bci.min();
@@ -235,6 +234,35 @@ void copy_block_buffer(CellInterval const &bci, CellInterval const &ci,
             i, j, k, block_grid, Utils::MemoryOrder::ROW_MAJOR);
         kernel(static_cast<unsigned>(block_index),
                static_cast<unsigned>(local_index), node);
+      }
+    }
+  }
+}
+
+/**
+ * @brief Iterate over all local blocks that overlap a given 3D slice,
+ *        invoking a visitor for each such block.
+ *
+ * This encapsulates the common boilerplate shared by every
+ * @c get_slice_* / @c set_slice_* method in LB and EK.
+ *
+ * @param lattice       The lattice
+ * @param lower_corner  Lower corner of the 3D slice (inclusive)
+ * @param upper_corner  Upper corner of the 3D slice (exclusive)
+ * @param visitor       Callable with signature
+ *     <tt>(IBlock &block, CellInterval const &bci,
+ *          CellInterval const &ci, Utils::Vector3i const &block_offset)</tt>
+ */
+void for_each_block_in_slice(::LatticeWalberla const &lattice,
+                             Utils::Vector3i const &lower_corner,
+                             Utils::Vector3i const &upper_corner,
+                             auto &&visitor) {
+  if (auto const ci = get_interval(lattice, lower_corner, upper_corner)) {
+    for (auto &block : *lattice.get_blocks()) {
+      auto const block_offset = lattice.get_block_corner(block, true);
+      if (auto const bci = get_block_interval(
+              lattice, lower_corner, upper_corner, block_offset, block)) {
+        visitor(block, *bci, *ci, block_offset);
       }
     }
   }

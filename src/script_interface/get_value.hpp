@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2022 The ESPResSo project
+ * Copyright (C) 2016-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -257,6 +257,12 @@ template <typename T> struct VisitorVector {
 
     return ret;
   }
+
+  template <typename U, std::size_t N>
+    requires allow_conversion<T, U>::value
+  std::vector<T> operator()(Utils::Vector<U, N> const &vv) const {
+    return {vv.begin(), vv.end()};
+  }
 };
 
 /* std::vector cases */
@@ -310,7 +316,7 @@ template <> struct get_value_helper<std::filesystem::path> {
 };
 
 /** Custom error for a conversion that fails when the value is a nullptr. */
-class bad_get_nullptr : public std::bad_variant_access {};
+class bad_get_nullptr : public std::bad_variant_access {}; // LCOV_EXCL_LINE
 
 /* This allows direct retrieval of a shared_ptr to the object from
  * an ObjectRef variant. If the type is a derived type, the type is

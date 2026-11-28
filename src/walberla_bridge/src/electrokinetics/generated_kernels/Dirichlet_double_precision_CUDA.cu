@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+10.gd3f6236, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 #include "Dirichlet_double_precision_CUDA.h"
 #include "core/DataTypes.h"
@@ -82,11 +82,6 @@ static FUNC_PREFIX __launch_bounds__(256) void dirichlet_double_precision_cuda_b
     const int32_t y = *((int32_t *)(&_data_indexVector_14[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
     uint8_t *RESTRICT _data_indexVector_18 = _data_indexVector + 8;
     const int32_t z = *((int32_t *)(&_data_indexVector_18[24 * blockDim.x * blockIdx.x + 24 * threadIdx.x]));
-
-    const int32_t cx[] = {0, 0, 0, -1, 1, 0, 0, -1, 1, -1, 1, 0, 0, -1, 1, 0, 0, -1, 1, 1, -1, 1, -1, 1, -1, 1, -1};
-    const int32_t cy[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0, 1, 1, -1, -1, 1, 1, -1, -1};
-    const int32_t cz[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1, 1, 1, 1, 1, -1, -1, -1, -1};
-    const int32_t invdir[] = {0, 2, 1, 4, 3, 6, 5, 10, 9, 8, 7, 16, 15, 18, 17, 12, 11, 14, 13, 26, 25, 24, 23, 22, 21, 20, 19};
 
     double *RESTRICT _data_field_10_20 = _data_field + _stride_field_1 * y + _stride_field_2 * z;
     uint8_t *RESTRICT _data_indexVector_116 = _data_indexVector + 16;

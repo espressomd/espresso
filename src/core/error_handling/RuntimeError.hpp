@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 The ESPResSo project
+ * Copyright (C) 2014-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -55,7 +55,6 @@ struct RuntimeError {
   int line() const { return m_line; }
   /** Get a string representation */
   std::string format() const;
-  void print() const;
 
 private:
   /** Boost serialization */

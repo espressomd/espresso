@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016-2024 The ESPResSo project
+# Copyright (C) 2016-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -44,11 +44,15 @@ function(espresso_unit_test_executable)
   set_target_properties(${TEST_NAME} PROPERTIES EXCLUDE_FROM_ALL ON)
   target_link_libraries(
     ${TEST_NAME} PRIVATE Boost::unit_test_framework espresso::config
-    espresso::compiler_flags espresso::tests::compiler_flags ${TEST_DEPENDS})
+    espresso::compiler_flags espresso::tests::compiler_flags
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_FFTW}>:Heffte::Heffte>
+    $<$<BOOL:${ESPRESSO_BUILD_WITH_WALBERLA}>:espresso::walberla>
+    ${TEST_DEPENDS})
   target_include_directories(${TEST_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/core)
   if(ESPRESSO_BUILD_WITH_CUDA)
     espresso_add_cuda_rpaths(${TEST_NAME}) # for GPU-aware MPI vendors
   endif()
+  espresso_set_kokkos_properties_on_source_files(${TEST_NAME})
 endfunction()
 
 # register the executable of a unit test in the CTest suite
@@ -61,8 +65,10 @@ function(espresso_unit_test_register)
   if(NOT DEFINED TEST_TARGET)
     set(TEST_TARGET ${TEST_NAME})
   endif()
-  # If NUM_PROC is given, set up MPI parallel test case
-  if(TEST_NUM_PROC)
+  if(NOT DEFINED TEST_NUM_PROC)
+    set(TEST_NUM_PROC 1)
+  endif()
+  if(TEST_NUM_PROC GREATER 1 OR CMAKE_CXX_COMPILER_ID STREQUAL "NVHPC")
     if(${TEST_NUM_PROC} GREATER ${ESPRESSO_TEST_NP})
       set(TEST_NUM_PROC ${ESPRESSO_TEST_NP})
     endif()
@@ -77,6 +83,24 @@ function(espresso_unit_test_register)
   if(NOT DEFINED TEST_NUM_THREADS)
     set(TEST_NUM_THREADS 2)
   endif()
+  if(${TEST_NUM_THREADS} GREATER ${ESPRESSO_TEST_NT})
+    set(TEST_NUM_THREADS ${ESPRESSO_TEST_NT})
+  endif()
+  if(ESPRESSO_BUILD_WITH_ASAN)
+    # disable memory patcher (https://github.com/open-mpi/ompi/issues/12819)
+    list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_memory=^patcher")
+    # use PMIx hash-table storage instead of a shared-memory segment to avoid
+    # conflicts with ASAN address-space layout randomization
+    list(APPEND TEST_ENV_VARIABLES "PMIX_MCA_gds=hash")
+    # suppress OpenMPI memory leaks diagnostics
+    list(APPEND TEST_ENV_VARIABLES "LSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/lsan.supp:print_suppressions=0")
+    list(APPEND TEST_ENV_VARIABLES "ASAN_OPTIONS=detect_leaks=0")
+  endif()
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
 
   if(ESPRESSO_WARNINGS_ARE_ERRORS)
     set(SANITIZERS_HALT_ON_ERROR "halt_on_error=1")
@@ -86,17 +110,7 @@ function(espresso_unit_test_register)
   list(APPEND TEST_ENV_VARIABLES "UBSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/maintainer/CI/ubsan.supp:${SANITIZERS_HALT_ON_ERROR}:print_stacktrace=1")
   list(APPEND TEST_ENV_VARIABLES "ASAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}:detect_leaks=0:allocator_may_return_null=1")
   list(APPEND TEST_ENV_VARIABLES "MSAN_OPTIONS=${SANITIZERS_HALT_ON_ERROR}")
-  if(NOT TEST_NUM_PROC AND ESPRESSO_MPIEXEC_GUARD_SINGLETON_NUMA AND "${TEST_DEPENDS}" MATCHES "(^|;)([Bb]oost::mpi|MPI::MPI_CXX)($|;)")
-    list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
-  endif()
-  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false" "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
-  set(TEST_NUM_CORES 1)
-  if(DEFINED TEST_NUM_PROC)
-    set(TEST_NUM_CORES ${TEST_NUM_PROC})
-  endif()
-  if(ESPRESSO_BUILD_WITH_SHARED_MEMORY_PARALLELISM)
-    math(EXPR TEST_NUM_CORES "${TEST_NUM_CORES} * ${TEST_NUM_THREADS}")
-  endif()
+  math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
   set_tests_properties(
     ${TEST_NAME} PROPERTIES ENVIRONMENT "${TEST_ENV_VARIABLES}"
                             PROCESSORS ${TEST_NUM_CORES}

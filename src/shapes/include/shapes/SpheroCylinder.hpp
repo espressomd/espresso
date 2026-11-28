@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -19,10 +19,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SRC_SHAPES_SPHEROCYLINDER_HPP
-#define SRC_SHAPES_SPHEROCYLINDER_HPP
+#pragma once
 
 #include "Shape.hpp"
+
 #include <utils/Vector.hpp>
 
 namespace Shapes {
@@ -69,7 +69,7 @@ public:
 public:
   SpheroCylinder()
       : m_center({0.0, 0.0, 0.0}), m_axis({1.0, 0.0, 0.0}), m_rad(0),
-        m_length(0.0) {
+        m_length(0.0), m_direction(1.0) {
     precalc();
   }
 
@@ -98,5 +98,3 @@ public:
                       Utils::Vector3d &vec) const override;
 };
 } // namespace Shapes
-
-#endif

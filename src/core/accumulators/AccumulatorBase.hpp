@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -21,6 +21,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -37,7 +38,11 @@ namespace Accumulators {
 class AccumulatorBase {
 public:
   AccumulatorBase(::System::System const *system, int delta_N)
-      : m_system(reinterpret_cast<void const *>(system)), m_delta_N(delta_N) {}
+      : m_system(reinterpret_cast<void const *>(system)), m_delta_N(delta_N) {
+    if (delta_N < 1) {
+      throw std::runtime_error("delta_N must be >= 1");
+    }
+  }
   virtual ~AccumulatorBase() = default;
 
   int &delta_N() { return m_delta_N; }

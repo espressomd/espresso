@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,12 +28,13 @@ import tests_common
 
 class RandomPairTest(ut.TestCase):
 
-    """This test creates a system of random particles.
-       Then the interaction pairs for a certain cutoff
-       are calculated by brute force in python (pairs_n2),
-       and compared to the pairs returned by the cell
-       systems, which should be identical. This check is
-       repeated for all valid combinations of periodicities.
+    """
+    This test creates a system of random particles.
+    Then the interaction pairs for a certain cutoff
+    are calculated by brute force in python (pairs_n2),
+    and compared to the pairs returned by the cell
+    systems, which should be identical. This check is
+    repeated for all valid combinations of periodicities.
 
     """
     system = espressomd.System(box_l=[10., 15., 15.])
@@ -69,7 +70,7 @@ class RandomPairTest(ut.TestCase):
     def tearDown(self):
         self.system.part.clear()
 
-    def pairs_n2(self, dist):
+    def pairs_n2(self, cutoff):
         # Go through list of all possible pairs for full periodicity
         # and skip those that are not within the desired distance
         # for the current periodicity
@@ -77,8 +78,8 @@ class RandomPairTest(ut.TestCase):
         pairs = []
         parts = self.system.part
         for p in self.all_pairs:
-            if self.system.distance(parts.by_id(
-                    p[0]), parts.by_id(p[1])) <= dist:
+            dist = self.system.distance(parts.by_id(p[0]), parts.by_id(p[1]))
+            if dist <= cutoff:
                 pairs.append(p)
         return set(pairs)
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -279,6 +279,11 @@ class ParticleProperties(ut.TestCase):
         p1.update({"exclusions": []})
         self.assertTrue(p1.exclusions.size == 0)
 
+        p3 = self.system.part.add(pos=(0, 0, 0), exclusions=pid1)
+        p4 = self.system.part.add(pos=(0, 0, 0), exclusions=[pid1])
+        self.assertEqual(p3.exclusions, [p1.id])
+        self.assertEqual(p4.exclusions, [p1.id])
+
     @utx.skipIfMissingFeatures(["ROTATION"])
     def test_contradicting_properties_quat(self):
         invalid_combinations = [
@@ -435,6 +440,9 @@ class ParticleProperties(ut.TestCase):
 
         check("MASS", "mass", [1.1, 0., -1.], 1.)
         check("ELECTROSTATICS", "q", [1., -1.], 0.)
+        with self.assertRaisesRegex(ValueError, "Unknown parameter 'color' for particle. Hint: a feature is probably not compiled in"):
+            self.system.part.add(pos=[0., 0., 0.], color="red")
+        self.assertEqual(len(self.system.part), 1)
 
     def test_parallel_property_setters(self):
         system = self.system
@@ -451,6 +459,8 @@ class ParticleProperties(ut.TestCase):
             assert hasattr(system.part.by_id(0), attr), \
                 "Inconsistency between ParticleHandle and particle_data.particle_attributes"
             try:
+                print(f'getattr(system.part.by_id(0), attr) = {getattr(system.part.by_id(0), attr)}')  # nopep8
+                print(f'attr = {attr}')
                 setattr(partcls, attr, getattr(system.part.by_id(0), attr))
             except RuntimeError as err:
                 self.assertEqual(str(err), f"Parameter '{attr}' is read-only.")
@@ -591,6 +601,7 @@ class ParticleProperties(ut.TestCase):
 
     def test_particle_list(self):
         self.assertEqual(str(self.system.part), "ParticleList([17])")
+        self.assertIsNone(self.system.part.call_method("unknown"))
 
     def test_particle_slice(self):
         """Tests operations on slices of particles"""
@@ -616,6 +627,7 @@ class ParticleProperties(ut.TestCase):
         self.assertEqual(len(all_partcls), len(ids))
         np.testing.assert_equal(all_partcls.id, sorted(ids))
         np.testing.assert_equal(all_partcls.pos, pos[np.argsort(ids)])
+        self.assertIsNone(all_partcls.call_method("unknown"))
 
         # Access via slicing
         np.testing.assert_equal(system.part.by_ids(range(3, 6)).id,

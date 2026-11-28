@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -27,6 +27,7 @@
 #include "LatticeIndices.hpp"
 
 #include <walberla_bridge/electrokinetics/EKinWalberlaBase.hpp>
+#include <walberla_bridge/utils/ResourceManager.hpp>
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -59,6 +60,10 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     }
     m_index = index;
     return 0;
+  }
+  if (not name.starts_with("get_")) {
+    context()->parallel_try_catch(
+        [&]() { ek_throw_if_expired(m_mpi_cart_comm_observer); });
   }
   if (name == "set_density") {
     auto const dens = get_value<double>(params, "value");
@@ -112,16 +117,7 @@ Variant EKSpeciesNode::do_call_method(std::string const &name,
     if (is_none(params.at("value"))) {
       m_ek_species->remove_node_from_flux_boundary(m_index);
     } else {
-      context()->parallel_try_catch([&]() {
-        if (get_lattice().get_ghost_layers() < 2) {
-          if (context()->get_comm().size() > 1) {
-            throw std::runtime_error("The number of ghostlayers should be > 1 "
-                                     "when using flux boundaries and mpi.");
-          }
-          runtimeWarningMsg() << "The number of ghostlayers should be > 1 when "
-                                 "using flux boundaries and mpi.";
-        }
-      });
+      m_ek_sip->flux_boundary_ghost_layer_size_sanity_check();
       auto const flux =
           get_value<Utils::Vector3d>(params, "value") * m_conv_flux;
       m_ek_species->set_node_flux_boundary(m_index, flux);

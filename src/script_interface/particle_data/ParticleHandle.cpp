@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -39,6 +39,7 @@
 #include "core/rotation.hpp"
 #include "core/system/System.hpp"
 #include "core/virtual_sites.hpp"
+#include "core/virtual_sites/com.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/mpi/reduce_optional.hpp>
@@ -54,6 +55,7 @@
 #include <cstddef>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <set>
 #include <sstream>
 #include <stdexcept>
@@ -67,8 +69,8 @@ namespace ScriptInterface {
 namespace Particles {
 
 #ifdef ESPRESSO_ROTATION
-static auto const contradicting_arguments_quat = std::vector<
-    std::array<std::string, 3>>{{
+static std::array<std::array<std::string_view, 3>,
+                  4> constexpr contradicting_arguments_quat{{
     {{"dip", "dipm",
       "Setting 'dip' is sufficient as it defines the scalar dipole moment."}},
     {{"quat", "director",
@@ -87,7 +89,8 @@ static void sanity_checks_rotation(VariantMap const &params) {
     auto formatter =
         boost::format("Contradicting particle attributes: '%s' and '%s'. %s");
     for (auto const &[prop1, prop2, reason] : contradicting_arguments_quat) {
-      if (params.contains(prop1) and params.contains(prop2)) {
+      if (params.contains(std::string{prop1}) and
+          params.contains(std::string{prop2})) {
         auto const err_msg = boost::str(formatter % prop1 % prop2 % reason);
         throw std::invalid_argument(err_msg);
       }
@@ -177,24 +180,50 @@ void ParticleHandle::set_particle_property(T &(Particle::*setter)(),
       [&value, setter](Particle &p) { (p.*setter)() = get_value<T>(value); });
 }
 
+#ifdef ESPRESSO_EXCLUSIONS
+void ParticleHandle::set_exclusions(Variant const &value) {
+  std::vector<int> exclusion_list;
+  if (is_type<int>(value)) {
+    exclusion_list.emplace_back(get_value<int>(value));
+  } else {
+    exclusion_list = get_value<std::vector<int>>(value);
+  }
+  auto &cell_structure = get_cell_structure()->get_cell_structure();
+  context()->parallel_try_catch([&]() {
+    for (auto const pid : exclusion_list) {
+      particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
+                                       context()->get_comm());
+    }
+  });
+  set_particle_property([&](Particle const &p) {
+    for (auto const pid : p.exclusions()) {
+      local_remove_exclusion(m_pid, pid, cell_structure);
+    }
+    for (auto const pid : exclusion_list) {
+      if (!p.has_exclusion(pid)) {
+        local_add_exclusion(m_pid, pid, cell_structure);
+      }
+    }
+  });
+}
+#endif // ESPRESSO_EXCLUSIONS
+
 ParticleHandle::ParticleHandle() {
   /* Warning: the order of particle property setters matters! Some properties
    * override each other, e.g. quat/director/dip or dip/dipm.
-   * This is revelant during checkpointing: all particle properties are set at
+   * This is relevant during checkpointing: all particle properties are set at
    * once, in the order specified in the following call to `add_parameters()`.
    */
   add_parameters({
       {"id", AutoParameter::read_only, [this]() { return m_pid; }},
       {"type",
        [this](Variant const &value) {
-         auto const old_type = get_particle_property(&Particle::type);
          auto const new_type = get_value<int>(value);
          if (new_type < 0) {
            throw std::domain_error(
                error_msg("type", "must be an integer >= 0"));
          }
          get_system()->nonbonded_ias->make_particle_type_exist(new_type);
-         on_particle_type_change(m_pid, old_type, new_type);
          set_particle_property(&Particle::type, value);
        },
        [this]() { return get_particle_data(m_pid).type(); }},
@@ -272,6 +301,47 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+      {"magnetodynamics",
+       [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+           auto const dict = get_value<VariantMap>(value);
+           if (dict.contains("is_enabled"))
+             p.stoner_wohlfarth_is_enabled() =
+                 get_value<bool>(dict.at("is_enabled"));
+           if (dict.contains("sw_phi_0"))
+             p.stoner_wohlfarth_phi_0() =
+                 get_value<double>(dict.at("sw_phi_0"));
+           if (dict.contains("sat_mag"))
+             p.saturation_magnetization() =
+                 get_value<double>(dict.at("sat_mag"));
+           if (dict.contains("anisotropy_field_inv"))
+             p.magnetic_anisotropy_field_inv() =
+                 get_value<double>(dict.at("anisotropy_field_inv"));
+           if (dict.contains("anisotropy_energy"))
+             p.magnetic_anisotropy_energy() =
+                 get_value<double>(dict.at("anisotropy_energy"));
+           if (dict.contains("sw_tau0_inv"))
+             p.stoner_wohlfarth_tau0_inv() =
+                 get_value<double>(dict.at("sw_tau0_inv"));
+           if (dict.contains("sw_dt_incr"))
+             p.stoner_wohlfarth_dt_incr() =
+                 get_value<double>(dict.at("sw_dt_incr"));
+         });
+       },
+       [this]() {
+         auto const &p = get_particle_data(m_pid);
+         return VariantMap{
+             {"is_enabled", p.stoner_wohlfarth_is_enabled()},
+             {"sw_phi_0", p.stoner_wohlfarth_phi_0()},
+             {"sat_mag", p.saturation_magnetization()},
+             {"anisotropy_field_inv", p.magnetic_anisotropy_field_inv()},
+             {"anisotropy_energy", p.magnetic_anisotropy_energy()},
+             {"sw_tau0_inv", p.stoner_wohlfarth_tau0_inv()},
+             {"sw_dt_incr", p.stoner_wohlfarth_dt_incr()},
+         };
+       }},
+#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_ROTATION
       {"director",
        [this](Variant const &value) {
@@ -305,32 +375,26 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() {
          auto const rotation_bits = get_particle_data(m_pid).rotation();
-         return Utils::Vector3b{{::detail::get_nth_bit(rotation_bits, 0),
-                                 ::detail::get_nth_bit(rotation_bits, 1),
-                                 ::detail::get_nth_bit(rotation_bits, 2)}};
+         return Utils::Vector3b{{::detail::get_nth_bit(rotation_bits, 0u),
+                                 ::detail::get_nth_bit(rotation_bits, 1u),
+                                 ::detail::get_nth_bit(rotation_bits, 2u)}};
        }},
       {"omega_lab",
        [this](Variant const &value) {
          set_particle_property([&value](Particle &p) {
            auto const omega = get_value<Utils::Vector3d>(value);
-           p.omega() = convert_vector_space_to_body(p, omega);
+           p.omega() = convert_vector_space_to_body(p.quat(), omega);
          });
        },
        [this]() {
          auto &p = get_particle_data(m_pid);
-         return convert_vector_body_to_space(p, p.omega());
+         return convert_vector_body_to_space(p.quat(), p.omega());
        }},
       {"torque_lab",
        [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           auto const torque = get_value<Utils::Vector3d>(value);
-           p.torque() = convert_vector_space_to_body(p, torque);
-         });
+         set_particle_property(&Particle::torque, value);
        },
-       [this]() {
-         auto &p = get_particle_data(m_pid);
-         return convert_vector_body_to_space(p, p.torque());
-       }},
+       [this]() { return get_particle_data(m_pid).torque(); }},
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_ROTATIONAL_INERTIA
       {"rinertia",
@@ -357,9 +421,9 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() {
          auto const fixed = get_particle_data(m_pid).fixed();
-         return Utils::Vector3b{{::detail::get_nth_bit(fixed, 0),
-                                 ::detail::get_nth_bit(fixed, 1),
-                                 ::detail::get_nth_bit(fixed, 2)}};
+         return Utils::Vector3b{{::detail::get_nth_bit(fixed, 0u),
+                                 ::detail::get_nth_bit(fixed, 1u),
+                                 ::detail::get_nth_bit(fixed, 2u)}};
        }},
       {"ext_force",
        [this](Variant const &value) {
@@ -541,32 +605,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
 #ifdef ESPRESSO_EXCLUSIONS
     // set exclusions
     if (params.contains("exclusions")) {
-      std::vector<int> exclusion_list;
-      if (is_type<int>(params.at("exclusions"))) {
-        exclusion_list.emplace_back(get_value<int>(params, "exclusions"));
-      } else {
-        exclusion_list = get_value<std::vector<int>>(params, "exclusions");
-      }
-      context()->parallel_try_catch([&]() {
-        auto &cell_structure = get_cell_structure()->get_cell_structure();
-        for (auto const pid : exclusion_list) {
-          particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
-                                           context()->get_comm());
-        }
-      });
-      set_particle_property([this, &exclusion_list](Particle &p) {
-        auto &cell_structure = get_cell_structure()->get_cell_structure();
-        for (auto const pid : p.exclusions()) {
-          local_remove_exclusion(m_pid, pid, cell_structure);
-        }
-        for (auto const pid : exclusion_list) {
-          if (!p.has_exclusion(pid)) {
-            local_add_exclusion(m_pid, pid, cell_structure);
-          }
-        }
-      });
+      set_exclusions(params.at("exclusions"));
     }
 #endif // ESPRESSO_EXCLUSIONS
+    return {};
   }
   if (name == "get_bond_by_id") {
     if (not context()->is_head_node()) {
@@ -663,6 +705,28 @@ Variant ParticleHandle::do_call_method(std::string const &name,
                   Variant{static_cast<int>(PropagationMode::TRANS_VS_RELATIVE |
                                            PropagationMode::ROT_VS_RELATIVE)});
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
+#ifdef ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
+  } else if (name == "vs_com_relate_to") {
+    auto &cell_structure = get_cell_structure()->get_cell_structure();
+    auto const molid = get_value<int>(params, "molid");
+    auto const maybe_exists_vs = get_pid_for_vs_com(cell_structure, molid);
+    if (not context()->is_head_node()) {
+      return {};
+    }
+    if (molid < 0) {
+      throw std::domain_error("Invalid molecule id: " + std::to_string(molid));
+    }
+    if (maybe_exists_vs) {
+      throw std::runtime_error(
+          "Molecule id: " + std::to_string(molid) +
+          " is already tracked by virtual site with particle id: " +
+          std::to_string(*maybe_exists_vs));
+    }
+    set_parameter("mol_id", params.at("molid"));
+    set_parameter(
+        "propagation",
+        Variant{static_cast<int>(PropagationMode::TRANS_VS_CENTER_OF_MASS)});
+#endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 #ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "has_exclusion") {
     auto const other_pid = get_value<int>(params, "pid");
@@ -691,32 +755,10 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     });
     local_remove_exclusion(m_pid, other_pid, cell_structure);
     get_system()->on_particle_change();
+#ifdef ESPRESSO_EXCLUSIONS
   } else if (name == "set_exclusions") {
-    auto &cell_structure = get_cell_structure()->get_cell_structure();
-    std::vector<int> exclusion_list;
-    try {
-      auto const pid = get_value<int>(params, "p_ids");
-      exclusion_list.push_back(pid);
-    } catch (...) {
-      exclusion_list = get_value<std::vector<int>>(params, "p_ids");
-    }
-    context()->parallel_try_catch([&]() {
-      for (auto const pid : exclusion_list) {
-        particle_exclusion_sanity_checks(m_pid, pid, cell_structure,
-                                         context()->get_comm());
-      }
-    });
-    set_particle_property([this, &exclusion_list](Particle &p) {
-      auto &cell_structure = get_cell_structure()->get_cell_structure();
-      for (auto const pid : p.exclusions()) {
-        local_remove_exclusion(m_pid, pid, cell_structure);
-      }
-      for (auto const pid : exclusion_list) {
-        if (!p.has_exclusion(pid)) {
-          local_add_exclusion(m_pid, pid, cell_structure);
-        }
-      }
-    });
+    set_exclusions(params.at("p_ids"));
+#endif // ESPRESSO_EXCLUSIONS
   } else if (name == "get_exclusions") {
     if (not context()->is_head_node()) {
       return {};
@@ -737,14 +779,14 @@ Variant ParticleHandle::do_call_method(std::string const &name,
     return get_particle_property<std::vector<double>>(
         [&params](Particle const &p) {
           auto const vec = get_value<Utils::Vector3d>(params, "vec");
-          return convert_vector_body_to_space(p, vec).as_vector();
+          return convert_vector_body_to_space(p.quat(), vec).as_vector();
         });
   }
   if (name == "convert_vector_space_to_body") {
     return get_particle_property<std::vector<double>>(
         [&params](Particle const &p) {
           auto const vec = get_value<Utils::Vector3d>(params, "vec");
-          return convert_vector_space_to_body(p, vec).as_vector();
+          return convert_vector_space_to_body(p.quat(), vec).as_vector();
         });
 #endif // ESPRESSO_ROTATION
   }
@@ -809,7 +851,10 @@ void ParticleHandle::do_construct(VariantMap const &params) {
       /* clang-format off */
       // set particle properties (filter out read-only and deferred properties)
       std::set<std::string_view> const skip = {
-          "pos_folded", "pos", "id", "exclusions", "node", "image_box", "bonds",
+          "pos_folded", "pos", "id", "node", "image_box", "bonds",
+#ifdef ESPRESSO_EXCLUSIONS
+          "exclusions",
+#endif // ESPRESSO_EXCLUSIONS
           "lees_edwards_flag", "__cpt_sentinel",
       };
       /* clang-format on */
@@ -818,9 +863,22 @@ void ParticleHandle::do_construct(VariantMap const &params) {
           do_set_parameter(name, params.at(name));
         }
       }
+      for (auto const &name : params | std::views::keys) {
+        if (not skip.contains(name) and not name.starts_with('_') and
+            not has_parameter(name)) {
+          auto error_msg = "Unknown parameter '" + name + "' for particle.";
+          std::string hint = "Hint: a feature is probably not compiled in.";
+          throw std::invalid_argument(error_msg + " " + hint);
+        }
+      }
       if (not params.contains("type")) {
         do_set_parameter("type", 0);
       }
+#ifdef ESPRESSO_EXCLUSIONS
+      if (params.contains("exclusions")) {
+        do_call_method("set_exclusions", {{"p_ids", params.at("exclusions")}});
+      }
+#endif // ESPRESSO_EXCLUSIONS
     });
   } catch (...) {
     remove_particle(m_pid);

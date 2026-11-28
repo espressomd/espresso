@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 #
-# Copyright (C) 2019-2022 The ESPResSo project
+# Copyright (C) 2019-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -18,12 +18,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-ISSUE_NUMBER=$(curl -s -G https://api.github.com/search/issues \
+ISSUE_NUMBER=$(curl -s -G --fail-with-body --retry 6 --retry-delay 10 --retry-connrefused --retry-all-errors https://api.github.com/search/issues \
      --data-urlencode "q=\"CI failed for merged PR\" org:espressomd repo:espresso is:open is:issue in:title" \
      --data-urlencode "q=${CI_PIPELINE_ID} org:espressomd repo:espresso is:open is:issue in:body" | jq '.items[0] .number')
 
 if [ "${ISSUE_NUMBER}" != "null" ]; then
-    curl -s "https://api.github.com/repos/espressomd/espresso/issues/${ISSUE_NUMBER}" \
+    curl -s --fail-with-body --retry 6 --retry-delay 10 --retry-connrefused --retry-all-errors "https://api.github.com/repos/espressomd/espresso/issues/${ISSUE_NUMBER}" \
          -H "Accept: application/vnd.github.full+json" \
          -H "Content-Type: application/json" \
          -H "Authorization: token ${GITHUB_TOKEN}" \

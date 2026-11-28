@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_EXTERNAL_FIELD_FIELDS_PLAIN_WAVE_HPP
-#define CORE_EXTERNAL_FIELD_FIELDS_PLAIN_WAVE_HPP
+
+#pragma once
 
 #include "jacobian_type.hpp"
 
@@ -59,7 +59,7 @@ public:
   T &phase() { return m_phase; }
 
   /**
-   * brief Evaluate field.
+   * @brief Evaluate field.
    *
    * @param x Where?
    * @param t When?
@@ -70,7 +70,7 @@ public:
   }
 
   /**
-   * brief Evaluate the Jacobian matrix of the field.
+   * @brief Evaluate the Jacobian matrix of the field.
    *
    * See https://en.wikipedia.org/wiki/Jacobian_matrix_and_determinant
    * In the special case of a scalar field, the Jacobian is the gradient of
@@ -81,9 +81,7 @@ public:
    * @return Jacobian matrix
    */
   jacobian_type jacobian(const Utils::Vector3d &x, T t = 0.) const {
-    using Utils::tensor_product;
-
-    return tensor_product(m_amplitude, m_k) *
+    return Utils::tensor_product(m_amplitude, m_k) *
            cos(m_k * x - m_omega * t + m_phase);
   }
 
@@ -91,5 +89,3 @@ public:
 };
 } // namespace Fields
 } // namespace FieldCoupling
-
-#endif

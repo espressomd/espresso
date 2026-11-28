@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -640,7 +640,7 @@ BOOST_AUTO_TEST_CASE(le_sweep) {
   BOOST_CHECK_THROW(make_kernel(0u, 0u, 1u), std::domain_error);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
 
   MPI_Init(&argc, &argv);

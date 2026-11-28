@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -40,6 +40,8 @@
 
 #include <boost/mpi/collectives/gather.hpp>
 
+#include <omp.h>
+
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -63,7 +65,7 @@ static int coord(std::string const &s) {
   throw std::invalid_argument("Invalid Cartesian coordinate: '" + s + "'");
 }
 
-static std::string coord_letter(int c) {
+static std::string coord_letter(int c) { // NOLINT(modernize-use-string-view)
   if (c == 0)
     return "x";
   if (c == 1)
@@ -88,6 +90,10 @@ CellSystem::CellSystem() {
            auto const error_msg = std::string("Parameter 'node_grid'");
            auto const old_node_grid = ::communicator.node_grid;
            auto const new_node_grid = get_value<Utils::Vector3i>(v);
+           if (::communicator.locked_for_checkpointing) {
+             assert(new_node_grid == old_node_grid);
+             return;
+           }
            auto const n_nodes_old = Utils::product(old_node_grid);
            auto const n_nodes_new = Utils::product(new_node_grid);
            if (n_nodes_new != n_nodes_old) {
@@ -196,6 +202,7 @@ Variant CellSystem::do_call_method(std::string const &name,
     }
     state["verlet_reuse"] = get_cell_structure().get_verlet_reuse();
     state["n_nodes"] = context()->get_comm().size();
+    state["omp_num_threads"] = omp_get_max_threads();
     return state;
   }
   if (name == "get_pairs") {
@@ -262,11 +269,33 @@ Variant CellSystem::do_call_method(std::string const &name,
     return out;
   }
   if (name == "tune_skin") {
+    auto const min_skin = get_value<double>(params, "min_skin");
+    auto const max_skin = get_value<double>(params, "max_skin");
+    auto const tol = get_value<double>(params, "tol");
+    auto const int_steps = get_value<int>(params, "int_steps");
+    context()->parallel_try_catch([&]() {
+      if (tol <= 0.) {
+        // A non-positive tolerance makes the core bisection loop
+        // `while (fabs(a - b) > tol)` non-terminating by construction.
+        throw std::domain_error("Parameter 'tol' must be > 0");
+      }
+      if (int_steps <= 0) {
+        // A non-positive step count divides by zero in the per-step timing.
+        throw std::domain_error("Parameter 'int_steps' must be > 0");
+      }
+      if (min_skin < 0.) {
+        throw std::domain_error("Parameter 'min_skin' must be >= 0");
+      }
+      if (max_skin < 0.) {
+        throw std::domain_error("Parameter 'max_skin' must be >= 0");
+      }
+      if (max_skin < min_skin) {
+        throw std::domain_error("Parameter 'max_skin' must be >= 'min_skin'");
+      }
+    });
     auto &system = get_system();
     system.tune_verlet_skin(
-        get_value<double>(params, "min_skin"),
-        get_value<double>(params, "max_skin"), get_value<double>(params, "tol"),
-        get_value<int>(params, "int_steps"),
+        min_skin, max_skin, tol, int_steps,
         get_value_or<bool>(params, "adjust_max_skin", false));
     return get_cell_structure().get_verlet_skin();
   }
@@ -279,6 +308,7 @@ Variant CellSystem::do_call_method(std::string const &name,
 std::vector<int> CellSystem::mpi_resort_particles(bool global_flag) const {
   auto &cell_structure = get_cell_structure();
   cell_structure.resort_particles(global_flag);
+  cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
   clear_particle_node();
   auto const size = static_cast<int>(cell_structure.local_particles().size());
   std::vector<int> n_part_per_node;
@@ -323,6 +353,24 @@ void CellSystem::configure(Particles::ParticleHandle &particle) {
 
 void CellSystem::configure(Particles::ParticleSlice &slice) {
   slice.attach(m_system);
+}
+
+void CheckpointerContext::do_construct(VariantMap const &params) {
+  m_node_grid = get_value_or(params, "node_grid", ::communicator.node_grid);
+}
+
+Variant CheckpointerContext::do_call_method(std::string const &name,
+                                            VariantMap const &params) {
+  if (name == "get_node_grid") {
+    return ::communicator.node_grid;
+  }
+  if (name == "acquire_lock") {
+    ::communicator.set_node_grid(m_node_grid);
+    ::communicator.locked_for_checkpointing = true;
+  } else if (name == "release_lock") {
+    ::communicator.locked_for_checkpointing = false;
+  }
+  return {};
 }
 
 } // namespace CellSystem

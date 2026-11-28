@@ -17,7 +17,7 @@
 //! \\author pystencils
 //======================================================================================================================
 
-// kernel generated with pystencils v1.3.7+13.gdfd203a, lbmpy v1.3.7+5.gd7100a3, sympy v1.10, lbmpy_walberla/pystencils_walberla from waLBerla commit c69cb11d6a95d32b2280544d3d9abde1fe5fdbb5
+// kernel generated with pystencils v1.4+1.ge851f4e, lbmpy v1.4+1.ge9efe34, sympy v1.12.1, lbmpy_walberla/pystencils_walberla from waLBerla commit 007e77e077ad9d22b5eed6f3d3118240993e553c
 
 #include "DynamicUBBSinglePrecision.h"
 #include "core/DataTypes.h"
@@ -37,7 +37,7 @@ namespace lbm {
 #pragma GCC diagnostic ignored "-Wconversion"
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__clang__)
 #pragma push
 #ifdef __NVCC_DIAG_PRAGMA_SUPPORT__
 #pragma nv_diag_suppress 177
@@ -60,13 +60,9 @@ static FUNC_PREFIX void dynamicubbsingleprecision_boundary_DynamicUBBSinglePreci
   const int32_t neighbour_offset_y[] = {0, 1, -1, 0, 0, 0, 0, 1, 1, -1, -1, 1, -1, 0, 0, 1, -1, 0, 0};
   const int32_t neighbour_offset_z[] = {0, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, 1, 1, 1, 1, -1, -1, -1, -1};
 
-#ifdef _OPENMP
 #pragma omp parallel
-#endif
   {
-#ifdef _OPENMP
 #pragma omp for schedule(static)
-#endif
     for (int64_t ctr_0 = 0; ctr_0 < indexVectorSize; ctr_0 += 1) {
       const int32_t x = *((int32_t *)(&_data_indexVector[28 * ctr_0]));
       const int32_t y = *((int32_t *)(&_data_indexVector[28 * ctr_0 + 4]));
@@ -92,7 +88,7 @@ static FUNC_PREFIX void dynamicubbsingleprecision_boundary_DynamicUBBSinglePreci
 #pragma GCC diagnostic pop
 #endif
 
-#ifdef __CUDACC__
+#if defined(__CUDACC__) && !defined(__clang__)
 #pragma pop
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,7 +19,7 @@
 
 #pragma once
 
-#include "config/config.hpp"
+#include <config/config.hpp>
 
 #ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
 

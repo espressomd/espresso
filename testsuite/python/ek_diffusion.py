@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022-2023 The ESPResSo project
+# Copyright (C) 2022-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -26,12 +26,13 @@ import scipy.optimize
 
 
 class EKTest:
-    BOX_L = 15.5
-    AGRID = 0.5
+    BOX_L = 88.815
+    N_CELLS = 45
+    AGRID = BOX_L / N_CELLS
     DENSITY = 1
-    DIFFUSION_COEFFICIENT = 0.05
-    TAU = 0.9
-    TIMESTEPS = int(65 / TAU)
+    DIFFUSION_COEFFICIENT = 0.34
+    TAU = 2.815
+    TIMESTEPS = 60
 
     system = espressomd.System(box_l=[BOX_L, BOX_L, BOX_L])
     system.time_step = TAU
@@ -44,35 +45,29 @@ class EKTest:
         return (4 * np.pi * D * time)**(-3 / 2) * \
             np.exp(-np.sum(np.square(pos), axis=-1) / (4 * D * time))
 
-    def test_diffusion_single(self):
-        self.detail_test_diffusion(single_precision=True)
-
-    def test_diffusion_double(self):
-        self.detail_test_diffusion(single_precision=False)
-
-    def detail_test_diffusion(self, single_precision: bool):
+    def test_diffusion(self):
         """
         Testing EK for simple diffusion of a point droplet
         """
 
-        decimal_precision: int = 7 if single_precision else 10
+        decimal_precision = 7 if self.ek_params["single_precision"] else 10
 
-        lattice = espressomd.electrokinetics.LatticeWalberla(
+        lattice = espressomd.electrokinetics.Lattice(
             n_ghost_layers=1, agrid=self.AGRID)
 
-        ekspecies = self.ek_species_class(
+        ekspecies = espressomd.electrokinetics.EKSpecies(
             lattice=lattice, density=0.0, valency=0.0, advection=False,
             diffusion=self.DIFFUSION_COEFFICIENT, friction_coupling=False,
-            single_precision=single_precision, tau=self.TAU)
+            tau=self.TAU, **self.ek_params)
 
-        eksolver = espressomd.electrokinetics.EKNone(lattice=lattice)
+        eksolver = espressomd.electrokinetics.EKNone(
+            lattice=lattice, tau=self.TAU, **self.ek_params)
 
         self.system.ekcontainer = espressomd.electrokinetics.EKContainer(
             tau=self.TAU, solver=eksolver)
         self.system.ekcontainer.add(ekspecies)
 
         center = np.asarray(lattice.shape // 2, dtype=int)
-
         ekspecies[center].density = self.DENSITY
 
         # check that the density in the domain is what is expected
@@ -101,35 +96,49 @@ class EKTest:
             lattice.shape)
         np.testing.assert_equal(peak, center)
 
+        # scale by the cell volume to get value of point
+        cell_volume = self.AGRID ** 3
+        simulated_density /= cell_volume
+
         calc_density = self.analytical_density(
-            positions, self.TIMESTEPS * self.TAU, self.DIFFUSION_COEFFICIENT) * self.AGRID ** 3
+            positions, self.TIMESTEPS * self.TAU, self.DIFFUSION_COEFFICIENT)
 
         target = [self.TIMESTEPS * self.TAU, self.DIFFUSION_COEFFICIENT]
 
         popt, _ = scipy.optimize.curve_fit(self.analytical_density,
                                            positions.reshape(-1, 3),
-                                           simulated_density.reshape(
-                                               -1) / self.AGRID ** 3,
+                                           simulated_density.reshape(-1),
                                            p0=target,
                                            bounds=([0, 0], [np.inf, np.inf]))
 
         np.testing.assert_allclose(
-            popt[0], self.TIMESTEPS * self.TAU, rtol=0.1)
+            popt[0], self.TIMESTEPS * self.TAU, rtol=0.001, atol=0)
         np.testing.assert_allclose(
-            popt[1], self.DIFFUSION_COEFFICIENT, rtol=0.1)
+            popt[1], self.DIFFUSION_COEFFICIENT, rtol=0.001, atol=0)
         np.testing.assert_allclose(
-            calc_density, simulated_density, atol=1e-5, rtol=0.)
+            calc_density, simulated_density, atol=2e-7, rtol=0.)
 
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class EKDiffusionCPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpecies
+class EKDiffusionDoublePrecisionCPU(EKTest, ut.TestCase):
+    ek_params = {"single_precision": False, "gpu": False}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class EKDiffusionSinglePrecisionCPU(EKTest, ut.TestCase):
+    ek_params = {"single_precision": True, "gpu": False}
 
 
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class EKDiffusionGPU(EKTest, ut.TestCase):
-    ek_species_class = espressomd.electrokinetics.EKSpeciesGPU
+class EKDiffusionDoublePrecisionGPU(EKTest, ut.TestCase):
+    ek_params = {"single_precision": False, "gpu": True}
+
+
+@utx.skipIfMissingGPU()
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class EKDiffusionSinglePrecisionGPU(EKTest, ut.TestCase):
+    ek_params = {"single_precision": True, "gpu": True}
 
 
 if __name__ == "__main__":

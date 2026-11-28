@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,6 +25,8 @@
 #include "ek/Implementation.hpp"
 #include "lb/Implementation.hpp"
 
+#include "GpuParticleData.hpp"
+#include "Observable_stat.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
@@ -35,10 +37,12 @@
 #include "galilei/Galilei.hpp"
 #include "immersed_boundary/ImmersedBoundaries.hpp"
 #include "integrators/Propagation.hpp"
+#include "integrators/steepest_descent.hpp"
 #include "lees_edwards/lees_edwards.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "object-in-fluid/oif_global_forces.hpp"
+#include "stokesian_dynamics/sd_interface.hpp"
 #include "thermostat.hpp"
 
 #include "BoxGeometry.hpp"

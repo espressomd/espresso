@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -28,10 +28,18 @@ import numpy as np
 import itertools
 
 
+def deriv(f, x, h=1E-5):
+    # central difference quotient
+    return 1 / (2 * h) * (f(x + h) - f(x - h))
+
+
 np.random.seed(42)
 params_lin = {'initial_pos_offset': 0.1, 'time_0': 0.1, 'shear_velocity': 1.2}
 params_osc = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
-              'omega': 2.51}
+              'omega': 2.51, "decay_rate": 0}
+params_osc_decay = {'initial_pos_offset': 0.1, 'time_0': -2.1, 'amplitude': 2.3,
+                    'omega': 2.51, "decay_rate": 0.1}
+
 lin_protocol = espressomd.lees_edwards.LinearShear(**params_lin)
 
 
@@ -41,6 +49,8 @@ def get_lin_pos_offset(time, initial_pos_offset=None,
 
 
 osc_protocol = espressomd.lees_edwards.OscillatoryShear(**params_osc)
+osc_decay_protocol = espressomd.lees_edwards.OscillatoryShear(
+    **params_osc_decay)
 off_protocol = espressomd.lees_edwards.Off()
 const_offset_protocol = espressomd.lees_edwards.LinearShear(
     initial_pos_offset=2.2, shear_velocity=0)
@@ -118,10 +128,6 @@ class LeesEdwards(ut.TestCase):
             system.lees_edwards.pos_offset, expected_pos)
 
         # Check if the offset is determined correctly
-
-        system.time = 0.0
-
-        # Oscillatory shear
         system.lees_edwards.protocol = osc_protocol
 
         # check parameter setter/getter consistency
@@ -140,6 +146,8 @@ class LeesEdwards(ut.TestCase):
             self.assertAlmostEqual(
                 system.lees_edwards.pos_offset, expected_pos)
 
+        system.time = 0.0
+
         # Check that time change during integration updates offsets
         system.integrator.run(1)
         time = system.time
@@ -153,13 +161,36 @@ class LeesEdwards(ut.TestCase):
         self.assertAlmostEqual(
             system.lees_edwards.pos_offset, expected_pos)
 
-        # Check that LE shear axes can be overriden
+        # Check that LE shear axes can be overridden
         self.assertEqual(system.lees_edwards.shear_direction, "x")
         self.assertEqual(system.lees_edwards.shear_plane_normal, "y")
         system.lees_edwards.set_boundary_conditions(
             shear_direction="y", shear_plane_normal="z", protocol=lin_protocol)
         self.assertEqual(system.lees_edwards.shear_direction, "y")
         self.assertEqual(system.lees_edwards.shear_plane_normal, "z")
+
+        # Oscillatory shear with exponential decay
+        system.lees_edwards.protocol = osc_decay_protocol
+
+        # check parameter setter/getter consistency
+        self.assertEqual(
+            system.lees_edwards.protocol.get_params(), params_osc_decay)
+
+        def osc_decay_pos(t): return params_osc_decay["initial_pos_offset"] +\
+            params_osc_decay["amplitude"] * np.exp(-(t - params_osc_decay["time_0"]) * params_osc_decay["decay_rate"]) *\
+            np.sin(params_osc_decay["omega"] *
+                   (t - params_osc_decay["time_0"]))
+
+        # check pos offset and shear velocity at different times,
+        # check that LE offsets are recalculated on simulation time change
+        for time in [0., 2.3]:
+            system.time = time
+            expected_pos = osc_decay_pos(time)
+            expected_vel = deriv(osc_decay_pos, time)
+            self.assertAlmostEqual(
+                system.lees_edwards.pos_offset, expected_pos)
+            self.assertAlmostEqual(
+                system.lees_edwards.shear_velocity, expected_vel)
 
         # Check that LE is disabled correctly via parameter
         system.lees_edwards.protocol = None
@@ -413,7 +444,7 @@ class LeesEdwards(ut.TestCase):
                     np.testing.assert_allclose(
                         np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
                     system.integrator.run(1)
-                # chekc the distance is still correct after both have crossed
+                # check the distance is still correct after both have crossed
                 np.testing.assert_allclose(
                     np.copy(system.distance_vec(p1, p2)), shear_normal_axis, atol=atol)
 
@@ -451,7 +482,7 @@ class LeesEdwards(ut.TestCase):
                     np.testing.assert_allclose(
                         np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
                     system.integrator.run(1)
-                # chekc the distance is still correct after both have crossed
+                # check the distance is still correct after both have crossed
                 np.testing.assert_allclose(
                     np.copy(system.velocity_difference(p1, p2)), dv, atol=atol)
 
@@ -572,6 +603,79 @@ class LeesEdwards(ut.TestCase):
         system.integrator.run(1)
         np.testing.assert_allclose(
             np.copy(p1.torque_lab), [0, 0, -2], atol=tol)
+
+    @utx.skipIfMissingFeatures(["EXTERNAL_FORCES", "DPD"])
+    def test_dpd_vel_diff_sign_flip(self):
+        """
+        Two particles interact across the LE boundary via DPD at zero
+        temperature. When shear_velocity is flipped, the DPD force,
+        the DPD pressure tensor component, and the velocity difference
+        must also flip sign in the shear direction.
+        """
+        system = self.system
+        system.box_l = [10, 10, 10]
+
+        gamma = 4.5
+        r_cut = 1.5
+        epsilon = 0.1
+
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=1, gamma=gamma, r_cut=r_cut,
+            trans_weight_function=1, trans_gamma=gamma, trans_r_cut=r_cut)
+        system.thermostat.set_dpd(kT=0, seed=43)
+
+        for shear_direction, shear_plane_normal in self.direction_permutations:
+            sd = {"x": 0, "y": 1, "z": 2}[shear_direction]
+            sn = {"x": 0, "y": 1, "z": 2}[shear_plane_normal]
+
+            p1_pos = np.zeros(3)
+            p1_pos[sn] = epsilon
+            p2_pos = np.zeros(3)
+            p2_pos[sn] = system.box_l[sn] - epsilon
+
+            p1 = system.part.add(pos=p1_pos, fix=[True] * 3)
+            p2 = system.part.add(pos=p2_pos, fix=[True] * 3)
+
+            results = {}
+            for shear_vel in [-1., 1.]:
+                protocol = espressomd.lees_edwards.LinearShear(
+                    initial_pos_offset=0, shear_velocity=shear_vel)
+                system.lees_edwards.set_boundary_conditions(
+                    shear_direction=shear_direction,
+                    shear_plane_normal=shear_plane_normal,
+                    protocol=protocol)
+                system.cell_system.set_n_square(use_verlet_lists=True)
+                system.integrator.run(0)
+
+                results[shear_vel] = {
+                    "force": np.copy(p1.f),
+                    "pressure": np.copy(
+                        system.analysis.pressure_tensor()["dpd"]),
+                    "vel_diff": np.copy(
+                        system.velocity_difference(p1, p2)),
+                }
+
+            # Flipping shear velocity must flip the shear-direction
+            # component of force, pressure[sn, sd], and vel_diff
+            f_pos = results[1.]["force"]
+            f_neg = results[-1.]["force"]
+            self.assertAlmostEqual(f_pos[sd], -f_neg[sd], places=10)
+
+            p_pos = results[1.]["pressure"]
+            p_neg = results[-1.]["pressure"]
+            self.assertAlmostEqual(p_pos[sn, sd], -p_neg[sn, sd], places=10)
+
+            v_pos = results[1.]["vel_diff"]
+            v_neg = results[-1.]["vel_diff"]
+            self.assertAlmostEqual(v_pos[sd], -v_neg[sd], places=10)
+
+            system.part.clear()
+
+        system.non_bonded_inter[0, 0].dpd.set_params(
+            weight_function=0, gamma=0, r_cut=0,
+            trans_weight_function=0, trans_gamma=0, trans_r_cut=0)
+        system.thermostat.turn_off()
+        system.box_l = self.box_l
 
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "ROTATION", "DPD"])
     def test_virt_sites_interaction(self):

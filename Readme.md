@@ -3,7 +3,7 @@
 [![GitLab CI](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/badges/python/pipeline.svg)](https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/commits/python)
 [![codecov](https://codecov.io/gh/espressomd/espresso/branch/python/graph/badge.svg)](https://codecov.io/gh/espressomd/espresso)
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD)
-[![Contribute with Gitpod](https://img.shields.io/badge/Contribute%20with-Gitpod-908a85?logo=gitpod)](https://gitpod.io/#https://github.com/espressomd/espresso)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/launch-Codespaces-579aca?logo=github)](https://codespaces.new/espressomd/espresso)
 
 This is the Molecular Dynamics software ESPResSo ("Extensible
 Simulation Package for Research on Soft Matter Systems").
@@ -66,13 +66,14 @@ user guide, section [Installation](https://espressomd.github.io/doc/installation
 For most users, we recommend downloading the latest release version of ESPResSo.
 The [release page](https://github.com/espressomd/espresso/releases) shows all
 releases since 4.0. When choosing a release, we recommend the latest bugfix
-release in that line. For example, in the 4.2 line, choose 4.2.2.
+release in that line. For example, in the 5.0 line, choose 5.0.1.
 
 Quickstart:
 
 1. download the source code: one of the
    [stable releases](https://github.com/espressomd/espresso/releases)
-   (.tar.gz files before 2025) or the development version
+   (under section "Assets", select any archive named "source code",
+   or for releases before 2025, the signed .tar.gz file) or the development version
    (`git clone -b python https://github.com/espressomd/espresso.git`)
 2. install dependencies on
    [Ubuntu](https://espressomd.github.io/doc/installation.html#installing-requirements-on-ubuntu),
@@ -86,9 +87,9 @@ Common installation issues are addressed in the
 [FAQ](https://github.com/espressomd/espresso/wiki/Installation-FAQ),
 together with contributed patches for compiler-related and library-related issues.
 
-You can also try ESPReSSo in the cloud using
+You can also try ESPResSo in the cloud using
 [Binder](https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD) or
-[Gitpod](https://gitpod.io/#https://github.com/espressomd/espresso).
+[Codespaces](https://codespaces.new/espressomd/espresso).
 
 ### Join the community
 
@@ -110,7 +111,7 @@ publications, as indicated in the documentation. For detailed instructions, see
 
 ## License
 
-Copyright (C) 2010-2025 The ESPResSo project
+Copyright (C) 2010-2026 The ESPResSo project
 
 Copyright (C) 2002-2010 Max-Planck-Institute for Polymer Research, Theory Group
 
@@ -121,3 +122,7 @@ option) any later version.
 
 You should have received a [copy](COPYING) of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+ESPResSo includes third-party code covered by licenses compatible with GNU GPLv3.
+For more details, please refer to the user guide, section
+[Licensing](https://espressomd.github.io/doc/introduction.html#licensing).

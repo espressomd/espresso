@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -134,6 +134,11 @@ class LBTest:
             lbf[0, 0, 0].velocity = [1, 2]
         with self.assertRaises(TypeError):
             lbf[0, 1].velocity = [1, 2, 3]
+        # check node population setter rejects wrong-length vectors
+        with self.assertRaises(RuntimeError):
+            lbf[0, 0, 0]._population = [1., 2.]
+        with self.assertRaises(RuntimeError):
+            lbf[0, 0, 0]._population = [1.] * 42
         # check node setters update cached velocities (with precision loss)
         lbnode = lbf[0, 0, 0]
         lbnode.last_applied_force = [0., 0., 0.]
@@ -227,10 +232,10 @@ class LBTest:
             np.copy(node.velocity), atol=self.atol)
         np.testing.assert_allclose(
             np.copy(lbslice.pressure_tensor)[1, 2, 3, :],
-            np.copy(node.pressure_tensor), atol=self.atol)
+            np.copy(node.pressure_tensor), atol=self.atol, rtol=self.rtol)
         np.testing.assert_allclose(
             np.copy(lbslice.pressure_tensor_neq)[1, 2, 3, :],
-            np.copy(node.pressure_tensor_neq), atol=self.atol)
+            np.copy(node.pressure_tensor_neq), atol=self.atol, rtol=self.rtol)
         np.testing.assert_allclose(
             np.copy(lbslice.density)[1, 2, 3],
             np.copy(node.density), atol=self.atol)
@@ -264,6 +269,65 @@ class LBTest:
             self.lb_class(**make_kwargs(kT=-1., seed=42))
         with self.assertRaisesRegex(ValueError, "Parameter 'seed' must be >= 0"):
             self.lb_class(**make_kwargs(kT=0., seed=-42))
+
+    def test_rollback(self):
+        """check rollback to a valid state when setter fails"""
+        node_grid = np.copy(self.system.cell_system.node_grid)
+        world_size = np.prod(node_grid)
+        if world_size <= 4:
+            wrong_box_l = [1., 1., 7.] if world_size == 1 else 2. * node_grid
+            lattice1 = espressomd.lb.Lattice(
+                n_ghost_layers=1, agrid=1., box_l=self.system.box_l)
+            lattice2 = espressomd.lb.Lattice(
+                n_ghost_layers=1, agrid=1., box_l=wrong_box_l)
+            kwargs = self.params.copy()
+            del kwargs["agrid"]
+            solver_valid = self.lb_class(lattice=lattice1, **kwargs)
+            solver_wrong = self.lb_class(lattice=lattice2, **kwargs)
+            self.system.lb = solver_valid
+            with self.assertRaisesRegex(RuntimeError, "waLBerla and ESPResSo disagree about domain decomposition"):
+                self.system.lb = solver_wrong
+            self.assertEqual(self.system.lb, solver_valid)
+
+    def test_node_grid_change(self):
+        """check MPI Cartesian communicator invalidation"""
+        node_grid = np.copy(self.system.cell_system.node_grid)
+        # create a lbf, slice and node for the current MPI topology
+        lbf = self.lb_class(**self.params, **self.lb_params)
+        lbnode = lbf[0, 0, 0]
+        lbslice = lbf[0:5, 0:5, 0:5]
+        self.system.lb = lbf
+        # veto node grid change
+        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
+            self.system.cell_system.node_grid = node_grid
+        self.system.lb = None
+        # invalidate MPI Cartesian communicator
+        self.system.cell_system.node_grid = node_grid
+        # create a new lbf
+        lbf_new = self.lb_class(**self.params, **self.lb_params)
+        self.system.lb = lbf_new
+        # prevent binding of an expired LB object
+        with self.assertRaisesRegex(RuntimeError, "the MPI Cartesian communicator of this LB object has expired"):
+            self.system.lb = lbf
+        self.assertEqual(self.system.lb, lbf_new)
+        # expired MPI communicator doesn't prevent read access to the fields
+        _ = lbnode.velocity
+        _ = lbslice.pressure_tensor_neq
+        # expired MPI communicator prevents write access to the fields
+        for handle in [lbnode, lbslice, lbf[0, 0, 0], lbf[0:5, 0:5, 0:5]]:
+            with self.assertRaisesRegex(RuntimeError, "the MPI Cartesian communicator of this LB object has expired"):
+                handle.velocity = [1., 2., 3.]
+
+    def test_lbcontainer(self):
+        self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
+        self.assertIsNone(self.system.lbcontainer.solver)
+        lbf = self.lb_class(kT=1.0, seed=42, **self.params, **self.lb_params)
+        self.system.lb = lbf
+        self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
+        self.system.lbcontainer.clear()
+        self.assertIsInstance(self.system.lbcontainer, espressomd.lb.Container)
+        self.assertIsNone(self.system.lbcontainer.solver)
+        self.assertIsNone(self.system.lbcontainer.call_method("unknown"))
 
     def test_node_exceptions(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -328,6 +392,7 @@ class LBTest:
         densities = np.copy(lbf[:, :, :].density)
         np.testing.assert_allclose(densities, ref_density, rtol=1e-5)
         self.assertIsNone(lbf[:1, 0, 0].boundary[0])
+        self.assertIsNone(lbf[:1, 0, 0].call_method("unknown"))
 
         # prepare various slicing operations
         slices = []
@@ -337,7 +402,7 @@ class LBTest:
                 slice(0, 0), slice(5, 1), slice(0, -lbf.shape[i] + 1),
                 slice(-lbf.shape[i], None), slice(2, lbf.shape[i] - 1), 1])
 
-        # check gettters
+        # check getters
         for subset in itertools.product(*slices):
             # skip indexing without any slice
             if not any(isinstance(item, slice) for item in subset):
@@ -345,7 +410,7 @@ class LBTest:
             np.testing.assert_allclose(
                 np.copy(lbf[subset].density), ref_density[subset], rtol=1e-5)
 
-        # check settters
+        # check setters
         for subset in itertools.product(*slices):
             # skip indexing without any slice and skip slices with zero length
             if not any(isinstance(item, slice) for item in subset) or any(
@@ -412,6 +477,7 @@ class LBTest:
 
         shape_ref = np.copy(self.system.box_l) / self.params['agrid']
         np.testing.assert_array_equal(lbf.shape, shape_ref.astype(int))
+        self.assertIsNone(lbf[0, 0, 0].call_method("unknown"))
 
         v_fluid = np.array([1.2, 4.3, 0.2])
         lbf[0, 0, 0].velocity = v_fluid
@@ -445,7 +511,7 @@ class LBTest:
         self.system.thermostat.set_langevin(kT=2., seed=23, gamma=2.)
         lbf = self.lb_class(kT=1., seed=42, **self.params, **self.lb_params)
         self.system.lb = lbf
-        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+        with self.assertRaisesRegex(RuntimeError, r"Cannot set parameter 'kT' to (1[.0]*|0\.99[0-9]+): there are currently active thermostats with kT=(2[.0]*|1\.99[0-9]+)"):
             self.system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.)
         self.assertFalse(self.system.thermostat.lb.is_active)
         self.assertTrue(self.system.thermostat.langevin.is_active)
@@ -470,8 +536,6 @@ class LBTest:
         with self.assertRaisesRegex(RuntimeError, "MD cell geometry change not supported by LB"):
             self.system.box_l = [1., 2., 3.]
         np.testing.assert_allclose(np.copy(self.system.box_l), 6., atol=1e-7)
-        with self.assertRaisesRegex(RuntimeError, "MPI topology change not supported by LB"):
-            self.system.cell_system.node_grid = self.system.cell_system.node_grid
 
     def test_grid_index(self):
         lbf = self.lb_class(**self.params, **self.lb_params)
@@ -808,9 +872,9 @@ class LBTest:
             self.lb_class(**params_with_tau(self.system.time_step),
                           **self.lb_params)
 
-        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be >= MD time_step \(0\.0200[0-9]+\)"):
+        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.01(?:0*|00[0-9]+)\) must be >= MD time_step \(0\.02(?:0*|00[0-9]+)\)"):
             self.system.time_step = 2.0 * lbf.get_params()["tau"]
-        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.0100[0-9]+\) must be an integer multiple of the MD time_step \(0\.0080[0-9]+\)"):
+        with self.assertRaisesRegex(ValueError, r"LB tau \(0\.01(?:0*|00[0-9]+)\) must be an integer multiple of the MD time_step \(0\.008(?:0*|0[0-9]+)\)"):
             self.system.time_step = 0.8 * lbf.get_params()["tau"]
 
         self.system.lb = None
@@ -826,11 +890,11 @@ class LBTest:
         np.testing.assert_allclose(f1, f2, rtol=1e-2)
 
     def test_block_grid_exceptions(self):
-        if self.lb_class is espressomd.lb.LBFluidWalberla:
+        if self.lb_params["gpu"] is False:
             with self.assertRaisesRegex(RuntimeError, "Lattice grid dimensions and block grid are not compatible"):
                 self.lb_class(
                     **self.params, single_precision=self.lb_params["single_precision"], blocks_per_mpi_rank=[11, 1, 1])
-        if self.lb_class is espressomd.lb.LBFluidWalberlaGPU:
+        if self.lb_params["gpu"] is True:
             with self.assertRaisesRegex(RuntimeError, "Using more than one block per MPI rank is not supported for GPU LB"):
                 self.lb_class(
                     **self.params,
@@ -856,18 +920,16 @@ class LBTest:
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
     atol = 1e-10
     rtol = 1e-7
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
     atol = 5e-6
     rtol = 2e-4
 
@@ -875,9 +937,8 @@ class LBTestWalberlaSinglePrecisionCPU(LBTest, ut.TestCase):
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": False}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
     atol = 1e-10
     rtol = 1e-7
 
@@ -885,19 +946,17 @@ class LBTestWalberlaDoublePrecisionGPU(LBTest, ut.TestCase):
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
 class LBTestWalberlaSinglePrecisionGPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberlaGPU
-    lb_lattice_class = espressomd.lb.LatticeWalberla
-    lb_params = {"single_precision": True}
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": True}
     atol = 5e-6
     rtol = 2e-4
 
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaDoublePrecisionBlocksCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_class = espressomd.lb.LBFluid
     blocks_per_mpi_rank = [2, 2, 2]
-    lb_params = {"single_precision": False,
+    lb_params = {"single_precision": False, "gpu": False,
                  "blocks_per_mpi_rank": blocks_per_mpi_rank}
     atol = 1e-10
     rtol = 1e-7
@@ -905,10 +964,9 @@ class LBTestWalberlaDoublePrecisionBlocksCPU(LBTest, ut.TestCase):
 
 @utx.skipIfMissingFeatures("WALBERLA")
 class LBTestWalberlaSinglePrecisionBlocksCPU(LBTest, ut.TestCase):
-    lb_class = espressomd.lb.LBFluidWalberla
-    lb_lattice_class = espressomd.lb.LatticeWalberla
+    lb_class = espressomd.lb.LBFluid
     blocks_per_mpi_rank = [2, 2, 2]
-    lb_params = {"single_precision": True,
+    lb_params = {"single_precision": True, "gpu": False,
                  "blocks_per_mpi_rank": blocks_per_mpi_rank}
     atol = 5e-6
     rtol = 2e-4

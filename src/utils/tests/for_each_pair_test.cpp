@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,9 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for the Utils::for_each_pair. */
-
-#define BOOST_TEST_MODULE for_each_pair test
+#define BOOST_TEST_MODULE "for_each_pair test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -35,7 +33,7 @@ using Utils::for_each_pair;
 #include <utility>
 #include <vector>
 
-using PairContainer = std::vector<std::pair<std::size_t, size_t>>;
+using PairContainer = std::vector<std::pair<std::size_t, std::size_t>>;
 
 struct F {
   std::vector<std::size_t> vec1;

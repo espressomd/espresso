@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -31,14 +31,14 @@
 #include <tuple>
 
 std::tuple<Utils::Vector3d, Utils::Vector3d, Utils::Vector3d, Utils::Vector3d>
-IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
-                        Particle const &p2, Particle const &p3,
-                        Particle const &p4) const {
-
+IBMTribend::calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
+                        Utils::Vector3d const &pos2,
+                        Utils::Vector3d const &pos3,
+                        Utils::Vector3d const &pos4) const {
   // Get vectors making up the two triangles
-  auto const dx1 = box_geo.get_mi_vector(p1.pos(), p3.pos());
-  auto const dx2 = box_geo.get_mi_vector(p2.pos(), p3.pos());
-  auto const dx3 = box_geo.get_mi_vector(p4.pos(), p3.pos());
+  auto const dx1 = box_geo.get_mi_vector(pos1, pos3);
+  auto const dx2 = box_geo.get_mi_vector(pos2, pos3);
+  auto const dx3 = box_geo.get_mi_vector(pos4, pos3);
 
   // Get normals on triangle; pointing outwards by definition of indices
   // sequence
@@ -54,7 +54,7 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
   n2 /= Aj;
 
   // Get the prefactor for the force term
-  auto const sc = std::min(1.0, n1 * n2);
+  auto const sc = std::clamp(n1 * n2, -1., 1.);
 
   // Get theta as angle between normals
   auto const direc = vector_product(n1, n2);
@@ -69,19 +69,12 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Particle const &p1,
 
   // Force on particles: eq. (C.28-C.31)
   auto const force1 =
-      Pre *
-      (vector_product(box_geo.get_mi_vector(p2.pos(), p3.pos()), v1) / Ai +
-       vector_product(box_geo.get_mi_vector(p3.pos(), p4.pos()), v2) / Aj);
-  auto const force2 =
-      Pre *
-      (vector_product(box_geo.get_mi_vector(p3.pos(), p1.pos()), v1) / Ai);
+      Pre * (vector_product(dx2, v1) / Ai + vector_product(-dx3, v2) / Aj);
+  auto const force2 = Pre * (vector_product(-dx1, v1) / Ai);
   auto const force3 =
-      Pre *
-      (vector_product(box_geo.get_mi_vector(p1.pos(), p2.pos()), v1) / Ai +
-       vector_product(box_geo.get_mi_vector(p4.pos(), p1.pos()), v2) / Aj);
-  auto const force4 =
-      Pre *
-      (vector_product(box_geo.get_mi_vector(p1.pos(), p3.pos()), v2) / Aj);
+      Pre * (vector_product(box_geo.get_mi_vector(pos1, pos2), v1) / Ai +
+             vector_product(box_geo.get_mi_vector(pos4, pos1), v2) / Aj);
+  auto const force4 = Pre * (vector_product(dx1, v2) / Aj);
   return std::make_tuple(force1, force2, force3, force4);
 }
 
@@ -115,7 +108,7 @@ void IBMTribend::initialize(BoxGeometry const &box_geo,
     auto const n2 = n2l / n2l.norm();
 
     // calculate theta0 by taking the acos of the scalar n1*n2
-    auto const sc = std::min(1., n1 * n2);
+    auto const sc = std::clamp(n1 * n2, -1., 1.);
 
     theta0 = std::acos(sc);
 

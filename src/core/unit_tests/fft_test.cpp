@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 The ESPResSo project
+ * Copyright (C) 2024-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -26,10 +26,12 @@
 
 #include "fft/fft.hpp"
 #include "fft/vector.hpp"
+#include "p3m/common.hpp"
 #include "p3m/for_each_3d.hpp"
 #include "p3m/packing.hpp"
 
 #include <utils/Vector.hpp>
+#include <utils/index.hpp>
 
 #include <array>
 #include <cstddef>
@@ -38,6 +40,7 @@
 #include <optional>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
@@ -163,6 +166,11 @@ BOOST_AUTO_TEST_CASE(fft_exceptions) {
   fft::allocator<float> allocator{};
   BOOST_CHECK_EQUAL(allocator.allocate(0ul), nullptr);
   BOOST_CHECK_THROW(allocator.allocate(bad_size), std::bad_array_new_length);
+  // tuning exceptions shouldn't be caught by visit_try_catch
+  static_assert(std::is_base_of_v<std::exception, p3m_tuning_exception>);
+  static_assert(!std::is_base_of_v<std::runtime_error, p3m_tuning_exception>);
+  auto const simd_tuning_exception = p3m_tuning_exception("SIMD");
+  BOOST_CHECK_EQUAL(simd_tuning_exception.what(), "SIMD");
 }
 
 BOOST_AUTO_TEST_CASE(fft_plan_without_mpi) {
@@ -173,40 +181,59 @@ BOOST_AUTO_TEST_CASE(fft_plan_without_mpi) {
 
 #endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
-BOOST_AUTO_TEST_CASE(for_each_3d_test) {
-  auto const m_start = Utils::Vector3i{{0, -1, 3}};
-  auto const m_stop = Utils::Vector3i{{2, 2, 5}};
-  auto ref_loop_counters = m_start;
-  auto indices = Utils::Vector3i{};
+template <Utils::MemoryOrder Order = Utils::MemoryOrder::ROW_MAJOR>
+struct for_each_3d_kernel {
+  static auto constexpr m_start = Utils::Vector3i{{0, -1, 3}};
+  static auto constexpr m_stop = Utils::Vector3i{{2, 2, 5}};
+  Utils::Vector3i ref_loop_counters = m_start;
+  Utils::Vector3i indices{};
 
-  auto const kernel = [&]() {
-    BOOST_REQUIRE_EQUAL(indices, ref_loop_counters);
-    if (++ref_loop_counters[2u] == m_stop[2u]) {
-      ref_loop_counters[2u] = m_start[2u];
-      if (++ref_loop_counters[1u] == m_stop[1u]) {
-        ref_loop_counters[1u] = m_start[1u];
-        if (++ref_loop_counters[0u] == m_stop[0u]) {
-          ref_loop_counters[0u] = m_start[0u];
-        }
-      }
-    }
-  };
-
-  {
-    for_each_3d(m_start, m_stop, indices, kernel, [&](unsigned dim, int n) {
-      BOOST_REQUIRE_GE(dim, 0);
-      BOOST_REQUIRE_LE(dim, 2);
-      BOOST_REQUIRE_EQUAL(n, ref_loop_counters[dim]);
-    });
-
+  ~for_each_3d_kernel() {
     BOOST_REQUIRE_EQUAL(indices, m_stop);
     BOOST_REQUIRE_EQUAL(ref_loop_counters, m_start);
   }
-  {
-    for_each_3d(m_start, m_stop, indices, kernel);
 
-    BOOST_REQUIRE_EQUAL(indices, m_stop);
-    BOOST_REQUIRE_EQUAL(ref_loop_counters, m_start);
+  void operator()() {
+    BOOST_REQUIRE_EQUAL(indices, ref_loop_counters);
+    auto constexpr is_row_major = Order == Utils::MemoryOrder::ROW_MAJOR;
+    auto constexpr index_fast = is_row_major ? 2u : 0u;
+    auto constexpr index_slow = is_row_major ? 0u : 2u;
+    auto constexpr index_medium = 1u;
+    if (++ref_loop_counters[index_fast] == m_stop[index_fast]) {
+      ref_loop_counters[index_fast] = m_start[index_fast];
+      if (++ref_loop_counters[index_medium] == m_stop[index_medium]) {
+        ref_loop_counters[index_medium] = m_start[index_medium];
+        if (++ref_loop_counters[index_slow] == m_stop[index_slow]) {
+          ref_loop_counters[index_slow] = m_start[index_slow];
+        }
+      }
+    }
+  }
+};
+
+BOOST_AUTO_TEST_CASE(for_each_3d_test) {
+  {
+    auto kernel = for_each_3d_kernel<Utils::MemoryOrder::ROW_MAJOR>{};
+    for_each_3d(kernel.m_start, kernel.m_stop, kernel.indices, kernel,
+                [&](unsigned dim, int n) {
+                  BOOST_REQUIRE_GE(dim, 0);
+                  BOOST_REQUIRE_LE(dim, 2);
+                  BOOST_REQUIRE_EQUAL(n, kernel.ref_loop_counters[dim]);
+                });
+  }
+  {
+    auto kernel = for_each_3d_kernel<Utils::MemoryOrder::ROW_MAJOR>{};
+    for_each_3d(kernel.m_start, kernel.m_stop, kernel.indices, kernel);
+  }
+  {
+    auto kernel = for_each_3d_kernel<Utils::MemoryOrder::ROW_MAJOR>{};
+    for_each_3d_order<Utils::MemoryOrder::ROW_MAJOR>(
+        kernel.m_start, kernel.m_stop, kernel.indices, kernel);
+  }
+  {
+    auto kernel = for_each_3d_kernel<Utils::MemoryOrder::COLUMN_MAJOR>{};
+    for_each_3d_order<Utils::MemoryOrder::COLUMN_MAJOR>(
+        kernel.m_start, kernel.m_stop, kernel.indices, kernel);
   }
 }
 

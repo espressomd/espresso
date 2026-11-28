@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -53,7 +53,7 @@ system.time_step = 0.1
 if args.visualizer:
     system.time_step = 0.001
 system.cell_system.skin = 0.1
-lb_fluid = espressomd.lb.LBFluidWalberla(
+lb_fluid = espressomd.lb.LBFluid(
     agrid=agrid, density=0.5, kinematic_viscosity=3.2, tau=system.time_step)
 system.lb = lb_fluid
 

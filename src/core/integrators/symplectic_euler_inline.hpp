@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -55,8 +55,10 @@ inline void symplectic_euler_rotator_1(Particle &p, double time_step) {
   if (p.can_rotate()) {
     // For rotation, we also use symplectic Euler scheme
     // Update angular velocity first, then orientation
+    auto const torque_lab = p.torque();
     convert_torque_propagate_omega(p, time_step);
     propagate_omega_quat_particle(p, time_step);
+    p.torque() = torque_lab;
   }
 }
 

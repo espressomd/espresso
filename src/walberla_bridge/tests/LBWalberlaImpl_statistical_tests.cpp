@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 The ESPResSo project
+ * Copyright (C) 2019-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -113,7 +113,7 @@ BOOST_DATA_TEST_CASE(velocity_fluctuation, bdata::make(thermalized_lbs()),
   BOOST_CHECK_CLOSE(sum_v_square[2] / steps, params.kT, tol_kT);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
   Vector3i mpi_shape{};
 

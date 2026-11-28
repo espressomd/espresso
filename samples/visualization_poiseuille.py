@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -53,8 +53,8 @@ visualizer = espressomd.visualization.openGLLive(
     velocity_arrows_type_radii=[0.1],
     velocity_arrows_type_colors=[[0, 1, 0]])
 
-lbf = espressomd.lb.LBFluidWalberla(kT=0, agrid=1.0, density=1.0, kinematic_viscosity=1.0,
-                                    tau=0.1, ext_force_density=[0, 0.003, 0])
+lbf = espressomd.lb.LBFluid(kT=0., agrid=1., density=1., kinematic_viscosity=1.,
+                            tau=0.1, ext_force_density=[0., 0.003, 0.])
 system.lb = lbf
 system.thermostat.set_lb(LB_fluid=lbf, gamma=1.5)
 

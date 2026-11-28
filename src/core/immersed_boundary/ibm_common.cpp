@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -19,6 +19,7 @@
 
 #include "ibm_common.hpp"
 
+#include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "communication.hpp"
 #include "system/System.hpp"

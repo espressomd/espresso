@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -85,6 +85,11 @@ struct ThermalizedBond {
 
   std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
   forces(Particle const &p1, Particle const &p2,
+         Utils::Vector3d const &dx) const;
+
+  std::optional<std::tuple<Utils::Vector3d, Utils::Vector3d>>
+  forces(double mass1, double mass2, Utils::Vector<double, 3> vel1,
+         Utils::Vector<double, 3> vel2, int id1, int id2,
          Utils::Vector3d const &dx) const;
 
 private:

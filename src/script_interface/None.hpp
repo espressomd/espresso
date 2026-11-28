@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 The ESPResSo project
+ * Copyright (C) 2017-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,8 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SCRIPT_INTERFACE_NONE_HPP
-#define SCRIPT_INTERFACE_NONE_HPP
+#pragma once
 
 #include <boost/serialization/access.hpp>
 
@@ -46,5 +45,3 @@ private:
   void serialize(Archive &, long int /* version */) const {}
 };
 } // namespace ScriptInterface
-
-#endif

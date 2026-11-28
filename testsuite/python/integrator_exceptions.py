@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 The ESPResSo project
+# Copyright (C) 2020-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -21,6 +21,9 @@ import espressomd.interactions
 import espressomd.lees_edwards
 import espressomd.shapes
 import espressomd.propagation
+import espressomd.thermostat
+import espressomd.integrate
+import espressomd.code_features
 import os
 import numpy as np
 import unittest as ut
@@ -46,6 +49,7 @@ class Test(ut.TestCase):
         self.system.lees_edwards.protocol = None
 
     def test_00_common_interface(self):
+        Propagation = espressomd.propagation.Propagation
         self.system.integrator.set_vv()
         with self.assertRaisesRegex(ValueError, 'time_step must be > 0.'):
             self.system.time_step = -2.
@@ -59,7 +63,6 @@ class Test(ut.TestCase):
         with self.assertRaisesRegex(ValueError, 'cannot reuse old forces and recalculate forces'):
             self.system.integrator.run(recalc_forces=True, reuse_forces=True)
         self.assertIsNone(self.system.integrator.integrator.call_method("unk"))
-        self.assertIsNone(self.system.thermostat.call_method("unk"))
         self.assertIsNone(self.system.thermostat.kT)
         if espressomd.has_features("WCA"):
             wca = self.system.non_bonded_inter[0, 0].wca
@@ -73,12 +76,25 @@ class Test(ut.TestCase):
                 self.system.analysis.energy()
             wca.set_params(epsilon=0., sigma=0.)
         if espressomd.has_features(["ROTATION"]):
+            p = self.system.part.by_id(0)
             with self.assertRaisesRegex(Exception, "Rotating particles must have a rotation propagation mode enabled"):
-                Propagation = espressomd.propagation.Propagation
-                p = self.system.part.by_id(0)
                 p.propagation = Propagation.TRANS_LANGEVIN
                 p.rotation = [False, False, True]
                 self.system.integrator.run(0, recalc_forces=True)
+            p.propagation = Propagation.SYSTEM_DEFAULT
+        if espressomd.has_features(["THERMAL_STONER_WOHLFARTH"]):
+            p0 = self.system.part.by_id(0)
+            p1 = self.system.part.add(pos=p0.pos)
+            p1.vs_auto_relate_to(p0)
+            p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+            magnetodynamics = p1.magnetodynamics
+            with self.assertRaisesRegex(Exception, "The thermal Stoner-Wohlfarth model requires the Langevin thermostat"):
+                magnetodynamics["is_enabled"] = True
+                p1.magnetodynamics = magnetodynamics
+                self.system.integrator.run(0, recalc_forces=True)
+            magnetodynamics["is_enabled"] = False
+            p1.magnetodynamics = magnetodynamics
+            self.system.integrator.run(0, recalc_forces=True)
 
     def test_01_statefulness(self):
         # setting a thermostat with invalid values should be a no-op
@@ -217,18 +233,11 @@ class Test(ut.TestCase):
                                                 barostat=barostat)
 
             if barostat == "Andersen":
-                exception_msg = ""
-                try:
+                with self.assertRaisesRegex(Exception, "the volume to become negative"):
                     system.integrator.run(10)
-                except Exception as err:
-                    exception_msg = f"{exception_msg}\n{err}"
-                try:
-                    system.part.clear()
-                except Exception as err:
-                    exception_msg = f"{exception_msg}\n{err}"
-                self.assertIn("the volume to become negative", exception_msg)
+                system.part.clear()
             if barostat == "MTK":
-                # Volume cannot be negative within NPT ensemble based on MTK equation
+                # Volume cannot be negative with NPT based on MTK equation
                 self.assertGreater(float(np.prod(system.box_l)), 0.)
 
         system.part.clear()
@@ -264,10 +273,70 @@ class Test(ut.TestCase):
         self.system.thermostat.set_langevin(kT=1., gamma=1., seed=42)
         self.system.thermostat.set_langevin(kT=2., gamma=1., seed=42)
         self.system.thermostat.set_brownian(kT=2., gamma=1., seed=42)
-        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1.0*: there are currently active thermostats with kT=2.0*"):
+        with self.assertRaisesRegex(RuntimeError, "Cannot set parameter 'kT' to 1[.0]*: there are currently active thermostats with kT=2[.0]*"):
             self.system.thermostat.set_brownian(kT=1., gamma=1., seed=42)
         with self.assertRaisesRegex(RuntimeError, f"Parameter 'kT' is read-only"):
             self.system.thermostat.kT = 2.
+
+    @utx.skipIfMissingFeatures("BOND_CONSTRAINT")
+    def test_rigid_bond_incompatible_integrators(self):
+        system = self.system
+        system.part.clear()
+        system.box_l = [4., 4., 4.]
+        system.cell_system.skin = 0.4
+        system.time_step = 0.01
+        bond = espressomd.interactions.RigidBond(r=1.0, ptol=1e-4, vtol=1e-4)
+        system.bonded_inter.add(bond)
+        p1 = system.part.add(pos=[1.5, 2.0, 2.0])
+        p2 = system.part.add(pos=[2.5, 2.0, 2.0])
+        p2.add_bond((bond, p1))
+        error_msg = self.msg + \
+            'Rigid bonds \\(RATTLE\\) require an inertial integrator'
+
+        system.integrator.set_brownian_dynamics()
+        system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
+        with self.assertRaisesRegex(Exception, error_msg):
+            system.integrator.run(0)
+
+        system.thermostat.turn_off()
+        system.integrator.set_steepest_descent(
+            f_max=0., gamma=1., max_displacement=0.1)
+        with self.assertRaisesRegex(Exception, error_msg):
+            system.integrator.run(0)
+
+        if espressomd.has_features("STOKESIAN_DYNAMICS"):
+            system.thermostat.turn_off()
+            system.periodicity = 3 * [False]
+            system.thermostat.set_stokesian(kT=0)
+            system.integrator.set_stokesian_dynamics(
+                viscosity=1.0, radii={0: 1.0})
+            with self.assertRaisesRegex(Exception, error_msg):
+                system.integrator.run(0)
+
+    def test_missing_features(self):
+        thermostats = {
+            "STOKESIAN_DYNAMICS": ("set_stokesian", "Stokesian"),
+            "DPD": ("set_dpd", "DPDThermostat"),
+            "NPT": ("set_npt", "IsotropicNpt"),
+            "WALBERLA": ("set_lb", "LBThermostat"),
+        }
+        integrators = {
+            "STOKESIAN_DYNAMICS": ("set_stokesian_dynamics", "StokesianDynamics"),
+            "NPT": ("set_isotropic_npt", "VelocityVerletIsotropicNPT"),
+        }
+        FeaturesError = espressomd.code_features.FeaturesError
+        for feature, (method, class_name) in thermostats.items():
+            if not espressomd.has_features(feature):
+                with self.assertRaisesRegex(RuntimeError, rf"Unknown method {method}\(\). Hint: a feature is probably not compiled in"):
+                    getattr(self.system.thermostat, method)()
+                with self.assertRaisesRegex(RuntimeError, feature):
+                    getattr(espressomd.thermostat, class_name)()
+        for feature, (method, class_name) in integrators.items():
+            if not espressomd.has_features(feature):
+                with self.assertRaisesRegex(FeaturesError, feature):
+                    getattr(self.system.integrator, method)()
+                with self.assertRaisesRegex(FeaturesError, feature):
+                    getattr(espressomd.integrate, class_name)()
 
 
 if __name__ == "__main__":

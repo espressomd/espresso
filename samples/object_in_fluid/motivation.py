@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -71,7 +71,7 @@ system.non_bonded_inter[cell0.particle_type, 10].soft_sphere.set_params(
     a=0.0001, n=1.2, cutoff=0.1, offset=0.0)
 
 # fluid
-lbf = espressomd.lb.LBFluidWalberla(
+lbf = espressomd.lb.LBFluid(
     agrid=1., density=1., kinematic_viscosity=1.5, tau=system.time_step,
     ext_force_density=[0.025, 0., 0.], single_precision=True)
 system.lb = lbf

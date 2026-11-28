@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2010-2022 The ESPResSo project
+# Copyright (C) 2010-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -314,6 +314,15 @@ class Correlator(_AccumulatorBase):
         update these weights with ``obs.args = [...]``, you'll have to
         provide already squared values! Other correlation operations
         will ignore these values.
+
+    Methods
+    -------
+    update()
+        Update the correlator (get the current values from the observable(s)).
+    finalize()
+        Trigger a compression for the last remaining values in the buffer.
+        After that, the correlator can no longer be updated.
+
     """
 
     _so_name = "Accumulators::Correlator"

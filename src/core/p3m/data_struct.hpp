@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -26,6 +26,9 @@
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
 #include "common.hpp"
+#include "communication.hpp"
+
+#include <utils/device_qualifier.hpp>
 
 #include <array>
 #include <cassert>
@@ -36,12 +39,12 @@
 
 /** @brief State of the p3m methods, the part which applies to  both,
   electrostatic and dipolar p3m */
-
-template <typename FloatType> struct P3MStateCommon {
+template <typename FloatType, Arch Architecture = Arch::CPU>
+struct P3MStateCommon {
   using value_type = FloatType;
 
   explicit P3MStateCommon(P3MParameters &&parameters)
-      : params{std::move(parameters)} {}
+      : params{std::move(parameters)}, local_mesh{} {}
 
   /** @brief P3M base parameters. */
   P3MParameters params;
@@ -71,51 +74,10 @@ template <typename FloatType> struct P3MStateCommon {
   std::vector<FloatType> g_energy;
 };
 
-template <typename FloatType> class FFTBackend;
-template <typename FloatType> class FFTBuffers;
+#if defined(ESPRESSO_DP3M)
 
 /**
- * @brief LEGACY Base class for the electrostatics and magnetostatics P3M
- * algorithms. Contains a handle to the FFT backend, information about the local
- * mesh, the differential operator, and various buffers.
- */
-template <typename FloatType>
-struct p3m_data_struct : public P3MStateCommon<FloatType> {
-  using value_type = FloatType;
-  using P3MStateCommon<FloatType>::P3MStateCommon;
-  using P3MStateCommon<FloatType>::local_mesh;
-
-  P3MFFTMesh<FloatType> mesh;
-
-  /** @brief FFT algorithm. */
-  std::unique_ptr<FFTBackend<FloatType>> fft;
-  /** @brief FFT buffers. */
-  std::unique_ptr<FFTBuffers<FloatType>> fft_buffers;
-
-  void update_mesh_views() {
-    auto const mesh_size_ptr = fft->get_mesh_size();
-    auto const mesh_start_ptr = fft->get_mesh_start();
-    for (auto i = 0u; i < 3u; ++i) {
-      mesh.size[i] = mesh_size_ptr[i];
-      mesh.start[i] = mesh_start_ptr[i];
-    }
-    mesh.stop = mesh.start + mesh.size;
-    fft_buffers->update_mesh_views(mesh);
-  }
-
-  template <typename T, class... Args> void make_fft_instance(Args... args) {
-    assert(fft == nullptr);
-    fft = std::make_unique<T>(std::as_const(local_mesh), args...);
-  }
-
-  template <typename T, class... Args> void make_mesh_instance(Args... args) {
-    assert(fft_buffers == nullptr);
-    fft_buffers = std::make_unique<T>(std::as_const(local_mesh), args...);
-  }
-};
-
-/**
- * @brief API for the FFT backend of the P3M algorithm.
+ * @brief API for the legacy FFT backend of the P3M algorithm.
  */
 template <typename FloatType> class FFTBackend {
 protected:
@@ -132,14 +94,12 @@ public:
   virtual void forward_fft(FloatType *rs_mesh) = 0;
   /** @brief Carry out the backward FFT of the scalar mesh. */
   virtual void backward_fft(FloatType *rs_mesh) = 0;
-  /** @brief Get indices of the k-space data layout. */
-  virtual std::tuple<int, int, int> get_permutations() const = 0;
   virtual std::array<int, 3u> const &get_mesh_size() const = 0;
   virtual std::array<int, 3u> const &get_mesh_start() const = 0;
 };
 
 /**
- * @brief API for the FFT mesh buffers.
+ * @brief API for the legacy FFT mesh buffers.
  */
 template <typename FloatType> class FFTBuffers {
 protected:
@@ -148,7 +108,7 @@ protected:
 public:
   explicit FFTBuffers(P3MLocalMesh const &local_mesh)
       : local_mesh{local_mesh} {}
-  virtual ~FFTBuffers() = default;
+  virtual HOST_ONLY_QUALIFIER ~FFTBuffers() = default;
   /** @brief Initialize the meshes. */
   virtual void init_meshes(int ca_mesh_size) = 0;
   /** @brief Initialize the halo buffers. */
@@ -175,5 +135,7 @@ public:
    */
   virtual void update_mesh_views(P3MFFTMesh<FloatType> &out) = 0;
 };
+
+#endif // defined(ESPRESSO_DP3M)
 
 #endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

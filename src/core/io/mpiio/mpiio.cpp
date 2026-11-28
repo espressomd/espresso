@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -54,9 +54,6 @@
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "errorhandling.hpp"
-#include "system/System.hpp"
-
-#include <utils/Vector.hpp>
 
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -73,6 +70,7 @@
 #include <cstdio>
 #include <cstring>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <sys/stat.h>
 #include <tuple>
@@ -166,8 +164,8 @@ static void mpiio_dump_array(const std::string &fn, T const *arr,
   }
   auto const offset =
       static_cast<MPI_Offset>(pref) * static_cast<MPI_Offset>(sizeof(T));
-  ret = MPI_File_set_view(f, offset, MPI_T, MPI_T, const_cast<char *>("native"),
-                          MPI_INFO_NULL);
+  char datarep[] = "native"; // non-const typed string
+  ret = MPI_File_set_view(f, offset, MPI_T, MPI_T, datarep, MPI_INFO_NULL);
   ret |= MPI_File_write_all(f, arr, static_cast<int>(len), MPI_T,
                             MPI_STATUS_IGNORE);
   static_cast<void>(ret and fatal_error("Could not write file", fn, &f, ret));
@@ -349,9 +347,8 @@ static void mpiio_read_array(const std::string &fn, T *arr, std::size_t len,
   }
   auto const offset =
       static_cast<MPI_Offset>(pref) * static_cast<MPI_Offset>(sizeof(T));
-  ret = MPI_File_set_view(f, offset, MPI_T, MPI_T, const_cast<char *>("native"),
-                          MPI_INFO_NULL);
-
+  char datarep[] = "native"; // non-const typed string
+  ret = MPI_File_set_view(f, offset, MPI_T, MPI_T, datarep, MPI_INFO_NULL);
   ret |= MPI_File_read_all(f, arr, static_cast<int>(len), MPI_T,
                            MPI_STATUS_IGNORE);
   static_cast<void>(ret and fatal_error("Could not read file", fn, &f, ret));

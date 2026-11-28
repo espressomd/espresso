@@ -182,47 +182,29 @@ path set to ``pypresso``.
 Running in the cloud
 ~~~~~~~~~~~~~~~~~~~~
 
-A `Gitpod <https://gitpod.io>`__ config file is provided to automatically
-build |es| in its default configuration (`direct link
-<https://gitpod.io/#https://github.com/espressomd/espresso>`__), which is
-sufficient to run most tutorials. The Gitpod workspace can be accessed from
-the `terminal via SSH <https://www.gitpod.io/docs/configure/ssh>`__ or from
-a `web browser <https://www.gitpod.io/docs/configure/browser-settings>`__,
-which uses the VS Code IDE.
+.. _Using Binder:
 
-To execute the tutorials, choose a Jupyter backend:
+Using Binder
+""""""""""""
 
-* VS Code Jupyter: navigate to ``ESPRESSO/build/doc/tutorials`` in the
-  project tree and open the notebook files; if the kernel drop-down menu
-  doesn't offer ``build/pypresso`` as a kernel, restart the VS Code IDE:
-  quit the workspace by closing the browser tab, re-open the tab and
-  click ``espressomd-espresso-...`` in the popup to restart the IDE
-  (don't click on the green button "New Workspace")
+A pre-compiled version of |es| is available
+for the `Binder platform <https://mybinder.org>`__ :cite:`jupyter18a`
+(`direct link <https://mybinder.org/v2/gh/jngrad/espresso-binder/HEAD>`__),
+which uses the JupyterLab IDE.
 
-* Jupyter Notebook:
+.. _Using Codespaces:
 
-  .. code-block:: bash
+Using Codespaces
+""""""""""""""""
 
-      cd ${GITPOD_REPO_ROOT}/build/doc/tutorials
-      ../../ipypresso notebook --NotebookApp.allow_origin="$(gp url 8888)" \
-          --port=8888 --no-browser
-
-* JupyterLab:
-
-  .. code-block:: bash
-
-      cd ${GITPOD_REPO_ROOT}/build/doc/tutorials
-      ../../ipypresso lab --NotebookApp.allow_origin="$(gp url 8888)" \
-          --port=8888 --no-browser
-
-For both Jupyter Notebook and JupyterLab, a notification will appear and say
-that a new port 8888 has been made available. Click the orange "Make public"
-button to open that port and then Ctrl+click one of the urls in the terminal
-output to open the Jupyter backed in a pop-up window.
-
-To start a workspace from a specific branch, use a link in the following form:
-``https://gitpod.io/#https://github.com/user_name/espresso/tree/branch_name``,
-where ``user_name`` and ``branch_name`` need to be adapted.
+A `Codespaces <https://github.com/features/codespaces>`__ config file is provided
+to facilitate the building of |es| in the default configuration (`direct link
+<https://codespaces.new/espressomd/espresso>`__).
+The codepace can be accessed from the terminal via the `GitHub CLI ssh command
+<https://cli.github.com/manual/gh_codespace_ssh>`__
+or from a web browser (default), which uses the VS Code IDE.
+Instructions to build |es| and execute the tutorials are available
+in file `.devcontainer/Readme.md <https://github.com/espressomd/espresso/blob/python/.devcontainer/Readme.md>`__.
 
 
 .. _Parallel computing:
@@ -280,9 +262,8 @@ extra arguments are passed to the ``mpiexec`` program.
 On cluster computers, it might be necessary to load the MPI library with
 ``module load openmpi`` or similar.
 
-On modern NUMA architectures, |es| can leverage shared-memory parallelism
-(SMP) using the `OpenMP <https://www.openmp.org>`__ programming model.
-This is enabled via the CMake option ``-D SHARED_MEMORY_PARALLELISM=ON``.
+|es| leverages shared-memory parallelism (SMP) using
+the `OpenMP <https://www.openmp.org>`__ programming model.
 To run a simulation with 4 OpenMP threads, use the following syntax:
 
 .. code-block:: bash
@@ -440,8 +421,6 @@ In order to use GPU acceleration you need a NVIDIA GPU
 and it needs to have at least compute capability 2.0.
 For more details, please refer to the installation section
 :ref:`Nvidia GPU acceleration`.
-
-For more information please check :class:`espressomd.cuda_init.CudaInitHandle`.
 
 .. _List available devices:
 
@@ -812,6 +791,22 @@ GDB can investigate ASAN reports with break points:
     set breakpoint pending on
     break __asan_report_error
 
+If that doesn't work, ASAN report can be configured to trigger a signal:
+
+.. code-block:: bash
+
+    ASAN_OPTIONS=abort_on_error=1 ./pypresso script.py
+
+Multiple `ASAN options <https://github.com/google/sanitizers/wiki/AddressSanitizerFlags#run-time-flags>`__
+can be joined with a semicolon.
+
+When using the GCC compiler toolchain, it might be necessary to preload
+the ASAN libraries before the C++ library, like so:
+
+.. code-block:: bash
+
+    LD_PRELOAD="$(g++ -print-file-name=libasan.so):$(g++ -print-file-name=libstdc++.so)" ./pypresso script.py
+
 .. _UBSAN:
 
 UBSAN
@@ -881,9 +876,13 @@ of an abnormal floating-point operation. This is achieved by sending a signal
 that can be caught in GDB to allow inspection of the failing code.
 
 When FPE instrumentation is enabled, most script interface calls will be
-monitored for abnormal mathematical operations. One can select which subset
-of CPU exceptions will trap by explicitly providing a bitmask to the FPE
-handler constructor, like so:
+monitored for abnormal mathematical operations.
+Some |es| features have to call third-party libraries that are known
+to occasionally raise CPU flags; to handle these exceptional cases,
+|es| will temporarily disable any active FPE monitoring during calls
+to the affected libraries.
+One can select which subset of CPU exceptions will trap by explicitly
+providing a bitmask to the FPE handler constructor, like so:
 
 .. code-block:: c++
 
@@ -957,6 +956,16 @@ For a more fine-grained report on GPU kernels:
 
     $ CALI_CONFIG=cuda-activity-report ./pypresso ../samples/p3m.py --gpu
 
+For more details on profiling methods and report types,
+see the following chapters of the Caliper user guide:
+
+* `GPU profiling <https://software.llnl.gov/Caliper/GPUProfiling.html>`__,
+  `CUDA services <https://software.llnl.gov/Caliper/services.html#cupti>`__
+* `MPI profiling <https://software.llnl.gov/Caliper/MPIProfiling.html>`__,
+  `MPI services <https://software.llnl.gov/Caliper/services.html#mpi>`__
+* `OpenMP profiling <https://software.llnl.gov/Caliper/OpenMP.html>`__,
+  `OpenMP services <https://software.llnl.gov/Caliper/services.html#ompt>`__
+
 To introduce custom markers at the C++ level, add ``CALI`` macros inside
 performance-critical functions to register them:
 
@@ -979,6 +988,20 @@ use a :class:`~espressomd.profiler.Caliper` object to fence code blocks:
     cali.begin_section(label="calc_energies")
     energies = system.analysis.energy()
     cali.end_section(label="calc_energies")
+
+By default, ``CALI_CONFIG=runtime-report`` only reports nested regions.
+Asynchronous regions are not part of the tree and need to be queried individually:
+
+.. code-block:: none
+
+    CALI_CONFIG=event-trace,output=espresso-%mpi.rank%.cali mpiexec -n 2 ./pypresso script.py
+    cali-query -q "SELECT region, ghosts_reduce_forces_async, \
+                          sum(time.duration.ns) AS time_ns, \
+                          percent_total(time.duration.ns) AS \"Time %\"  \
+                   WHERE ghosts_reduce_forces_async \
+                   GROUP BY region, ghosts_reduce_forces_async \
+                   FORMAT table ORDER BY time_ns DESC" \
+               espresso-*.cali
 
 .. _Valgrind:
 
@@ -1253,6 +1276,48 @@ To interactively read the data:
           10  2.619    0.262    2.619    0.262   /opt/espressomd/integrate.py:101(run)
     p3m.py.prof% quit
 
+.. _py-spy:
+
+py-spy
+~~~~~~
+
+.. note::
+
+    Requires an external dependency:
+
+    .. code-block:: bash
+
+        python3 -m pip install py-spy
+
+    Capturing C++ function names with option ``--native`` requires debug symbols,
+    enabled with the CMake options
+    ``-D CMAKE_CXX_FLAGS="-g -fno-omit-frame-pointer" -D CMAKE_BUILD_TYPE=Release``.
+
+py-spy [11]_ is a low-overhead Python profiler.
+
+To generate a nested graph that can be interacted with in a web browser:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 py-spy record \
+        -o profile.svg -- ./pypresso ../samples/p3m.py --cpu
+
+Use Ctrl+F in the web browser to highlight blocks matching a function name.
+Pass option ``--native`` to capture C++ function names.
+
+To record samples in a format that can be analyzed by AI agents, run:
+
+.. code-block:: bash
+
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 py-spy record \
+        --native -f raw -o profile.folded -- ./pypresso ../samples/p3m.py --cpu
+
+To record samples with multiple MPI ranks (use single quotes to prevent variable expansion):
+
+    OMP_NUM_THREADS=1 OMP_PROC_BIND=true OMP_PLACES=0 mpiexec -n 2 --bind-to core --report-bindings \
+        -x OMP_NUM_THREADS sh -c 'exec py-spy record --native -f raw -o profile.${OMPI_COMM_WORLD_RANK}.folded -- ./pypresso ../samples/p3m.py --cpu'
+
+
 ____
 
 .. [1]
@@ -1284,3 +1349,6 @@ ____
 
 .. [10]
    https://github.com/google/sanitizers/issues/1614
+
+.. [11]
+   https://github.com/benfred/py-spy

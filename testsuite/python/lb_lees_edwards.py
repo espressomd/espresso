@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2023 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -33,14 +33,14 @@ system.time_step = 0.01
 
 class LBContextManager:
     """
-    Add an LB actor and remove it from the actor list at the end.
+    Add an LB solver and remove it at the end.
     """
 
     def __init__(self, **kwargs):
         self.kwargs = kwargs
 
     def __enter__(self):
-        self.lbf = espressomd.lb.LBFluidWalberla(
+        self.lbf = espressomd.lb.LBFluid(
             agrid=1., density=1., kinematic_viscosity=1.,
             tau=system.time_step, **self.kwargs)
         system.lb = self.lbf
@@ -329,7 +329,7 @@ class LBLeesEdwards(ut.TestCase):
                         protocol=espressomd.lees_edwards.Off())
                 self.assertEqual(system.lees_edwards.shear_direction, "x")
                 self.assertEqual(system.lees_edwards.shear_plane_normal, "y")
-        # when de-activating and later re-activating a LB actor with LEbc,
+        # when de-activating and later re-activating an LB actor with LEbc,
         # the MD LEbc must have the same shear directions
         with self.assertRaisesRegex(RuntimeError, err_msg):
             with LEContextManager('z', 'y', 1.):
@@ -341,10 +341,24 @@ class LBLeesEdwards(ut.TestCase):
             if shear_dir != shear_plane_normal:
                 with self.assertRaisesRegex(ValueError, err_msg):
                     with LEContextManager(shear_dir, shear_plane_normal, 1.):
-                        system.lb = espressomd.lb.LBFluidWalberla(
+                        system.lb = espressomd.lb.LBFluid(
                             agrid=1., density=1., kinematic_viscosity=1.,
                             tau=system.time_step)
                 self.assertIsNone(system.lb)
+        # LB only implements shear_direction="x"
+        err_msg = "Lees-Edwards LB only supports shear_direction=\"x\""
+        with self.assertRaisesRegex(ValueError, err_msg):
+            with LEContextManager('z', 'y', 1.):
+                system.lb = espressomd.lb.LBFluid(
+                    agrid=1., density=1., kinematic_viscosity=1.,
+                    tau=system.time_step)
+        self.assertIsNone(system.lb)
+        system.lees_edwards.protocol = None
+        with self.assertRaisesRegex(ValueError, err_msg):
+            with LBContextManager() as lbf:
+                LEContextManager('z', 'y', 1.).initialize()
+        self.assertIsNone(system.lb)
+        system.lees_edwards.protocol = None
         # while LB and MD LEbc must agree on the shear directions,
         # the offset can change
         with LEContextManager('x', 'y', -1.):
@@ -354,7 +368,7 @@ class LBLeesEdwards(ut.TestCase):
         system.lees_edwards.protocol = None
         with self.assertRaisesRegex(RuntimeError, "Lees-Edwards LB doesn't support thermalization"):
             with LEContextManager('x', 'y', 1.):
-                system.lb = espressomd.lb.LBFluidWalberla(
+                system.lb = espressomd.lb.LBFluid(
                     agrid=1., density=1., kinematic_viscosity=1., kT=1., seed=42,
                     tau=system.time_step)
         self.assertIsNone(system.lb)
@@ -374,17 +388,17 @@ class LBLeesEdwards(ut.TestCase):
         self.assertIsNone(system.lb)
 
         with self.assertRaisesRegex(ValueError, "Lees-Edwards sweep is implemented for a ghost layer of thickness 1"):
-            lattice = espressomd.lb.LatticeWalberla(agrid=1., n_ghost_layers=2)
+            lattice = espressomd.lb.Lattice(agrid=1., n_ghost_layers=2)
             with LEContextManager('x', 'y', 1.):
-                system.lb = espressomd.lb.LBFluidWalberla(
+                system.lb = espressomd.lb.LBFluid(
                     lattice=lattice, density=1., kinematic_viscosity=1.,
                     tau=system.time_step)
 
         system.box_l = [16, 16, 1]
-        with self.assertRaisesRegex(ValueError, "LB LEbc doesn't support domain decomposition along the shear and normal directions"):
+        with self.assertRaisesRegex(ValueError, "LB LEbc doesn't support domain decomposition along the shear direction, nor multiple blocks along the normal direction"):
             for blocks_per_mpi_rank in ([2, 1, 1], [1, 2, 1]):
                 with LEContextManager('x', 'y', 1.):
-                    system.lb = espressomd.lb.LBFluidWalberla(
+                    system.lb = espressomd.lb.LBFluid(
                         agrid=1., density=1., kinematic_viscosity=1.,
                         tau=system.time_step, blocks_per_mpi_rank=blocks_per_mpi_rank)
 

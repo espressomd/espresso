@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -39,9 +39,9 @@ public:
 
 /**
  * @brief Fatal CUDA exception.
+ * Not derived from @c std::exception by design.
  * Best course of action is to terminate the program immediately.
  */
-
 class cuda_fatal_error {
   std::string m_msg;
   std::terminate_handler m_terminate_handler;

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2025 The ESPResSo project
+# Copyright (C) 2021-2026 The ESPResSo project
 # Copyright (C) 2020-2022 The waLBerla project
 #
 # This file is part of ESPResSo.
@@ -29,7 +29,7 @@ import pystencils as ps
 
 
 def remove_intermediate_variable(code, name):
-    re_pat = re.compile(f"const (float|double) {name} = .*?;\n")
+    re_pat = re.compile(rf"\n *const (float|double|u?int(?:(?:8|16|32|64)?_t)?) {name}(?: *\[\d*\])? = .*?;(?=\n)")  # nopep8
     assert re_pat.search(code) is not None, \
         f"pattern '{re_pat}' not found in '''\n{code}\n'''"
     return re_pat.sub("", code)
