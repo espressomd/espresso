@@ -26,6 +26,7 @@ import numpy as np
 
 import espressomd
 import espressomd.lb
+import espressomd.lees_edwards
 import espressomd.shapes
 
 AGRID = 1.
@@ -40,12 +41,18 @@ LB_PARAMS = {"agrid": AGRID,
 GAMMA = 2.
 N_WARMUP = 20
 N_CONTINUE = 10
+# the offset is not a multiple of AGRID, such that the Lees-Edwards ghost
+# layers are interpolated between two nodes, and it changes over time
+LE_PROTOCOL_PARAMS = {"initial_pos_offset": 0.7 * AGRID,
+                      "shear_velocity": 1.5,
+                      "time_0": 0.}
 
 
-class LBCheckpointThermalized:
+class LBCheckpoint:
     """
-    Check that a thermalized LB fluid restored from a checkpoint
-    continues exactly like the uninterrupted simulation.
+    Check that an LB fluid restored from a checkpoint continues exactly
+    like the uninterrupted simulation, for a thermalized fluid and for
+    an unthermalized fluid with Lees-Edwards boundary conditions.
     """
 
     system = espressomd.System(box_l=3 * [BOX_L])
@@ -56,18 +63,25 @@ class LBCheckpointThermalized:
         self.system.thermostat.turn_off()
         self.system.part.clear()
         self.system.lb = None
+        self.system.lees_edwards.protocol = None
+        self.system.time = 0.
 
-    def make_fluid(self, with_walls):
-        lbf = espressomd.lb.LBFluid(**LB_PARAMS, **self.lb_params)
+    def make_fluid(self, with_walls, kT, wall_axis=0):
+        lbf = espressomd.lb.LBFluid(**{**LB_PARAMS, "kT": kT},
+                                    **self.lb_params)
         if with_walls:
             # boundary nodes on both sides of the periodic image, such that
-            # the ghost layers contain boundary nodes too; one wall moves,
-            # such that the boundary PDFs depend on the fluid density
+            # the ghost layers contain boundary nodes too; one wall moves
+            # tangentially, such that the boundary PDFs depend on the fluid
+            # density
+            normal = np.zeros(3)
+            normal[wall_axis] = 1.
+            velocity = np.roll([0., 0.02, -0.01], wall_axis)
             lbf.add_boundary_from_shape(
-                espressomd.shapes.Wall(normal=[1, 0, 0], dist=1.5))
+                espressomd.shapes.Wall(normal=normal, dist=1.5))
             lbf.add_boundary_from_shape(
-                espressomd.shapes.Wall(normal=[-1, 0, 0], dist=-(BOX_L - 1.)),
-                velocity=[0., 0.02, -0.01])
+                espressomd.shapes.Wall(normal=-normal, dist=-(BOX_L - 1.)),
+                velocity=velocity)
         return lbf
 
     def get_fluid_state(self, lbf):
@@ -82,16 +96,43 @@ class LBCheckpointThermalized:
                 "v": np.copy(self.system.part.all().v),
                 "f": np.copy(self.system.part.all().f)}
 
-    def check_checkpoint(self, with_walls, with_particles, binary):
+    def check_checkpoint(self, with_walls, with_particles, binary,
+                         with_lees_edwards=False):
         system = self.system
-        lbf = self.make_fluid(with_walls)
+        if with_lees_edwards:
+            # Lees-Edwards LB is unthermalized and only supports a shear
+            # along x with the shear plane normal along y, so the walls
+            # are orthogonal to z
+            kT = 0.
+            wall_axis = 2
+            protocol = espressomd.lees_edwards.LinearShear(
+                **LE_PROTOCOL_PARAMS)
+            system.lees_edwards.set_boundary_conditions(
+                shear_direction="x", shear_plane_normal="y",
+                protocol=protocol)
+        else:
+            kT = LB_PARAMS["kT"]
+            wall_axis = 0
+        lbf = self.make_fluid(with_walls, kT, wall_axis)
         system.lb = lbf
         if with_particles:
             # particles are far apart so that they never couple to the
             # same LB node, which makes the force summation order-independent
-            pos = np.array([[4.2, 1.1, 1.3], [4.8, 3.9, 4.6], [3.3, 6.4, 6.7]])
-            vel = np.array([[0.1, -0.2, 0.3], [-0.3, 0.1, 0.2],
-                            [0.2, 0.3, -0.1]])
+            if with_lees_edwards:
+                # particles stay clear of the walls along z; the last two
+                # are less than AGRID / 2 away from the shear plane and
+                # couple to the Lees-Edwards-shifted ghost layer
+                pos = np.array([[4.2, 1.1, 3.3], [4.8, 3.9, 5.6],
+                                [3.3, 6.4, 7.7], [6.1, 0.2, 9.4],
+                                [8.6, BOX_L - 0.3, 4.4]])
+                vel = np.array([[0.1, -0.2, 0.3], [-0.3, 0.1, 0.2],
+                                [0.2, 0.3, -0.1], [-0.1, 0.1, 0.2],
+                                [0.2, -0.1, -0.3]])
+            else:
+                pos = np.array([[4.2, 1.1, 1.3], [4.8, 3.9, 4.6],
+                                [3.3, 6.4, 6.7]])
+                vel = np.array([[0.1, -0.2, 0.3], [-0.3, 0.1, 0.2],
+                                [0.2, 0.3, -0.1]])
             system.part.add(pos=pos, v=vel)
             system.thermostat.set_lb(LB_fluid=lbf, seed=17, gamma=GAMMA)
         system.integrator.run(N_WARMUP)
@@ -101,6 +142,7 @@ class LBCheckpointThermalized:
             lbf.save_checkpoint(str(path), binary)
             saved_fluid = self.get_fluid_state(lbf)
             saved_rng_state = lbf.rng_state
+            saved_time = system.time
             if with_particles:
                 saved_particles = self.get_particle_state()
                 saved_philox_counter = system.thermostat.lb.philox_counter
@@ -111,13 +153,20 @@ class LBCheckpointThermalized:
             if with_particles:
                 ref_particles = self.get_particle_state()
 
-            # restart from the checkpoint into a new fluid
+            # restart from the checkpoint into a new fluid; the simulation
+            # time is not part of the LB checkpoint and must be restored
+            # first, because the Lees-Edwards offset of the ghost layers
+            # is evaluated at the time the checkpoint is loaded
+            system.time = saved_time
             system.thermostat.turn_off()
             system.lb = None
-            lbf = self.make_fluid(with_walls)
+            lbf = self.make_fluid(with_walls, kT, wall_axis)
             system.lb = lbf
             lbf.load_checkpoint(str(path), binary)
-        lbf.rng_state = saved_rng_state
+        if with_lees_edwards:
+            self.assertIsNone(saved_rng_state)
+        else:
+            lbf.rng_state = saved_rng_state
         if with_particles:
             system.thermostat.set_lb(LB_fluid=lbf, seed=17, gamma=GAMMA)
             system.thermostat.lb.call_method(
@@ -158,35 +207,33 @@ class LBCheckpointThermalized:
                 finally:
                     self.tearDown()
 
+    def test_checkpoint_lees_edwards(self):
+        if self.lb_params["gpu"]:
+            self.skipTest("Lees-Edwards LB doesn't support GPU")
+        if self.system.cell_system.node_grid[0] != 1:
+            self.skipTest("Lees-Edwards LB doesn't support domain "
+                          "decomposition along the shear direction")
+        for with_walls, with_particles in itertools.product(
+                (False, True), (False, True)):
+            with self.subTest(walls=with_walls, particles=with_particles):
+                try:
+                    self.check_checkpoint(with_walls, with_particles, True,
+                                          with_lees_edwards=True)
+                finally:
+                    self.tearDown()
+
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
-class LBCheckpointWalberlaDoublePrecisionCPU(LBCheckpointThermalized,
+class LBCheckpointWalberlaDoublePrecisionCPU(LBCheckpoint,
                                              ut.TestCase):
     lb_params = {"single_precision": False, "gpu": False}
     rtol = 1e-12
     atol = 1e-12
 
 
-@utx.skipIfMissingFeatures(["WALBERLA"])
-class LBCheckpointWalberlaSinglePrecisionCPU(LBCheckpointThermalized,
-                                             ut.TestCase):
-    lb_params = {"single_precision": True, "gpu": False}
-    rtol = 1e-6
-    atol = 1e-6
-
-
 @utx.skipIfMissingGPU()
 @utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class LBCheckpointWalberlaDoublePrecisionGPU(LBCheckpointThermalized,
-                                             ut.TestCase):
-    lb_params = {"single_precision": False, "gpu": True}
-    rtol = 1e-12
-    atol = 1e-12
-
-
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
-class LBCheckpointWalberlaSinglePrecisionGPU(LBCheckpointThermalized,
+class LBCheckpointWalberlaSinglePrecisionGPU(LBCheckpoint,
                                              ut.TestCase):
     lb_params = {"single_precision": True, "gpu": True}
     rtol = 1e-6

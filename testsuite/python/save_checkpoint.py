@@ -66,14 +66,16 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
 
 # Lees-Edwards boundary conditions
+# (LB doesn't support domain decomposition along the shear direction)
 le_active = False
 if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
-        'LB' not in modes or n_nodes in (1, 2, 3)):
+        'LB' not in modes or (n_nodes in (1, 2, 3) and
+                              system.cell_system.node_grid[0] == 1)):
     le_active = True
     protocol = espressomd.lees_edwards.LinearShear(
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
-        shear_direction="z", shear_plane_normal="y", protocol=protocol)
+        shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
 lbf_class = None
 lb_lattice = None
