@@ -41,6 +41,7 @@ public:
     const bool res = decide(p1, p2);
     return res;
   }
+
   virtual ~PairCriterion() = default;
 };
 } // namespace PairCriteria
