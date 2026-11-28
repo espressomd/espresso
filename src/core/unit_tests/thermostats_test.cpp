@@ -17,14 +17,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Unit tests for thermostats. */
-
-#define BOOST_TEST_MODULE Thermostats test
+#define BOOST_TEST_MODULE "Thermostats test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
 #include "Particle.hpp"
 #include "config/config.hpp"
+#include "propagation.hpp"
 #include "random.hpp"
 #include "random_test.hpp"
 #include "thermostat.hpp"
@@ -353,4 +352,17 @@ BOOST_AUTO_TEST_CASE(test_predicate) {
   BOOST_CHECK_EQUAL(is_false.message(),
                     "The correlation coefficient M[0][1]{0} "
                     "differs from 1 by 1 (> 1e-10)");
+}
+
+BOOST_AUTO_TEST_CASE(propagation_serialization) {
+  using namespace PropagationMode;
+  BOOST_CHECK_EQUAL(propagation_bitmask_to_string(NONE), "NONE");
+  BOOST_CHECK_EQUAL(propagation_bitmask_to_string(ROT_EULER), "ROT_EULER");
+  auto const modes = propagation_bitmask_to_string(ROT_EULER | TRANS_NEWTON);
+  auto const ref_a = "TRANS_NEWTON|ROT_EULER";
+  auto const ref_b = "ROT_EULER|TRANS_NEWTON";
+  BOOST_TEST((modes == ref_a or modes == ref_b),
+             "value = " << modes << ", expected " << ref_a << " or " << ref_b);
+  BOOST_CHECK_EQUAL(propagation_flags_map().at("NONE"), NONE);
+  BOOST_CHECK_EQUAL(propagation_flags_map().at("ROT_EULER"), ROT_EULER);
 }

@@ -27,6 +27,8 @@
 
 #include "magnetostatics/actor.hpp"
 
+#include <utils/Vector.hpp>
+
 /**
  * @brief Dipolar all with all and no replica.
  * Handling of a system of dipoles where no replicas exist.
@@ -84,6 +86,13 @@ struct DipolarDirectSum : public Dipoles::Actor<DipolarDirectSum> {
   void long_range_energy_gpu() const;
   void add_long_range_forces_gpu() const;
 #endif
+
+  /**
+   * @brief Calculate the dipolar pressure tensor.
+   * Not implemented for the GPU variant: emits a runtime warning
+   * and returns a zero tensor in that case.
+   */
+  Utils::Vector9d long_range_pressure() const;
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   void dipole_field_at_part_cpu() const;
 #endif

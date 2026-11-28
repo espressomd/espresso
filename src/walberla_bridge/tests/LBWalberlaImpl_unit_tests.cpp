@@ -640,7 +640,7 @@ BOOST_AUTO_TEST_CASE(le_sweep) {
   BOOST_CHECK_THROW(make_kernel(0u, 0u, 1u), std::domain_error);
 }
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) { // NOLINT(bugprone-exception-escape)
   int n_nodes;
 
   MPI_Init(&argc, &argv);

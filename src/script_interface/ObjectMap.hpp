@@ -39,7 +39,7 @@ namespace ScriptInterface {
  *
  * Mapped elements are cleared from the core during destruction.
  * Due to how dynamic dispatch works, derived types must mark
- * @ref erase_in_core as @c final` and call @ref do_destruct in
+ * @c erase_in_core as @c final and call @c do_destruct in
  * their virtual destructor. This is to ensure that pure virtual
  * functions called by @ref clear cannot be executed in a type
  * derived from the type currently being destructed, since derived

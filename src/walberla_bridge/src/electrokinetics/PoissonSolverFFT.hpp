@@ -140,14 +140,17 @@ public:
 protected:
   template <typename ComplexType> struct heffte_container {
 #if defined(__CUDACC__)
-    using backend = heffte::backend::cufft;
+    using backend =
+        std::conditional_t<Architecture == lbmpy::Arch::GPU,
+                           heffte::backend::cufft, heffte::backend::fftw>;
 #else  // __CUDACC__
     using backend = heffte::backend::fftw;
 #endif // __CUDACC__
     std::unique_ptr<heffte::box3d<>> box_in;
     std::unique_ptr<heffte::box3d<>> box_out;
     std::unique_ptr<heffte::fft3d<backend>> fft;
-    std::unique_ptr<heffte::fft3d<backend>::buffer_container<ComplexType>>
+    std::unique_ptr<
+        typename heffte::fft3d<backend>::template buffer_container<ComplexType>>
         buffer;
 
     heffte_container(heffte::plan_options const &options,
@@ -162,114 +165,120 @@ protected:
           to_array(grid_range.second - offset_vec), to_array(order));
       fft = std::make_unique<heffte::fft3d<backend>>(*box_in, *box_out,
                                                      MPI_COMM_WORLD, options);
-      buffer = std::make_unique<
-          heffte::fft3d<backend>::buffer_container<ComplexType>>(
+      buffer = std::make_unique<typename heffte::fft3d<
+          backend>::template buffer_container<ComplexType>>(
           fft->size_workspace());
     }
   };
 
 private:
-  BlockDataID m_potential_field_with_ghosts_id;
+  template <typename FT, lbmpy::Arch AT = lbmpy::Arch::CPU> struct Green {
+    std::vector<FloatType> m_greens;
+    std::vector<FloatType> m_potential;
+    std::vector<ComplexType> m_potential_fourier;
+  };
+
 #if defined(__CUDACC__)
-  BlockDataID m_potential_field_id;
-  BlockDataID m_greens_function_field_id;
-  BlockDataID m_potential_fourier_id;
-#endif // __CUDACC__
+  template <typename FT> struct Green<FT, lbmpy::Arch::GPU> {
+    using GreenFunctionField = gpu::GPUField<FloatType>;
+    using PotentialFourier = gpu::GPUField<ComplexType>;
+    BlockDataID m_potential_field_id;
+    BlockDataID m_greens_function_field_id;
+    BlockDataID m_potential_fourier_id;
+    walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<ComplexType>,
+                                   walberla::gpu::FieldAccessor<FloatType>)>
+        kernel_greens = gpu::make_kernel(
+            multiply_by_greens_function<FloatType, ComplexType>);
+    walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<FloatType>,
+                                   walberla::gpu::FieldAccessor<FloatType>)>
+        kernel_move_fields = gpu::make_kernel(move_field<FloatType>);
+  };
+#endif
+
+  BlockDataID m_potential_field_with_ghosts_id;
+
+  Green<FloatType, Architecture> m_green;
 
   std::unique_ptr<heffte_container<ComplexType>> heffte;
   std::shared_ptr<FullCommunicator> m_full_communication;
-
-#if defined(__CUDACC__)
-  using GreenFunctionField = gpu::GPUField<FloatType>;
-  using PotentialFourier = gpu::GPUField<ComplexType>;
-
-  walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<ComplexType>,
-                                 walberla::gpu::FieldAccessor<FloatType>)>
-      kernel_greens;
-  walberla::gpu::Kernel<void (*)(walberla::gpu::FieldAccessor<FloatType>,
-                                 walberla::gpu::FieldAccessor<FloatType>)>
-      kernel_move_fields;
-#else  // __CUDACC__
-  std::vector<FloatType> m_greens;
-  std::vector<FloatType> m_potential;
-  std::vector<ComplexType> m_potential_fourier;
-#endif // __CUDACC__
 
 public:
   ~PoissonSolverFFT() override = default;
   PoissonSolverFFT(std::shared_ptr<LatticeWalberla> lattice,
                    double permittivity)
-      : PoissonSolver(std::move(lattice), permittivity)
-#if defined(__CUDACC__)
-        ,
-        kernel_greens(gpu::make_kernel(
-            multiply_by_greens_function<FloatType, ComplexType>)),
-        kernel_move_fields(gpu::make_kernel(move_field<FloatType>))
-#endif
-  {
+      : PoissonSolver(std::move(lattice), permittivity) {
     auto blocks = get_lattice().get_blocks();
 #if defined(__CUDACC__)
-    m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
-        blocks, "potential field", 1u, field::fzyx, 0u, false);
-    m_potential_field_with_ghosts_id =
-        gpu::addGPUFieldToStorage<PotentialField>(
-            blocks, "potential field with ghosts", 1u, field::fzyx,
-            get_lattice().get_ghost_layers());
-    m_greens_function_field_id = gpu::addGPUFieldToStorage<GreenFunctionField>(
-        blocks, "greens function", 1u, field::fzyx, 0u, false);
-    m_potential_fourier_id = gpu::addGPUFieldToStorage<PotentialFourier>(
-        blocks, "fourier field", 1u, field::fzyx, 0u, false);
+    if constexpr (Architecture == lbmpy::Arch::GPU) {
+      using GreenFunctionField =
+          Green<FloatType, lbmpy::Arch::GPU>::GreenFunctionField;
+      using PotentialFourier =
+          Green<FloatType, lbmpy::Arch::GPU>::PotentialFourier;
+      m_green.m_potential_field_id = gpu::addGPUFieldToStorage<PotentialField>(
+          blocks, "potential field", 1u, field::fzyx, 0u, false),
+      m_green.m_greens_function_field_id =
+          gpu::addGPUFieldToStorage<GreenFunctionField>(
+              blocks, "greens function", 1u, field::fzyx, 0u, false),
+      m_green.m_potential_fourier_id =
+          gpu::addGPUFieldToStorage<PotentialFourier>(
+              blocks, "fourier field", 1u, field::fzyx, 0u, false),
+      m_potential_field_with_ghosts_id =
+          gpu::addGPUFieldToStorage<PotentialField>(
+              blocks, "potential field with ghosts", 1u, field::fzyx,
+              get_lattice().get_ghost_layers());
 
-    auto const grid_range = get_lattice().get_local_grid_range();
-    auto const global_dim = get_lattice().get_grid_dimensions();
-    for (auto &block : *blocks) {
-      auto green_field = block.template getData<GreenFunctionField>(
-          m_greens_function_field_id);
-      auto kernel = gpu::make_kernel(create_greens_function<FloatType>);
-      kernel.addFieldIndexingParam(
-          gpu::FieldIndexing<FloatType>::xyz(*green_field));
-      kernel.addParam(grid_range.first[0]);
-      kernel.addParam(grid_range.first[1]);
-      kernel.addParam(grid_range.first[2]);
-      kernel.addParam(grid_range.second[0]);
-      kernel.addParam(grid_range.second[1]);
-      kernel.addParam(grid_range.second[2]);
-      kernel.addParam(global_dim[0]);
-      kernel.addParam(global_dim[1]);
-      kernel.addParam(global_dim[2]);
-      kernel();
+      auto const grid_range = get_lattice().get_local_grid_range();
+      auto const global_dim = get_lattice().get_grid_dimensions();
+      for (auto &block : *blocks) {
+        auto green_field = block.template getData<GreenFunctionField>(
+            m_green.m_greens_function_field_id);
+        auto kernel = gpu::make_kernel(create_greens_function<FloatType>);
+        kernel.addFieldIndexingParam(
+            gpu::FieldIndexing<FloatType>::xyz(*green_field));
+        kernel.addParam(grid_range.first[0]);
+        kernel.addParam(grid_range.first[1]);
+        kernel.addParam(grid_range.first[2]);
+        kernel.addParam(grid_range.second[0]);
+        kernel.addParam(grid_range.second[1]);
+        kernel.addParam(grid_range.second[2]);
+        kernel.addParam(global_dim[0]);
+        kernel.addParam(global_dim[1]);
+        kernel.addParam(global_dim[2]);
+        kernel();
 
-      auto potential =
-          block.template getData<PotentialField>(m_potential_field_id);
-      auto potential_ghosts = block.template getData<PotentialField>(
-          m_potential_field_with_ghosts_id);
-      auto green = block.template getData<GreenFunctionField>(
-          m_greens_function_field_id);
-      auto fourier =
-          block.template getData<PotentialFourier>(m_potential_fourier_id);
+        auto potential = block.template getData<PotentialField>(
+            m_green.m_potential_field_id);
+        auto potential_ghosts = block.template getData<PotentialField>(
+            m_potential_field_with_ghosts_id);
+        auto green = block.template getData<GreenFunctionField>(
+            m_green.m_greens_function_field_id);
+        auto fourier = block.template getData<PotentialFourier>(
+            m_green.m_potential_fourier_id);
 
-      ek::accessor::Scalar::initialize(potential, FloatType{0});
-      ek::accessor::Scalar::initialize(potential_ghosts, FloatType{0});
+        ek::accessor::Scalar::initialize(potential, FloatType{0});
+        ek::accessor::Scalar::initialize(potential_ghosts, FloatType{0});
 
-      kernel_greens =
-          gpu::make_kernel(multiply_by_greens_function<FloatType, ComplexType>);
-      kernel_greens.addFieldIndexingParam(
-          gpu::FieldIndexing<ComplexType>::allInner(*fourier));
-      kernel_greens.addFieldIndexingParam(
-          gpu::FieldIndexing<FloatType>::allInner(*green));
+        m_green.kernel_greens = gpu::make_kernel(
+            multiply_by_greens_function<FloatType, ComplexType>);
+        m_green.kernel_greens.addFieldIndexingParam(
+            gpu::FieldIndexing<ComplexType>::allInner(*fourier));
+        m_green.kernel_greens.addFieldIndexingParam(
+            gpu::FieldIndexing<FloatType>::allInner(*green));
 
-      kernel_move_fields = gpu::make_kernel(move_field<FloatType>);
-      kernel_move_fields.addFieldIndexingParam(
-          gpu::FieldIndexing<FloatType>::xyz(*potential_ghosts));
-      kernel_move_fields.addFieldIndexingParam(
-          gpu::FieldIndexing<FloatType>::xyz(*potential));
+        m_green.kernel_move_fields = gpu::make_kernel(move_field<FloatType>);
+        m_green.kernel_move_fields.addFieldIndexingParam(
+            gpu::FieldIndexing<FloatType>::xyz(*potential_ghosts));
+        m_green.kernel_move_fields.addFieldIndexingParam(
+            gpu::FieldIndexing<FloatType>::xyz(*potential));
+      }
     }
-
-#else  // __CUDACC__
-    m_potential_field_with_ghosts_id = field::addToStorage<PotentialField>(
-        blocks, "potential field with ghosts", FloatType{0}, field::fzyx,
-        get_lattice().get_ghost_layers());
 #endif // __CUDACC__
+
+    if constexpr (Architecture == lbmpy::Arch::CPU) {
+      m_potential_field_with_ghosts_id = field::addToStorage<PotentialField>(
+          blocks, "potential field with ghosts", FloatType{0}, field::fzyx,
+          get_lattice().get_ghost_layers());
+    }
 
     m_full_communication = std::make_shared<FullCommunicator>(blocks);
     m_full_communication->addPackInfo(
@@ -303,18 +312,17 @@ public:
 #endif
     heffte =
         std::make_unique<heffte_container<ComplexType>>(options, grid_range);
-#if not defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::CPU) {
-      m_potential = std::vector<FloatType>(heffte->fft->size_inbox());
-      m_greens = std::vector<FloatType>(heffte->fft->size_outbox());
-      m_potential_fourier =
+      m_green.m_potential = std::vector<FloatType>(heffte->fft->size_inbox());
+      m_green.m_greens = std::vector<FloatType>(heffte->fft->size_outbox());
+      m_green.m_potential_fourier =
           std::vector<ComplexType>(heffte->fft->size_outbox());
       auto const dim = grid_range.second - grid_range.first;
       auto const global_dim = get_lattice().get_grid_dimensions();
       for (int x = 0; x < dim[0]; x++) {
         for (int y = 0; y < dim[1]; y++) {
           for (int z = 0; z < dim[2]; z++) {
-            m_greens[pos_to_linear_index(x, y, z, dim)] =
+            m_green.m_greens[pos_to_linear_index(x, y, z, dim)] =
                 greens_function<FloatType>(x + grid_range.first[0],
                                            y + grid_range.first[1],
                                            z + grid_range.first[2], global_dim);
@@ -322,22 +330,22 @@ public:
         }
       }
     }
-#endif
     reset_charge_field();
-#if not defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::CPU) {
       // make FFT plan
-      heffte->fft->forward(m_potential.data(), m_potential_fourier.data(),
+      heffte->fft->forward(m_green.m_potential.data(),
+                           m_green.m_potential_fourier.data(),
                            heffte->buffer->data());
     }
-#endif
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
+      using PotentialFourier =
+          Green<FloatType, lbmpy::Arch::GPU>::PotentialFourier;
       for (auto &block : *get_lattice().get_blocks()) {
-        auto potential =
-            block.template getData<PotentialField>(m_potential_field_id);
-        auto fourier =
-            block.template getData<PotentialFourier>(m_potential_fourier_id);
+        auto potential = block.template getData<PotentialField>(
+            m_green.m_potential_field_id);
+        auto fourier = block.template getData<PotentialFourier>(
+            m_green.m_potential_fourier_id);
         FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
         ComplexType *_data_fourier = fourier->dataAt(0, 0, 0, 0);
         // make FFT plan
@@ -407,16 +415,17 @@ public:
   }
 
   void solve() override {
-#if not defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::CPU) {
       auto grid_range = get_lattice().get_local_grid_range();
       auto dim = grid_range.second - grid_range.first;
-      heffte->fft->forward(m_potential.data(), m_potential_fourier.data(),
+      heffte->fft->forward(m_green.m_potential.data(),
+                           m_green.m_potential_fourier.data(),
                            heffte->buffer->data());
-      std::ranges::transform(m_potential_fourier, m_greens,
-                             m_potential_fourier.begin(), std::multiplies<>{});
-      heffte->fft->backward(m_potential_fourier.data(), m_potential.data(),
-                            heffte->buffer->data());
+      std::ranges::transform(m_green.m_potential_fourier, m_green.m_greens,
+                             m_green.m_potential_fourier.begin(),
+                             std::multiplies<>{});
+      heffte->fft->backward(m_green.m_potential_fourier.data(),
+                            m_green.m_potential.data(), heffte->buffer->data());
 
       for (auto &block : *get_lattice().get_blocks()) {
         auto potential_with_ghosts = block.template getData<PotentialField>(
@@ -425,28 +434,29 @@ public:
           for (int y = 0; y < dim[1]; y++) {
             for (int z = 0; z < dim[2]; z++) {
               potential_with_ghosts->get(x, y, z) =
-                  m_potential[pos_to_linear_index(x, y, z, dim)];
+                  m_green.m_potential[pos_to_linear_index(x, y, z, dim)];
             }
           }
         }
       }
     }
-#endif
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
+      using PotentialFourier =
+          Green<FloatType, lbmpy::Arch::GPU>::PotentialFourier;
       for (auto &block : *get_lattice().get_blocks()) {
-        auto potential =
-            block.template getData<PotentialField>(m_potential_field_id);
-        auto fourier =
-            block.template getData<PotentialFourier>(m_potential_fourier_id);
+        auto potential = block.template getData<PotentialField>(
+            m_green.m_potential_field_id);
+        auto fourier = block.template getData<PotentialFourier>(
+            m_green.m_potential_fourier_id);
         FloatType *_data_potential = potential->dataAt(0, 0, 0, 0);
         ComplexType *_data_fourier = fourier->dataAt(0, 0, 0, 0);
         heffte->fft->forward(_data_potential, _data_fourier,
                              heffte->buffer->data());
-        kernel_greens();
+        m_green.kernel_greens();
         heffte->fft->backward(_data_fourier, _data_potential,
                               heffte->buffer->data());
-        kernel_move_fields();
+        m_green.kernel_move_fields();
       }
     }
 #endif
@@ -457,7 +467,6 @@ public:
   void add_charge_to_field(std::size_t id, double valency) override {
     auto const factor = FloatType_c(valency / get_permittivity());
     auto const density_id = BlockDataID(id);
-#if not defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::CPU) {
       auto grid_range = get_lattice().get_local_grid_range();
       auto dim = grid_range.second - grid_range.first;
@@ -466,19 +475,18 @@ public:
         for (int x = 0; x < dim[0]; x++) {
           for (int y = 0; y < dim[1]; y++) {
             for (int z = 0; z < dim[2]; z++) {
-              m_potential[pos_to_linear_index(x, y, z, dim)] +=
+              m_green.m_potential[pos_to_linear_index(x, y, z, dim)] +=
                   factor * density_field->get(x, y, z);
             }
           }
         }
       }
     }
-#endif
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       for (auto &block : *get_lattice().get_blocks()) {
-        auto field =
-            block.template getData<PotentialField>(m_potential_field_id);
+        auto field = block.template getData<PotentialField>(
+            m_green.m_potential_field_id);
         auto density_field =
             block.template getData<gpu::GPUField<FloatType>>(density_id);
         add_fields(field, density_field, FloatType_c(factor));
@@ -488,28 +496,27 @@ public:
   }
 
   void reset_charge_field() override {
-#if not defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::CPU) {
       auto const grid_range = get_lattice().get_local_grid_range();
       auto const dim = grid_range.second - grid_range.first;
       for (int x = 0; x < dim[0]; x++) {
-        for (int i = 0; i < m_potential_fourier.size(); i++) {
-          m_potential_fourier[i] *= m_greens[i];
+        for (int i = 0; i < m_green.m_potential_fourier.size(); i++) {
+          m_green.m_potential_fourier[i] *= m_green.m_greens[i];
         }
         for (int y = 0; y < dim[1]; y++) {
           for (int z = 0; z < dim[2]; z++) {
-            m_potential[pos_to_linear_index(x, y, z, dim)] = FloatType{0};
+            m_green.m_potential[pos_to_linear_index(x, y, z, dim)] =
+                FloatType{0};
           }
         }
       }
     }
-#endif
 #if defined(__CUDACC__)
     if constexpr (Architecture == lbmpy::Arch::GPU) {
       // the FFT-solver re-uses the potential field for the charge
       for (auto &block : *get_lattice().get_blocks()) {
-        auto field =
-            block.template getData<PotentialField>(m_potential_field_id);
+        auto field = block.template getData<PotentialField>(
+            m_green.m_potential_field_id);
         ek::accessor::Scalar::initialize(field, FloatType{0});
       }
     }

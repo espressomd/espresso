@@ -19,11 +19,11 @@
 
 #pragma once
 
-#include "cell_system/CellStructure.hpp"
 #include "script_interface/auto_parameters/AutoParameters.hpp"
 #include "script_interface/interactions/BondedInteractions.hpp"
 
 #include "core/Particle.hpp"
+#include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
 #include "core/system/System.hpp"
 
