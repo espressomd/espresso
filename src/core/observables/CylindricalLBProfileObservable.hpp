@@ -74,8 +74,12 @@ public:
       // z-axis symmetry.
       auto const z_axis = Utils::Vector3d{{0.0, 0.0, 1.0}};
       auto const theta = Utils::angle_between(z_axis, transform_params->axis());
-      auto const rot_axis =
-          Utils::vector_product(z_axis, transform_params->axis()).normalize();
+      auto const cross =
+          Utils::vector_product(z_axis, transform_params->axis());
+      auto const cross_norm = cross.norm();
+      // for an axis anti-parallel to z, rotate around any axis in the x-y plane
+      auto const rot_axis = (cross_norm > 0.) ? cross / cross_norm
+                                              : Utils::Vector3d{{1., 0., 0.}};
       if (theta > std::numeric_limits<double>::epsilon())
         p_cart = Utils::vec_rotate(rot_axis, theta, p_cart);
       auto const pos = p_cart + transform_params->center();

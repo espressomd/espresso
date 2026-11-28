@@ -238,6 +238,15 @@ class CylindricalLBObservableCommon:
         for attr_name in ['center', 'axis', 'orientation']:
             np.testing.assert_array_almost_equal(np.copy(ctp.__getattr__(attr_name)),
                                                  np.copy(observable.transform_params.__getattr__(attr_name)))
+        # check axis anti-parallel to the z-axis
+        self.lbf[:, :, :].velocity = [0., 0., 0.01]
+        ctp = espressomd.math.CylindricalTransformationParameters(
+            center=3 * [7], axis=[0, 0, -1], orientation=[1, 0, 0])
+        observable = espressomd.observables.CylindricalLBVelocityProfile(
+            **{**params, 'transform_params': ctp})
+        obs_data = observable.calculate()
+        np.testing.assert_allclose(obs_data[..., 0:2], 0., atol=1e-6)
+        np.testing.assert_allclose(obs_data[..., 2], -0.01, atol=1e-6)
 
     def test_cylindrical_lb_flux_density_obs(self):
         """
