@@ -94,7 +94,7 @@ class ICC(ElectrostaticExtensions):
     def valid_keys(self):
         return {"n_icc", "convergence", "relaxation", "ext_field",
                 "max_iterations", "first_id", "eps_out", "normals",
-                "areas", "sigmas", "epsilons", "check_neutrality"}
+                "areas", "sigmas", "epsilons"}
 
     def required_keys(self):
         return {"n_icc", "normals", "areas", "epsilons"}
@@ -105,8 +105,7 @@ class ICC(ElectrostaticExtensions):
                 "ext_field": [0., 0., 0.],
                 "max_iterations": 100,
                 "first_id": 0,
-                "eps_out": 1,
-                "check_neutrality": True}
+                "eps_out": 1}
 
     def last_iterations(self):
         """

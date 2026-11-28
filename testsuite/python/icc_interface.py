@@ -119,6 +119,8 @@ class Test(ut.TestCase):
                           ({"eps_out": -1.}, "Parameter 'eps_out' must be > 0"),
                           ({"ext_field": 0.},
                            "parameter 'ext_field' is not convertible to 'Utils::Vector<double, 3>'"),
+                          ({"relaxaton": 0.9},
+                           "Parameter 'relaxaton' is not a valid parameter"),
                           ]
 
         for kwargs, error in invalid_params:
@@ -126,18 +128,6 @@ class Test(ut.TestCase):
             params.update(kwargs)
             with self.assertRaisesRegex((ValueError, RuntimeError), error):
                 espressomd.electrostatic_extensions.ICC(**params)
-
-    def test_unknown_kwarg_rejected(self):
-        part_slice, normals, areas = self.add_icc_particles()
-        with self.assertRaises((RuntimeError, ValueError, TypeError)):
-            espressomd.electrostatic_extensions.ICC(
-                n_icc=len(part_slice),
-                normals=normals,
-                areas=areas,
-                epsilons=np.ones_like(areas),
-                first_id=part_slice.id[0],
-                relaxaton=0.9,  # typo: should be 'relaxation'
-            )
 
     @utx.skipIfMissingFeatures(["P3M"])
     def test_exceptions_small_r_cut(self):

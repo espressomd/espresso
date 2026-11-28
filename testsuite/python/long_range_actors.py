@@ -76,7 +76,6 @@ class Test(ut.TestCase):
             epsilons=np.ones_like(areas),
             first_id=part_slice.id[0],
             max_iterations=100,
-            check_neutrality=False,
         )
         return icc, part_slice
 
