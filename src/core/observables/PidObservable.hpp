@@ -67,6 +67,13 @@ public:
   std::vector<int> const &ids() const { return m_ids; }
 };
 
+/**
+ * @brief Throw if any of the particle ids does not exist.
+ * Collective call: every rank of @p comm has to call it with the same ids.
+ */
+void check_particle_ids_exist(boost::mpi::communicator const &comm,
+                              std::vector<int> const &ids);
+
 namespace detail {
 /**
  * Recursive implementation for finding the shape of a given `std::vector` of

@@ -142,6 +142,11 @@ class RdfTest(ut.TestCase):
             espressomd.observables.RDF(**{**params, 'min_r': 100.})
         with self.assertRaises(ValueError):
             espressomd.observables.RDF(**{**params, 'n_r_bins': 0})
+        for key in ('ids1', 'ids2'):
+            observable = espressomd.observables.RDF(
+                **{**params, key: [partcls.id[0], 42]})
+            with self.assertRaisesRegex(RuntimeError, "Particle with id 42 does not exist"):
+                observable.calculate()
 
 
 if __name__ == "__main__":

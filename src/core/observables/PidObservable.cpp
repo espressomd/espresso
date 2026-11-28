@@ -25,52 +25,46 @@
 
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/communicator.hpp>
+#include <boost/mpi/operations.hpp>
 
+#include <algorithm>
+#include <cassert>
+#include <cstddef>
 #include <functional>
-#include <sstream>
+#include <iterator>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 namespace Observables {
 
-/** Validate that every requested particle id corresponds to an existing
- *  particle. The documented precondition for an observable is that its ids
- *  refer to existing particles; otherwise @ref fetch_particles silently drops
- *  the missing ids, which downstream leads to an out-of-bounds read in the
- *  chain observables and silently-wrong results in the map observables.
- *
- *  The check is collective so it cannot deadlock: every rank participates in
- *  the same reductions and throws the same exception, which is surfaced to
- *  Python via the script interface's parallel_try_catch wrapper.
- */
-static void check_particle_ids_exist(boost::mpi::communicator const &comm,
-                                     std::vector<int> const &ids) {
+void check_particle_ids_exist(boost::mpi::communicator const &comm,
+                              std::vector<int> const &ids) {
   auto const &cell_structure = *System::get_system().cell_structure;
-  auto local_count = 0;
-  for (auto const pid : ids) {
-    auto const *ptr = cell_structure.get_local_particle(pid);
-    if (ptr != nullptr and not ptr->is_ghost()) {
-      ++local_count;
-    }
-  }
+  auto const is_local = [&cell_structure](int pid) {
+    auto const *p = cell_structure.get_local_particle(pid);
+    return p != nullptr and not p->is_ghost();
+  };
+  auto const local_count = std::ranges::count_if(ids, is_local);
   auto const global_count =
-      boost::mpi::all_reduce(comm, local_count, std::plus<int>{});
-  if (global_count != static_cast<int>(ids.size())) {
-    // Identify the first missing id (collectively) for a helpful message.
-    for (auto const pid : ids) {
-      auto const *ptr = cell_structure.get_local_particle(pid);
-      auto const present = (ptr != nullptr and not ptr->is_ghost()) ? 1 : 0;
-      auto const total =
-          boost::mpi::all_reduce(comm, present, std::plus<int>{});
-      if (total == 0) {
-        std::stringstream error_msg;
-        error_msg << "Particle with id " << pid << " does not exist; "
-                  << "the observable cannot be computed because it references "
-                  << "particle ids that do not exist.";
-        throw std::runtime_error(error_msg.str());
-      }
-    }
+      boost::mpi::all_reduce(comm, local_count, std::plus<>{});
+  if (global_count == std::ranges::ssize(ids)) {
+    return;
   }
+  std::vector<int> local_present(ids.size());
+  std::ranges::transform(ids, local_present.begin(), [&is_local](int pid) {
+    return is_local(pid) ? 1 : 0;
+  });
+  std::vector<int> global_present(ids.size());
+  boost::mpi::all_reduce(comm, local_present.data(),
+                         static_cast<int>(ids.size()), global_present.data(),
+                         boost::mpi::maximum<int>{});
+  auto const missing = std::ranges::find(global_present, 0);
+  assert(missing != global_present.end());
+  auto const pid = ids[static_cast<std::size_t>(
+      std::distance(global_present.begin(), missing))];
+  throw std::runtime_error("Particle with id " + std::to_string(pid) +
+                           " does not exist");
 }
 
 std::vector<double>

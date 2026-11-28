@@ -247,44 +247,19 @@ class ObservableTests(ut.TestCase):
                 espressomd.observables.CosPersistenceAngles(ids=np.arange(i))
 
     def test_nonexistent_id_is_rejected(self):
-        """
-        Bug #23: the documented "(existing) particle" precondition for
-        observable ids is unenforced. Passing a nonexistent id to a
-        get_all_particle_positions-family chain observable (here
-        ParticleDistances) makes fetch_particles silently drop the id, so
-        detail::get_argsort produces an out-of-range index that
-        detail::get_all_particle_positions consumes as an out-of-bounds read
-        (assert-abort in debug builds, garbage/SIGSEGV in release).
-
-        Correct behavior is a clear RuntimeError at calculate() time.
-        """
-        # Only particles 0..n_parts-1 exist; 99 does not.
         nonexistent = 99
         self.assertNotIn(nonexistent, list(range(self.n_parts)))
         obs = espressomd.observables.ParticleDistances(
             ids=[0, 1, 2, nonexistent])
-        self.system.integrator.run(0)
-        with self.assertRaises(RuntimeError):
+        with self.assertRaisesRegex(RuntimeError, f"Particle with id {nonexistent} does not exist"):
             obs.calculate()
-        # Removing the offending particle is not possible here (it never
-        # existed), but valid ids must still work afterwards.
-        obs_ok = espressomd.observables.ParticleDistances(ids=[0, 1, 2])
-        np.testing.assert_array_equal(obs_ok.calculate().shape, (2,))
+        obs = espressomd.observables.ParticleDistances(ids=[0, 1, 2])
+        np.testing.assert_array_equal(obs.calculate().shape, (2,))
 
     @ut.skipIf(
         system.cell_system.get_state()["n_nodes"] > 1,
         "subprocess re-initializes espressomd; only safe outside an MPI run")
     def test_nonexistent_id_does_not_crash_subprocess(self):
-        """
-        Bug #23 (crash-safety): the out-of-bounds read on the unfixed code can
-        abort or segfault the whole process. Run the trigger out-of-process so
-        a crash surfaces as a non-zero/negative return code rather than as a
-        clean Python exception. After the fix the child must exit cleanly and
-        report that the nonexistent id was REJECTED with an exception.
-
-        This runs only single-rank; the multi-rank collective existence check
-        is exercised by ``test_nonexistent_id_is_rejected``.
-        """
         child_script = r"""
 import espressomd
 import espressomd.observables

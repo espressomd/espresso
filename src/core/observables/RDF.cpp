@@ -38,6 +38,8 @@
 namespace Observables {
 std::vector<double>
 RDF::operator()(boost::mpi::communicator const &comm) const {
+  check_particle_ids_exist(comm, ids1());
+  check_particle_ids_exist(comm, ids2());
   auto const &local_particles_1 = fetch_particles(ids1());
 
   if (ids2().empty()) {

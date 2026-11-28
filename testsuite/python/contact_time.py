@@ -248,6 +248,12 @@ class ContactTimeTest(ut.TestCase):
                 ids=[1], target_ids=[2])
             espressomd.accumulators.ContactTimes(
                 obs=obs, delta_N=1, contact_threshold=-1.)
+        self.system.part.add(pos=2 * [(0., 0., 0.)], id=[1, 2])
+        for ids, target_ids in (([1, 42], [2]), ([1], [2, 42])):
+            obs = espressomd.observables.PairwiseDistances(
+                ids=ids, target_ids=target_ids)
+            with self.assertRaisesRegex(RuntimeError, "Particle with id 42 does not exist"):
+                obs.calculate()
 
 
 if __name__ == "__main__":
