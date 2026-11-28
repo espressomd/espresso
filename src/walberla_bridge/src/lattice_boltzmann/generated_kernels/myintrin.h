@@ -61,8 +61,7 @@ QUALIFIERS __m128 _my_cvtepu32_ps(const __m128i v) {
     __GNUC__ >= 5 && !defined(__clang__) && !defined(__NVCOMPILER)
 __attribute__((optimize("no-associative-math")))
 #endif
-QUALIFIERS __m128d
-_my_cvtepu64_pd(const __m128i x) {
+QUALIFIERS __m128d _my_cvtepu64_pd(const __m128i x) {
 #if defined(__AVX512VL__) || defined(__AVX10_1__)
   return _mm_cvtepu64_pd(x);
 #elif defined(__clang__)
@@ -115,8 +114,7 @@ QUALIFIERS __m256 _my256_cvtepu32_ps(const __m256i v) {
     __GNUC__ >= 5 && !defined(__clang__) && !defined(__NVCOMPILER)
 __attribute__((optimize("no-associative-math")))
 #endif
-QUALIFIERS __m256d
-_my256_cvtepu64_pd(const __m256i x) {
+QUALIFIERS __m256d _my256_cvtepu64_pd(const __m256i x) {
 #if defined(__AVX512VL__) || defined(__AVX10_1__)
   return _mm256_cvtepu64_pd(x);
 #elif defined(__clang__)

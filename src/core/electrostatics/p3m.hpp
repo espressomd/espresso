@@ -139,7 +139,7 @@ public:
   virtual void assign_charge(double q, Utils::Vector3d const &real_pos,
                              bool skip_cache) = 0;
 
-  virtual void prepare_fft_mesh(bool reset_weights) = 0;
+  virtual void prepare_fft_mesh(bool reset_weights, bool zero_rs) = 0;
 
   /** Calculate real-space contribution of p3m Coulomb pair forces. */
   Utils::Vector3d pair_force(double q1q2, Utils::Vector3d const &d,
@@ -200,8 +200,8 @@ protected:
 };
 
 std::shared_ptr<CoulombP3M>
-new_coulomb_p3m_heffte(P3MParameters &&p3m_params,
-                       TuningParameters const &tuning_params, double prefactor,
-                       bool single_precision, Arch arch);
+new_coulomb_p3m(P3MParameters &&p3m_params,
+                TuningParameters const &tuning_params, double prefactor,
+                bool single_precision, Arch arch);
 
 #endif // ESPRESSO_P3M

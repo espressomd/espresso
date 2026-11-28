@@ -507,7 +507,7 @@ Ionic crystals
 For an infinite wire, the energy per ion is :math:`MC\frac{q}{a}` with
 :math:`M = -2\ln{2}` the 1D Madelung constant, :math:`C` the electrostatics
 prefactor, :math:`q` the electric charge and :math:`a` the lattice constant.
-Likewise, the pressure per ion can be derived as :math:`MC\frac{q}{aV}`
+The scalar pressure per ion is :math:`MC\frac{q}{aV}`
 with :math:`V` the simulation box volume. For details, see :cite:`ciftja19a`.
 
 For an infinite 2D or 3D ionic crystal lattice, the Madelung constant can be
@@ -526,6 +526,8 @@ with :math:`M` the orientation-dependent 1D Madelung constant,
 :math:`\zeta(s)` the Riemann zeta function,
 :math:`C` the magnetostatics prefactor, :math:`\mu` the dipole moment and
 :math:`a` the lattice constant :cite:`batle20a`.
+The scalar pressure per dipole is :math:`MC\frac{|\mu|^2}{a^3V}`
+with :math:`V` the simulation box volume.
 
 For an infinite 2D or 3D magnetic crystal lattice, the Madelung constant for
 the maximal energy and minimal energy dipole orientation can be estimated

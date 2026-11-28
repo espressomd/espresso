@@ -40,6 +40,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -61,11 +62,10 @@ void set_from_vector_like(
     std::shared_ptr<Interactions::BondedInteractions> bonded_ias) {
 
   if constexpr (traits::is_vector_like<Container>::value) {
-    VariantMap const obj_params{{"id", -1},
-                                {"__cell_structure", cell_structure},
-                                {"__bonded_ias", bonded_ias}};
-    auto so = std::dynamic_pointer_cast<ParticleModifier>(
-        context->make_shared("Particles::ParticleModifier", obj_params));
+    auto so = std::dynamic_pointer_cast<ParticleModifier>(context->make_shared(
+        "Particles::ParticleModifier", {{"id", -1},
+                                        {"__cell_structure", cell_structure},
+                                        {"__bonded_ias", bonded_ias}}));
     for (std::size_t i = 0; i < pids.size(); ++i) {
       so->set_pid(pids[i]);
       so->do_set_parameter(param_name, values[i]);
@@ -104,15 +104,19 @@ get_particles_properties(std::vector<int> const &pids,
     return result;
   }
 
-  // sort values by particle id to retain original order
-  auto const projector = [](auto const &pair) { return pair.first; };
-  std::ranges::sort(parameters, std::less<int>{}, projector);
-  assert(std::ranges::equal(pids, parameters | std::views::keys) &&
+  // reorder gathered values to match the caller's id_selection order
+  assert(parameters.size() == pids.size() &&
          "Missing or duplicate particle ids");
-
-  result.reserve(pids.size());
-  for (auto const &value : parameters | std::views::values) {
-    result.emplace_back(std::move(value));
+  std::unordered_map<int, std::size_t> lookup;
+  lookup.reserve(parameters.size());
+  std::size_t p_index = 0u;
+  for (auto const pid : pids) {
+    lookup[pid] = p_index;
+    ++p_index;
+  }
+  result.resize(pids.size());
+  for (auto &[pid, val] : parameters) {
+    result[lookup[pid]] = std::move(val);
   }
   return result;
 }

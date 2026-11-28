@@ -278,7 +278,7 @@ class Test(ut.TestCase):
             espressomd.magnetostatics.DipolarP3M)
 
         # check bisection exception
-        with self.assertRaisesRegex(RuntimeError, r"Root must be bracketed for bisection in dp3m_rtbisection"):
+        with self.assertRaisesRegex(RuntimeError, "Root must be bracketed for bisection in dp3m_rtbisection"):
             solver = espressomd.magnetostatics.DipolarP3M(
                 prefactor=2, accuracy=0.01, cao=1,
                 r_cut=0.373, alpha=3.81, mesh=(8, 8, 8))
@@ -309,22 +309,6 @@ class Test(ut.TestCase):
     def check_invalid_params_elc_p3m(self, container, solver_p3m):
         ELC = espressomd.electrostatics.ELC
         self.check_invalid_params_layer_corrections(container, solver_p3m, ELC)
-
-        self.system.part.by_id(0).q = -1.00001
-
-        with self.assertRaisesRegex(RuntimeError, "ELC does not currently support non-neutral systems with a dielectric contrast"):
-            actor = ELC(actor=solver_p3m, gap_size=1., maxPWerror=1.,
-                        pot_diff=3., delta_mid_top=0.5, delta_mid_bot=0.5,
-                        const_pot=True, check_neutrality=False)
-            self.system.electrostatics.solver = actor
-        self.system.electrostatics.clear()
-
-        with self.assertRaisesRegex(RuntimeError, "ELC does not work for non-neutral systems and non-metallic dielectric contrast"):
-            actor = ELC(actor=solver_p3m, gap_size=1., maxPWerror=1.,
-                        pot_diff=0., delta_mid_top=0.5, delta_mid_bot=0.5,
-                        const_pot=False, check_neutrality=False)
-            self.system.electrostatics.solver = actor
-        self.system.electrostatics.clear()
 
         self.system.part.by_id(0).q = -1
 

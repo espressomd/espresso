@@ -106,7 +106,7 @@ double p3m_k_space_error_gpu(double prefactor, const int *mesh, int cao,
   meshi.y = 1. / mesh[1];
   meshi.z = 1. / mesh[2];
 
-  switch (cao) {
+  switch (cao) { // NOLINT(bugprone-unhandled-code-paths)
   case 1:
     KERNELCALL(p3m_k_space_error_gpu_kernel_ik<1>, grid, block, mesh3, meshi,
                alpha_L, thrust::raw_pointer_cast(he_q.data()));

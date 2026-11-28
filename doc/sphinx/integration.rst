@@ -451,7 +451,7 @@ by setting the mass of the particle to zero.
 |es|'s discretisation is based on :cite:`schlick10a`, :cite:`ermak78a`
 and reads
 
-.. math:: \vec{x}(t+ dt) = \gamma^{-1} \vec{F}(\vec{x}(t), \vec{v}(t), t) dt + \sqrt{2 k_B T \gamma^{-1} dt} \vec{\eta}_*(t)
+.. math:: \vec{x}(t + dt) = \vec{x}(t) + \gamma^{-1} \vec{F}(\vec{x}(t), \vec{v}(t), t) dt + \sqrt{2 k_B T \gamma^{-1} dt} \vec{\eta}_*(t)
 
 where :math:`\vec{\eta_*}` are pseudo-random numbers with zero mean and unit variance (particle indices are omitted for clarity).
 Velocities are obtained directly from

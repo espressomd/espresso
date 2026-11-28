@@ -104,6 +104,9 @@ function(python_test)
         ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
         ${TEST_FILE_CONFIGURED} --verbose ${TEST_ARGUMENTS}
         ${MPIEXEC_POSTFLAGS})
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL NVHPC)
+    # NVHPC doesn't support singleton mode
+    return()
   else()
     add_test(NAME ${TEST_NAME}
              COMMAND ${CMAKE_BINARY_DIR}/pypresso ${PYPRESSO_OPTIONS}
@@ -127,16 +130,30 @@ function(python_test)
       set_property(TEST ${TEST_NAME} PROPERTY TIMEOUT ${TEST_TIMEOUT})
     endif()
   endif()
+  if(ESPRESSO_INSIDE_DOCKER)
+    set_tests_properties(${TEST_NAME} PROPERTIES COST 10)
+    if("long" IN_LIST TEST_LABELS)
+      set_tests_properties(${TEST_NAME} PROPERTIES COST 20)
+    endif()
+  endif()
 
   math(EXPR TEST_NUM_CORES "${TEST_NUM_PROC} * ${TEST_NUM_THREADS}")
+
+  list(APPEND TEST_ENV_VARIABLES "OMPI_MCA_hwloc_base_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "PRTE_MCA_hwloc_default_binding_policy=none")
+  list(APPEND TEST_ENV_VARIABLES "HYDRA_BINDING=none")
+  list(APPEND TEST_ENV_VARIABLES "OMP_PROC_BIND=false")
+  list(APPEND TEST_ENV_VARIABLES "OMP_NUM_THREADS=${TEST_NUM_THREADS}")
 
   # cmake-format: off
   set_tests_properties(
     ${TEST_NAME} PROPERTIES PROCESSORS ${TEST_NUM_CORES} SKIP_RETURN_CODE 5
-                            ENVIRONMENT "OMP_PROC_BIND=false"
-                            ENVIRONMENT "OMP_NUM_THREADS=${TEST_NUM_THREADS}"
+                            ENVIRONMENT "${TEST_ENV_VARIABLES}"
                             DEPENDS "${TEST_DEPENDS}" LABELS "${TEST_LABELS}")
   # cmake-format: on
+  if(${TEST_NUM_CORES} GREATER ${ESPRESSO_HOST_NUM_CORES})
+    set_tests_properties(${TEST_NAME} PROPERTIES DISABLED ON)
+  endif()
 
   set(python_tests ${python_tests} ${TEST_FILE_CONFIGURED} PARENT_SCOPE)
 endfunction(python_test)
@@ -258,12 +275,16 @@ python_test(FILE observables.py MAX_NUM_PROC 4)
 python_test(FILE particle.py MAX_NUM_PROC 4)
 python_test(FILE pressure.py MAX_NUM_PROC 4)
 python_test(FILE stress_tensor_covariance.py MAX_NUM_PROC 8)
+# no MPI/OpenMP deadlock with only non-bonded interactions
+set_tests_properties(stress_tensor_covariance PROPERTIES DISABLED OFF)
 python_test(FILE scafacos_dipoles_1d_2d.py MAX_NUM_PROC 4)
 python_test(FILE scafacos_interface.py MAX_NUM_PROC 2)
 python_test(FILE long_range_actors.py MAX_NUM_PROC 4 GPU_SLOTS 2)
 python_test(FILE tabulated.py MAX_NUM_PROC 2)
 python_test(FILE particle_slice.py MAX_NUM_PROC 4)
 python_test(FILE rigid_bond.py MAX_NUM_PROC 4)
+python_test(FILE rigid_bond_virial.py MAX_NUM_PROC 4)
+python_test(FILE rigid_bond_virial_stats.py MAX_NUM_PROC 4 LABELS long)
 python_test(FILE rotation_per_particle.py MAX_NUM_PROC 4)
 python_test(FILE rotational_inertia.py MAX_NUM_PROC 2)
 python_test(FILE rotational-diffusion-aniso.py MAX_NUM_PROC 1 LABELS long)
@@ -296,9 +317,15 @@ python_test(FILE virtual_sites_tracers_gpu.py MAX_NUM_PROC 2 GPU_SLOTS 1
             DEPENDENCIES virtual_sites_tracers_common.py)
 python_test(FILE virtual_sites_center_of_mass.py MAX_NUM_PROC 4)
 python_test(FILE regular_decomposition.py MAX_NUM_PROC 4)
-python_test(FILE regular_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
-python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 SUFFIX 1_core)
+python_test(FILE regular_decomposition.py MAX_NUM_PROC 1 NUM_THREADS 2 SUFFIX
+            1_mpi_ranks_2_omp_threads)
+python_test(FILE regular_decomposition.py MAX_NUM_PROC 2 NUM_THREADS 1 SUFFIX
+            2_mpi_ranks_1_omp_threads)
 python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 4)
+python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 1 NUM_THREADS 2 SUFFIX
+            1_mpi_ranks_2_omp_threads)
+python_test(FILE hybrid_decomposition.py MAX_NUM_PROC 2 NUM_THREADS 1 SUFFIX
+            2_mpi_ranks_1_omp_threads)
 python_test(FILE coordinates_folding.py MAX_NUM_PROC 2)
 python_test(FILE ibm.py MAX_NUM_PROC 2)
 python_test(FILE dipolar_mdlc_p3m_scafacos_p2nfft.py MAX_NUM_PROC 1)
@@ -389,6 +416,9 @@ if(${ESPRESSO_TEST_NP} GREATER_EQUAL 2)
 endif()
 python_test(FILE lb_mass_conservation.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX
             1_core NUM_THREADS 2)
+python_test(FILE lb_checkpoint.py MAX_NUM_PROC 4 GPU_SLOTS 0)
+python_test(FILE lb_checkpoint.py MAX_NUM_PROC 1 GPU_SLOTS 1 SUFFIX 1_core)
+python_test(FILE dp3m_magnetostatic_pressure.py MAX_NUM_PROC 2)
 python_test(FILE p3m_electrostatic_pressure.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE p3m_madelung.py MAX_NUM_PROC 2 GPU_SLOTS 2 LABELS long)
 python_test(FILE sigint.py DEPENDENCIES sigint_child.py NO_MPI)
@@ -404,19 +434,22 @@ python_test(FILE linear_momentum.py MAX_NUM_PROC 4)
 python_test(FILE linear_momentum_lb.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE mmm1d.py MAX_NUM_PROC 2)
 python_test(FILE elc.py MAX_NUM_PROC 2 GPU_SLOTS 1)
+python_test(FILE elc_nonneutral.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE elc_vs_analytic.py MAX_NUM_PROC 2 GPU_SLOTS 1)
 python_test(FILE rotation.py MAX_NUM_PROC 1)
 python_test(FILE shapes.py MAX_NUM_PROC 1)
 python_test(FILE system.py MAX_NUM_PROC 2)
 python_test(FILE h5md.py MAX_NUM_PROC 2)
 python_test(FILE h5md.py MAX_NUM_PROC 1 SUFFIX 1_core)
-python_test(FILE p3m_fft.py MAX_NUM_PROC 6)
+if(${ESPRESSO_TEST_NP} GREATER_EQUAL 6)
+  python_test(FILE p3m_fft.py MAX_NUM_PROC 6 NUM_THREADS 1 SUFFIX 6_cores)
+endif()
 if(${ESPRESSO_TEST_NP} GREATER_EQUAL 8)
-  python_test(FILE p3m_fft.py MAX_NUM_PROC 8 SUFFIX 8_cores)
+  python_test(FILE p3m_fft.py MAX_NUM_PROC 8 NUM_THREADS 1 SUFFIX 8_cores)
 endif()
 python_test(FILE p3m_tuning_exceptions.py MAX_NUM_PROC 1 GPU_SLOTS 1)
 python_test(FILE utils.py MAX_NUM_PROC 1)
-python_test(FILE npt_thermostat.py MAX_NUM_PROC 4)
+python_test(FILE npt_thermostat.py MAX_NUM_PROC 2)
 python_test(FILE box_geometry.py MAX_NUM_PROC 1)
 python_test(FILE lattice.py MAX_NUM_PROC 4)
 python_test(FILE lattice_vtk.py MAX_NUM_PROC 4 GPU_SLOTS 1 NUM_THREADS 1
@@ -452,6 +485,8 @@ python_test(FILE propagation_stokesian.py MAX_NUM_PROC 2)
 python_test(FILE integrator_symplectic_euler_langevin.py MAX_NUM_PROC 4)
 python_test(FILE integrator_steepest_descent.py MAX_NUM_PROC 4)
 python_test(FILE integrator_exceptions.py MAX_NUM_PROC 1)
+python_test(FILE integrator_recalc_forces.py MAX_NUM_PROC 1 NUM_THREADS 1)
+python_test(FILE integrator_time_step_restore.py MAX_NUM_PROC 1 NUM_THREADS 1)
 python_test(FILE integrator_langevin_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_brownian_stats.py MAX_NUM_PROC 1 LABELS long)
 python_test(FILE integrator_npt_stats.py MAX_NUM_PROC 4 LABELS long)

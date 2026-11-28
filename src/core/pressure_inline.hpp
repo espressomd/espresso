@@ -60,7 +60,7 @@ calc_bonded_virial_pressure_tensor(
   );
   std::optional<Utils::Matrix<double, 3, 3>> pressure{std::nullopt};
   if (pair_force) {
-    pressure = Utils::tensor_product(*pair_force, dx);
+    pressure = Utils::tensor_product(dx, *pair_force);
   }
   return pressure;
 }
@@ -100,8 +100,8 @@ calc_bonded_three_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
     if (result) {
       Utils::Vector3d force2, force3;
       std::tie(std::ignore, force2, force3) = result.value();
-      return Utils::tensor_product(force2, dx21) +
-             Utils::tensor_product(force3, dx31);
+      return Utils::tensor_product(dx21, force2) +
+             Utils::tensor_product(dx31, force3);
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +
@@ -134,9 +134,9 @@ calc_bonded_four_body_pressure_tensor(Bonded_IA_Parameters const &iaparams,
       Utils::Vector3d force2, force3, force4;
       std::tie(std::ignore, force2, force3, force4) = result.value();
 
-      return -Utils::tensor_product(force2, v12) +
-             Utils::tensor_product(force3, v23) +
-             Utils::tensor_product(force4, v23 + v34);
+      return -Utils::tensor_product(v12, force2) +
+             Utils::tensor_product(v23, force3) +
+             Utils::tensor_product(v23 + v34, force4);
     }
   } else {
     runtimeWarningMsg() << "Unsupported bond type " +

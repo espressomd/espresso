@@ -46,8 +46,13 @@ Variant Integrator::integrate(VariantMap const &params) {
   });
 
   auto constexpr update_accumulators = true;
-  auto const reuse_forces = reuse_forces_flag
-                                ? INTEG_REUSE_FORCES_ALWAYS
+  // The mutual-exclusion check above guarantees that at most one of the two
+  // flags is set, so the order of these cases is irrelevant. recalc_forces
+  // must map to NEVER so that forces are recomputed unconditionally, even
+  // when propagation.recalc_forces is already false after a prior run.
+  auto const reuse_forces = reuse_forces_flag ? INTEG_REUSE_FORCES_ALWAYS
+                            : recalc_forces_flag
+                                ? INTEG_REUSE_FORCES_NEVER
                                 : INTEG_REUSE_FORCES_CONDITIONALLY;
   return get_system().integrate_with_signal_handler(steps, reuse_forces,
                                                     update_accumulators);
