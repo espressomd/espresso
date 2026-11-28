@@ -41,6 +41,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "ParticleRange.hpp"
+#include "aosoa_pack.hpp"
 
 #include <utils/Vector.hpp>
 #include <utils/math/sqr.hpp>
@@ -205,7 +206,6 @@ struct ElectrostaticLayerCorrection
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
-    sanity_checks_dielectric_contrasts();
     /* Most ELC parameters do not depend on the P3M parameters,
      * but the P3M parameters depend on the ELC parameters during tuning,
      * therefore ELC needs to be tuned before P3M. */
@@ -256,7 +256,6 @@ struct ElectrostaticLayerCorrection
     sanity_checks_periodicity();
     sanity_checks_cell_structure();
     sanity_checks_charge_neutrality();
-    sanity_checks_dielectric_contrasts();
     visit_base_solver([](auto &actor) { actor->sanity_checks(); });
   }
 
@@ -342,13 +341,15 @@ struct ElectrostaticLayerCorrection
       std::visit(
           [this, &pos1, &pos2, &p1f_asym, &p2f_asym, q1q2](auto &p3m_ptr) {
             auto const &p3m = *p3m_ptr;
+            // force on particle 1 exerted by the images of particle 2
             elc.dielectric_layers_contribution(
-                *m_box_geo, pos1, pos2, q1q2,
+                *m_box_geo, pos2, pos1, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p1f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
+            // force on particle 2 exerted by the images of particle 1
             elc.dielectric_layers_contribution(
-                *m_box_geo, pos2, pos1, q1q2,
+                *m_box_geo, pos1, pos2, q1q2,
                 [&](double q_eff, Utils::Vector3d const &d) {
                   p2f_asym += p3m.pair_force(q_eff, d, d.norm());
                 });
@@ -384,7 +385,6 @@ private:
 
   void sanity_checks_cell_structure() const {}
   void sanity_checks_periodicity() const;
-  void sanity_checks_dielectric_contrasts() const;
 
   /// the force calculation
   void add_force() const;

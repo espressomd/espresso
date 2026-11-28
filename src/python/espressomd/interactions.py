@@ -1482,7 +1482,7 @@ class BondedInteractions(ScriptObjectMap):
         Parameters
         ----------
         bond: :class:`espressomd.interactions.BondedInteraction`
-            Either a bond object...
+            The bond object to register.
 
         """
 

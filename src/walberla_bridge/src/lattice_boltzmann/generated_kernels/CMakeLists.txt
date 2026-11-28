@@ -46,7 +46,8 @@ configure_codegen_kernel(StreamCollideSweepThermalized)
 
 if(WALBERLA_BUILD_WITH_CUDA)
   foreach(precision Single Double)
-    target_sources(espresso_walberla_codegen
-                   PRIVATE FieldAccessors${precision}PrecisionCUDA.cu)
+    set(source_file FieldAccessors${precision}PrecisionCUDA.cu)
+    target_sources(espresso_walberla_codegen PRIVATE ${source_file})
+    espresso_set_walberla_codegen_kernel_source_properties(${source_file})
   endforeach()
 endif()

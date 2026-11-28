@@ -40,6 +40,7 @@
 #include <cmath>
 #include <iterator>
 #include <limits>
+#include <memory>
 #include <span>
 #include <string>
 

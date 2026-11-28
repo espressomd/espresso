@@ -76,7 +76,7 @@ static void force_calc_icc(
   auto const reset_kernel = [](Particle &p) { p.force_and_torque() = {}; };
   cell_structure.for_each_local_particle(reset_kernel);
   cell_structure.for_each_ghost_particle(reset_kernel);
-  cell_structure.reset_local_force_and_torque();
+  cell_structure.reset_local_force_buffers();
 
   // calc ICC forces
   cell_structure.non_bonded_loop(
@@ -117,7 +117,7 @@ void ICCStar::iteration() {
   auto const elc_kernel = coulomb.pair_force_elc_kernel();
   icc_cfg.citeration = 0;
 
-  using execution_space = Kokkos::DefaultExecutionSpace;
+  using execution_space = Kokkos::DefaultHostExecutionSpace;
   auto const &unique_particles = cell_structure.get_unique_particles();
   auto &local_force = cell_structure.get_local_force();
   auto scatter_force = system.cell_structure->get_scatter_force();
@@ -133,7 +133,7 @@ void ICCStar::iteration() {
     cell_structure.ghosts_reduce_forces();
     // force reduction
     Kokkos::Experimental::contribute(local_force, scatter_force);
-    kokkos_parallel_range_for<Kokkos::RangePolicy<execution_space>>(
+    kokkos_parallel_range_for<execution_space>(
         "reduction", std::size_t{0}, unique_particles.size(),
         [&local_force, &unique_particles](std::size_t const i) {
           auto &force = unique_particles.at(i)->force();
@@ -220,6 +220,11 @@ void ICCStar::iteration() {
     if (global_max_rel_diff < icc_cfg.convergence)
       break;
   }
+
+  // The iterations above scattered coulomb forces into the local force
+  // buffers; leave them zeroed so the force calculation that follows this
+  // charge update does not accumulate on top of stale contributions.
+  cell_structure.reset_local_force_buffers();
 
   if (global_max_rel_diff > icc_cfg.convergence) {
     runtimeErrorMsg()
