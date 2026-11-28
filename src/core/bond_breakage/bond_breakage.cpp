@@ -127,6 +127,7 @@ ActionSet actions_for_breakage(CellStructure const &cell_structure,
             DeleteAllBonds{p2->id(), p1->id()}};
       }
     }
+    return {};
   }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
