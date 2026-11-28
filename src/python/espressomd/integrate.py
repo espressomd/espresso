@@ -220,6 +220,8 @@ class VelocityVerletIsotropicNPT(Integrator):
         If ``True``, a cubic box is assumed and the value of ``direction``
         will be ignored when rescaling the box. This is required e.g. for
         electrostatics and magnetostatics. Default is ``False``.
+    barostat : :obj:`str`, optional, {'Andersen', 'MTK'}
+        The barostat scheme. Default is ``'Andersen'``.
 
     """
     _so_name = "Integrators::VelocityVerletIsoNPT"
