@@ -307,9 +307,10 @@ void influence_function_r2c(auto &g_function, auto const &global_size,
 /** @brief Calculate indices that shift @ref P3MParameters::mesh by `mesh/2`.
  *  For each mesh size @f$ n @f$ in @c mesh_size, create a sequence of integer
  *  values @f$ \left( 0, \ldots, \lfloor n/2 \rfloor, -\lfloor n/2 \rfloor,
- *  \ldots, -1\right) @f$ if @c zero_out_midpoint is false, otherwise
- *  @f$ \left( 0, \ldots, \lfloor n/2 - 1 \rfloor, 0, -\lfloor n/2 \rfloor,
- *  \ldots, -1\right) @f$.
+ *  \ldots, -1\right) @f$. If @c zero_out_midpoint is true, the Nyquist mode
+ *  @f$ n/2 @f$ of an even mesh is set to 0, giving
+ *  @f$ \left( 0, \ldots, n/2 - 1, 0, -n/2 + 1, \ldots, -1\right) @f$.
+ *  An odd mesh has no Nyquist mode and is not modified.
  */
 std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
     Utils::Vector3i const &mesh_size, bool zero_out_midpoint = false) {
@@ -317,16 +318,26 @@ std::array<std::vector<int>, 3> inline calc_p3m_mesh_shift(
 
   for (auto i = 0u; i < 3u; ++i) {
     ret[i] = std::vector<int>(static_cast<std::size_t>(mesh_size[i]));
+    auto const is_even_mesh = mesh_size[i] % 2 == 0;
 
     for (int j = 1; j <= mesh_size[i] / 2; j++) {
       ret[i][j] = j;
       ret[i][mesh_size[i] - j] = -j;
     }
-    if (zero_out_midpoint)
+    if (zero_out_midpoint and is_even_mesh)
       ret[i][mesh_size[i] / 2] = 0;
   }
 
   return ret;
+}
+
+/** @brief Check whether a k-space mesh index is the zero mode or the
+ *  Nyquist mode. Only an even mesh has a Nyquist mode, at index @f$ n/2 @f$.
+ *  @param index      Mesh index in k-space, in @f$ [0, n) @f$
+ *  @param mesh_size  Number of mesh points @f$ n @f$
+ */
+inline bool is_zero_or_nyquist_mode(int index, int mesh_size) {
+  return index == 0 or (mesh_size % 2 == 0 and index == mesh_size / 2);
 }
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)

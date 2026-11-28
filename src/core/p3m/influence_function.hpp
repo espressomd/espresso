@@ -166,13 +166,15 @@ std::vector<FloatType> grid_influence_function(
   }
 
   auto const wavevector = (2. * std::numbers::pi) * inv_box_l;
-  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
 
+  auto const is_zero_or_nyquist = [&](unsigned int dim) {
+    return is_zero_or_nyquist_mode(indices[dim], params.mesh[dim]);
+  };
+
   for_each_3d(n_start, n_stop, indices, [&]() {
-    if ((indices[0u] % half_mesh[0u] != 0) or
-        (indices[1u] % half_mesh[1u] != 0) or
-        (indices[2u] % half_mesh[2u] != 0)) {
+    if (not(is_zero_or_nyquist(0u) and is_zero_or_nyquist(1u) and
+            is_zero_or_nyquist(2u))) {
       auto const k =
           Utils::Vector3d{{shifts[0u][indices[0u]] * wavevector[0u],
                            shifts[1u][indices[1u]] * wavevector[1u],

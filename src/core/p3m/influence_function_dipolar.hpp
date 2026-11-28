@@ -151,17 +151,19 @@ std::vector<FloatType> grid_influence_function_dipolar(
 
   auto const offset = calc_p3m_mesh_shift(params.mesh, false)[0];
   auto const d_op = calc_p3m_mesh_shift(params.mesh, true)[0];
-  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
   auto shift_off = Utils::Vector3i{};
   auto d_op_off = Utils::Vector3i{};
 
+  auto const is_zero_or_nyquist = [&](unsigned int dim) {
+    return is_zero_or_nyquist_mode(indices[dim], params.mesh[dim]);
+  };
+
   for_each_3d(
       n_start, n_stop, indices,
       [&]() {
-        if (((indices[0u] % half_mesh[0u] != 0) or
-             (indices[1u] % half_mesh[1u] != 0) or
-             (indices[2u] % half_mesh[2u] != 0))) {
+        if (not(is_zero_or_nyquist(0u) and is_zero_or_nyquist(1u) and
+                is_zero_or_nyquist(2u))) {
           auto const index =
               Utils::get_linear_index<memory_order>(indices - n_start, size);
           g[index] = FloatType(
@@ -218,19 +220,21 @@ inline double grid_influence_function_self_energy(
 
   auto const offset = calc_p3m_mesh_shift(params.mesh, false)[0];
   auto const d_op = calc_p3m_mesh_shift(params.mesh, true)[0];
-  auto const half_mesh = params.mesh / 2;
   auto indices = Utils::Vector3i{};
   auto shift_off = Utils::Vector3i{};
   auto d_op_off = Utils::Vector3i{};
   auto index = std::size_t(0u);
   auto energy = 0.;
 
+  auto const is_zero_or_nyquist = [&](unsigned int dim) {
+    return is_zero_or_nyquist_mode(indices[dim], params.mesh[dim]);
+  };
+
   for_each_3d(
       n_start, n_stop, indices,
       [&]() {
-        if (((indices[0u] % half_mesh[0u] != 0) or
-             (indices[1u] % half_mesh[1u] != 0) or
-             (indices[2u] % half_mesh[2u] != 0))) {
+        if (not(is_zero_or_nyquist(0u) and is_zero_or_nyquist(1u) and
+                is_zero_or_nyquist(2u))) {
           auto const U2 = G_opt_dipolar_self_energy<m>(params, shift_off);
           energy += static_cast<double>(g[index]) * U2 * d_op_off.norm2();
         }

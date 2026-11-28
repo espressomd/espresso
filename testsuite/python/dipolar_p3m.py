@@ -50,10 +50,11 @@ class MagnetostaticsP3M(ut.TestCase):
         mdlc_params = {'maxPWerror': 1e-5, 'gap_size': 5.}
 
         # reference values for energy and force calculated for prefactor = 1.1
-        ref_dp3m_energy = 1.673333
-        ref_dp3m_force = np.array([-3.54175042, -4.6761059, 9.96632774])
-        ref_dp3m_torque1 = np.array([-3.29316117, -13.21245739, -5.33787892])
-        ref_dp3m_torque2 = np.array([3.98103932, -7.47123148, -4.12823244])
+        # with an even mesh of 80 points per direction
+        ref_dp3m_energy = 1.910958
+        ref_dp3m_force = np.array([-3.66191219, -4.77712158, 10.06358373])
+        ref_dp3m_torque1 = np.array([-3.77131609, -13.01601984, -5.37272543])
+        ref_dp3m_torque2 = np.array([3.77131609, -7.32029567, -4.28079903])
 
         # check metallic case
         dp3m = espressomd.magnetostatics.DipolarP3M(

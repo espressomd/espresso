@@ -32,6 +32,8 @@
 #include "p3m/FFTBackendLegacy.hpp"
 #include "p3m/FFTBuffersLegacy.hpp"
 #include "p3m/common.hpp"
+#include "p3m/influence_function.hpp"
+#include "p3m/influence_function_dipolar.hpp"
 
 #include "EspressoCoreGlobalConfig.hpp"
 #include "Particle.hpp"
@@ -49,6 +51,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -73,7 +76,7 @@ BOOST_AUTO_TEST_CASE(calc_meshift_false) {
 BOOST_AUTO_TEST_CASE(calc_meshift_true) {
   std::array<std::vector<int>, 3> const ref = {
       {std::vector<int>{0}, std::vector<int>{0, 1, 0, -1},
-       std::vector<int>{0, 1, 2, 0, -3, -2, -1}}};
+       std::vector<int>{0, 1, 2, 3, -3, -2, -1}}};
 
   auto const mesh = Utils::Vector3i{{1, 4, 7}};
   auto const val = calc_p3m_mesh_shift(mesh, true);
@@ -84,6 +87,66 @@ BOOST_AUTO_TEST_CASE(calc_meshift_true) {
     }
   }
 }
+
+BOOST_AUTO_TEST_CASE(zero_or_nyquist_mode) {
+  // even mesh: zero mode and Nyquist mode
+  BOOST_CHECK(is_zero_or_nyquist_mode(0, 6));
+  BOOST_CHECK(is_zero_or_nyquist_mode(3, 6));
+  BOOST_CHECK(not is_zero_or_nyquist_mode(2, 6));
+  // odd mesh: zero mode only
+  BOOST_CHECK(is_zero_or_nyquist_mode(0, 5));
+  BOOST_CHECK(not is_zero_or_nyquist_mode(2, 5));
+  BOOST_CHECK(not is_zero_or_nyquist_mode(4, 5));
+  BOOST_CHECK(is_zero_or_nyquist_mode(0, 1));
+}
+
+#if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+/** Count the influence function values that are zero and check that all
+ *  values are finite. Only the zero mode is zero on an odd mesh; on an even
+ *  mesh, the 8 combinations of zero mode and Nyquist mode are zero.
+ */
+template <typename InfluenceFunction>
+void check_influence_function_zeros(InfluenceFunction const &kernel) {
+  auto const box_l = Utils::Vector3d::broadcast(10.);
+  for (auto const mesh_size : {5, 6, 7}) {
+    BOOST_TEST_CONTEXT("mesh " << mesh_size) {
+      auto const mesh = Utils::Vector3i::broadcast(mesh_size);
+      auto params = P3MParameters{
+          false, 0., 3.5, mesh, Utils::Vector3d::broadcast(0.5), 3, 0.9, 1e-3};
+      params.recalc_a_ai_cao_cut(box_l);
+      params.alpha_L = params.alpha * box_l[0];
+      auto const g = kernel(params, mesh, Utils::Vector3d::broadcast(0.1));
+      auto const ref_zeros = std::ptrdiff_t{(mesh_size % 2 == 0) ? 8 : 1};
+      BOOST_CHECK_EQUAL(std::ranges::count(g, 0.), ref_zeros);
+      BOOST_CHECK(g[0] == 0.);
+      BOOST_CHECK(
+          std::ranges::all_of(g, [](double v) { return std::isfinite(v); }));
+    }
+  }
+}
+#endif // defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
+
+#ifdef ESPRESSO_P3M
+BOOST_AUTO_TEST_CASE(influence_function_zero_modes) {
+  check_influence_function_zeros([](P3MParameters const &params,
+                                    Utils::Vector3i const &mesh,
+                                    Utils::Vector3d const &inv_box_l) {
+    return grid_influence_function<double, 1, 0, Utils::MemoryOrder::ROW_MAJOR>(
+        params, Utils::Vector3i{}, mesh, inv_box_l);
+  });
+}
+#endif // ESPRESSO_P3M
+
+#ifdef ESPRESSO_DP3M
+BOOST_AUTO_TEST_CASE(influence_function_dipolar_zero_modes) {
+  check_influence_function_zeros([](P3MParameters const &params,
+                                    Utils::Vector3i const &mesh,
+                                    Utils::Vector3d const &inv_box_l) {
+    return grid_influence_function_dipolar<double, 3, 0>(
+        params, Utils::Vector3i{}, mesh, inv_box_l);
+  });
+}
+#endif // ESPRESSO_DP3M
 
 #if defined(ESPRESSO_P3M) or defined(ESPRESSO_DP3M)
 
