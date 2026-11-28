@@ -40,7 +40,10 @@ struct TabulatedPotential {
   double maxval = -1.0;
   /** Inverse distance on the x-axis between tabulated values. */
   double invstepsize = 0.0;
-  /** Tabulated forces. */
+  /** Tabulated forces, i.e. @f$ -\mathrm{d}V/\mathrm{d}x @f$, the negative
+   *  derivative of the energy with respect to the tabulated coordinate
+   *  @f$ x @f$ (distance, bond angle or dihedral angle).
+   */
   std::vector<double> force_tab;
   /** Tabulated energies. */
   std::vector<double> energy_tab;

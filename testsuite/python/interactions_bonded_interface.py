@@ -185,15 +185,23 @@ class BondedInteractions(ut.TestCase):
 
     @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_angle(self):
-        params = {"energy": [1., 2., 3.], "force": [3., 4., 5.]}
+        params = {"energy": [1., 2., 3.], "force_angle": [3., 4., 5.]}
         BondedInteractions.generateTestForBondParams(
             0, espressomd.interactions.TabulatedAngle, params)(self)
+        # the old parameter name must not be silently accepted
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'force' was renamed to 'force_angle'"):
+            espressomd.interactions.TabulatedAngle(
+                energy=[1., 2., 3.], force=[3., 4., 5.])
 
     @utx.skipIfMissingFeatures(["TABULATED"])
     def test_tabulated_dihedral(self):
-        params = {"energy": [1., 2., 3.], "force": [3., 4., 5.]}
+        params = {"energy": [1., 2., 3.], "force_dihedral": [3., 4., 5.]}
         BondedInteractions.generateTestForBondParams(
             0, espressomd.interactions.TabulatedDihedral, params)(self)
+        # the old parameter name must not be silently accepted
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'force' was renamed to 'force_dihedral'"):
+            espressomd.interactions.TabulatedDihedral(
+                energy=[1., 2., 3.], force=[3., 4., 5.])
 
     @utx.skipIfMissingFeatures(["BOND_CONSTRAINT"])
     def test_rigid_bond(self):

@@ -335,7 +335,7 @@ public:
          [this]() { return get_struct().pot->maxval; }},
         {"energy", AutoParameter::read_only,
          [this]() { return get_struct().pot->energy_tab; }},
-        {"force", AutoParameter::read_only,
+        {"force_angle", AutoParameter::read_only,
          [this]() { return get_struct().pot->force_tab; }},
     });
   }
@@ -346,7 +346,7 @@ private:
         std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
             get_value<double>(params, "min"), get_value<double>(params, "max"),
             get_value<std::vector<double>>(params, "energy"),
-            get_value<std::vector<double>>(params, "force")));
+            get_value<std::vector<double>>(params, "force_angle")));
   }
 };
 
@@ -361,7 +361,7 @@ public:
          [this]() { return get_struct().pot->maxval; }},
         {"energy", AutoParameter::read_only,
          [this]() { return get_struct().pot->energy_tab; }},
-        {"force", AutoParameter::read_only,
+        {"force_dihedral", AutoParameter::read_only,
          [this]() { return get_struct().pot->force_tab; }},
     });
   }
@@ -372,7 +372,7 @@ private:
         std::make_shared<::Bonded_IA_Parameters>(CoreBondedInteraction(
             get_value<double>(params, "min"), get_value<double>(params, "max"),
             get_value<std::vector<double>>(params, "energy"),
-            get_value<std::vector<double>>(params, "force")));
+            get_value<std::vector<double>>(params, "force_dihedral")));
   }
 };
 

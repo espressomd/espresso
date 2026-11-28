@@ -1069,7 +1069,8 @@ class TabulatedDistance(BondedInteraction):
     energy: array_like of :obj:`float`
         The energy table.
     force: array_like of :obj:`float`
-        The force table.
+        The force table, i.e. :math:`-\\mathrm{d}V/\\mathrm{d}r`, the negative
+        derivative of the energy with respect to the distance.
 
     """
 
@@ -1095,8 +1096,10 @@ class TabulatedAngle(BondedInteraction):
 
     energy: array_like of :obj:`float`
         The energy table for the range :math:`0-\\pi`.
-    force: array_like of :obj:`float`
-        The force table for the range :math:`0-\\pi`.
+    force_angle: array_like of :obj:`float`
+        The table of :math:`-\\mathrm{d}V/\\mathrm{d}\\theta` for the range
+        :math:`0-\\pi`, i.e. the negative derivative of the energy with
+        respect to the bond angle.
 
     """
 
@@ -1107,6 +1110,10 @@ class TabulatedAngle(BondedInteraction):
     def __init__(self, *args, **kwargs):
         pi = 3.14159265358979
         if len(args) == 0 and "sip" not in kwargs:
+            if "force" in kwargs:
+                raise RuntimeError(
+                    "Parameter 'force' was renamed to 'force_angle', which "
+                    "takes -dV/dtheta (the old 'force' took +dV/dtheta)")
             kwargs.update({"min": 0., "max": pi})
         super().__init__(*args, **kwargs)
 
@@ -1128,9 +1135,10 @@ class TabulatedDihedral(BondedInteraction):
 
     energy: array_like of :obj:`float`
         The energy table for the range :math:`0-2\\pi`.
-    force: array_like of :obj:`float`
-        The force table for the range :math:`0-2\\pi`.
-
+    force_dihedral: array_like of :obj:`float`
+        The table of :math:`-\\mathrm{d}V/\\mathrm{d}\\phi` for the range
+        :math:`0-2\\pi`, i.e. the negative derivative of the energy with
+        respect to the dihedral angle.
     """
 
     _so_name = "Interactions::TabulatedDihedralBond"
@@ -1140,6 +1148,10 @@ class TabulatedDihedral(BondedInteraction):
     def __init__(self, *args, **kwargs):
         pi = 3.14159265358979
         if len(args) == 0 and "sip" not in kwargs:
+            if "force" in kwargs:
+                raise RuntimeError(
+                    "Parameter 'force' was renamed to 'force_dihedral', which "
+                    "takes -dV/dphi (the old 'force' took -(dV/dphi)/sin(phi))")
             kwargs.update({"min": 0., "max": 2. * pi})
         super().__init__(*args, **kwargs)
 

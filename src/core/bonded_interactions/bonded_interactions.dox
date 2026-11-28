@@ -527,15 +527,17 @@
  *
  *  @subsubsection bondedIA_angle_tab Tabulated potential
  *
- *  The tabulated potential and its derivative with respect to the angle are
- *  provided by the user. The angle force term takes the form:
+ *  The tabulated potential and the negative of its derivative with respect to
+ *  the angle, @f$ -\mathrm{d}U(\theta_{ijk})/\mathrm{d}\theta_{ijk} @f$
+ *  (parameter @c force_angle), are provided by the user. The angle force term
+ *  takes the form:
  *
  *  @f{equation}{
  *      \label{eq:tabulated-pot-angle-term}
  *      K(\theta_{ijk})
- *          = \frac{-1}{\sin(\theta_{ijk})}
+ *          = \frac{1}{\sin(\theta_{ijk})}
  *            \left(
- *                  \frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
+ *                  -\frac{\mathrm{d}U(\theta_{ijk})}{\mathrm{d}\theta_{ijk}}
  *            \right)
  *  @f}
  *

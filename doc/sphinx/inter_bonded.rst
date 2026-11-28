@@ -222,10 +222,12 @@ A tabulated bond length can be instantiated via
     system.bonded_inter.add(tab_dist)
     p1.add_bond((tab_dist, p2))
 
-This creates a bond type identifier with a tabulated potential. The force acts
-in the direction of the connecting vector between the particles. The bond breaks
-above the tabulated range, but for distances smaller than the tabulated range,
-a linear extrapolation based on the first two tabulated force values is used.
+This creates a bond type identifier with a tabulated potential. The force table
+contains :math:`-\mathrm{d}V/\mathrm{d}r`, i.e. the negative derivative of the
+energy with respect to the distance. The force acts in the direction of the 
+connecting vector between the particles. The bond breaks above the tabulated 
+range, but for distances smaller than the tabulated range, a linear extrapolation 
+based on the first two tabulated force values is used.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
 
@@ -342,6 +344,8 @@ Example::
     p1.add_bond((angle_cossquare, p0, p2))
 
 
+.. _Tabulated angle potential:
+
 Tabulated angle potential
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -350,19 +354,29 @@ A tabulated bond angle can be instantiated via
 
     import espressomd.interactions
     theta = np.linspace(0, np.pi, num=91, endpoint=True)
-    angle_tab =  espressomd.interactions.TabulatedAngle(
-        energy=10 * (theta - 2 * np.pi / 3)**2,
-        force=10 * (theta - 2 * np.pi / 3) / 2)
+    angle_tab = espressomd.interactions.TabulatedAngle(
+        energy=10 / 2 * (theta - 2 * np.pi / 3)**2,
+        force_angle=-10 * (theta - 2 * np.pi / 3))
     system.bonded_inter.add(angle_tab)
     p1.add_bond((angle_tab, p0, p2))
 
 The energy and force tables must be sampled from :math:`0` to :math:`\pi`,
-where :math:`\pi` corresponds to a flat angle. The forces are scaled with the
+where :math:`\pi` corresponds to a flat angle.
+The force table ``force_angle`` contains :math:`-\mathrm{d}V/\mathrm{d}\theta`,
+i.e. the negative derivative of the energy with respect to the bond angle;
+note that this is an energy, not a force, since :math:`\theta` is dimensionless.
+The forces are scaled with the
 inverse length of the connecting vectors. The force on the extremities acts
 perpendicular to the connecting vector between the corresponding particle and
 the center particle, in the plane defined by the three particles. The force on
 the center particle balances the other two forces.
 For details of the interpolation, see :ref:`Tabulated interaction`.
+
+.. note::
+
+   Before ESPResSo 5.1, the force table was passed as ``force`` and had to
+   contain :math:`+\mathrm{d}V/\mathrm{d}\theta`. Tables built for the old
+   convention must be passed as ``force_angle`` with the opposite sign.
 
 
 .. _Dihedral interactions:
@@ -406,9 +420,17 @@ angle between the planes defined by the particle triples :math:`p_1`,
 Together with appropriate Lennard-Jones interactions, this potential can
 mimic a large number of atomic torsion potentials.
 
-Note that there is a singularity in the forces, but not in the energy, when
-:math:`\phi = 0` and :math:`\phi = \pi`.
+The forces are obtained from the chain rule
+:math:`f_i = -(\mathrm{d}V/\mathrm{d}\phi)(\partial\phi/\partial r_i)`, with the
+gradients of :math:`\phi` taken from :cite:`blondel96a`. This formulation has no
+singularity at :math:`\phi = 0` or :math:`\phi = \pi`; the dihedral angle and
+its gradients are undefined only when three consecutive particles are
+collinear (no plane normal can be constructed from them). In that case a
+runtime warning is issued and the energy and force for this bond are set to
+zero.
 
+
+.. _Tabulated dihedral potential:
 
 Tabulated dihedral potential
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -417,15 +439,30 @@ A tabulated dihedral interaction can be instantiated via
 :class:`espressomd.interactions.TabulatedDihedral`::
 
     import espressomd.interactions
-    dihedral_tab = espressomd.interactions.TabulatedDihedral(energy=<energy>, force=<force>)
+    dihedral_tab = espressomd.interactions.TabulatedDihedral(
+        energy=<energy>, force_dihedral=<force_dihedral>)
     system.bonded_inter.add(dihedral_tab)
     p2.add_bond((dihedral_tab, p1, p3, p4))
 
 The energy and force tables must be sampled from :math:`0` to :math:`2\pi`.
+The force table ``force_dihedral`` contains
+:math:`-\mathrm{d}V/\mathrm{d}\phi`, i.e. the negative derivative of the energy
+with respect to the dihedral angle; note that this
+is an energy, not a force, since :math:`\phi` is dimensionless.
 For details of the interpolation, see :ref:`Tabulated interaction`.
 
-Note that there is a singularity in the forces, but not in the energy, when
-:math:`\phi = 0` and :math:`\phi = \pi`.
+Like the analytic dihedral potential above, this interaction has no singularity
+at :math:`\phi = 0` or :math:`\phi = \pi`.
+
+.. note::
+
+   Before ESPResSo 5.1, the force table was passed as ``force`` and had to
+   contain :math:`-(\mathrm{d}V/\mathrm{d}\phi)/\sin\phi` instead. That
+   quantity is unbounded at :math:`\phi = 0` and :math:`\phi = \pi` whenever
+   :math:`\mathrm{d}V/\mathrm{d}\phi` does not vanish there, so it could not be
+   tabulated correctly for a general potential. Tables built for the old
+   convention must be regenerated by dropping the :math:`1/\sin\phi` factor
+   and passed as ``force_dihedral``.
 
 .. _Immersed Boundary Method interactions:
 
