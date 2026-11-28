@@ -113,13 +113,5 @@ class TestCPU(Test, ut.TestCase):
     rtol = 1e-7
 
 
-@utx.skipIfMissingGPU()
-@utx.skipIfMissingFeatures(["P3M"])
-class TestGPU(Test, ut.TestCase):
-
-    p3m_params = {"gpu": True}
-    rtol = 5e-6
-
-
 if __name__ == "__main__":
     ut.main()

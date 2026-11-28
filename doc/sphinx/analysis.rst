@@ -523,7 +523,7 @@ documentation for all available observables in :mod:`espressomd.observables`.
 
    - :class:`~espressomd.observables.PressureTensor`: Total pressure tensor (see :ref:`Pressure Tensor`)
 
-   - :class:`~espressomd.observables.DPDStress`
+   - :class:`~espressomd.observables.DPDPressure`
 
 
 .. _Accumulators:

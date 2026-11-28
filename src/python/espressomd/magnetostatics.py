@@ -160,7 +160,7 @@ class DipolarP3M(MagnetostaticInteraction):
             raise TypeError("Parameter 'tune' has to be a boolean")
 
     def required_keys(self):
-        return {"accuracy"}
+        return {"prefactor", "accuracy"}
 
     def default_params(self):
         return {"cao": -1,

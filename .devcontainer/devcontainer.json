@@ -1,5 +1,5 @@
 {
-  "image": "ghcr.io/espressomd/docker/fedora:3388b293a5e8a9b613b1bfa4220e54dfb4bff245",
+  "image": "ghcr.io/espressomd/docker/fedora:d5ac9f0a0e44f3ade96f58672b311147851855d3",
   "customizations": {
     "vscode": {
       "settings": {

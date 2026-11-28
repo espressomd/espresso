@@ -61,6 +61,8 @@ class PairCriteria(ut.TestCase):
         dc = espressomd.pair_criteria.DistanceCriterion(cut_off=0.1)
         with self.assertRaises(RuntimeError):
             dc.call_method("unknown")
+        with self.assertRaisesRegex(RuntimeError, "Parameter 'cut_off' is missing"):
+            espressomd.pair_criteria.EnergyCriterion()
 
     @utx.skipIfMissingFeatures("LENNARD_JONES")
     def test_energy_crit(self):
