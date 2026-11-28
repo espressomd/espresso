@@ -734,23 +734,13 @@ Particle number counting feature
 
 
 Knowing the number of particles of a certain type in simulations where
-particle numbers can fluctuate is of interest.
-Particle ids can be stored in a map for each individual type::
+particle numbers can fluctuate is of interest::
 
     import espressomd
     system = espressomd.System(box_l=[1, 1, 1])
-    system.setup_type_map([_type])
     system.number_of_particles(_type)
 
-If you want to keep track of particle ids of a certain type you have to
-initialize the method by calling  ::
-
-    system.setup_type_map([_type])
-
-After that the system will keep track of particle ids of that type. Keeping
-track of particles of a given type is not enabled by default since it requires
-memory. The keyword ``number_of_particles`` as argument will return the number
-of particles which have the given type. For counting the number of particles
+For counting the number of particles
 of a given type you could also use
 :meth:`ParticleList.select() <espressomd.particle_data.ParticleList.select>` ::
 
@@ -763,9 +753,8 @@ of a given type you could also use
     print(len(system.part.select(type=2)))
 
 However calling ``select(type=type)`` results in looping over all particles,
-which is slow. In contrast, the system
-:meth:`~espressomd.system.System.number_of_particles` method can return the
-number of particles with that type.
+and creating temporary particle objects, which is slow. In contrast, the system
+:meth:`~espressomd.system.System.number_of_particles` method has low overhead.
 
 .. _Self-propelled swimmers:
 

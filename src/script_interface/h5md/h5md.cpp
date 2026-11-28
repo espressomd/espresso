@@ -66,6 +66,7 @@ void H5md::do_construct(VariantMap const &params) {
           "charge_unit", "chunk_size");
   // MPI communicator is needed to close parallel file handles
   m_mpi_env_lock = ::communication_environment->get_mpi_env();
+  is_file_closed = false;
 }
 
 H5md::~H5md() {
@@ -74,8 +75,18 @@ H5md::~H5md() {
   m_mpi_env_lock.reset();
 }
 
+void H5md::sanity_check_is_file_closed(std::string const &name) const {
+  if (is_file_closed) {
+    if (context()->is_head_node()) {
+      throw std::runtime_error("cannot call '" + name + "' on a closed file");
+    }
+    throw Exception("");
+  }
+}
+
 Variant H5md::do_call_method(std::string const &name, VariantMap const &) {
   if (name == "write") {
+    sanity_check_is_file_closed(name);
     auto const &system = ::System::get_system();
     auto const particles = system.cell_structure->local_particles();
     auto const sim_time = system.get_sim_time();
@@ -83,9 +94,12 @@ Variant H5md::do_call_method(std::string const &name, VariantMap const &) {
     auto const n_steps = static_cast<int>(std::round(sim_time / time_step));
     m_h5md->write(particles, sim_time, n_steps, *system.box_geo);
   } else if (name == "flush") {
+    sanity_check_is_file_closed(name);
     m_h5md->flush();
   } else if (name == "close") {
+    sanity_check_is_file_closed(name);
     m_h5md->close();
+    is_file_closed = true;
   } else if (name == "valid_fields") {
     return make_vector_of_variants(m_h5md->valid_fields());
   }

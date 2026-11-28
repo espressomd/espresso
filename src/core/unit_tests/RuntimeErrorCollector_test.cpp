@@ -65,8 +65,8 @@ BOOST_AUTO_TEST_CASE(count) {
   /* There should now be one error and world.size() warnings */
   auto const n_local_errors = static_cast<int>(world.rank() == rank_of_error);
   auto const n_local_warnings = n_local_errors + 1;
-  BOOST_REQUIRE_EQUAL(rec.count(ErrorLevel::ERROR), n_local_errors);
-  BOOST_REQUIRE_EQUAL(rec.count(ErrorLevel::WARNING), n_local_warnings);
+  BOOST_REQUIRE_EQUAL(rec.count_local(ErrorLevel::ERROR), n_local_errors);
+  BOOST_REQUIRE_EQUAL(rec.count_local(ErrorLevel::WARNING), n_local_warnings);
 
   /* Clear list of errors */
   world.barrier();
@@ -115,6 +115,19 @@ BOOST_AUTO_TEST_CASE(gather) {
   }
 
   BOOST_REQUIRE_EQUAL(rec.count(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(dtor) {
+  boost::mpi::communicator world;
+  auto rec = std::make_unique<RuntimeErrorCollector>(world);
+  auto const rank_of_error = world.size() - 1;
+  if (world.rank() == rank_of_error) {
+    rec->error("unhandled_error", "Test_functions", "Test_file", world.rank());
+  }
+  world.barrier();
+  BOOST_REQUIRE_EQUAL(rec->count(), 1);
+  world.barrier();
+  rec.reset();
 }
 
 int main(int argc, char **argv) {

@@ -26,7 +26,7 @@ import espressomd.lb
 
 """
 Check the lattice-Boltzmann thermostat with respect to the particle velocity
-distribution.
+distribution. The LB time step can be an integer multiple of the MD time step.
 """
 
 KT = 0.2
@@ -34,12 +34,12 @@ AGRID = 0.8
 node_volume = AGRID**3
 KIN_VISC = 0.3
 DENS = 0.8
-TIME_STEP = 0.005
+TAU = 0.005
 
 LB_PARAMS = {'agrid': AGRID,
              'density': DENS,
              'kinematic_viscosity': KIN_VISC,
-             'tau': TIME_STEP,
+             'tau': TAU,
              'kT': KT,
              'seed': 123}
 
@@ -52,10 +52,13 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
     with the root-mean-squared-velocity.
     The temperature check together with the friction test
     ensure that the noise amplitude is correct.
+    The LB time step is always ``TAU``, the MD time step is
+    ``TAU / md_steps_per_lb_step``.
     """
 
     system = espressomd.System(box_l=[AGRID * 12] * 3)
-    system.time_step = TIME_STEP
+    system.time_step = TAU
+    md_steps_per_lb_step = 1
     system.cell_system.skin = 0.4 * AGRID
     # use "small" particles such that radius=hydrodynamic radius
     global_gamma = 0.1 * AGRID * 6 * np.pi * KIN_VISC * DENS
@@ -64,6 +67,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
     partcl_mass = 0.2 * partcl_gamma
 
     def setUp(self):
+        self.system.time_step = TAU / self.md_steps_per_lb_step
         self.lbf = self.lb_class(**LB_PARAMS, **self.lb_params)
         self.system.lb = self.lbf
         # make test results independent of execution order
@@ -78,6 +82,9 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
         self.system.thermostat.turn_off()
         self.system.part.clear()
 
+    def run_lb_steps(self, n_lb_steps):
+        self.system.integrator.run(n_lb_steps * self.md_steps_per_lb_step)
+
     def get_lb_kT(self, lbf):
         nodes_mass = lbf[:, :, :].density * node_volume
         nodes_vel_sq = np.sum(np.square(lbf[:, :, :].velocity), axis=3)
@@ -87,11 +94,11 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
         return np.mean(lbf[:, :, :].velocity, axis=(0, 1, 2))
 
     def test_fluid(self):
-        self.system.integrator.run(100)
+        self.run_lb_steps(100)
         fluid_kTs = []
         for _ in range(100):
             fluid_kTs.append(self.get_lb_kT(self.lbf))
-            self.system.integrator.run(3)
+            self.run_lb_steps(3)
 
         fluid_kT = np.mean(fluid_kTs)
         np.testing.assert_allclose(fluid_kT, KT, rtol=0.05)
@@ -121,14 +128,14 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
             pos=np.random.random((n_partcls_per_type, 3)) * self.system.box_l,
             mass=n_partcls_per_type * [self.partcl_mass],
             gamma=n_partcls_per_type * [self.partcl_gamma])
-        self.system.integrator.run(50)
+        self.run_lb_steps(50)
         n_samples = 400
         vel_global_gamma = np.zeros((n_samples, n_partcls_per_type, 3))
         vel_per_part_gamma = np.zeros_like(vel_global_gamma)
         fluid_kTs = []
 
         for i in range(n_samples):
-            self.system.integrator.run(3)
+            self.run_lb_steps(3)
             if i % 10 == 0:
                 fluid_kTs.append(self.get_lb_kT(self.lbf))
             vel_global_gamma[i] = partcls_global_gamma.v
@@ -172,7 +179,7 @@ class LBThermostatCommon(thermostats_common.ThermostatsCommon):
 
         run_time = 0.3
         n_steps = int(run_time / self.system.time_step)
-        steps_per_sample = 10
+        steps_per_sample = 10 * self.md_steps_per_lb_step
         lb_vels = []
         for _ in range(int(n_steps / steps_per_sample)):
             self.system.integrator.run(steps_per_sample)
@@ -239,6 +246,33 @@ class LBThermostatWalberlaDoublePrecisionBlocksCPU(
     lb_class = espressomd.lb.LBFluid
     lb_params = {"single_precision": False, "gpu": False,
                  "blocks_per_mpi_rank": [2, 2, 2]}
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBThermostatWalberlaDoublePrecisionCPUTauNeqTimeStep(
+        LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": False}
+    md_steps_per_lb_step = 5
+
+
+@utx.skipIfMissingFeatures(["WALBERLA"])
+class LBThermostatWalberlaSinglePrecisionCPUTauNeqTimeStep(
+        LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": True, "gpu": False}
+    md_steps_per_lb_step = 5
+
+
+@utx.skipIfMissingGPU()
+@ut.skipIf(LBThermostatCommon.system.cell_system.get_state()["n_nodes"] != 1,
+           "only runs for 1 MPI rank")
+@utx.skipIfMissingFeatures(["WALBERLA", "CUDA"])
+class LBThermostatWalberlaDoublePrecisionGPUTauNeqTimeStep(
+        LBThermostatCommon, ut.TestCase):
+    lb_class = espressomd.lb.LBFluid
+    lb_params = {"single_precision": False, "gpu": True}
+    md_steps_per_lb_step = 5
 
 
 if __name__ == '__main__':

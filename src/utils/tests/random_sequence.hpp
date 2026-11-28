@@ -19,9 +19,7 @@
 
 #pragma once
 
-namespace Testing {
-namespace RandomSequence {
-
+namespace Testing::RandomSequence {
 constexpr inline double values[] = {
     5.36812441e-01, 9.05016283e-01, 2.21117887e-01, 5.02819496e-01,
     7.63086501e-01, 6.53893270e-01, 8.23665727e-01, 9.69872102e-01,
@@ -2523,5 +2521,4 @@ constexpr inline double values[] = {
     3.53820642e-01, 2.50878091e-01, 2.37320793e-01, 7.18205684e-01,
     5.23954402e-01, 1.02606800e-01, 3.52420052e-01, 9.15295828e-01,
     8.03228185e-01, 1.88864574e-01, 4.64225071e-02, 2.85621607e-01};
-}
-} // namespace Testing
+} // namespace Testing::RandomSequence

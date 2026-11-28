@@ -21,19 +21,21 @@
 
 #pragma once
 
+#include <complex>
 #include <cstddef>
-#include <limits>
-#include <stdexcept>
 #include <type_traits>
 #include <vector>
 
 namespace fft {
 
+template <typename T, typename... Ts>
+inline constexpr bool is_any_of_v = (std::is_same_v<T, Ts> or ...);
+
 /** @brief Aligned allocator for FFT data. */
 template <class FloatType> struct allocator {
-  static_assert(std::is_same_v<FloatType, float> or
-                    std::is_same_v<FloatType, double>,
-                "FFTW only implements float and double");
+  static_assert(is_any_of_v<FloatType, float, double, std::complex<float>,
+                            std::complex<double>>,
+                "FFTW only implements float/double and their std::complex<T>");
   typedef FloatType value_type;
   allocator() noexcept = default; // default ctor not required
   template <class U> explicit allocator(allocator<U> const &) {}
