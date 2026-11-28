@@ -45,12 +45,6 @@
 
 namespace BondBreakage {
 
-// Variant holding any of the actions
-using Action = std::variant<DeleteBond, DeleteAngleBond, DeleteAllBonds>;
-
-// Set of actions
-using ActionSet = std::unordered_set<Action>;
-
 /** Add a particle+bond combination to the breakage queue */
 void BondBreakage::queue_breakage(int particle_id,
                                   BondPartners const &bond_partners,
@@ -72,9 +66,8 @@ static auto gather_global_queue(Queue const &local_queue) {
 }
 
 /** @brief Constructs the actions to take for a breakage queue entry */
-static ActionSet actions_for_breakage(CellStructure const &cell_structure,
-                                      QueueEntry const &e,
-                                      BreakageSpec const &spec) {
+ActionSet actions_for_breakage(CellStructure const &cell_structure,
+                               QueueEntry const &e, BreakageSpec const &spec) {
   auto is_angle_bond = [](auto const &bond_partners) {
     return bond_partners[1];
   }; // optional for second partner engaged
@@ -113,7 +106,9 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
       auto vs = cell_structure.get_local_particle(e.particle_id);
       auto p1 = cell_structure.get_local_particle(*(e.bond_partners[0]));
       auto p2 = cell_structure.get_local_particle(*(e.bond_partners[1]));
-      if (p1 and p2) {
+      // The breakage queue is broadcast to all ranks; only ranks which hold
+      // all three particles build actions.
+      if (vs and p1 and p2) {
         if (not vs->is_virtual()) {
           runtimeErrorMsg()
               << "The REVERT_BIND_AT_POINT_OF_COLLISION bond "
@@ -132,6 +127,7 @@ static ActionSet actions_for_breakage(CellStructure const &cell_structure,
             DeleteAllBonds{p2->id(), p1->id()}};
       }
     }
+    return {};
   }
 #endif // ESPRESSO_VIRTUAL_SITES_RELATIVE
 
