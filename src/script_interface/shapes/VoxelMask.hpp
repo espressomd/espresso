@@ -94,7 +94,7 @@ inline void load_voxel_mask(::Shapes::VoxelMask &mask, std::string const &path,
                             VoxelMaskLoadState const &state) {
   IO::VoxelMaskFile const file(path, dataset, comm);
   auto g = mask.geometry();
-  if (g.mask_shape == Utils::Vector3i{}) {
+  if (g.mask_shape == Utils::Vector3i::broadcast(0)) {
     g.mask_shape = file.shape();
     mask.set_geometry(g);
   } else if (file.shape() != g.mask_shape) {
@@ -124,7 +124,7 @@ inline auto make_voxel_mask_loader(std::string path, std::string dataset,
         local_geo.my_right(),
         box_geo.length(),
         {{box_geo.periodic(0u), box_geo.periodic(1u), box_geo.periodic(2u)}}};
-    auto const changed = not last->has_value() or * *last != state;
+    auto const changed = not last->has_value() or **last != state;
     if (not boost::mpi::all_reduce(comm, changed, std::logical_or<>())) {
       return;
     }
