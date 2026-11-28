@@ -61,7 +61,9 @@ IBMTribend::calc_forces(BoxGeometry const &box_geo, Utils::Vector3d const &pos1,
   auto const desc = (dx1 * direc);
   auto const theta = std::acos(sc) * std::copysign(1., desc);
 
-  auto const DTh = theta - theta0;
+  // theta lies in [-pi, pi], theta0 in [0, 2*pi) (initialize() maps concave
+  // reference dihedrals to 2*pi - acos); wrap their difference to [-pi, pi]
+  auto const DTh = std::remainder(theta - theta0, 2. * std::numbers::pi);
   auto const Pre = kb * DTh * std::copysign(1., theta);
 
   auto const v1 = (n2 - sc * n1).normalize();

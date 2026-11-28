@@ -99,6 +99,28 @@ class IBM(ut.TestCase):
         self.assertAlmostEqual(energy['bonded'], 0., delta=1e-10)
         self.assertAlmostEqual(pressure['bonded'], 0., delta=1e-10)
 
+    def test_tribend_reference_shape(self):
+        """The bending force vanishes at the reference shape, for both
+        convex (theta0 < pi) and concave (theta0 > pi) dihedrals."""
+        system = self.system
+        center = np.array(system.box_l) / 2.
+        for height, is_concave in [(-0.3, False), (0.3, True)]:
+            with self.subTest(concave=is_concave):
+                p1 = system.part.add(pos=center + [1.0, 0.0, 0.0])
+                p2 = system.part.add(pos=center + [0.5, 1.0, height])
+                p3 = system.part.add(pos=center + [0.0, 0.0, 0.0])
+                p4 = system.part.add(pos=center + [0.5, -1.0, height])
+                tribend = espressomd.interactions.IBM_Tribend(
+                    ind1=p1.id, ind2=p2.id, ind3=p3.id, ind4=p4.id,
+                    kb=1., refShape="Initial")
+                system.bonded_inter.add(tribend)
+                p1.add_bond((tribend, p2, p3, p4))
+                self.assertEqual(tribend.theta0 > np.pi, is_concave)
+                system.integrator.run(0, recalc_forces=True)
+                np.testing.assert_allclose(
+                    np.copy(system.part.all().f), 0., atol=1e-10)
+                system.part.clear()
+
     def test_triel(self):
         system = self.system
         system.thermostat.set_langevin(kT=0, gamma=1, seed=1)
