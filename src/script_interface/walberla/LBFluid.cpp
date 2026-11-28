@@ -24,6 +24,10 @@
 #include "LBWalberlaNodeState.hpp"
 #include "WalberlaCheckpoint.hpp"
 
+#include "script_interface/shapes/Shape.hpp"
+
+#include <shapes/VoxelMask.hpp>
+
 #include "core/BoxGeometry.hpp"
 #include "core/lb/LBWalberla.hpp"
 #include "core/lees_edwards/lees_edwards.hpp"
@@ -50,6 +54,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <exception>
 #include <filesystem>
 #include <functional>
 #include <memory>
@@ -132,6 +137,80 @@ Variant LBFluid::do_call_method(std::string const &name,
     m_instance->update_boundary_from_shape(
         get_value<std::vector<int>>(params, "raster"),
         get_value<std::vector<double>>(params, "values"));
+    return {};
+  }
+  if (name == "add_boundary_from_shape_local") {
+    auto const so_shape =
+        get_value<std::shared_ptr<ScriptInterface::Shapes::Shape>>(params,
+                                                                   "shape");
+    auto const velocity = get_value<Utils::Vector3d>(params, "velocity");
+    auto const shape = so_shape->shape();
+    auto const agrid = m_lb_params->get_agrid();
+    auto const &lattice = m_instance->get_lattice();
+    auto const grid_size = lattice.get_grid_dimensions();
+    context()->parallel_try_catch([&]() {
+      auto const *voxel_mask =
+          dynamic_cast<::Shapes::VoxelMask const *>(shape.get());
+      if (voxel_mask == nullptr) {
+        return;
+      }
+      // A rank stores the voxels [floor((L - o) / h) - halo,
+      // ceil((U - o) / h) + halo) for its local box [L, U). The outermost
+      // ghost-layer node centers lie at L - d and U + d, with
+      // d = (n_ghost_layers - 0.5) * agrid. Both are stored if
+      // d < halo * h, by monotonicity of floor and ceil.
+      auto const &g = voxel_mask->geometry();
+      auto const n_ghost_layers = static_cast<int>(lattice.get_ghost_layers());
+      auto const reach = (n_ghost_layers - 0.5) * agrid;
+      if (not(g.halo * g.voxel_size > reach)) {
+        std::ostringstream msg;
+        msg << "VoxelMask halo is too small for the LB ghost layers: "
+            << "need halo * voxel_size > (n_ghost_layers - 0.5) * agrid, "
+            << "got halo=" << g.halo << ", voxel_size=" << g.voxel_size
+            << ", agrid=" << agrid << ", n_ghost_layers=" << n_ghost_layers;
+        throw std::domain_error(msg.str());
+      }
+    });
+    // collective: shapes with rank-local data reload it if it is stale
+    context()->parallel_try_catch([&]() { shape->on_local_geometry_change(); });
+    auto const system = m_system.lock();
+    // A throwing predicate must not leave the other ranks waiting in the
+    // collective ghost communication: record the error and continue.
+    std::optional<std::string> local_error;
+    auto const is_inside = [&](Utils::Vector3d const &pos) {
+      try {
+        return shape->is_inside(pos);
+      } catch (std::exception const &err) {
+        if (not local_error) {
+          local_error = err.what();
+        }
+        return false;
+      }
+    };
+    auto const is_boundary = [&](Utils::Vector3i const &node) {
+      auto const half = Utils::Vector3d::broadcast(0.5);
+      if (system) {
+        auto const pos = (node + half) * agrid;
+        return is_inside(system->box_geo->folded_position(pos));
+      }
+      // without a system, fold on the lattice, which is always periodic
+      auto const folded_node = (node + grid_size) % grid_size;
+      return is_inside((folded_node + half) * agrid);
+    };
+    m_instance->update_boundary_from_predicate(is_boundary, velocity);
+    if (system) {
+      system->on_lb_boundary_conditions_change();
+    }
+    auto const any_error = boost::mpi::all_reduce(
+        context()->get_comm(), local_error.has_value(), std::logical_or<>());
+    context()->parallel_try_catch([&]() {
+      if (any_error) {
+        throw std::runtime_error(
+            "Cannot evaluate the shape on all LB nodes; the boundaries are "
+            "only partially set" +
+            (local_error ? ": " + *local_error : std::string{}));
+      }
+    });
     return {};
   }
   if (name == "get_lattice_speed") {

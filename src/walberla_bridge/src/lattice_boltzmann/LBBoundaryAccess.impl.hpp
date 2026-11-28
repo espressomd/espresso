@@ -27,6 +27,7 @@
 
 #include <utils/Vector.hpp>
 
+#include <functional>
 #include <optional>
 #include <vector>
 
@@ -219,6 +220,23 @@ void LBWalberlaImpl<FloatType, Architecture>::update_boundary_from_shape(
   auto const &grid_size = get_lattice().get_grid_dimensions();
   auto data = fill_3D_vector_array(data_flat, grid_size);
   set_boundary_from_grid(*m_boundary, get_lattice(), raster_flat, data);
+  ghost_communication();
+  reallocate_ubb_field();
+}
+
+/**
+ * @brief Set boundary conditions from a node predicate.
+ * @param is_boundary  Predicate on the unfolded global node index.
+ * @param velocity     Uniform slip velocity.
+ */
+template <typename FloatType, lbmpy::Arch Architecture>
+void LBWalberlaImpl<FloatType, Architecture>::update_boundary_from_predicate(
+    std::function<bool(Utils::Vector3i const &)> const &is_boundary,
+    Utils::Vector3d const &velocity) {
+  on_boundary_add();
+  m_pending_ghost_comm.set(GhostComm::UBB);
+  set_boundary_from_predicate(*m_boundary, get_lattice(), is_boundary,
+                              velocity);
   ghost_communication();
   reallocate_ubb_field();
 }

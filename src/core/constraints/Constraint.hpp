@@ -59,6 +59,20 @@ public:
 
   virtual void reset_force() {}
 
+  /**
+   * @brief Reload rank-local data after the local box or the box geometry
+   * changed (node grid or periodicity change). Called on all ranks and
+   * may be collective.
+   */
+  virtual void on_local_geometry_change() {}
+
+  /**
+   * @brief Prepare for a force calculation at integration start.
+   * Called on all ranks and may be collective.
+   * @throw std::runtime_error on all ranks if the constraint is unusable.
+   */
+  virtual void on_integration_start() {}
+
   virtual ~Constraint() = default;
 };
 } // namespace Constraints

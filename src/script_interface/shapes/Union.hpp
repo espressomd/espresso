@@ -26,8 +26,10 @@
 #include "script_interface/ObjectList.hpp"
 
 #include <shapes/Union.hpp>
+#include <shapes/VoxelMask.hpp>
 
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -43,11 +45,19 @@ public:
 
   ~Union() override { do_destruct(); }
 
+  void do_construct(VariantMap const &params) override {
+    context()->parallel_try_catch([&]() { Base::do_construct(params); });
+  }
+
 private:
   bool has_in_core(value_type const &obj_ptr) const override {
     return m_core_shape->contains(obj_ptr->shape());
   }
   void add_in_core(value_type const &obj_ptr) override {
+    // a VoxelMask stores only rank-local data and cannot be queried globally
+    if (std::dynamic_pointer_cast<::Shapes::VoxelMask>(obj_ptr->shape())) {
+      throw std::domain_error("A VoxelMask cannot be part of a Union");
+    }
     m_core_shape->add(obj_ptr->shape());
   }
   void remove_in_core(value_type const &obj_ptr) final {

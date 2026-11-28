@@ -74,5 +74,24 @@ public:
   }
 
   void on_boxl_change() const { veto_boxl_change(); }
+
+  void on_node_grid_change() const {
+    for (auto const &constraint : *this) {
+      constraint->on_local_geometry_change();
+    }
+  }
+
+  /** @brief Collective; throws on all ranks if a constraint is unusable. */
+  void on_integration_start() const {
+    for (auto const &constraint : *this) {
+      constraint->on_integration_start();
+    }
+  }
+
+  void on_periodicity_change() const {
+    for (auto const &constraint : *this) {
+      constraint->on_local_geometry_change();
+    }
+  }
 };
 } // namespace Constraints

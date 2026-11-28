@@ -76,6 +76,12 @@ public:
     m_outer_normal_force = 0.0;
   }
 
+  void on_local_geometry_change() override {
+    m_shape->on_local_geometry_change();
+  }
+
+  void on_integration_start() override;
+
   bool &only_positive() { return m_only_positive; }
   bool &penetrable() { return m_penetrable; }
   int &type() { return part_rep.type(); }
@@ -99,6 +105,12 @@ private:
   std::weak_ptr<System::System const> m_system;
 
   IA_parameters const &get_ia_param(int type) const;
+  /**
+   * @brief Check that the shape provides exact distances for all
+   * interactions of the constraint type.
+   * @throw std::runtime_error if the shape reach is too short.
+   */
+  void check_distance_reach() const;
 };
 
 } // namespace Constraints

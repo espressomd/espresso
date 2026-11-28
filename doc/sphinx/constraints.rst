@@ -219,6 +219,71 @@ are only calculated if the particle is on the side of the wall in which the
 normal vector is pointing.
 
 
+VoxelMask
+"""""""""
+
+:class:`espressomd.shapes.VoxelMask`
+
+A solid/pore mask on a regular voxel grid, read from an HDF5 file.
+This shape requires the feature ``H5MD``.
+It is meant for porous media such as tomography data, where the mask
+is too large to be held on every MPI rank.
+
+The file holds a 3D dataset indexed ``[x][y][z]`` in C order (x slowest),
+as written by ``h5py`` from a numpy array.
+Nonzero values denote solid voxels, zero denotes pore.
+Any integer, floating-point or boolean data type works.
+Stacks stored as ``[z][y][x]`` must be transposed before writing.
+The voxel with index ``(i, j, k)`` is the cube with lower corner
+``origin + voxel_size * (i, j, k)`` and edge length ``voxel_size``::
+
+    import h5py
+    import numpy as np
+    mask = np.zeros((32, 32, 32), dtype=bool)
+    mask[:, :, :4] = True
+    with h5py.File("mask.h5", "w") as h5:
+        h5.create_dataset("mask", data=mask)
+    shape = espressomd.shapes.VoxelMask(
+        file="mask.h5", dataset="mask", voxel_size=0.5, origin=[0., 0., 0.],
+        halo=3)
+    system.constraints.add(shape=shape, particle_type=1)
+
+Each MPI rank reads and stores only the voxels of its local box plus a
+halo of ``halo`` voxels in every direction, at one bit per voxel.
+The distance to the solid is exact up to ``halo * voxel_size``.
+If no interface is within that distance, the shape reports a distance
+of ``1e100`` (``-1e100`` inside the solid), which lies beyond any
+interaction cutoff, so the constraint exerts no force on the particle.
+A particle can move up to half the Verlet skin out of its local box
+before it is resorted. Hence the halo must satisfy
+``halo * voxel_size >= max_cutoff + skin / 2``, where ``max_cutoff`` is
+the largest interaction cutoff of the constraint type and ``skin`` is
+``system.cell_system.skin``.
+Otherwise, interactions with a longer range would be cut off, and the
+interaction of a particle near a rank boundary would depend on the
+node grid.
+The integrator checks this rule and raises an error if it is violated.
+The halo must be at least one voxel.
+
+The distance is measured to the nearest solid voxel cube.
+It is positive in the pore and negative inside the solid,
+where it measures the distance to the nearest pore voxel.
+
+The mask is periodic with the box length, not with the mask length.
+Parts of the box not covered by the mask are pore, and mask voxels whose
+center lies outside of the box are ignored.
+In non-periodic directions, the region beyond the box boundary is pore.
+
+The methods ``calc_distance()`` and ``is_inside()`` accept any position
+in periodic directions, and positions inside the box in non-periodic
+directions.
+The shape cannot be rasterized globally.
+Adding the shape to a :ref:`Shape union` is not supported and raises
+an error.
+The methods ``get_local_voxel_counts()`` and ``get_local_memory_bytes()``
+return the number of stored voxels and their memory, per MPI rank.
+
+
 Sphere
 """"""
 
