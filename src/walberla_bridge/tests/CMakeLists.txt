@@ -45,6 +45,10 @@ function(ESPRESSO_ADD_TEST)
     espresso::utils)
   target_include_directories(${TEST_NAME} PRIVATE ${WALBERLA_INCLUDE_DIRS}
                                                   ${walberla_BINARY_DIR}/src)
+  # disable GCC static analysis on large TUs to reduce RAM usage
+  set_source_files_properties(
+    ${TEST_SRC} TARGET_DIRECTORY ${TEST_NAME}
+    PROPERTIES COMPILE_OPTIONS $<$<COMPILE_LANG_AND_ID:CXX,GNU>:-fno-analyzer>)
 endfunction()
 
 espresso_add_test(SRC ResourceManager_test.cpp)

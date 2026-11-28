@@ -28,6 +28,7 @@
 #include "electrostatics/p3m.hpp"
 
 #include "communication.hpp"
+#include "fft/vector.hpp"
 #include "kokkos_helpers.hpp"
 #include "p3m/P3MFFTBackend.hpp"
 #include "p3m/common.hpp"
@@ -79,15 +80,17 @@ struct CoulombP3MState : public P3MStateCommon<FloatType, Architecture> {
   p3m_interpolation_cache inter_weights;
 
   /** charge density in real-space with halo */
-  std::vector<FloatType> rs_charge_density;
+  fft::vector<FloatType> rs_charge_density;
   /** charge density in k-space without halo */
-  std::vector<ComplexType> ks_charge_density;
+  fft::vector<ComplexType> ks_charge_density;
   /** electric fields in real-space with halo */
-  std::array<std::vector<FloatType>, 3> rs_E_fields;
+  std::array<fft::vector<FloatType>, 3> rs_E_fields;
   /** electric fields in k-space without halo */
-  std::array<std::vector<ComplexType>, 3> ks_E_fields;
+  std::array<std::span<ComplexType>, 3> ks_E_fields;
+  fft::vector<ComplexType> ks_E_fields_batched;
   /** electric fields in real-space without halo */
-  std::array<std::vector<FloatType>, 3> rs_E_fields_no_halo;
+  std::array<std::span<FloatType>, 3> rs_E_fields_no_halo;
+  fft::vector<FloatType> rs_E_fields_no_halo_batched;
   p3m_send_mesh<FloatType> halo_comm;
   // FFT reciprocal-space transform, hidden behind the backend interface so the
   // solver is agnostic to heFFTe vs kokkos-fft (see init_cpu_kernels).
@@ -214,7 +217,7 @@ public:
   void charge_assign() override;
   void assign_charge(double q, Utils::Vector3d const &real_pos,
                      bool skip_cache) override;
-  void prepare_fft_mesh(bool reset_weights) override {
+  void prepare_fft_mesh(bool reset_weights, bool zero_rs) override {
     if (reset_weights) {
       p3m.inter_weights.reset(p3m.params.cao);
     }
@@ -231,7 +234,9 @@ public:
       kokkos_deep_copy(execution_space{}, p3m.rs_charge_density_kokkos,
                        FloatType{0});
     }
-    std::ranges::fill(p3m.rs_charge_density, FloatType{0});
+    if (num_threads > 1 or zero_rs) {
+      std::ranges::fill(p3m.rs_charge_density, FloatType{0});
+    }
   }
 
 protected:

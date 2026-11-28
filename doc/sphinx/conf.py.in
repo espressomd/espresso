@@ -264,7 +264,7 @@ class SpdxRole(sphinx.util.docutils.SphinxRole):
         spdx_id = self.text
         node_spdx = docutils.nodes.inline(text='SPDX license identifier: ')
         node_spdx_id = docutils.nodes.inline(text=spdx_id)
-        node_spdx_id.set_class('pre')
+        node_spdx_id['classes'].append('pre')
         node_spdx_url = docutils.nodes.reference(refuri=f'https://spdx.org/licenses/{spdx_id}.html')
         node_spdx_url += node_spdx_id
         node_spdx += node_spdx_url
