@@ -25,16 +25,9 @@
 #include <utils/Vector.hpp>
 
 /*
- * The pore has mirror symmetry in z about its center (the documented
- * invariant in SimplePore::calculate_dist). Two probe points at the +z and
- * -z mouths with identical r and |z| therefore MUST yield the same signed
- * distance, and a point inside the solid wall material at either mouth must
- * report a negative (inside) distance.
- *
- * Bug #13: the smoothing-area side test used the signed z in
- * Utils::sqr(z - c_z) instead of Utils::sqr(std::abs(z) - c_z). At the
- * negative-z mouth this forces side=+1 (outside) even for a point inside the
- * solid, flipping the sign of the distance.
+ * The pore has mirror symmetry in z about its center. Two points at the
+ * +z and -z mouths with identical r and |z| yield the same signed distance,
+ * and a point inside the wall material yields a negative distance.
  */
 BOOST_AUTO_TEST_CASE(mirror_symmetry_in_z) {
   Shapes::SimplePore pore;

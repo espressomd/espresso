@@ -68,7 +68,11 @@ class SimplePore : public Shape {
   std::pair<double, double> dist_half_pore(double r, double z) const;
 
 public:
-  SimplePore() : m_axis({1., 0., 0}) { precalc(); }
+  SimplePore()
+      : m_rad(0.), m_length(0.), m_smoothing_rad(0.), m_center({0., 0., 0.}),
+        m_axis({1., 0., 0.}) {
+    precalc();
+  }
 
   double radius() const { return m_rad; }
   void set_radius(double const &radius) {
