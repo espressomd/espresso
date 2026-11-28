@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ESPRESSO_SRC_CORE_PAIR_CRITERIA_PAIR_CRITERION_HPP
-#define ESPRESSO_SRC_CORE_PAIR_CRITERIA_PAIR_CRITERION_HPP
+
+#pragma once
 
 #include "Particle.hpp"
 #include "particle_node.hpp"
@@ -44,5 +44,3 @@ public:
   virtual ~PairCriterion() = default;
 };
 } // namespace PairCriteria
-
-#endif

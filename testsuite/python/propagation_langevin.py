@@ -257,6 +257,13 @@ class LangevinThermostat(ut.TestCase):
         np.testing.assert_almost_equal(np.copy(virtual.f), [0, 0, 0])
         np.testing.assert_almost_equal(np.copy(physical.f), dt * v0 / 2. - v0)
 
+    def test_exceptions(self):
+        with self.assertRaisesRegex(RuntimeError, "Unknown method unknown"):
+            self.assertIsNone(self.system.thermostat.call_method(
+                "unknown"))
+        self.assertIsNone(self.system.thermostat.langevin.call_method(
+            "unknown"))
+
     @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "WALBERLA"])
     def test_virtual_sites_relative(self):
         Propagation = espressomd.propagation.Propagation
@@ -447,6 +454,59 @@ class LangevinThermostat(ut.TestCase):
                 np.testing.assert_allclose(pos, ref_pos, rtol=1e-7)
                 np.testing.assert_allclose(vel, ref_vel, rtol=1e-7)
                 np.testing.assert_allclose(rot, ref_rot, rtol=1e-7)
+
+    @utx.skipIfMissingFeatures(["ROTATION", "EXTERNAL_FORCES"])
+    def test_body_lab_conversion(self):
+        Propagation = espressomd.propagation.Propagation
+        system = self.system
+        system.time = 0.
+        system.time_step = dt = 1e-6
+        system.thermostat.set_langevin(
+            kT=0., gamma=5., gamma_rotation=5., seed=42)
+        system.integrator.set_vv()
+        ext_torque = np.array([1., -0.5, 2.])
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                            ext_torque=ext_torque)
+        p2 = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                             director=np.array([1., 0.5, 0.3]) / 1.34**0.5,
+                             ext_torque=ext_torque)
+        p2.propagation = Propagation.TRANS_NEWTON | Propagation.ROT_EULER
+        for i in range(4):
+            system.integrator.run(1, recalc_forces=(i == 2))
+            omega_lab = np.copy(p.omega_lab)
+            ref_omega = ext_torque / 5. * (1. - np.exp(-5. * system.time))
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=10. * dt)
+            # per-particle propagation case
+            omega_lab = np.copy(p2.omega_lab)
+            torque_lab = np.copy(p2.torque_lab)
+            ref_omega = ext_torque * system.time
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=1e-10)
+            np.testing.assert_allclose(torque_lab, ext_torque, rtol=1e-10)
+
+    @utx.skipIfMissingFeatures(["VIRTUAL_SITES_RELATIVE", "EXTERNAL_FORCES"])
+    def test_body_lab_vs_relative(self):
+        system = self.system
+        system.time = 0.
+        system.time_step = dt = 1e-6
+        system.thermostat.set_langevin(
+            kT=0., gamma=5., gamma_rotation=5., seed=42)
+        system.integrator.set_vv()
+        ext_force = np.array([1., -0.5, 2.])
+        p = system.part.add(pos=[0., 0., 0.], rotation=3 * [True],
+                            director=np.array([1., 0.5, 0.3]) / 1.34**0.5)
+        p_vs = system.part.add(
+            pos=[0.5, 0.2, -0.3], rotation=3 * [True], ext_force=ext_force)
+        p_vs.vs_auto_relate_to(p)
+
+        for i in range(4):
+            system.integrator.run(1, recalc_forces=(i == 2))
+            omega_lab = np.copy(p.omega_lab)
+            torque_lab = np.copy(p.torque_lab)
+            ref_torque = np.cross(np.copy(p_vs.pos - p.pos), ext_force)
+            ref_omega = ref_torque / 5. * (1. - np.exp(-5. * system.time))
+            np.testing.assert_allclose(torque_lab, ref_torque, rtol=100. * dt)
+            np.testing.assert_allclose(omega_lab, ref_omega, rtol=10. * dt)
 
 
 if __name__ == "__main__":

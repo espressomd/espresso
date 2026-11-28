@@ -499,8 +499,8 @@ class Visualizer():
         box_l = self.system.box_l
         positions = ase_data.arrays['positions']
         max_index = len(positions)
-        colors = ase_data.arrays['colors']
-        min_radii = np.min(ase_data.arrays['radii'])
+        colors = ase_data.arrays.get('colors')
+        radii = ase_data.arrays.get('radii')
         numbers = ase_data.arrays['numbers']
         bonds_to_add = []
         ghost_positions = []
@@ -544,7 +544,8 @@ class Visualizer():
             wall_intersection_b = pos_b - (1 - best_distance) * distance_vec
 
             ghost_positions.extend([wall_intersection_a, wall_intersection_b])
-            ghost_colors.extend([colors[b[0]], colors[b[1]]])
+            if colors is not None:
+                ghost_colors.extend([colors[b[0]], colors[b[1]]])
             ghost_numbers.extend([numbers[b[0]], numbers[b[1]]])
             bonds_to_add.extend(
                 [(b[0], max_index, 1), (b[1], max_index + 1, 1)])
@@ -555,14 +556,20 @@ class Visualizer():
             return bonds
 
         # add ghost particles
+        n_ghosts = len(ghost_positions)
         ase_data.arrays['positions'] = np.vstack([positions, ghost_positions])
-        ase_data.arrays['colors'] = np.hstack(
-            [ase_data.arrays['colors'], ghost_colors])
-        ase_data.arrays['radii'] = np.hstack(
-            [ase_data.arrays['radii'], [1e-6 * min_radii] * len(ghost_positions)])
         ase_data.arrays['numbers'] = np.hstack([numbers, ghost_numbers])
-        ase_data.arrays['forces'] = np.vstack(
-            [ase_data.arrays['forces'], np.zeros((len(ghost_positions), 3))])
+        if colors is not None:
+            ase_data.arrays['colors'] = np.hstack([colors, ghost_colors])
+        # ghost particles must be invisible: give them a vanishing radius
+        if radii is None:
+            radii = np.full(len(positions), 0.5)
+        min_radii = np.min(radii)
+        ase_data.arrays['radii'] = np.hstack(
+            [radii, [1e-6 * min_radii] * n_ghosts])
+        if 'forces' in ase_data.arrays:
+            ase_data.arrays['forces'] = np.vstack(
+                [ase_data.arrays['forces'], np.zeros((n_ghosts, 3))])
 
         bonds.extend(bonds_to_add)
         return bonds

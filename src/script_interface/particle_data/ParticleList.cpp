@@ -146,7 +146,7 @@ Variant ParticleList::do_call_method(std::string const &name,
     return get_maximal_particle_id();
   }
   if (name == "clear") {
-    remove_all_particles();
+    get_system().cell_structure->remove_all_particles();
     return {};
   }
   if (not context()->is_head_node()) {

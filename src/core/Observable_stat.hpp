@@ -33,6 +33,10 @@ class Observable_stat {
   std::vector<double> m_data;
   /** Number of doubles per data item */
   std::size_t m_chunk_size;
+  /** Number of non-bonded interactions */
+  std::size_t m_n_bonded;
+  /** Number of particle types */
+  int m_max_type;
 
   std::size_t get_non_bonded_offset(int type1, int type2) const;
 
@@ -44,7 +48,17 @@ class Observable_stat {
   }
 
 public:
-  Observable_stat(std::size_t chunk_size, std::size_t n_bonded, int max_type);
+  Observable_stat(std::size_t chunk_size, std::size_t n_bonded, int max_type)
+      : m_data{}, m_chunk_size{chunk_size}, m_n_bonded{n_bonded},
+        m_max_type{max_type} {
+    reset(n_bonded, max_type);
+  }
+
+  /**
+   * @brief Reinitialize the underlying storage.
+   * If the new data layout is unchanged, no reallocation takes place.
+   */
+  void reset(std::size_t n_bonded, int max_type);
 
   auto get_chunk_size() const { return m_chunk_size; }
 
