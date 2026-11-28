@@ -335,8 +335,7 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 
   auto const &unique_particles = system.cell_structure->get_unique_particles();
   auto &local_force = system.cell_structure->get_local_force();
-  auto scatter_force = system.cell_structure->get_scatter_force();
-  Kokkos::Experimental::contribute(local_force, scatter_force);
+  system.cell_structure->contribute_and_reset_force_replicas();
 #ifdef ESPRESSO_ROTATION
   // when no kernel scattered into the torque buffers this pass, they are
   // all-zero and both the reduction over replicas and the per-particle

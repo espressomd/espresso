@@ -72,6 +72,8 @@ espresso_unit_test(SRC dipolar_direct_sum_kernels_test.cpp DEPENDS
                    espresso::core espresso::utils Kokkos::kokkos)
 espresso_unit_test(SRC periodic_fold_test.cpp)
 espresso_unit_test(SRC grid_test.cpp DEPENDS espresso::core Kokkos::kokkos)
+espresso_unit_test(SRC scatter_view_replicas_test.cpp DEPENDS espresso::core
+                   Kokkos::kokkos)
 espresso_unit_test(SRC lees_edwards_test.cpp DEPENDS espresso::core
                    Kokkos::kokkos)
 espresso_unit_test(SRC BoxGeometry_test.cpp DEPENDS espresso::core
