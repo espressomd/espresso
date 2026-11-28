@@ -149,7 +149,8 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
 #endif
 
 static BondsKernelData
-create_kokkos_bonds_kernel_data(System::System const &system) {
+create_kokkos_bonds_kernel_data(System::System const &system,
+                                [[maybe_unused]] bool compute_virial) {
   auto scatter_force = system.cell_structure->get_scatter_force();
 #ifdef ESPRESSO_NPT
   auto scatter_virial = system.cell_structure->get_scatter_virial();
@@ -161,6 +162,7 @@ create_kokkos_bonds_kernel_data(System::System const &system) {
                                 scatter_force,
 #ifdef ESPRESSO_NPT
                                 scatter_virial,
+                                compute_virial,
 #endif
                                 aosoa,
                                 !system.bond_breakage->breakage_specs.empty()};
@@ -492,13 +494,14 @@ void System::System::calculate_forces() {
   ESPRESSO_CALI_MARK_BEGIN("cabana_short_range");
 #endif
   auto &bs = cell_structure->bond_state();
-  auto bonds_kernel_data = create_kokkos_bonds_kernel_data(*this);
+  auto bonds_kernel_data =
+      create_kokkos_bonds_kernel_data(*this, virial != nullptr);
   auto pair_bonds_kernel = PairBondsKernel{
-      bonds_kernel_data, bs.pair_list, bs.pair_ids, get_ptr(coulomb_kernel)};
+      bonds_kernel_data, bs.pairs.list, bs.pairs.ids, get_ptr(coulomb_kernel)};
   auto angle_bonds_kernel =
-      AngleBondsKernel{bonds_kernel_data, bs.angle_list, bs.angle_ids};
-  auto dihedral_bonds_kernel =
-      DihedralBondsKernel{bonds_kernel_data, bs.dihedral_list, bs.dihedral_ids};
+      AngleBondsKernel{bonds_kernel_data, bs.angles.list, bs.angles.ids};
+  auto dihedral_bonds_kernel = DihedralBondsKernel{
+      bonds_kernel_data, bs.dihedrals.list, bs.dihedrals.ids};
 
   auto first_neighbor_kernel =
       create_cabana_neighbor_kernel(*this, virial, elc_kernel, coulomb_kernel,
@@ -543,11 +546,10 @@ void System::System::calculate_forces() {
   }
 #endif // ESPRESSO_ROTATION
 #ifdef ESPRESSO_NPT
-  auto const have_bonds = cell_structure->get_local_pair_bond_numbers() > 0 or
-                          cell_structure->get_local_angle_bond_numbers() > 0 or
-                          cell_structure->get_local_dihedral_bond_numbers() > 0;
+  auto const have_bonds = not cell_structure->bond_state().empty();
   if (generic_pair_path or
-      (bonded_ias->maximal_cutoff() >= 0. and have_bonds)) {
+      (virial != nullptr and bonded_ias->maximal_cutoff() >= 0. and
+       have_bonds)) {
     cell_structure->mark_virial_replicas_dirty();
   }
 #endif // ESPRESSO_NPT
@@ -562,11 +564,12 @@ void System::System::calculate_forces() {
   reduce_cabana_forces_and_torques(*this, virial);
 
 #ifdef ESPRESSO_COLLISION_DETECTION
-  auto collision_kernel = [&collision_detection = *collision_detection](
-                              Particle const &p1, Particle const &p2,
-                              Distance const &d) {
-    collision_detection.detect_collision(p1, p2, d.dist2);
-  };
+  auto collision_kernel =
+      [&collision_detection = *collision_detection,
+       &bond_table = std::as_const(*cell_structure).bond_table()](
+          Particle const &p1, Particle const &p2, Distance const &d) {
+        collision_detection.detect_collision(p1, p2, d.dist2, bond_table);
+      };
   if (not collision_detection->is_off()) {
     auto const verlet_criterion = make_verlet_criterion();
     cell_structure->non_bonded_loop(collision_kernel, verlet_criterion);

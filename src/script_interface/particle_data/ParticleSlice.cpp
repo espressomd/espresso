@@ -20,6 +20,7 @@
 #include "ParticleSlice.hpp"
 #include "ParticleHandle.hpp"
 
+#include "core/bond_queries.hpp"
 #include "core/bonds.hpp"
 #include "core/nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "core/particle_node.hpp"
@@ -50,24 +51,51 @@ static void set_particles_bonds(
     std::vector<int> const &pids,
     std::vector<std::vector<int>> const &all_bonds_ids,
     std::vector<std::vector<std::vector<int>>> const &all_bonds_partner_ids,
-    ::CellStructure &cell_structure, ::System::System &system) {
-  for (std::size_t i = 0; i < pids.size(); ++i) {
-    auto const pid = pids[i];
-    auto const bonds_ids = all_bonds_ids[i];
-    auto const bonds_partner_ids = all_bonds_partner_ids[i];
-    // Remove old bonds
-    auto p = cell_structure.get_local_particle(pid);
-    if (p != nullptr and not p->is_ghost()) {
-      p->bonds().clear();
+    ::System::System &system) {
+  // Validate the new bonds before touching the old ones
+  {
+    if (all_bonds_ids.size() != pids.size() or
+        all_bonds_partner_ids.size() != pids.size()) {
+      throw std::invalid_argument("Every particle needs a list of bonds");
     }
-    // Add new bonds
-    for (std::size_t j = 0; j < bonds_ids.size(); ++j) {
-      std::vector<int> particle_ids = {pid};
-      std::ranges::copy(bonds_partner_ids[j], std::back_inserter(particle_ids));
-      ::add_bond(system, bonds_ids[j], particle_ids);
-      system.on_particle_change();
+    std::vector<int> all_ids(pids.begin(), pids.end());
+    for (std::size_t i = 0; i < pids.size(); ++i) {
+      if (all_bonds_ids[i].size() != all_bonds_partner_ids[i].size()) {
+        throw std::invalid_argument(
+            "Every bond needs a bond id and a list of partners");
+      }
+      for (std::size_t j = 0; j < all_bonds_ids[i].size(); ++j) {
+        std::vector<int> particle_ids = {pids[i]};
+        std::ranges::copy(all_bonds_partner_ids[i][j],
+                          std::back_inserter(particle_ids));
+        ::check_bond_shape(system, all_bonds_ids[i][j], particle_ids);
+        std::ranges::copy(all_bonds_partner_ids[i][j],
+                          std::back_inserter(all_ids));
+      }
+    }
+    ::check_particles_exist(system, all_ids);
+  }
+  // Remove the bonds owned by every particle of the slice before adding
+  // any new bond, so that a new bond between two particles of the slice is
+  // not removed again when its partner is processed. Bonds owned by
+  // particles outside the slice are left untouched. The ranks of the
+  // particles share their owned bonds with all ranks, so that
+  // ::remove_bond() also removes them on the ranks of the partners.
+  auto const owned_bonds = ::gather_bonds_of_particles(
+      system, pids,
+      [](BondRecord const &bond, int pid) { return bond.owner_id() == pid; });
+  for (auto const &[bond_id, ids] : owned_bonds) {
+    ::remove_bond(system, bond_id, ids);
+  }
+  for (std::size_t i = 0; i < pids.size(); ++i) {
+    for (std::size_t j = 0; j < all_bonds_ids[i].size(); ++j) {
+      std::vector<int> particle_ids = {pids[i]};
+      std::ranges::copy(all_bonds_partner_ids[i][j],
+                        std::back_inserter(particle_ids));
+      ::add_bond(system, all_bonds_ids[i][j], particle_ids);
     }
   }
+  system.on_particle_change();
 }
 
 #ifdef ESPRESSO_EXCLUSIONS
@@ -230,7 +258,7 @@ Variant ParticleSlice::do_call_method(std::string const &name,
               get_value<std::vector<std::vector<int>>>(params, "all_bonds_ids"),
               get_value<std::vector<std::vector<std::vector<int>>>>(
                   params, "all_bonds_partner_ids"),
-              *get_cell_structure(), *get_system());
+              *get_system());
         }
       });
     } else {

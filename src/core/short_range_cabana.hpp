@@ -192,9 +192,6 @@ update_cabana_state(CellStructure &cell_structure,
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_BEGIN("AoSoA commit full");
 #endif
-    int pair_count = 0;
-    int angle_count = 0;
-    int dihedral_count = 0;
 #ifdef ESPRESSO_EXCLUSIONS
     // commit_particle accumulates the any-exclusion aggregate below; clear it
     // before the sweep repopulates it (read O(1) at the dispatch gate).
@@ -202,54 +199,14 @@ update_cabana_state(CellStructure &cell_structure,
 #endif
     kokkos_parallel_range_for<execution_space>(
         "AoSoA write", std::size_t{0}, n_part,
-        [&unique_particles, &aosoa, &id_to_index, &cell_structure, &pair_count,
-         &angle_count, &dihedral_count](int const index) {
+        [&unique_particles, &aosoa, &id_to_index](int const index) {
           auto const &p = *unique_particles.at(index);
           commit_particle(p, index, aosoa, true);
           id_to_index(p.id()) = index;
-          if (not p.is_ghost()) {
-            cell_structure.update_bond_storage(pair_count, angle_count,
-                                               dihedral_count, p);
-          }
         });
     Kokkos::fence();
-    using host_space = Kokkos::DefaultHostExecutionSpace;
-    auto &bs = cell_structure.bond_state();
-    if (pair_count) {
-      auto &pair_bond_list = bs.pair_list;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_pair_bond_indices", std::size_t{0}, pair_count,
-          [&pair_bond_list, &id_to_index](int idx) {
-            for (int col = 0; col < 2; ++col) {
-              pair_bond_list(idx, col) = id_to_index(pair_bond_list(idx, col));
-            }
-          });
-    }
-    if (angle_count) {
-      auto &angle_bond_list = bs.angle_list;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_angle_bond_indices", std::size_t{0}, angle_count,
-          [&angle_bond_list, &id_to_index](int idx) {
-            for (int col = 0; col < 3; ++col) {
-              angle_bond_list(idx, col) =
-                  id_to_index(angle_bond_list(idx, col));
-            }
-          });
-    }
-    if (dihedral_count) {
-      auto &dihedral_bond_list = bs.dihedral_list;
-      kokkos_parallel_range_for<host_space>(
-          "resolve_dihedral_bond_indices", std::size_t{0}, dihedral_count,
-          [&dihedral_bond_list, &id_to_index](int idx) {
-            for (int col = 0; col < 4; ++col) {
-              dihedral_bond_list(idx, col) =
-                  id_to_index(dihedral_bond_list(idx, col));
-            }
-          });
-    }
-    if (pair_count != 0 or angle_count != 0 or dihedral_count != 0) {
-      Kokkos::fence();
-    }
+    // all particles have an index now
+    cell_structure.build_local_bond_lists();
 #ifdef ESPRESSO_CALIPER
     ESPRESSO_CALI_MARK_END("AoSoA commit full");
 #endif
@@ -360,10 +317,10 @@ void cabana_short_range(auto const &pair_bonds_kernel,
     ESPRESSO_CALI_MARK_BEGIN("cabana_bond_loop");
 #endif
     using host_space = Kokkos::DefaultHostExecutionSpace;
-    auto const n_pair_bonds = cell_structure.get_local_pair_bond_numbers();
-    auto const n_angle_bonds = cell_structure.get_local_angle_bond_numbers();
-    auto const n_dihedral_bonds =
-        cell_structure.get_local_dihedral_bond_numbers();
+    auto const &bs = cell_structure.bond_state();
+    auto const n_pair_bonds = bs.pairs.count;
+    auto const n_angle_bonds = bs.angles.count;
+    auto const n_dihedral_bonds = bs.dihedrals.count;
     if (n_pair_bonds > 0) {
       kokkos_parallel_range_for<host_space>("for_each_local_pair_bonds",
                                             std::size_t{0}, n_pair_bonds,

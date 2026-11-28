@@ -78,7 +78,7 @@ class Test(ut.TestCase):
             # topology: 0-1-2-...-n
             length = len(system.part)
             for pid in range(length - 1):
-                system.part.by_id(pid).add_bond((bond, pid + 1))
+                system.bonds[bond].add((pid, pid + 1))
             system.auto_exclusions(distance=1)
 
             for pid in range(1, length - 1):
@@ -111,7 +111,7 @@ class Test(ut.TestCase):
             # topology: 0-1-2-...-n-0
             length = len(system.part)
             for pid in range(length):
-                system.part.by_id(pid).add_bond((bond, (pid + 1) % length))
+                system.bonds[bond].add((pid, (pid + 1) % length))
             system.part.auto_exclusions(distance=2)
 
             for pid in range(length):
@@ -142,9 +142,9 @@ class Test(ut.TestCase):
         p3 = system.part.add(pos=length * (np.array([2, 2, 0]) - 1))
 
         # topology: 0-1(-2)-3
-        p1.add_bond((bond, p0))
-        p2.add_bond((bond, p1))
-        p3.add_bond((bond, p1))
+        self.system.bonds[bond].add((p1, p0))
+        self.system.bonds[bond].add((p2, p1))
+        self.system.bonds[bond].add((p3, p1))
         system.part.auto_exclusions(distance=2)
 
         self.assertEqual(sorted(list(p0.exclusions)), [1, 2, 3])
@@ -166,12 +166,12 @@ class Test(ut.TestCase):
         p5 = system.part.add(pos=length * (np.array([2, 2, 2]) - 1))
 
         # topology: 0-1(-2-4-5)-3-4-5
-        p1.add_bond((bond, p0))
-        p2.add_bond((bond, p1))
-        p3.add_bond((bond, p1))
-        p2.add_bond((bond, p4))
-        p3.add_bond((bond, p4))
-        p5.add_bond((bond, p4))
+        self.system.bonds[bond].add((p1, p0))
+        self.system.bonds[bond].add((p2, p1))
+        self.system.bonds[bond].add((p3, p1))
+        self.system.bonds[bond].add((p2, p4))
+        self.system.bonds[bond].add((p3, p4))
+        self.system.bonds[bond].add((p5, p4))
         system.part.auto_exclusions(distance=3)
 
         self.assertEqual(sorted(list(p0.exclusions)), [1, 2, 3, 4])
@@ -190,7 +190,7 @@ class Test(ut.TestCase):
         p4 = system.part.add(id=4, pos=[0.2, 0.1, 0.1])
 
         # topology: 0-4
-        p0.add_bond((bond, p4))
+        self.system.bonds[bond].add((p0, p4))
         system.part.auto_exclusions(distance=1)
 
         self.assertEqual(list(p0.exclusions), [4])
@@ -214,10 +214,10 @@ class Test(ut.TestCase):
         self.system.part.add(pos=[0.2, 0.1, 0.1])
         self.system.part.add(pos=[0.2, 0.2, 0.1])
         self.system.part.add(pos=[0.1, 0.2, 0.1])
-        system.part.by_id(0).add_bond((angle, 1, 2))
-        system.part.by_id(0).add_bond((dihe, 1, 2, 3))
+        self.system.bonds[angle].add((0, 1, 2))
+        self.system.bonds[dihe].add((0, 1, 2, 3))
         if espressomd.has_features(["VIRTUAL_SITES_INERTIALESS_TRACERS"]):
-            system.part.by_id(0).add_bond((volcons,))
+            self.system.bonds[volcons].add((0,))
 
         system.part.auto_exclusions(distance=2)
 

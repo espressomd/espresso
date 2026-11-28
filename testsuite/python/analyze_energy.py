@@ -133,14 +133,14 @@ class AnalyzeEnergy(ut.TestCase):
         p0.pos = [1, 2, 2]
         p1.pos = [3, 2, 2]
         # single bond
-        p0.add_bond((self.harmonic, p1))
+        self.system.bonds[self.harmonic].add((p0, p1))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 6, delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
         self.assertAlmostEqual(energy["bonded"], 6, delta=1e-7)
         self.assertAlmostEqual(energy["non_bonded"], 0., delta=1e-7)
         # two bonds
-        p1.add_bond((self.harmonic, p0))
+        self.system.bonds[self.harmonic].add((p1, p0))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 12, delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 0., delta=1e-7)
@@ -162,7 +162,7 @@ class AnalyzeEnergy(ut.TestCase):
         p0.v = [3, 4, 5]
         p1.v = [3, 4, 5]
         # single bond
-        p0.add_bond((self.harmonic, p1))
+        self.system.bonds[self.harmonic].add((p0, p1))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50. + 3. / 2. + 1., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)
@@ -175,7 +175,7 @@ class AnalyzeEnergy(ut.TestCase):
         if espressomd.has_features(["DPD"]):
             self.assertAlmostEqual(energy["dpd"], 0., delta=1e-7)
         # two bonds
-        p1.add_bond((self.harmonic, p0))
+        self.system.bonds[self.harmonic].add((p1, p0))
         energy = self.system.analysis.energy()
         self.assertAlmostEqual(energy["total"], 50. + 3 + 1., delta=1e-7)
         self.assertAlmostEqual(energy["kinetic"], 50., delta=1e-7)

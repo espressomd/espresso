@@ -510,7 +510,7 @@ class LeesEdwards(ut.TestCase):
             r_cut = 1.5
             harm = espressomd.interactions.HarmonicBond(k=k_bond, r_0=0.0)
             system.bonded_inter.add(harm)
-            p1.add_bond((harm, p2))
+            self.system.bonds[harm].add((p1, p2))
 
             r_12 = np.copy(system.distance_vec(p1, p2))
             system.integrator.run(0)
@@ -891,7 +891,7 @@ class LeesEdwards(ut.TestCase):
 
         p1 = system.part.add(pos=(2.5, 4.5, 2.5), fix=[True] * 3)
         p2 = system.part.add(pos=(2.5, 0.5, 2.5), fix=[True] * 3)
-        p1.add_bond((harm, p2))
+        self.system.bonds[harm].add((p1, p2))
 
         system.bond_breakage[harm] = espressomd.bond_breakage.BreakageSpec(
             breakage_length=np.sqrt(2.), action_type="delete_bond")
@@ -919,7 +919,7 @@ class LeesEdwards(ut.TestCase):
         p4 = system.part.add(pos=(2.5, 0.25, 2.5))
         p4.vs_auto_relate_to(p2)
 
-        p3.add_bond((harm2, p4))
+        self.system.bonds[harm2].add((p3, p4))
 
         system.bond_breakage[harm2] = espressomd.bond_breakage.BreakageSpec(
             breakage_length=np.sqrt(2.) / 2.,

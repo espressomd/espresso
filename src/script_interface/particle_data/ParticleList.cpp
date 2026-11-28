@@ -25,6 +25,8 @@
 #include "script_interface/ScriptInterface.hpp"
 #include "script_interface/system/Leaf.hpp"
 
+#include "core/bond_queries.hpp"
+#include "core/bonds.hpp"
 #include "core/cell_system/CellStructure.hpp"
 #include "core/exclusions.hpp"
 #include "core/particle_node.hpp"
@@ -64,10 +66,10 @@ static void auto_exclusions(boost::mpi::communicator const &comm,
   auto &system = ::System::get_system();
   auto &cell_structure = *system.cell_structure;
 
-  // determine initial connectivity
+  // determine initial connectivity (owned bonds: every pair bond once)
   for (auto const &p : cell_structure.local_particles()) {
     auto const pid1 = p.id();
-    for (auto const bond : p.bonds()) {
+    for (auto const bond : cell_structure.bond_table().owned(pid1)) {
       if (bond.partner_ids().size() == 1u) {
         auto const pid2 = bond.partner_ids()[0];
         if (pid1 != pid2) {
@@ -147,6 +149,15 @@ Variant ParticleList::do_call_method(std::string const &name,
   }
   if (name == "clear") {
     get_system().cell_structure->remove_all_particles();
+    return {};
+  }
+  if (name == "add_bonds") {
+    // bonds of any type, encoded as [bond_id, n, id_0, ..., id_{n-1}]
+    auto const encoded = get_value<std::vector<int>>(params, "encoded");
+    auto &system = get_system();
+    context()->parallel_try_catch(
+        [&]() { ::add_encoded_bonds(system, encoded); });
+    system.on_particle_change();
     return {};
   }
   if (not context()->is_head_node()) {

@@ -48,14 +48,13 @@ struct BondsPressureKernelData {
 
 struct PairBondsPressureKernel {
   BondsPressureKernelData data;
-  LocalBondState::PairBondlistType bond_list;
-  LocalBondState::PairBondIDType bond_ids;
+  LocalBondList<2>::ListType bond_list;
+  LocalBondList<2>::IdsType bond_ids;
   Coulomb::ShortRangeForceKernel::kernel_type const *const coulomb_f_kernel;
 
   PairBondsPressureKernel(
-      BondsPressureKernelData data_,
-      LocalBondState::PairBondlistType bond_list_,
-      LocalBondState::PairBondIDType bond_ids_,
+      BondsPressureKernelData data_, LocalBondList<2>::ListType bond_list_,
+      LocalBondList<2>::IdsType bond_ids_,
       Coulomb::ShortRangeForceKernel::kernel_type const *coulomb_f_kernel_)
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)), coulomb_f_kernel(coulomb_f_kernel_) {}
@@ -104,12 +103,12 @@ struct PairBondsPressureKernel {
 
 struct AngleBondsPressureKernel {
   BondsPressureKernelData data;
-  LocalBondState::AngleBondlistType bond_list;
-  LocalBondState::AngleBondIDType bond_ids;
+  LocalBondList<3>::ListType bond_list;
+  LocalBondList<3>::IdsType bond_ids;
 
   AngleBondsPressureKernel(BondsPressureKernelData data_,
-                           LocalBondState::AngleBondlistType bond_list_,
-                           LocalBondState::AngleBondIDType bond_ids_)
+                           LocalBondList<3>::ListType bond_list_,
+                           LocalBondList<3>::IdsType bond_ids_)
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 
@@ -153,12 +152,12 @@ struct AngleBondsPressureKernel {
 
 struct DihedralBondsPressureKernel {
   BondsPressureKernelData data;
-  LocalBondState::DihedralBondlistType bond_list;
-  LocalBondState::DihedralBondIDType bond_ids;
+  LocalBondList<4>::ListType bond_list;
+  LocalBondList<4>::IdsType bond_ids;
 
   DihedralBondsPressureKernel(BondsPressureKernelData data_,
-                              LocalBondState::DihedralBondlistType bond_list_,
-                              LocalBondState::DihedralBondIDType bond_ids_)
+                              LocalBondList<4>::ListType bond_list_,
+                              LocalBondList<4>::IdsType bond_ids_)
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 

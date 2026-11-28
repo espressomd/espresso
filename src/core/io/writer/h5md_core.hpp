@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include "BondTable.hpp"
 #include "BoxGeometry.hpp"
 #include "ParticleRange.hpp"
 #include "h5md_specification.hpp"
@@ -105,9 +106,10 @@ public:
    * @param time Simulation time.
    * @param step Simulation step (monotonically increasing).
    * @param geometry The box dimensions.
+   * @param bond_table Bonds of the local particles.
    */
   void write(const ParticleRange &particles, double time, int step,
-             BoxGeometry const &geometry);
+             BoxGeometry const &geometry, BondTable const &bond_table);
 
   /**
    * @brief Retrieve the path to the hdf5 file.
@@ -214,7 +216,8 @@ private:
    * @brief Write the particle bonds (currently only pairs).
    * @param particles Particle range for which to write bonds.
    */
-  void write_connectivity(const ParticleRange &particles);
+  void write_connectivity(const ParticleRange &particles,
+                          BondTable const &bond_table);
   /**
    * @brief Write the unit attributes.
    */

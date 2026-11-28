@@ -21,15 +21,27 @@
 
 #include "pair_criteria/PairCriterion.hpp"
 
-#include "BondList.hpp"
+#include "bonds.hpp"
 
 namespace PairCriteria {
-/** @brief True if a bond of given type exists between two particles. */
+/**
+ * @brief True if a bond of given type exists between two particles.
+ * Head node only: the bonds are fetched from the ranks of the particles.
+ */
 class BondCriterion : public PairCriterion {
 public:
   bool decide(Particle const &p1, Particle const &p2) const override {
-    return pair_bond_exists_on(p1.bonds(), p2.id(), m_bond_type) ||
-           pair_bond_exists_on(p2.bonds(), p1.id(), m_bond_type);
+    auto const connects = [this](int owner_id, int partner_id) {
+      for (auto const &[bond_id, ids] : get_owned_bonds(owner_id)) {
+        if (bond_id == m_bond_type and ids.size() == 2u and
+            ids[1] == partner_id) {
+          return true;
+        }
+      }
+      return false;
+    };
+    return p1.id() != p2.id() and
+           (connects(p1.id(), p2.id()) or connects(p2.id(), p1.id()));
   }
   int get_bond_type() { return m_bond_type; }
   void set_bond_type(int t) { m_bond_type = t; }

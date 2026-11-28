@@ -50,6 +50,7 @@
 
 #include "mpiio.hpp"
 
+#include "BondTable.hpp"
 #include "Particle.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"
 #include "cell_system/CellStructure.hpp"
@@ -60,6 +61,7 @@
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <mpi.h>
 
@@ -219,7 +221,8 @@ static void dump_info(std::string const &fn, unsigned fields,
 void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
                             BondedInteractionsMap const &bonded_ias,
                             ParticleRange const &particles,
-                            write_buffers &buffers) {
+                            write_buffers &buffers,
+                            BondTable const &bond_table) {
   auto const nlocalpart = static_cast<unsigned long>(particles.size());
   auto const offset = mpi_calculate_file_offset(nlocalpart);
   // keep buffers in order to avoid allocating them on every function call
@@ -288,8 +291,14 @@ void mpi_mpiio_common_write(std::string const &prefix, unsigned fields,
           io::back_inserter(bonds)};
       boost::archive::binary_oarchive bond_archiver{os};
 
+      // one bond list per particle, holding every bond the particle
+      // participates in, so that reading stores each bond on the ranks of
+      // all its participants without communication
+      std::vector<int> block;
       for (auto const &p : particles) {
-        bond_archiver << p.bonds();
+        block.clear();
+        bond_table.copy_to(p.id(), block);
+        bond_archiver << block;
       }
     }
 
@@ -513,8 +522,17 @@ void mpi_mpiio_common_read(const std::string &prefix, unsigned fields,
     boost::iostreams::stream<boost::iostreams::array_source> ss(src);
     boost::archive::binary_iarchive ia(ss);
 
+    // the bonds travel with the particles to their rank at the next resort
+    std::vector<int> block;
     for (auto &p : particles) {
-      ia >> p.bonds();
+      ia >> block;
+      try {
+        cell_structure.bond_table().insert(p.id(), block);
+      } catch (std::invalid_argument const &) {
+        fatal_error("Malformed bond file (written by an incompatible version "
+                    "of ESPResSo?)",
+                    prefix + ".bond");
+      }
     }
   }
 

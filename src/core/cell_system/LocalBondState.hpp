@@ -23,67 +23,98 @@
 
 #include <Kokkos_Core.hpp>
 
+#include <cassert>
+#include <cstddef>
+#include <span>
 #include <vector>
 
-struct LocalBondState {
+/**
+ * @brief Flat list of the bonds between @p N particles that are evaluated
+ * on this MPI rank.
+ *
+ * Each row holds the particles of one bond, the owner first, as indices
+ * into the particle arrays.
+ */
+template <std::size_t N> struct LocalBondList {
   using execution_space = Kokkos::DefaultHostExecutionSpace;
-  using PairBondlistType =
-      Kokkos::View<int *[2], Kokkos::LayoutRight, execution_space>;
-  using PairBondIDType =
-      Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
-  using AngleBondlistType =
-      Kokkos::View<int *[3], Kokkos::LayoutRight, execution_space>;
-  using AngleBondIDType =
-      Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
-  using DihedralBondlistType =
-      Kokkos::View<int *[4], Kokkos::LayoutRight, execution_space>;
-  using DihedralBondIDType =
-      Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
+  using ListType = Kokkos::View<int *[N], Kokkos::LayoutRight, execution_space>;
+  using IdsType = Kokkos::View<int *, Kokkos::LayoutRight, execution_space>;
+  using IdToIndex = Kokkos::View<int *, execution_space>;
 
-  // Bond counts
-  int pair_count = 0;
-  int angle_count = 0;
-  int dihedral_count = 0;
+  /** @brief Number of bonds, i.e. of rows that are filled. */
+  int count = 0;
+  /** @brief Per bond, its particles. */
+  ListType list;
+  /** @brief Per bond, the key of the bonded interaction. */
+  IdsType ids;
 
-  // Kokkos bond lists
-  PairBondlistType pair_list;
-  PairBondIDType pair_ids;
-  AngleBondlistType angle_list;
-  AngleBondIDType angle_ids;
-  DihedralBondlistType dihedral_list;
-  DihedralBondIDType dihedral_ids;
+  /**
+   * @brief Replace the content of the list.
+   * @param rows      Particle indices, @p N per bond, one bond after the
+   *                  other.
+   * @param bond_ids  Per bond, the key of the bonded interaction.
+   */
+  void assign(std::span<const int> rows, std::span<const int> bond_ids);
 
-#ifdef ESPRESSO_COLLISION_DETECTION
-  std::vector<int> new_pair_list, new_pair_ids;
-  std::vector<int> new_angle_list, new_angle_ids;
-  std::vector<int> new_dihedral_list, new_dihedral_ids;
-#endif
-
-  void reset_counts() {
-    pair_count = 0;
-    angle_count = 0;
-    dihedral_count = 0;
-  }
-
-  void set_counts(int p, int a, int d) {
-    pair_count = p;
-    angle_count = a;
-    dihedral_count = d;
-  }
-
-  /** Allocate or reallocate all Kokkos Views to current counts. */
-  void allocate();
-
-  /** Deallocates Views */
+  /** @brief Empty the list and release its memory. */
   void clear();
 
-  /** Reset counts + collision vectors */
+  /** @brief Empty the list, keeping its memory. */
   void reset();
 
 #ifdef ESPRESSO_COLLISION_DETECTION
-  void clear_new_bonds();
-  void add_new_bond(int bond_id, std::vector<int> const &particle_ids,
-                    Kokkos::View<int *, execution_space> const &id_to_index);
-  void rebuild();
-#endif
+  /**
+   * @brief Register a bond created after the list was filled.
+   * It is counted right away, but only stored by @ref merge_new_bonds().
+   */
+  void add_new_bond(int bond_id, std::span<const int> particle_ids,
+                    IdToIndex const &id_to_index);
+
+  /** @brief Forget the bonds that were registered but not merged. */
+  void discard_new_bonds();
+
+  /** @brief Store the registered bonds at the end of the list. */
+  void merge_new_bonds();
+#endif // ESPRESSO_COLLISION_DETECTION
+
+private:
+  /** @brief Empty the list and make room for @p capacity bonds. */
+  void allocate(int capacity);
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+  /** @brief Particle indices and bond ids of the registered bonds. */
+  std::vector<int> m_new_list, m_new_ids;
+#endif // ESPRESSO_COLLISION_DETECTION
+};
+
+/**
+ * @brief Flat lists of the bonds evaluated on this MPI rank, by number of
+ * particles.
+ */
+struct LocalBondState {
+  using IdToIndex = LocalBondList<2>::IdToIndex;
+
+  LocalBondList<2> pairs;
+  LocalBondList<3> angles;
+  LocalBondList<4> dihedrals;
+
+  bool empty() const {
+    return pairs.count == 0 and angles.count == 0 and dihedrals.count == 0;
+  }
+
+  /** @brief Empty the lists and release their memory. */
+  void clear();
+
+  /** @brief Empty the lists, keeping their memory. */
+  void reset();
+
+#ifdef ESPRESSO_COLLISION_DETECTION
+  /** @copydoc LocalBondList::add_new_bond */
+  void add_new_bond(int bond_id, std::span<const int> particle_ids,
+                    IdToIndex const &id_to_index);
+  /** @copydoc LocalBondList::discard_new_bonds */
+  void discard_new_bonds();
+  /** @copydoc LocalBondList::merge_new_bonds */
+  void merge_new_bonds();
+#endif // ESPRESSO_COLLISION_DETECTION
 };

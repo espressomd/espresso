@@ -48,7 +48,7 @@ class VirtualSitesCOM(ut.TestCase):
         for pos in positions[0]:
             p = self.system.part.add(pos=pos, mol_id=mol_id, type=monomer_type)
             if p_previous is not None:
-                p.add_bond((fene, p_previous))
+                self.system.bonds[fene].add((p, p_previous))
             p_previous = p
 
     def set_molecules_and_vs(
@@ -199,7 +199,7 @@ class VirtualSitesCOM(ut.TestCase):
         vs_part = self.system.part.by_id(mid_for_vs[molecule_id[0]])
         p_tether = self.system.part.add(pos=vs_part.pos + 1e-6,
                                         type=5, fix=[True, True, False])
-        vs_part.add_bond((harmonic_bond, p_tether))
+        self.system.bonds[harmonic_bond].add((vs_part, p_tether))
 
         # track position of the center of mass over time
         xdata = np.zeros([3000, 3])
@@ -249,10 +249,10 @@ class VirtualSitesCOM(ut.TestCase):
                 rigid_bond = espressomd.interactions.RigidBond(
                     r=0.1, ptol=1E-2, vtol=1e-2)
                 self.system.bonded_inter.add(rigid_bond)
-                vs1.add_bond((rigid_bond, p))
+                self.system.bonds[rigid_bond].add((vs1, p))
                 with self.assertRaisesRegex(Exception, "VS COM particles cannot use rigid bonds"):
                     self.system.integrator.run(0)
-                vs1.delete_bond((rigid_bond, p))
+                self.system.bonds[rigid_bond].remove((vs1, p))
         # system can still be integrated
         self.system.integrator.run(0)
 

@@ -44,7 +44,6 @@
 #include "system/System.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/contains.hpp>
 #include <utils/math/int_pow.hpp>
 #include <utils/math/sqr.hpp>
 
@@ -57,6 +56,7 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <array>
 #include <cassert>
 #include <cmath>
 #include <cstddef>
@@ -280,43 +280,37 @@ void CellStructure::reset_local_properties() {
   kokkos_deep_copy(execution_space{}, get_aosoa().flags, uint8_t{0});
 }
 
-void CellStructure::update_bond_storage(int &pair_count, int &angle_count,
-                                        int &dihedral_count,
-                                        Particle const &p) {
-  auto &pair_list = m_bond_state->pair_list;
-  auto &pair_ids = m_bond_state->pair_ids;
-  auto &angle_list = m_bond_state->angle_list;
-  auto &angle_ids = m_bond_state->angle_ids;
-  auto &dihedral_list = m_bond_state->dihedral_list;
-  auto &dihedral_ids = m_bond_state->dihedral_ids;
-  for (auto const bond : p.bonds()) {
-    auto const partner_ids = bond.partner_ids();
-    try {
-      auto const partners = resolve_bond_partners(partner_ids);
-      // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
-      if (partners.size() == 1u) { // pair bonds
-        auto p_index = Kokkos::atomic_fetch_add(&pair_count, 1);
-        pair_list(p_index, 0) = p.id();
-        pair_list(p_index, 1) = partners[0]->id();
-        pair_ids(p_index) = bond.bond_id();
-      } else if (partners.size() == 2u) { // angle bond
-        auto a_index = Kokkos::atomic_fetch_add(&angle_count, 1);
-        angle_list(a_index, 0) = p.id();
-        angle_list(a_index, 1) = partners[0]->id();
-        angle_list(a_index, 2) = partners[1]->id();
-        angle_ids(a_index) = bond.bond_id();
-      } else if (partners.size() == 3u) { // dihedral bond
-        auto d_index = Kokkos::atomic_fetch_add(&dihedral_count, 1);
-        dihedral_list(d_index, 0) = p.id();
-        dihedral_list(d_index, 1) = partners[0]->id();
-        dihedral_list(d_index, 2) = partners[1]->id();
-        dihedral_list(d_index, 3) = partners[2]->id();
-        dihedral_ids(d_index) = bond.bond_id();
+void CellStructure::build_local_bond_lists() {
+  // Every bond enters the lists once, on the rank of its owner. Walking the
+  // particles in memory order sorts the bonds by the index of their owner,
+  // so that the bond loops access the particle data in memory order.
+  auto const &id_to_index = get_id_to_index();
+  // rows of particle indices and bond ids, for 2, 3 and 4 particles
+  std::array<std::vector<int>, 3> rows;
+  std::array<std::vector<int>, 3> bond_ids;
+  for (auto const *p : m_unique_particles) {
+    if (p->is_ghost()) {
+      continue;
+    }
+    for (auto const bond : m_bond_table.owned(p->id())) {
+      auto const ids = bond.particle_ids();
+      if (ids.size() < 2u) {
+        continue; // bonds without partners are not evaluated
       }
-    } catch (BondResolutionError const &) {
-      bond_resolution_error(partner_ids);
+      if (not resolve_bond_partners(bond.partner_ids())) {
+        bond_resolution_error(bond.partner_ids());
+        continue;
+      }
+      auto const k = ids.size() - 2u;
+      for (auto const pid : ids) {
+        rows[k].push_back(id_to_index(pid));
+      }
+      bond_ids[k].push_back(bond.bond_id());
     }
   }
+  m_bond_state->pairs.assign(rows[0], bond_ids[0]);
+  m_bond_state->angles.assign(rows[1], bond_ids[1]);
+  m_bond_state->dihedrals.assign(rows[2], bond_ids[2]);
 }
 
 void CellStructure::set_index_map() {
@@ -330,15 +324,11 @@ void CellStructure::set_index_map() {
   using execution_space = Kokkos::DefaultHostExecutionSpace;
   int n_threads = execution_space().concurrency();
 
-  m_bond_state->reset_counts();
-  // one cache line per thread: these counters are written on every particle,
-  // so packing them into shared cache lines makes the sweep bounce lines
-  // between L3 domains
+  // one cache line per thread: the maximal id is written on every particle,
+  // so packing the per-thread values into shared cache lines makes the
+  // sweep bounce lines between L3 domains
   struct alignas(64) PerThreadCounts {
     int max_id = 0;
-    int pair = 0;
-    int angle = 0;
-    int dihedral = 0;
   };
   std::vector<PerThreadCounts> thread_counts(n_threads);
 
@@ -347,32 +337,17 @@ void CellStructure::set_index_map() {
     unique_particles[index] = &p;
     auto &counts = thread_counts[omp_get_thread_num()];
     counts.max_id = std::max(p.id(), counts.max_id);
-    for (auto const bond : p.bonds()) {
-      if (not bond.partner_ids().empty()) {
-        auto const partner_ids = bond.partner_ids();
-        if (partner_ids.size() == 1u) {
-          counts.pair += 1;
-        } else if (partner_ids.size() == 2u) {
-          counts.angle += 1;
-        } else if (partner_ids.size() == 3u) {
-          counts.dihedral += 1;
-        }
-      }
-    }
   });
   Kokkos::fence();
-  int pair_count = 0;
-  int angle_count = 0;
-  int dihedral_count = 0;
   int max_id = 0;
   for (auto const &counts : thread_counts) {
-    pair_count += counts.pair;
-    angle_count += counts.angle;
-    dihedral_count += counts.dihedral;
     max_id = std::max(counts.max_id, max_id);
   }
-  set_local_bond_numbers(pair_count, angle_count, dihedral_count);
-  m_bond_state->allocate();
+  // Drop the free rows of the bond table when they dominate, so that its
+  // memory does not depend on the largest number of bonds ever held.
+  if (m_bond_table.is_wasteful()) {
+    m_bond_table.compact();
+  }
   for (auto &p : ghost_particles()) {
     auto const *local_particle = get_local_particle(p.id());
     if (not local_particle or not local_particle->is_ghost()) {
@@ -391,7 +366,9 @@ void CellStructure::set_index_map() {
 }
 
 CellStructure::CellStructure(BoxGeometry const &box)
-    : m_decomposition{std::make_unique<AtomDecomposition>(box)} {}
+    : m_decomposition{std::make_unique<AtomDecomposition>(box)} {
+  m_decomposition->set_migration(&m_bond_migration);
+}
 
 void CellStructure::check_particle_index() const {
   auto const max_id = get_max_local_particle_id();
@@ -438,28 +415,45 @@ void CellStructure::check_particle_sorting() const {
 }
 
 void CellStructure::remove_particle(int id) {
-  auto remove_all_bonds_to = [id](BondList &bl) {
-    for (auto it = bl.begin(); it != bl.end();) {
-      if (Utils::contains(it->partner_ids(), id)) {
-        it = bl.erase(it);
-      } else {
-        std::advance(it, 1);
-      }
-    }
-  };
+  // Every rank that stores a bond of the particle knows that the particle
+  // takes part in it, whether the particle resides here or not: the bonds
+  // are removed on all ranks without communication.
+  m_bond_table.remove_bonds_of(id);
 
-  for (auto cell : decomposition().local_cells()) {
-    auto &parts = cell->particles();
-    for (auto it = parts.begin(); it != parts.end();) {
-      if (it->id() == id) {
-        it = parts.erase(it);
-        update_particle_index(id, nullptr);
-        update_particle_index(parts);
-      } else {
-        remove_all_bonds_to(it->bonds());
-        it++;
-      }
+  // Locate the particle via the index instead of scanning all local
+  // particles. Real particles take precedence over ghosts in the index
+  // (ghosts only fill otherwise empty entries), so a ghost entry means the
+  // particle is not stored on this rank.
+  auto *const p = get_local_particle(id);
+  if (p == nullptr or p->is_ghost()) {
+    return;
+  }
+
+  auto const holds = [p](Cell *cell) {
+    if (cell == nullptr) {
+      return false;
     }
+    auto &parts = cell->particles();
+    return parts.begin() <= p and p < parts.end();
+  };
+  // The cell computed from the position is right unless the particle moved
+  // across a cell boundary since the last resort; then fall back to checking
+  // each local cell's storage range, which is O(cells), not O(particles).
+  auto *cell = particle_to_cell(*p);
+  if (not holds(cell)) {
+    auto const cells = decomposition().local_cells();
+    auto const found = std::ranges::find_if(cells, holds);
+    assert(found != cells.end());
+    cell = *found;
+  }
+
+  // ParticleList::erase() moves the last element into the freed slot, so
+  // only that element's index entry needs updating.
+  auto &parts = cell->particles();
+  auto const it = parts.erase(p);
+  update_particle_index(id, nullptr);
+  if (it != parts.end()) {
+    update_particle_index(*it);
   }
 }
 
@@ -494,26 +488,13 @@ int CellStructure::get_max_local_particle_id() const {
   return (it != m_particle_index.rend()) ? (*it)->id() : -1;
 }
 
-int CellStructure::get_local_pair_bond_numbers() const {
-  return m_bond_state->pair_count;
-}
-int CellStructure::get_local_angle_bond_numbers() const {
-  return m_bond_state->angle_count;
-}
-int CellStructure::get_local_dihedral_bond_numbers() const {
-  return m_bond_state->dihedral_count;
-}
-void CellStructure::set_local_bond_numbers(int pair_value, int angle_value,
-                                           int dihedral_value) {
-  m_bond_state->set_counts(pair_value, angle_value, dihedral_value);
-}
 #ifdef ESPRESSO_COLLISION_DETECTION
-void CellStructure::clear_new_bonds() { m_bond_state->clear_new_bonds(); }
+void CellStructure::clear_new_bonds() { m_bond_state->discard_new_bonds(); }
 void CellStructure::add_new_bond(int bond_id,
                                  std::vector<int> const &particle_ids) {
   m_bond_state->add_new_bond(bond_id, particle_ids, get_id_to_index());
 }
-void CellStructure::rebuild_bond_list() { m_bond_state->rebuild(); }
+void CellStructure::rebuild_bond_list() { m_bond_state->merge_new_bonds(); }
 #endif // ESPRESSO_COLLISION_DETECTION
 
 void CellStructure::remove_all_particles() {
@@ -524,6 +505,7 @@ void CellStructure::remove_all_particles() {
   m_particle_index.clear();
   clear_bond_properties();
   clear_particle_node();
+  m_bond_table.clear();
   get_system().on_particle_change();
 }
 
@@ -548,7 +530,7 @@ unsigned map_data_parts(unsigned data_parts) {
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
          | ((data_parts & DATA_PART_DIPFLD) ? GHOSTTRANS_DIPFLD : 0u)
 #endif
-         | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
+      ;
   /* clang-format on */
 }
 
@@ -760,8 +742,7 @@ void CellStructure::update_ghosts_and_resort_particle(unsigned data_parts) {
   ESPRESSO_CALI_MARK_FUNCTION;
 #endif
   /* data parts that are only updated on resort */
-  auto constexpr resort_only_parts =
-      Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS;
+  auto constexpr resort_only_parts = Cells::DATA_PART_PROPERTIES;
 
   auto const global_resort = boost::mpi::all_reduce(
       ::comm_cart, m_resort_particles, std::bit_or<unsigned>());

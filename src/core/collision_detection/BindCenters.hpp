@@ -54,11 +54,12 @@ public:
                          std::vector<CollisionPair> &local_collision_queue);
 
   bool detect_collision(Particle const &p1, Particle const &p2,
-                        double const dist_sq) const {
+                        double const dist_sq,
+                        BondTable const &bond_table) const {
     if (dist_sq > distance_sq)
       return false;
 
-    return detect_collision_common(p1, p2, bond_centers);
+    return detect_collision_common(p1, p2, bond_centers, bond_table);
   }
 };
 

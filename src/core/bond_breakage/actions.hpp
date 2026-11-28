@@ -20,6 +20,7 @@
 #pragma once
 
 #include <boost/functional/hash.hpp>
+#include <boost/serialization/access.hpp>
 
 #include <array>
 #include <cstddef>
@@ -40,6 +41,12 @@ struct DeleteBond {
   }
   bool operator==(DeleteBond const &) const = default;
   bool operator!=(DeleteBond const &) const = default;
+
+  template <class Archive> void serialize(Archive &ar, long int /*version*/) {
+    ar & particle_id;
+    ar & bond_partner_id;
+    ar & bond_type;
+  }
 };
 
 struct DeleteAngleBond {
@@ -55,6 +62,13 @@ struct DeleteAngleBond {
   }
   bool operator==(DeleteAngleBond const &) const = default;
   bool operator!=(DeleteAngleBond const &) const = default;
+
+  template <class Archive> void serialize(Archive &ar, long int /*version*/) {
+    ar & particle_id;
+    ar &bond_partner_id[0];
+    ar &bond_partner_id[1];
+    ar & bond_type;
+  }
 };
 
 struct DeleteAllBonds {
@@ -68,6 +82,11 @@ struct DeleteAllBonds {
   }
   bool operator==(DeleteAllBonds const &) const = default;
   bool operator!=(DeleteAllBonds const &) const = default;
+
+  template <class Archive> void serialize(Archive &ar, long int /*version*/) {
+    ar & particle_id_1;
+    ar & particle_id_2;
+  }
 };
 
 } // namespace BondBreakage

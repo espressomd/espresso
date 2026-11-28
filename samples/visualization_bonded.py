@@ -46,7 +46,7 @@ previous_part = None
 for i in range(n_part):
     part = system.part.add(pos=np.random.random(3) * system.box_l)
     if previous_part:
-        part.add_bond((system.bonded_inter[0], previous_part))
+        system.bonds[0].add((part, previous_part))
     previous_part = part
 
 visualizer = espressomd.visualization.openGLLive(

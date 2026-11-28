@@ -130,7 +130,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.bonded_inter.add(hb)
         self.system.bonded_inter.add(vb)
         p1, p2 = self.system.part.all()
-        p1.add_bond((vb, p2))
+        self.system.bonds[vb].add((p1, p2))
 
         self.system.integrator.run(steps=0, recalc_forces=True)
         self.assertEqual(self.system.analysis.energy()["total"], 0.)
@@ -143,7 +143,7 @@ class InteractionsBondedTest(ut.TestCase):
         self.system.bonded_inter.add(rb)
         p1, p2 = self.system.part.all()
         p2.pos = p1.pos + np.array([1.0, 0., 0.])
-        p1.add_bond((rb, p2))
+        self.system.bonds[rb].add((p1, p2))
 
         self.system.integrator.run(steps=0, recalc_forces=True)
         self.assertEqual(self.system.analysis.energy()["total"], 0.)
@@ -331,7 +331,7 @@ class InteractionsBondedTest(ut.TestCase):
 
         system.part.add(id=0, pos=[2.5, 5.0, 5.0])
         system.part.add(id=1, pos=[7.5, 5.0, 5.0])
-        system.part.by_id(0).add_bond((hb, 1))
+        self.system.bonds[hb].add((0, 1))
 
         # Expect bond resolution error
         error_msg = "ERROR: bond partner not found on local node, could only find: {}"

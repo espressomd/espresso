@@ -82,6 +82,7 @@ System::System(Private) {
 #endif
   propagation = std::make_shared<Propagation>();
   bonded_ias = std::make_shared<BondedInteractionsMap>();
+  bonded_ias->set_bond_table(&cell_structure->bond_table());
   thermostat = std::make_shared<Thermostat::Thermostat>();
   nonbonded_ias = std::make_shared<InteractionsNonBonded>();
   comfixed = std::make_shared<ComFixed>();
@@ -643,14 +644,7 @@ unsigned System::get_global_ghost_flags() const {
 
   if (thermostat->thermo_switch & THERMO_BOND) {
     data_parts |= Cells::DATA_PART_MOMENTUM;
-    data_parts |= Cells::DATA_PART_BONDS;
   }
-
-#ifdef ESPRESSO_COLLISION_DETECTION
-  if (not collision_detection->is_off()) {
-    data_parts |= Cells::DATA_PART_BONDS;
-  }
-#endif
 
 #ifdef ESPRESSO_ROTATION
   if (orientation_ghosts_needed(*this)) {

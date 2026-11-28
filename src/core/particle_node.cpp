@@ -23,6 +23,7 @@
 
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
+#include "bonds.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "communication.hpp"
@@ -86,7 +87,10 @@ std::size_t const max_cache_size = (100ul * 1048576ul) / sizeof(Particle);
 Utils::Cache<int, Particle> particle_fetch_cache(max_cache_size);
 } // namespace
 
-void invalidate_fetch_cache() { particle_fetch_cache.invalidate(); }
+void invalidate_fetch_cache() {
+  particle_fetch_cache.invalidate();
+  invalidate_bond_fetch_cache();
+}
 std::size_t fetch_cache_max_size() { return particle_fetch_cache.max_size(); }
 
 static void mpi_send_particle_data_local(int p_id) {

@@ -117,6 +117,11 @@ void GlueToSurface::handle_collisions(
 
   int current_vs_pid = global_max_seen_particle + 1;
 
+  // Bonds to create. Every bond is recorded on exactly one rank, the one
+  // where the first particle of the colliding pair resides, and is
+  // synchronized across ranks after the loop.
+  std::vector<BondTuple> new_bonds;
+
   // Iterate over global collision queue
   for (auto const &[pid1, pid2] : global_collision_queue) {
 
@@ -172,11 +177,10 @@ void GlueToSurface::handle_collisions(
     auto const &attach_vs_to =
         (p1->type() == part_type_to_attach_vs_to) ? *p1 : *p2;
 
-    // Add a bond between the centers of the colliding particles
-    // The bond is placed on the node that has p1
-    if (!p1->is_ghost()) {
-      const int bondG[] = {pid2};
-      get_part(cell_structure, pid1).bonds().insert({bond_centers, bondG});
+    // Record a bond between the centers of the colliding particles.
+    auto const record_bonds = not p1->is_ghost();
+    if (record_bonds) {
+      new_bonds.push_back({bond_centers, {pid1, pid2}});
     }
 
     // Change type of particle being attached, to make it inert
@@ -199,11 +203,18 @@ void GlueToSurface::handle_collisions(
       p2 = cell_structure.get_local_particle(pid2);
       current_vs_pid++;
     }
-    // Create bond between the virtual particles
-    auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
-    int const bondG[] = {current_vs_pid - 1};
-    get_part(cell_structure, p->id()).bonds().insert({bond_vs, bondG});
+    // Record a bond between the glued particle and its virtual site.
+    if (record_bonds) {
+      auto const p = (p1->type() == part_type_after_glueing) ? p1 : p2;
+      new_bonds.push_back({bond_vs, {p->id(), current_vs_pid - 1}});
+    }
   } // Loop over all collisions in the queue
+
+  // The global queue is the same on all ranks, so they agree on whether to
+  // take part in this collective call.
+  if (not global_collision_queue.empty()) {
+    add_bonds_on_all_ranks(system, new_bonds);
+  }
 
 #ifdef ESPRESSO_ADDITIONAL_CHECKS
   assert(Utils::Mpi::all_compare(::comm_cart, current_vs_pid) &&
@@ -214,7 +225,7 @@ void GlueToSurface::handle_collisions(
   if (not global_collision_queue.empty()) {
     cell_structure.set_resort_particles(Cells::RESORT_GLOBAL);
     cell_structure.update_ghosts_and_resort_particle(
-        Cells::DATA_PART_PROPERTIES | Cells::DATA_PART_BONDS);
+        Cells::DATA_PART_PROPERTIES);
     system.update_used_propagations();
   }
 }

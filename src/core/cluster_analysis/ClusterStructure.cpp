@@ -17,11 +17,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "ClusterStructure.hpp"
+#include "system/System.hpp"
 
 #include "BoxGeometry.hpp"
 #include "Cluster.hpp"
 #include "PartCfg.hpp"
+#include "bonds.hpp"
 #include "errorhandling.hpp"
+#include "pair_criteria/BondCriterion.hpp"
 #include "particle_node.hpp"
 
 #include <utils/for_each_pair.hpp>
@@ -49,6 +52,15 @@ void ClusterStructure::run_for_all_pairs() {
   auto const box_geo_handle = get_box_geo();
   auto const &box_geo = *box_geo_handle;
   PartCfg partCfg{box_geo};
+  if (dynamic_cast<PairCriteria::BondCriterion const *>(
+          m_pair_criterion.get())) {
+    // fetch the bonds of all particles at once, not pair by pair
+    std::vector<int> pids;
+    for (auto const &p : partCfg) {
+      pids.push_back(p.id());
+    }
+    prefetch_owned_bonds(pids);
+  }
   Utils::for_each_pair(partCfg, [this](Particle const &p1, Particle const &p2) {
     this->add_pair(p1, p2);
   });
@@ -60,10 +72,17 @@ void ClusterStructure::run_for_bonded_particles() {
   auto const box_geo_handle = get_box_geo();
   auto const &box_geo = *box_geo_handle;
   PartCfg partCfg{box_geo};
+  // the bonds reside on the ranks of the particles: fetch them at once
+  std::vector<int> pids;
+  for (auto const &p : partCfg) {
+    pids.push_back(p.id());
+  }
+  prefetch_owned_bonds(pids);
   for (const auto &p : partCfg) {
-    for (auto const bond : p.bonds()) {
-      if (bond.partner_ids().size() == 1) {
-        add_pair(p, get_particle_data(bond.partner_ids()[0]));
+    // owned bonds: every pair bond is added once
+    for (auto const &[bond_id, ids] : get_owned_bonds(p.id())) {
+      if (ids.size() == 2u) {
+        add_pair(p, get_particle_data(ids[1]));
       }
     }
   }

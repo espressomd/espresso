@@ -40,6 +40,7 @@
 #include <boost/mpi/communicator.hpp>
 #include <boost/mpi/request.hpp>
 #include <boost/range/numeric.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <Kokkos_Core.hpp>
 
@@ -136,7 +137,9 @@ void RegularDecomposition::move_left_or_right(ParticleList &src,
 void RegularDecomposition::exchange_neighbors(
     ParticleList &pl, std::vector<ParticleChange> &modified_cells) {
   auto const node_neighbors = Utils::Mpi::cart_neighbors<3>(m_comm);
-  static ParticleList send_buf_l, send_buf_r, recv_buf_l, recv_buf_r;
+  // the migration data of the particles, e.g. their bonds, travels in the
+  // same message as the particles
+  static MigrationMessage<ParticleList> send_l, send_r, recv_l, recv_r;
 
   for (int dir = 0; dir < 3; dir++) {
     /* Single node direction, no action needed. */
@@ -146,32 +149,37 @@ void RegularDecomposition::exchange_neighbors(
          the same, and we need only one communication */
     }
     if (Utils::Mpi::cart_get<3>(m_comm).dims[dir] == 2) {
-      move_left_or_right(pl, send_buf_l, send_buf_l, dir);
+      move_left_or_right(pl, send_l.particles, send_l.particles, dir);
+      pack_migration(send_l.particles, send_l.data);
 
-      Utils::Mpi::sendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
-                           node_neighbors[2 * dir], 0, recv_buf_l);
+      Utils::Mpi::sendrecv(m_comm, node_neighbors[2 * dir], 0, send_l,
+                           node_neighbors[2 * dir], 0, recv_l);
 
-      send_buf_l.clear();
+      send_l.particles.clear();
     } else {
       using boost::mpi::request;
       using Utils::Mpi::isendrecv;
 
-      move_left_or_right(pl, send_buf_l, send_buf_r, dir);
+      move_left_or_right(pl, send_l.particles, send_r.particles, dir);
+      pack_migration(send_l.particles, send_l.data);
+      pack_migration(send_r.particles, send_r.data);
 
-      auto req_l = isendrecv(m_comm, node_neighbors[2 * dir], 0, send_buf_l,
-                             node_neighbors[2 * dir], 0, recv_buf_l);
-      auto req_r = isendrecv(m_comm, node_neighbors[2 * dir + 1], 0, send_buf_r,
-                             node_neighbors[2 * dir + 1], 0, recv_buf_r);
+      auto req_l = isendrecv(m_comm, node_neighbors[2 * dir], 0, send_l,
+                             node_neighbors[2 * dir], 0, recv_l);
+      auto req_r = isendrecv(m_comm, node_neighbors[2 * dir + 1], 0, send_r,
+                             node_neighbors[2 * dir + 1], 0, recv_r);
 
       std::array<request, 4> reqs{{req_l[0], req_l[1], req_r[0], req_r[1]}};
       boost::mpi::wait_all(reqs.begin(), reqs.end());
 
-      send_buf_l.clear();
-      send_buf_r.clear();
+      send_l.particles.clear();
+      send_r.particles.clear();
+      unpack_migration(recv_r.particles, recv_r.data);
     }
 
-    move_if_local(recv_buf_l, pl, modified_cells);
-    move_if_local(recv_buf_r, pl, modified_cells);
+    unpack_migration(recv_l.particles, recv_l.data);
+    move_if_local(recv_l.particles, pl, modified_cells);
+    move_if_local(recv_r.particles, pl, modified_cells);
   }
 }
 

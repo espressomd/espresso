@@ -26,6 +26,10 @@
 
 #include <utils/Vector.hpp>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+
+#include <cassert>
 #include <optional>
 #include <span>
 #include <variant>
@@ -43,6 +47,43 @@ struct ModifiedList {
  * @brief Change of Particle Address.
  */
 using ParticleChange = std::variant<RemovedParticle, ModifiedList>;
+
+/**
+ * @brief Data kept outside of the particles that has to follow them when
+ * they move to another MPI rank, e.g. their bonds.
+ *
+ * A particle decomposition calls @ref pack() for every particle it sends
+ * to another rank, in the order of the particles in the message, and
+ * @ref unpack() for every received particle, in the same order.
+ */
+class ParticleMigration {
+public:
+  /** @brief Move the data of a departing particle into a buffer. */
+  virtual void pack(int pid, std::vector<int> &buffer) = 0;
+  /**
+   * @brief Restore the data of an arriving particle from a buffer.
+   * @return the remainder of the buffer.
+   */
+  virtual std::span<const int> unpack(int pid, std::span<const int> buffer) = 0;
+  virtual ~ParticleMigration() = default;
+};
+
+/**
+ * @brief Particles sent to another MPI rank, together with their
+ * migration data (see @ref ParticleMigration), in a single message.
+ */
+template <class Particles> struct MigrationMessage {
+  Particles particles;
+  /** @brief Migration data of the particles, in their order. */
+  std::vector<int> data;
+
+private:
+  friend boost::serialization::access;
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar & particles;
+    ar & data;
+  }
+};
 
 /**
  * @brief A distributed particle decomposition.
@@ -130,5 +171,40 @@ public:
 
   virtual BoxGeometry const &box() const = 0;
 
+  /**
+   * @brief Set the data that follows the particles when they move to
+   * another MPI rank. Must be set identically on all ranks.
+   */
+  virtual void set_migration(ParticleMigration *migration) {
+    m_migration = migration;
+  }
+
   virtual ~ParticleDecomposition() = default;
+
+protected:
+  ParticleMigration *m_migration = nullptr;
+
+  /** @brief Pack the migration data of the particles of a container. */
+  template <class Particles>
+  void pack_migration(Particles const &particles, std::vector<int> &buffer) {
+    buffer.clear();
+    if (m_migration) {
+      for (auto const &p : particles) {
+        m_migration->pack(p.id(), buffer);
+      }
+    }
+  }
+
+  /** @brief Unpack the migration data of the particles of a container. */
+  template <class Particles>
+  void unpack_migration(Particles const &particles,
+                        std::vector<int> const &buffer) {
+    if (m_migration) {
+      auto rest = std::span<const int>(buffer);
+      for (auto const &p : particles) {
+        rest = m_migration->unpack(p.id(), rest);
+      }
+      assert(rest.empty());
+    }
+  }
 };

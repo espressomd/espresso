@@ -69,7 +69,7 @@ public:
       auto &bonded_ias = *system.bonded_ias;
       Mpiio::mpi_mpiio_common_write(prefix.string(), fields, bonded_ias,
                                     cell_structure.local_particles(),
-                                    *m_buffers);
+                                    *m_buffers, cell_structure.bond_table());
     } else if (name == "read") {
       auto const system_si = m_system.lock();
       auto &system = system_si->get_system();

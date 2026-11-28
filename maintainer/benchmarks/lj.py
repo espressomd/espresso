@@ -132,7 +132,7 @@ def build_and_tune(system, args):
             vec /= np.linalg.norm(vec)
             p1 = system.part.add(pos=pos)
             p2 = system.part.add(pos=pos + vec * hb.r_0)
-            p1.add_bond((hb, p2))
+            system.bonds[hb].add((p1, p2))
             bond_pairs.append([p1.id, p2.id])
 
     benchmarks.minimize(system, 1 / system.time_step)
@@ -191,7 +191,7 @@ def run_from_state(system, args):
             r_0=meta["harmonic_r_0"], k=meta["harmonic_k"])
         system.bonded_inter.add(hb)
         for p1, p2 in handle["bond_pairs"]:
-            system.part.by_id(int(p1)).add_bond((hb, int(p2)))
+            system.bonds[hb].add((int(p1), int(p2)))
     system.integrator.set_vv()
     system.thermostat.set_langevin(
         kT=meta["kT"], gamma=meta["gamma"], seed=int(meta["seed"]))

@@ -21,6 +21,7 @@ import numpy as np
 import collections
 import itertools
 import functools
+import warnings
 from .interactions import BondedInteraction
 from .utils import nesting_level, array_locked, is_valid_type
 from .utils import check_type_or_throw_except
@@ -363,7 +364,6 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         ----------
-        delete_bond : Delete an unverified bond held by the particle.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
     is_virtual()
@@ -493,8 +493,12 @@ class ParticleHandle(ScriptInterfaceHelper):
     @property
     def bonds(self):
         """
-        The bonds stored by this particle. Note that bonds are only stored by
-        one partner. You need to define a bonded interaction.
+        The bonds whose first particle is this particle. A bond is listed
+        only for the first of the particles it was created with, e.g. a bond
+        created with ``system.bonds[bond].add((p1, p2))`` is listed for
+        ``p1`` but not for ``p2``. The bond information is not stored in the
+        particle: it is looked up in the bonds of the system. You need to
+        define a bonded interaction.
 
         A bond tuple is specified as a bond identifier associated with
         a particle ``(bond_ID, (*part_ID,))``. A single particle may contain
@@ -507,8 +511,8 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         --------
-        espressomd.particle_data.ParticleHandle.add_bond : Method to add bonds to a ``Particle``
-        espressomd.particle_data.ParticleHandle.delete_bond : Method to remove bonds from a ``Particle``
+        espressomd.interactions.BondCollection.add : Method to add bonds to a ``Particle``
+        espressomd.interactions.BondCollection.remove : Method to remove bonds from a ``Particle``
 
         """
         bonds = []
@@ -523,18 +527,26 @@ class ParticleHandle(ScriptInterfaceHelper):
     def bonds(self, bonds):
         # Assigning to the bond property means replacing the existing value
         # i.e., we delete all existing bonds
-        self.delete_all_bonds()
+        if not bonds:
+            self.delete_all_bonds()
+            return
 
-        if bonds:
-            nlvl = nesting_level(bonds)
-            if nlvl == 1:
-                self.add_bond(bonds)
-            elif nlvl == 2:
-                for bond in bonds:
-                    self.add_bond(bond)
-            else:
-                raise ValueError(
-                    "Bonds have to specified as lists of tuples/lists or a single list.")
+        nlvl = nesting_level(bonds)
+        if nlvl == 1:
+            bonds = [bonds]
+        elif nlvl != 2:
+            raise ValueError(
+                "Bonds have to specified as lists of tuples/lists or a single list.")
+        # validate the new bonds before the existing ones are deleted
+        new_bonds = []
+        for bond in bonds:
+            _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+            if _bond in new_bonds:
+                raise RuntimeError(
+                    f"Bond {_bond} already exists on particle {self.id}")
+            new_bonds.append(_bond)
+        # the existing bonds are only replaced if all particles exist
+        self.update({"bonds": new_bonds})
 
     @property
     def exclusions(self):
@@ -639,7 +651,6 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         --------
-        add_bond : Add an unverified bond to the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
@@ -661,7 +672,6 @@ class ParticleHandle(ScriptInterfaceHelper):
 
         See Also
         --------
-        delete_bond : Delete an unverified bond held by the ``Particle``.
         bonds : ``Particle`` property containing a list of all current bonds held by ``Particle``.
 
         """
@@ -722,9 +732,28 @@ class ParticleHandle(ScriptInterfaceHelper):
                     "Bond partners have to be of type integer or ParticleHandle.")
         return tuple(bond)
 
+    def _add_bond(self, bond):
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} already exists on particle {self.id}")
+        self.add_verified_bond(_bond)
+
+    def _delete_bond(self, bond):
+        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
+        if _bond not in self.bonds:
+            raise RuntimeError(
+                f"Bond {_bond} doesn't exist on particle {self.id}")
+        self.delete_verified_bond(_bond)
+
     def add_bond(self, bond):
         """
         Add a single bond to the particle.
+
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].add((p1, p2, ...))`` instead, see
+           :meth:`espressomd.interactions.BondCollection.add`.
+           This method will be removed in ESPResSo 5.1.
 
         Parameters
         ----------
@@ -757,15 +786,20 @@ class ParticleHandle(ScriptInterfaceHelper):
         >>> p1.add_bond((0, p2))
 
         """
-        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
-        if _bond in self.bonds:
-            raise RuntimeError(
-                f"Bond {_bond} already exists on particle {self.id}")
-        self.add_verified_bond(_bond)
+        warnings.warn(
+            "ParticleHandle.add_bond() is deprecated and will be removed in "
+            "ESPResSo 5.1; use system.bonds[bond].add((p1, p2, ...)) instead",
+            FutureWarning, stacklevel=2)
+        self._add_bond(bond)
 
     def delete_bond(self, bond):
         """
         Delete a single bond from the particle.
+
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].remove((p1, p2, ...))`` instead, see
+           :meth:`espressomd.interactions.BondCollection.remove`.
+           This method will be removed in ESPResSo 5.1.
 
         Parameters
         ----------
@@ -806,12 +840,11 @@ class ParticleHandle(ScriptInterfaceHelper):
         ((HarmonicBond(0): {'r_0': 1.0, 'k': 5.0, 'r_cut': 0.0}, 2),)
 
         """
-
-        _bond = self.normalize_and_check_bond_or_throw_exception(bond)
-        if _bond not in self.bonds:
-            raise RuntimeError(
-                f"Bond {_bond} doesn't exist on particle {self.id}")
-        self.delete_verified_bond(_bond)
+        warnings.warn(
+            "ParticleHandle.delete_bond() is deprecated and will be removed "
+            "in ESPResSo 5.1; use system.bonds[bond].remove((p1, p2, ...)) "
+            "instead", FutureWarning, stacklevel=2)
+        self._delete_bond(bond)
 
     def update(self, new_properties):
         """
@@ -968,17 +1001,35 @@ class ParticleSlice(ScriptInterfaceHelper):
         """
         Add a single bond to the particles.
 
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].add((p1, p2, ...))`` for each particle
+           instead, see :meth:`espressomd.interactions.BondCollection.add`.
+           This method will be removed in ESPResSo 5.1.
+
         """
+        warnings.warn(
+            "ParticleSlice.add_bond() is deprecated and will be removed in "
+            "ESPResSo 5.1; use system.bonds[bond].add((p1, p2, ...)) for "
+            "each particle instead", FutureWarning, stacklevel=2)
         for p_id in self.id_selection:
-            self._get_particle(p_id).add_bond(_bond)
+            self._get_particle(p_id)._add_bond(_bond)
 
     def delete_bond(self, _bond):
         """
         Delete a single bond from the particles.
 
+        .. deprecated:: 5.0
+           Use ``system.bonds[bond].remove((p1, p2, ...))`` for each particle
+           instead, see :meth:`espressomd.interactions.BondCollection.remove`.
+           This method will be removed in ESPResSo 5.1.
+
         """
+        warnings.warn(
+            "ParticleSlice.delete_bond() is deprecated and will be removed "
+            "in ESPResSo 5.1; use system.bonds[bond].remove((p1, p2, ...)) "
+            "for each particle instead", FutureWarning, stacklevel=2)
         for p_id in self.id_selection:
-            self._get_particle(p_id).delete_bond(_bond)
+            self._get_particle(p_id)._delete_bond(_bond)
 
     def delete_all_bonds(self):
         for p_id in self.id_selection:
@@ -1159,6 +1210,11 @@ class ParticleList(ScriptInterfaceHelper):
             return self._place_new_particle(particles_dict)
 
     def _place_new_particle(self, p_dict):
+        p, bonds = self._create_new_particle(p_dict)
+        self._add_bonds_to_new_particle(p, bonds)
+        return p
+
+    def _create_new_particle(self, p_dict):
         bonds = []
         if "propagation" in p_dict:
             p_dict["propagation"] = int(p_dict["propagation"])
@@ -1167,11 +1223,38 @@ class ParticleList(ScriptInterfaceHelper):
             if nesting_level(bonds) == 1:
                 bonds = [bonds]
         p = self.call_method("add_particle", **p_dict)
+        return p, bonds
+
+    def _add_bonds_to_new_particle(self, p, bonds):
         for bond in bonds:
             if len(bond):
                 bond = p.normalize_and_check_bond_or_throw_exception(bond)
                 p.add_verified_bond(bond)
-        return p
+
+    def _add_pending_bonds(self, pending_bonds):
+        """
+        Add the bonds of new particles in a single call, in the given order.
+        Every bond is encoded as ``[bond_id, n, owner, *partners]``.
+        """
+        # any particle handle can normalize the bonds
+        helper = self.by_id(pending_bonds[0][0])
+        encoded = []
+        for p_id, bonds in pending_bonds:
+            for bond in bonds:
+                if not len(bond):
+                    continue
+                bond = helper.normalize_and_check_bond_or_throw_exception(bond)
+                partners = bond[1:]
+                if p_id in partners:
+                    raise Exception(
+                        f"Bond partners {partners} include the particle {p_id} itself")
+                if len(set(partners)) != len(partners):
+                    raise Exception(
+                        f"Cannot add duplicate bond partners {partners} to particle {p_id}")
+                encoded += [bond[0]._bond_id, len(partners) + 1, p_id]
+                encoded += [int(pid) for pid in partners]
+        if encoded:
+            self.call_method("add_bonds", encoded=encoded)
 
     def _place_new_particles(self, p_list_dict):
         # Check if all entries have the same length
@@ -1187,10 +1270,20 @@ class ParticleList(ScriptInterfaceHelper):
             first_id = self.highest_particle_id + 1
             p_list_dict["id"] = np.arange(first_id, first_id + n_parts)
 
-        # Place the particles
+        # Place the particles first, then add the bonds, since a bond
+        # may refer to a particle that comes later in the list. Only the
+        # ids are kept: holding on to the particle handles interleaves
+        # their allocations with the particle storage on the heap, which
+        # degrades the memory locality of the particles for the rest of
+        # the simulation.
+        pending_bonds = []
         for i in range(n_parts):
             p_dict = {k: v[i] for k, v in p_list_dict.items()}
-            self._place_new_particle(p_dict)
+            _, bonds = self._create_new_particle(p_dict)
+            if bonds:
+                pending_bonds.append((int(p_dict["id"]), bonds))
+        if pending_bonds:
+            self._add_pending_bonds(pending_bonds)
 
         # Return slice of added particles
         return self.by_ids(p_list_dict["id"])

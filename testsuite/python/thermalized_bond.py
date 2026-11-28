@@ -79,7 +79,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for p1, p2 in zip(partcls_m1, partcls_m2):
-            p1.add_bond((thermalized_dist_bond, p2))
+            self.system.bonds[thermalized_dist_bond].add((p1, p2))
 
         # Warmup
         self.system.integrator.run(50)
@@ -130,7 +130,7 @@ class ThermalizedBond(ut.TestCase, thermostats_common.ThermostatsCommon):
         self.system.bonded_inter.add(thermalized_dist_bond)
 
         for p1, p2 in zip(partcls_m1, partcls_m2):
-            p1.add_bond((thermalized_dist_bond, p2))
+            self.system.bonds[thermalized_dist_bond].add((p1, p2))
 
         # Warmup
         self.system.integrator.run(50)

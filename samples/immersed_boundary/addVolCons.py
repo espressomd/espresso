@@ -27,4 +27,4 @@ def AddVolCons(system, kV):
 
     # loop over particles and add
     for p in system.part:
-        p.add_bond((volCons,))
+        system.bonds[volCons].add((p,))
