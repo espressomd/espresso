@@ -20,7 +20,7 @@
 
 URL="https://gitlab.icp.uni-stuttgart.de/espressomd/espresso/-/pipelines/${CI_PIPELINE_ID}"
 
-curl -s "https://api.github.com/repos/espressomd/espresso/issues" \
+curl -s --fail-with-body --retry 6 --retry-delay 10 --retry-connrefused --retry-all-errors "https://api.github.com/repos/espressomd/espresso/issues" \
      -H "Accept: application/vnd.github.full+json" \
      -H "Content-Type: application/json" \
      -H "Authorization: token ${GITHUB_TOKEN}" \

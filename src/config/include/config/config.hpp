@@ -34,10 +34,10 @@
 #include <version>
 
 #if defined(_GLIBCXX_RELEASE)
-static_assert(_GLIBCXX_RELEASE >= 12, "unsupported libstdc++ version");
+static_assert(_GLIBCXX_RELEASE >= 13, "unsupported libstdc++ version");
 #endif
 #if defined(_LIBCPP_VERSION)
-static_assert(_LIBCPP_VERSION / 10000 >= 16, "unsupported libc++ version");
+static_assert(_LIBCPP_VERSION / 10000 >= 19, "unsupported libc++ version");
 #endif
 
 /**

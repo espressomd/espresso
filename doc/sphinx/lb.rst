@@ -278,8 +278,9 @@ will be used instead of the default ones.
 
 .. note::
 
-    At the moment, LB only supports the case ``shear_plane_normal="y"`` and
-    doesn't allow domain decomposition along the shear and normal directions.
+    At the moment, LB only supports the case ``shear_direction="x"`` and
+    ``shear_plane_normal="y"``, and doesn't allow domain decomposition
+    along the shear and normal directions.
 
 .. _Reading and setting properties of single lattice nodes:
 

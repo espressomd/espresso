@@ -17,17 +17,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Testmodule for the Reaction Ensemble.
-"""
 import unittest as ut
+import unittest_decorators as utx
 import numpy as np
 import espressomd
 import espressomd.reaction_methods
 
 
-class ReactionEnsembleTest(ut.TestCase):
-
-    """Test the core implementation of the reaction ensemble."""
+@utx.skipIfMissingFeatures(["ELECTROSTATICS"])
+class Test(ut.TestCase):
+    """Test the reaction ensemble."""
 
     # The reaction ensemble follows the ideal titration curve only if N>>1,
     # Ideal curve is derived in the grandcanonical ensemble and for low N
@@ -68,7 +67,7 @@ class ReactionEnsembleTest(ut.TestCase):
     # degree of dissociation alpha = N_A / N_HA = N_H / N_0
     gamma = target_alpha**2 / (1. - target_alpha) * N0 / (volume**nubar)
     RE = espressomd.reaction_methods.ReactionEnsemble(
-        seed=12, kT=temperature,
+        seed=12, kT=temperature, system=system,
         exclusion_range=exclusion_range, search_algorithm="parallel")
     RE.set_non_interacting_type(type=max(types.values()) + 1)
 
@@ -87,13 +86,12 @@ class ReactionEnsembleTest(ut.TestCase):
             default_charges=cls.charge_dict)
 
     def test_ideal_titration_curve(self):
-        N0 = ReactionEnsembleTest.N0
-        types = ReactionEnsembleTest.types
-        system = ReactionEnsembleTest.system
-        gamma = ReactionEnsembleTest.gamma
-
-        RE = ReactionEnsembleTest.RE
-        target_alpha = ReactionEnsembleTest.target_alpha
+        N0 = self.N0
+        types = self.types
+        system = self.system
+        gamma = self.gamma
+        RE = self.RE
+        target_alpha = self.target_alpha
 
         # chemical warmup - get close to chemical equilibrium before we start
         # sampling
@@ -135,13 +133,9 @@ class ReactionEnsembleTest(ut.TestCase):
         self.assertAlmostEqual(rate0, 0.85, delta=0.05)
         self.assertAlmostEqual(rate1, 0.85, delta=0.05)
         self.assertAlmostEqual(
-            rate0,
-            RE.reactions[0].get_acceptance_rate(),
-            delta=1e-10)
+            rate0, RE.reactions[0].get_acceptance_rate(), delta=1e-10)
         self.assertAlmostEqual(
-            rate1,
-            RE.reactions[1].get_acceptance_rate(),
-            delta=1e-10)
+            rate1, RE.reactions[1].get_acceptance_rate(), delta=1e-10)
 
 
 if __name__ == "__main__":

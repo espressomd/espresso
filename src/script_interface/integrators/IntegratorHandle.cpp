@@ -108,7 +108,7 @@ void IntegratorHandle::on_bind_system(::System::System &system) {
               system.propagation->integ_switch == INTEG_METHOD_NVT and
               system.get_time_step() == -1. and
               is_type<double>(params.at(key)) and
-              get_value<double>(is_type<double>(params.at(key))) == -1.)) {
+              get_value<double>(params.at(key)) == -1.)) {
         do_set_parameter(key, params.at(key));
       }
     }

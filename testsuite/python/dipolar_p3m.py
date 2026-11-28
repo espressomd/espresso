@@ -66,18 +66,14 @@ class MagnetostaticsP3M(ut.TestCase):
         np.testing.assert_allclose(np.copy(p1.f), ref_dp3m_force, atol=tol)
         np.testing.assert_allclose(np.copy(p2.f), -ref_dp3m_force, atol=tol)
         np.testing.assert_allclose(
-            np.copy(p1.convert_vector_space_to_body(p1.torque_lab)),
-            ref_dp3m_torque1, atol=tol)
+            np.copy(p1.torque_lab), ref_dp3m_torque1, atol=tol)
         np.testing.assert_allclose(
-            np.copy(p2.convert_vector_space_to_body(p2.torque_lab)),
-            ref_dp3m_torque2, atol=tol)
+            np.copy(p2.torque_lab), ref_dp3m_torque2, atol=tol)
 
         # keep current values as reference to check for DP3M dipole correction
         ref_dp3m_energy_metallic = self.system.analysis.energy()['dipolar']
         ref_dp3m_forces_metallic = np.copy(partcls.f)
-        ref_dp3m_torque_metallic = np.array([
-            p1.convert_vector_space_to_body(p1.torque_lab),
-            p2.convert_vector_space_to_body(p2.torque_lab)])
+        ref_dp3m_torque_metallic = np.array([p1.torque_lab, p2.torque_lab])
 
         # MDLC cancels out dipole correction
         self.system.magnetostatics.clear()
@@ -123,9 +119,7 @@ class MagnetostaticsP3M(ut.TestCase):
             self.system.magnetostatics.solver = dp3m
             self.system.integrator.run(0, recalc_forces=True)
             dp3m_forces = np.copy(partcls.f)
-            dp3m_torque = np.array([
-                p1.convert_vector_space_to_body(p1.torque_lab),
-                p2.convert_vector_space_to_body(p2.torque_lab)])
+            dp3m_torque = np.array([p1.torque_lab, p2.torque_lab])
             dp3m_energy = self.system.analysis.energy()['dipolar']
             np.testing.assert_allclose(dp3m_forces, ref_dp3m_forces, atol=tol)
             np.testing.assert_allclose(dp3m_torque, ref_dp3m_torque, atol=tol)
@@ -147,6 +141,19 @@ class MagnetostaticsP3M(ut.TestCase):
             np.testing.assert_allclose(mdlc_energy, ref_mdlc_energy, atol=tol)
 
             self.system.magnetostatics.clear()
+
+    @ut.skipIf(system.cell_system.get_state()["n_nodes"] != 2,
+               "Skipping test: only runs for n_nodes == 2")
+    def test_simd_exclusion_path(self):
+        # should fall back to legacy FFT backend without heFFTe cross-checks
+        # (there is no SIMD memory alignment for a single-precision odd mesh)
+        self.system.part.add(
+            pos=[(4.0, 2.0, 2.0), (6.0, 2.0, 2.0)],
+            dip=[(1.3, 2.1, -6.0), (7.3, 6.1, -4.0)])
+        dp3m = espressomd.magnetostatics.DipolarP3M(
+            prefactor=1.1, accuracy=1e-6, mesh=[49, 49, 49],
+            cao=7, r_cut=4.74, tune=True, single_precision=True)
+        self.system.magnetostatics.solver = dp3m
 
 
 if __name__ == "__main__":

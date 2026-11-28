@@ -41,6 +41,7 @@
 #include <utils/math/int_pow.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <optional>
