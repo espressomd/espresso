@@ -16,8 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CORE_UTILS_ACCUMULATOR
-#define CORE_UTILS_ACCUMULATOR
+
+#pragma once
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/vector.hpp>
@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <vector>
@@ -45,7 +46,7 @@ private:
   }
 };
 
-class Accumulator {
+class Accumulator { // LCOV_EXCL_LINE
 public:
   explicit Accumulator(std::size_t N) : m_n(0u), m_acc_data(N) {}
   void operator()(const std::vector<double> &);
@@ -131,5 +132,3 @@ inline std::vector<double> Accumulator::std_error() const {
 }
 
 } // namespace Utils
-
-#endif

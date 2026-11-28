@@ -18,8 +18,8 @@ source codegen/bin/activate
 python3 -m pip install -c "$(git rev-parse --show-toplevel)/requirements.txt" \
     numpy cython sympy islpy jinja2 setuptools packaging
 python3 -m pip install \
-  git+https://i10git.cs.fau.de/pycodegen/lbmpy.git@e9efe343e42858f11c8844795326efa4f00681df \
-  git+https://i10git.cs.fau.de/jngrad/pystencils.git@e851f4e322d0c7771802169e7afac83b7f7da868
+  git+https://gitos.rrze.fau.de/cs10/pycodegen/lbmpy.git@e9efe343e42858f11c8844795326efa4f00681df \
+  git+https://gitos.rrze.fau.de/cs10/contributors/jean-noel-grad/pystencils.git@e851f4e322d0c7771802169e7afac83b7f7da868
 deactivate
 ```
 

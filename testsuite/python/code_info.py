@@ -17,7 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
 import unittest as ut
+import packaging.specifiers
 import espressomd
 import espressomd.code_info
 import espressomd.version
@@ -69,6 +71,61 @@ class Test(ut.TestCase):
         self.assertTrue(set(git_commit).issubset(commit_charset))
         if git_commit:
             self.assertIn(espressomd.version.git_state(), git_states)
+
+    def test_build_info(self):
+        def check_specs(version, specs):
+            return packaging.specifiers.SpecifierSet(specs).contains(version)
+        toolchain = espressomd.code_info.toolchain()
+        self.assertIsNotNone(toolchain["CMAKE_C_COMPILER_ID"])
+        self.assertIsNotNone(toolchain["CMAKE_C_COMPILER_VERSION"])
+        self.assertIsNotNone(toolchain["CMAKE_CXX_COMPILER_ID"])
+        self.assertIsNotNone(toolchain["CMAKE_CXX_COMPILER_VERSION"])
+        if espressomd.has_features(["CUDA"]):
+            self.assertIsNotNone(toolchain["CMAKE_CUDA_COMPILER_ID"])
+            self.assertIsNotNone(toolchain["CMAKE_CUDA_COMPILER_VERSION"])
+        else:
+            self.assertIsNone(toolchain["CMAKE_CUDA_COMPILER_ID"])
+            self.assertIsNone(toolchain["CMAKE_CUDA_COMPILER_VERSION"])
+            self.assertIsNone(toolchain["CMAKE_CUDA_HOST_COMPILER_ID"])
+            self.assertIsNone(toolchain["CMAKE_CUDA_HOST_COMPILER_VERSION"])
+        self.assertIsNotNone(toolchain["ESPRESSO_MPIEXEC_VENDOR"])
+        self.assertIsNotNone(toolchain["ESPRESSO_MPIEXEC_VERSION"])
+        self.assertIsNotNone(toolchain["OpenMP_CXX_VERSION"])
+        self.assertTrue(check_specs(toolchain["OpenMP_CXX_VERSION"], ">=4.5"))
+        icp_ci_infrastructure = "https://gitlab.icp.uni-stuttgart.de/espressomd/espresso"
+        if os.environ.get("CI_PROJECT_URL") == icp_ci_infrastructure:
+            specs = {
+                "GNU": ">=12.2.0",
+                "Clang": ">=18.1.0",
+                "NVHPC": ">=25.5",
+                "NVIDIA": ">=12.0",
+            }
+            self.assertIn(
+                toolchain["CMAKE_C_COMPILER_ID"], ["GNU", "Clang", "NVHPC"])
+            self.assertIn(
+                toolchain["CMAKE_CXX_COMPILER_ID"], ["GNU", "Clang", "NVHPC"])
+            if espressomd.has_features(["CUDA"]):
+                self.assertIn(
+                    toolchain["CMAKE_CUDA_COMPILER_ID"], ["Clang", "NVIDIA"])
+                self.assertIn(
+                    toolchain["CMAKE_CUDA_HOST_COMPILER_ID"],
+                    ["GNU", "NVHPC", None])
+            self.assertTrue(check_specs(
+                toolchain["CMAKE_C_COMPILER_VERSION"],
+                specs[toolchain["CMAKE_C_COMPILER_ID"]]))
+            self.assertTrue(check_specs(
+                toolchain["CMAKE_CXX_COMPILER_VERSION"],
+                specs[toolchain["CMAKE_CXX_COMPILER_ID"]]))
+            if espressomd.has_features(["CUDA"]):
+                self.assertTrue(check_specs(
+                    toolchain["CMAKE_CUDA_COMPILER_VERSION"],
+                    specs[toolchain["CMAKE_CUDA_COMPILER_ID"]]))
+            specs = {"OpenMPI": ">=4.1.6", "MPICH": ">=4.2"}
+            self.assertIn(
+                toolchain["ESPRESSO_MPIEXEC_VENDOR"], ["OpenMPI", "MPICH"])
+            self.assertTrue(check_specs(
+                toolchain["ESPRESSO_MPIEXEC_VERSION"],
+                specs[toolchain["ESPRESSO_MPIEXEC_VENDOR"]]))
 
 
 if __name__ == "__main__":

@@ -24,7 +24,7 @@
 #include "cell_system/CellStructure.hpp"
 
 #ifdef ESPRESSO_CALIPER
-#include <caliper/cali.h>
+#include "caliper_utils.hpp"
 #endif
 
 #include <cassert>
@@ -46,7 +46,7 @@ void short_range_loop(BondKernel bond_kernel, PairKernel pair_kernel,
                       double bond_cutoff,
                       VerletCriterion const &verlet_criterion = {}) {
 #ifdef ESPRESSO_CALIPER
-  CALI_CXX_MARK_FUNCTION;
+  ESPRESSO_CALI_MARK_FUNCTION;
 #endif
 
   assert(cell_structure.get_resort_particles() == Cells::RESORT_NONE);
