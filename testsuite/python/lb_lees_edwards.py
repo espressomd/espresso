@@ -329,7 +329,7 @@ class LBLeesEdwards(ut.TestCase):
                         protocol=espressomd.lees_edwards.Off())
                 self.assertEqual(system.lees_edwards.shear_direction, "x")
                 self.assertEqual(system.lees_edwards.shear_plane_normal, "y")
-        # when de-activating and later re-activating a LB actor with LEbc,
+        # when de-activating and later re-activating an LB actor with LEbc,
         # the MD LEbc must have the same shear directions
         with self.assertRaisesRegex(RuntimeError, err_msg):
             with LEContextManager('z', 'y', 1.):
@@ -345,6 +345,20 @@ class LBLeesEdwards(ut.TestCase):
                             agrid=1., density=1., kinematic_viscosity=1.,
                             tau=system.time_step)
                 self.assertIsNone(system.lb)
+        # LB only implements shear_direction="x"
+        err_msg = "Lees-Edwards LB only supports shear_direction=\"x\""
+        with self.assertRaisesRegex(ValueError, err_msg):
+            with LEContextManager('z', 'y', 1.):
+                system.lb = espressomd.lb.LBFluid(
+                    agrid=1., density=1., kinematic_viscosity=1.,
+                    tau=system.time_step)
+        self.assertIsNone(system.lb)
+        system.lees_edwards.protocol = None
+        with self.assertRaisesRegex(ValueError, err_msg):
+            with LBContextManager() as lbf:
+                LEContextManager('z', 'y', 1.).initialize()
+        self.assertIsNone(system.lb)
+        system.lees_edwards.protocol = None
         # while LB and MD LEbc must agree on the shear directions,
         # the offset can change
         with LEContextManager('x', 'y', -1.):

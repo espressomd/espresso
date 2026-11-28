@@ -26,6 +26,7 @@
 #include "lb/Implementation.hpp"
 
 #include "GpuParticleData.hpp"
+#include "Observable_stat.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"

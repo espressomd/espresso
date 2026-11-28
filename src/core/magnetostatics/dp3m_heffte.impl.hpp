@@ -49,6 +49,7 @@
 #include "communication.hpp"
 #include "errorhandling.hpp"
 #include "integrators/Propagation.hpp"
+#include "kokkos_helpers.hpp"
 #include "npt.hpp"
 #include "system/System.hpp"
 #include "tuning.hpp"
@@ -137,7 +138,8 @@ double DipolarP3MHeffte<FloatType, Architecture,
 
   double phi = 0.;
   boost::mpi::reduce(comm_cart, node_phi, phi, std::plus<>(), 0);
-  phi /= 3. * box_geo.length()[0] * Utils::int_pow<3>(dp3m.params.mesh[0]);
+  phi /= 3. * box_geo.length()[0] *
+         Utils::int_pow<3>(static_cast<double>(dp3m.params.mesh[0]));
   return phi * std::numbers::pi;
 }
 
@@ -164,10 +166,15 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::init_cpu_kernels() {
   dp3m.update_mesh_views();
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   dp3m.heffte.world_size = comm_cart.size();
-  dp3m.heffte.fft = std::make_shared<P3MFFT<FloatType, FFTConfig>>(
-      ::comm_cart, dp3m.params.mesh, dp3m.local_mesh.ld_no_halo,
-      dp3m.local_mesh.ur_no_halo, ::communicator.node_grid);
-  dp3m.resize_heffte_buffers();
+  try {
+    dp3m.heffte.fft =
+        std::make_shared<P3MFFT<FloatType, Architecture, FFTConfig>>(
+            nullptr, ::comm_cart, dp3m.params.mesh, dp3m.local_mesh.ld_no_halo,
+            dp3m.local_mesh.ur_no_halo, ::communicator.node_grid);
+    dp3m.resize_heffte_buffers();
+  } catch (p3m_tuning_exception const &) {
+    dp3m.heffte.fft.reset();
+  }
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   dp3m.calc_differential_operator();
 
@@ -182,13 +189,14 @@ template <int cao> struct AssignDipole {
   void operator()(auto &dp3m, auto &cell_structure) {
     using DipolarP3MState = std::remove_reference_t<decltype(dp3m)>;
     using value_type = DipolarP3MState::value_type;
-    auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
     auto const &aosoa = cell_structure.get_aosoa();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto const n_part = cell_structure.count_local_particles();
     dp3m.inter_weights.zfill(n_part); // allocate buffer for parallel write
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "InterpolateDipoles", std::size_t{0u}, n_part, [&](auto p_index) {
+          auto constexpr memory_order = Utils::MemoryOrder::ROW_MAJOR;
           auto const tid = omp_get_thread_num();
           auto const p_pos = aosoa.get_span_at(aosoa.position, p_index);
           auto const dip = unique_particles.at(p_index)->calc_dip();
@@ -204,23 +212,23 @@ template <int cao> struct AssignDipole {
               });
         });
     Kokkos::fence();
-    using execution_space = Kokkos::DefaultExecutionSpace;
     int num_threads = execution_space().concurrency();
-    Kokkos::RangePolicy<execution_space> policy(std::size_t{0},
-                                                dp3m.local_mesh.size);
-    Kokkos::parallel_for("ReduceInterpolatedDipoles", policy,
-                         [&dp3m, num_threads](std::size_t const i) {
-                           for (int dir = 0; dir < 3; ++dir) {
-                             value_type acc{};
-                             for (int tid = 0; tid < num_threads; ++tid) {
-                               acc += dp3m.rs_fields_kokkos(tid, dir, i);
-                             }
-                             dp3m.mesh.rs_fields[dir][i] += acc;
+    kokkos_parallel_range_for<execution_space>(
+        "ReduceInterpolatedDipoles", std::size_t{0}, dp3m.local_mesh.size,
+        [&dp3m, num_threads](std::size_t const i) {
+          for (int dir = 0; dir < 3; ++dir) {
+            value_type acc{};
+            for (int tid = 0; tid < num_threads; ++tid) {
+              acc += dp3m.rs_fields_kokkos(tid, dir, i);
+            }
+            dp3m.mesh.rs_fields[dir][i] += acc;
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-                             dp3m.heffte.rs_dipole_density[dir][i] += acc;
+            if (dp3m.heffte.fft != nullptr) {
+              dp3m.heffte.rs_dipole_density[dir][i] += acc;
+            }
 #endif
-                           }
-                         });
+          }
+        });
     Kokkos::fence();
   }
 };
@@ -236,13 +244,18 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::dipole_assign() {
 
 namespace {
 template <int cao> struct AssignTorques {
-  void operator()(auto &dp3m, double prefac, int d_rs,
+  void operator()(auto &dp3m, double pref, int d_rs,
                   CellStructure &cell_structure) const {
 
     assert(cao == dp3m.inter_weights.cao());
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
 
-    auto const kernel = [d_rs, &dp3m](auto const &pref, auto &p_torque,
-                                      std::size_t p_index) {
+    auto const kernel = [d_rs, pref, &dp3m](auto const &dip,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                            auto &p_dip_fld,
+#endif
+                                            auto &p_torque,
+                                            std::size_t p_index) {
       auto const weights = dp3m.inter_weights.template load<cao>(p_index);
       Utils::Vector3d E{};
       p3m_interpolate(dp3m.local_mesh, weights,
@@ -251,34 +264,50 @@ template <int cao> struct AssignTorques {
                         E[d_rs] += w * double(dp3m.mesh.rs_scalar[ind]);
                       });
 
-      auto const torque = vector_product(pref, E);
+      auto const torque = pref * vector_product(dip, E);
       auto access = p_torque.access();
       access(p_index, 0) -= torque[0];
       access(p_index, 1) -= torque[1];
       access(p_index, 2) -= torque[2];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      auto const dip_fld = pref * E;
+      auto access_dip_fld = p_dip_fld.access();
+      access_dip_fld(p_index, 0) -= dip_fld[0];
+      access_dip_fld(p_index, 1) -= dip_fld[1];
+      access_dip_fld(p_index, 2) -= dip_fld[2];
+#endif
     };
 
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
+    cell_structure.mark_torque_replicas_dirty();
     auto scatter_torque = cell_structure.get_scatter_torque();
-    kokkos_parallel_range_for(
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    auto scatter_dip_fld = cell_structure.get_scatter_dip_fld();
+#endif
+    kokkos_parallel_range_for<execution_space>(
         "AssignTorques", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, scatter_torque, p_index);
+            kernel(p.calc_dip(),
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                   scatter_dip_fld,
+#endif
+                   scatter_torque, p_index);
           }
         });
   }
 };
 
 template <int cao> struct AssignForcesDip {
-  void operator()(auto &dp3m, double prefac, int d_rs,
+  void operator()(auto &dp3m, double pref, int d_rs,
                   CellStructure &cell_structure) const {
 
     assert(cao == dp3m.inter_weights.cao());
+    using execution_space = Kokkos::DefaultHostExecutionSpace;
 
-    auto const kernel = [d_rs, &dp3m](auto const &pref, auto &p_force,
-                                      std::size_t p_index) {
+    auto const kernel = [d_rs, pref, &dp3m](auto const &dip, auto &p_force,
+                                            std::size_t p_index) {
       auto const weights = dp3m.inter_weights.template load<cao>(p_index);
 
       Utils::Vector3d E{};
@@ -290,17 +319,17 @@ template <int cao> struct AssignForcesDip {
       });
 
       auto access = p_force.access();
-      access(p_index, d_rs) += pref * E;
+      access(p_index, d_rs) += pref * (dip * E);
     };
 
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto scatter_force = cell_structure.get_scatter_force();
-    kokkos_parallel_range_for(
+    kokkos_parallel_range_for<execution_space>(
         "AssignForcesDip", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, scatter_force, p_index);
+            kernel(p.calc_dip(), scatter_force, p_index);
           }
         });
   }
@@ -327,6 +356,142 @@ void DipolarP3MState<FloatType, FFTConfig>::resize_heffte_buffers() {
 }
 #endif // ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
 
+/**
+ * @brief Reciprocal-space virial for the dipolar Ewald/P3M sum. Obtained
+ * via the same Nose-Klein strain-derivative method used for the Coulomb
+ * case (@cite essmann95a eq. (2.7), \f$\Pi_{\textrm{rec}, \alpha, \beta}\f$),
+ * applied to the dipolar structure
+ * factor \f$Q(\vec k) = \vec M(\vec k)\cdot\vec k\f$ with
+ * \f$\vec M(\vec k) = \sum_j \vec \mu_j \exp(i\vec k\cdot\vec r_j)\f$.
+ * Unlike the charge structure factor, \f$Q(\vec k)\f$ depends on
+ * \f$\vec k\f$ explicitly (not only through the phase factor), which
+ * produces an extra cross term beyond the charge-case \f$k_a k_b\f$
+ * envelope. This cross term is generally asymmetric in \f$(a,b)\f$: its
+ * symmetric half, \f$k_a\Re[M_b Q^*] + k_b\Re[M_a Q^*]\f$, is the
+ * dipole-dipole reciprocal-space pressure tensor eq. (46) in
+ * @cite aguado03a (their \f$\vec h\f$, \f$\kappa\f$ correspond to
+ * \f$\vec k\f$, \f$\alpha\f$ here), which only ever reports that
+ * symmetrized form. The remaining antisymmetric half is not in that
+ * reference -- it is the reciprocal-space image of the same
+ * dipole-dipole torque that already makes the real-space virial
+ * asymmetric (see @ref DipolarDirectSum::long_range_pressure and
+ * @ref DipolarP3M::pair_force), derived here by differentiating
+ * the reciprocal energy directly (via the strain parametrization
+ * \f$H(\varepsilon)=LI+\varepsilon E_{ab}\f$) instead of presupposing a
+ * symmetric result.
+ *
+ * Care is needed with the index convention: probing the strain component
+ * \f$\varepsilon_{ab}\f$ (i.e. \f$H(\varepsilon)=LI+\varepsilon E_{ab}\f$)
+ * yields \f$-\partial U/\partial\varepsilon_{ab} = r_b F_a\f$ for a pair
+ * separation \f$\vec r\f$ and force \f$\vec F\f$ -- the *transpose* of the
+ * \f$r_a F_b\f$ (@ref Utils::tensor_product "d (x) f") convention used by
+ * the real-space term and by @ref DipolarDirectSum::long_range_pressure.
+ * Concretely, differentiating \f$Q(\vec k)=\vec k\cdot\vec M\f$ gives a
+ * cross-term contribution to \f$-\partial U/\partial\varepsilon_{ab}\f$
+ * proportional to \f$k_a\Re[M_bQ^*]\f$; to match the \f$r_aF_b\f$
+ * convention, this must be stored as the \f$(b,a)\f$ tensor component,
+ * i.e. \f$\Pi_{ab}\f$ gets cross term \f$2k_b\Re[M_aQ^*]\f$ (indices
+ * swapped relative to the strain probe that produced it).
+ */
+template <typename FloatType, Arch Architecture, class FFTConfig>
+Utils::Vector9d
+DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_pressure() {
+  auto const &system = get_system();
+  auto const &box_geo = *system.box_geo;
+  auto const dipole_prefac = prefactor / Utils::product(dp3m.params.mesh);
+  Utils::Vector9d node_k_space_pressure_tensor{};
+
+  if (dp3m.sum_mu2 > 0.) {
+    dipole_assign();
+    dp3m.fft_buffers->perform_vector_halo_gather();
+    for (auto &rs_mesh : dp3m.fft_buffers->get_vector_mesh()) {
+      dp3m.fft->forward_fft(rs_mesh);
+    }
+    dp3m.update_mesh_views();
+
+    auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
+    auto local_index = Utils::Vector3i::broadcast(0);
+    auto const wavevector = 2. * std::numbers::pi * box_geo.length_inv()[0];
+    auto const half_alpha_inv_sq = Utils::sqr(1. / (2. * dp3m.params.alpha));
+
+    auto index = std::size_t(0u);
+    auto it_energy = dp3m.g_energy.begin();
+    for_each_3d(mesh_start, dp3m.mesh.size, local_index, [&]() {
+      auto constexpr KX = 2, KY = 0, KZ = 1;
+      auto const shift = local_index + dp3m.mesh.start;
+      auto const &d_op = dp3m.d_op[0u];
+      auto const &mesh_dip = dp3m.mesh.rs_fields;
+      auto const d_op_x = static_cast<FloatType>(d_op[shift[KX]]);
+      auto const d_op_y = static_cast<FloatType>(d_op[shift[KY]]);
+      auto const d_op_z = static_cast<FloatType>(d_op[shift[KZ]]);
+
+      // Re(M(k)) and Re(Q(k)) = Re(M(k)).n, same as the energy kernel's `re`
+      auto const Mx_re = mesh_dip[0u][index];
+      auto const My_re = mesh_dip[1u][index];
+      auto const Mz_re = mesh_dip[2u][index];
+      auto const Q_re = Mx_re * d_op_x + My_re * d_op_y + Mz_re * d_op_z;
+      ++index;
+      // Im(M(k)) and Im(Q(k))
+      auto const Mx_im = mesh_dip[0u][index];
+      auto const My_im = mesh_dip[1u][index];
+      auto const Mz_im = mesh_dip[2u][index];
+      auto const Q_im = Mx_im * d_op_x + My_im * d_op_y + Mz_im * d_op_z;
+      ++index;
+
+      auto const nx = static_cast<double>(d_op[shift[KX]]);
+      auto const ny = static_cast<double>(d_op[shift[KY]]);
+      auto const nz = static_cast<double>(d_op[shift[KZ]]);
+      auto const kx = nx * wavevector;
+      auto const ky = ny * wavevector;
+      auto const kz = nz * wavevector;
+      auto const norm_sq = Utils::sqr(kx) + Utils::sqr(ky) + Utils::sqr(kz);
+      if (norm_sq != 0.) {
+        auto const g = static_cast<double>(*it_energy);
+        auto const cell_energy =
+            g * static_cast<double>(Utils::sqr(Q_re) + Utils::sqr(Q_im));
+        auto const vterm = -2. * (1. / norm_sq + half_alpha_inv_sq);
+
+        // g * Re(M_a(k) * Q(k)^*), a in {x, y, z}
+        auto const Rx = g * static_cast<double>(Mx_re * Q_re + Mx_im * Q_im);
+        auto const Ry = g * static_cast<double>(My_re * Q_re + My_im * Q_im);
+        auto const Rz = g * static_cast<double>(Mz_re * Q_re + Mz_im * Q_im);
+
+        // Full (generally asymmetric) tensor: Pi_ab = cell_energy * (delta_ab
+        // + vterm * k_a * k_b) + 2 * k_b * R_a (note: indices of the cross
+        // term are swapped relative to the strain probe that produces it --
+        // see the class-level comment above for the derivation). The
+        // symmetric combination (R_a k_b + R_b k_a)/2 recovers the
+        // literature (Aguado & Madden, eq. 46) result; the leftover
+        // antisymmetric part is the k-space image of the same
+        // dipolar-torque signature that already makes the real-space term
+        // asymmetric (see dipolar_direct_sum.cpp / dp3m.hpp).
+        node_k_space_pressure_tensor[0u] +=
+            cell_energy * (1. + vterm * kx * kx) + 2. * nx * Rx; /* xx */
+        node_k_space_pressure_tensor[1u] +=
+            cell_energy * vterm * kx * ky + 2. * ny * Rx; /* xy */
+        node_k_space_pressure_tensor[2u] +=
+            cell_energy * vterm * kx * kz + 2. * nz * Rx; /* xz */
+        node_k_space_pressure_tensor[3u] +=
+            cell_energy * vterm * ky * kx + 2. * nx * Ry; /* yx */
+        node_k_space_pressure_tensor[4u] +=
+            cell_energy * (1. + vterm * ky * ky) + 2. * ny * Ry; /* yy */
+        node_k_space_pressure_tensor[5u] +=
+            cell_energy * vterm * ky * kz + 2. * nz * Ry; /* yz */
+        node_k_space_pressure_tensor[6u] +=
+            cell_energy * vterm * kz * kx + 2. * nx * Rz; /* zx */
+        node_k_space_pressure_tensor[7u] +=
+            cell_energy * vterm * kz * ky + 2. * ny * Rz; /* zy */
+        node_k_space_pressure_tensor[8u] +=
+            cell_energy * (1. + vterm * kz * kz) + 2. * nz * Rz; /* zz */
+      }
+      std::advance(it_energy, 1);
+    });
+  }
+
+  return node_k_space_pressure_tensor * dipole_prefac * std::numbers::pi *
+         box_geo.length_inv()[0];
+}
+
 template <typename FloatType, Arch Architecture, class FFTConfig>
 double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     bool force_flag, bool energy_flag) {
@@ -335,33 +500,35 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   auto const &system = get_system();
   auto const &box_geo = *system.box_geo;
   auto const dipole_prefac = prefactor / Utils::product(dp3m.params.mesh);
-#ifdef ESPRESSO_NPT
-  auto const npt_flag = force_flag and system.has_npt_enabled();
-#else
-  auto constexpr npt_flag = false;
-#endif
 
   auto constexpr mesh_start = Utils::Vector3i::broadcast(0);
   auto local_index = Utils::Vector3i::broadcast(0);
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
   auto constexpr r2c_dir = FFTConfig::r2c_dir;
-  auto const rs_local_size = dp3m.heffte.fft->rs_local_size();
-  auto const local_size = dp3m.heffte.fft->ks_local_size();
-  auto local_size_full = local_size;
-  if constexpr (FFTConfig::use_r2c) {
-    local_size_full[r2c_dir] -= 1;
-    local_size_full[r2c_dir] *= 2;
-  }
-  auto const local_origin = dp3m.heffte.fft->ks_local_ld_index();
 #ifndef NDEBUG
-  auto const line_stride = local_size_full[0];
-  auto const plane_stride = local_size_full[0] * local_size_full[0];
+  int line_stride = 0;
+  int plane_stride = 0;
 #endif
-  auto const &global_size = dp3m.params.mesh;
-  auto const cutoff_left = 1 - local_origin[r2c_dir];
-  auto const cutoff_right = global_size[r2c_dir] / 2 - local_origin[r2c_dir];
+  int cutoff_left = 0;
+  int cutoff_right = 0;
+  Utils::Vector3i local_origin{};
+  if (dp3m.heffte.fft != nullptr) {
+    auto local_size_full = dp3m.heffte.fft->ks_local_size();
+    if constexpr (FFTConfig::use_r2c) {
+      local_size_full[r2c_dir] -= 1;
+      local_size_full[r2c_dir] *= 2;
+    }
+    local_origin = dp3m.heffte.fft->ks_local_ld_index();
+#ifndef NDEBUG
+    line_stride = local_size_full[0];
+    plane_stride = local_size_full[0] * local_size_full[0];
+#endif
+    auto const &global_size = dp3m.params.mesh;
+    cutoff_left = 1 - local_origin[r2c_dir];
+    cutoff_right = global_size[r2c_dir] / 2 - local_origin[r2c_dir];
+    dp3m.resize_heffte_buffers();
+  }
   auto &short_dim = local_index[r2c_dir];
-  dp3m.resize_heffte_buffers();
 #endif
 
   if (dp3m.sum_mu2 > 0.) {
@@ -373,7 +540,8 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
     dp3m.update_mesh_views();
 
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-    if (dp3m.heffte.world_size == 1) {
+    if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
+      auto const rs_local_size = dp3m.heffte.fft->rs_local_size();
       // halo communication of real space dipoles density
       std::array<FloatType *, 3u> rs_fields = {
           {dp3m.heffte.rs_dipole_density[0u].data(),
@@ -384,14 +552,13 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
 
       for (auto dir : {0u, 1u, 2u}) {
         // get real-space dipoles density without ghost layers
-        auto rs_field_no_halo = extract_block<Utils::MemoryOrder::ROW_MAJOR,
-                                              FFTConfig::r_space_order>(
+        extract_block_into<Utils::MemoryOrder::ROW_MAJOR,
+                           FFTConfig::r_space_order>(
+            dp3m.rs_field_no_halo_kokkos.data(),
             dp3m.heffte.rs_dipole_density[dir], dp3m.local_mesh.dim,
             dp3m.local_mesh.n_halo_ld,
             dp3m.local_mesh.dim - dp3m.local_mesh.n_halo_ur);
         // re-order data in row-major
-        std::vector<FloatType> rs_field_no_halo_reorder;
-        rs_field_no_halo_reorder.resize(rs_field_no_halo.size());
         std::size_t index_row_major = 0u;
         for_each_3d_order<FFTConfig::k_space_order>(
             mesh_start, rs_local_size, local_index, [&]() {
@@ -399,14 +566,15 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
               auto const index = local_index[KZ] +
                                  rs_local_size[0] * local_index[KY] +
                                  Utils::sqr(rs_local_size[0]) * local_index[KX];
-              rs_field_no_halo_reorder[index_row_major] =
-                  rs_field_no_halo[index];
+              dp3m.rs_field_no_halo_reorder_kokkos(index_row_major) =
+                  dp3m.rs_field_no_halo_kokkos(index);
               ++index_row_major;
             });
-        dp3m.heffte.fft->forward(rs_field_no_halo_reorder.data(),
+        dp3m.heffte.fft->forward(dp3m.rs_field_no_halo_reorder_kokkos.data(),
                                  dp3m.heffte.ks_dipole_density[dir].data());
 #ifndef NDEBUG
         if (not dp3m.params.tuning) {
+          auto const local_size = dp3m.heffte.fft->ks_local_size();
           std::size_t index_row_major_r2c = 0u;
           for_each_3d_order<FFTConfig::k_space_order>(
               mesh_start, local_size, local_index, [&]() {
@@ -415,9 +583,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
                   auto const index_fft_legacy = local_index[KZ] +
                                                 line_stride * local_index[KY] +
                                                 plane_stride * local_index[KX];
-                  auto const old_value = std::complex<FloatType>{
+                  auto const old_value = std::complex<FloatType>(
                       dp3m.mesh.rs_fields[dir][2 * index_fft_legacy],
-                      dp3m.mesh.rs_fields[dir][2 * index_fft_legacy + 1]};
+                      dp3m.mesh.rs_fields[dir][2 * index_fft_legacy + 1]);
                   auto const &new_value =
                       dp3m.heffte.ks_dipole_density[dir][index_row_major_r2c];
                   assert(heffte_almost_equal(new_value, old_value));
@@ -432,7 +600,7 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   }
 
   /* === k-space energy calculation  === */
-  if (energy_flag or npt_flag) {
+  if (energy_flag) {
     /*********************
        Dipolar energy
     **********************/
@@ -462,7 +630,8 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
         std::advance(it_energy, 1);
       });
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-      if (dp3m.heffte.world_size == 1) {
+      if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
+        auto const local_size = dp3m.heffte.fft->ks_local_size();
         [[maybe_unused]] auto node_energy_heffte = 0.;
         std::size_t index_row_major_r2c = 0u;
         for_each_3d_order<FFTConfig::k_space_order>(
@@ -542,13 +711,14 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
                           mesh_dip[1u][index] * FloatType(d_op[shift[KY]]) +
                           mesh_dip[2u][index] * FloatType(d_op[shift[KZ]]);
           ++index;
-          *it_ks_scalar = *it_energy * std::complex<FloatType>{re, im};
+          *it_ks_scalar = *it_energy * std::complex<FloatType>(re, im);
           std::advance(it_energy, 1);
           std::advance(it_ks_scalar, 1);
         });
       }
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-      if (dp3m.heffte.world_size == 1) {
+      if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
+        auto const local_size = dp3m.heffte.fft->ks_local_size();
         std::size_t index_row_major_r2c = 0u;
         for_each_3d_order<FFTConfig::k_space_order>(
             mesh_start, local_size, local_index, [&]() {
@@ -596,7 +766,8 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
           std::advance(it_ks_scalar, 1);
         });
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-        if (dp3m.heffte.world_size == 1) {
+        if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
+          auto const local_size = dp3m.heffte.fft->ks_local_size();
           unsigned int constexpr d_ks[3] = {2u, 0u, 1u};
           std::size_t index_row_major_r2c = 0u;
           for_each_3d_order<FFTConfig::k_space_order>(
@@ -613,9 +784,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
                     auto const index_fft_legacy =
                         local_index[KZ] + line_stride * local_index[KY] +
                         plane_stride * local_index[KX];
-                    auto const old_value = std::complex<FloatType>{
+                    auto const old_value = std::complex<FloatType>(
                         dp3m.mesh.rs_scalar[2 * index_fft_legacy],
-                        dp3m.mesh.rs_scalar[2 * index_fft_legacy + 1]};
+                        dp3m.mesh.rs_scalar[2 * index_fft_legacy + 1]);
                     auto const &new_value =
                         dp3m.heffte.ks_B_field_storage[index_row_major_r2c];
                     assert(heffte_almost_equal(new_value, old_value));
@@ -626,13 +797,14 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
               });
           dp3m.heffte.fft->backward(dp3m.heffte.ks_B_field_storage.data(),
                                     dp3m.heffte.rs_B_fields_no_halo[d].data());
-          // pad zeros around the B-field in real space for ghost layers
-          dp3m.heffte.rs_B_fields[d] =
-              pad_with_zeros_discard_imag<FFTConfig::r_space_order,
-                                          Utils::MemoryOrder::ROW_MAJOR>(
-                  std::span(dp3m.heffte.rs_B_fields_no_halo[d]),
-                  dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
-                  dp3m.local_mesh.n_halo_ur);
+          // pad zeros around the B-field in real space for ghost layers,
+          // writing straight into the persistent halo-sized buffer
+          pad_with_zeros_discard_imag_into<FFTConfig::r_space_order,
+                                           Utils::MemoryOrder::ROW_MAJOR>(
+              dp3m.heffte.rs_B_fields[d].data(),
+              std::span(dp3m.heffte.rs_B_fields_no_halo[d]),
+              dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
+              dp3m.local_mesh.n_halo_ur);
           // communicate ghost layers of the B-field in real space
           dp3m.heffte.halo_comm.spread_grid(::comm_cart,
                                             dp3m.heffte.rs_B_fields[d].data(),
@@ -683,7 +855,8 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
       }
 
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-      if (dp3m.heffte.world_size == 1) {
+      if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
+        auto const local_size = dp3m.heffte.fft->ks_local_size();
         std::size_t index_row_major_r2c = 0u;
         for_each_3d_order<FFTConfig::k_space_order>(
             mesh_start, local_size, local_index, [&]() {
@@ -698,8 +871,8 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
                          FloatType(dp3m.d_op[1u][global_index[2u]]) +
                      mesh_dip[2u][index_row_major_r2c] *
                          FloatType(dp3m.d_op[2u][global_index[0u]]));
-                dp3m.heffte.ks_scalar[index_row_major_r2c] = {value.imag(),
-                                                              -value.real()};
+                dp3m.heffte.ks_scalar[index_row_major_r2c] =
+                    std::complex<FloatType>(value.imag(), -value.real());
 #ifndef NDEBUG
                 if (not dp3m.params.tuning) {
                   auto constexpr KX = 2, KY = 0, KZ = 1;
@@ -740,7 +913,8 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
         });
 
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-        if (dp3m.heffte.world_size == 1) {
+        if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
+          auto const local_size = dp3m.heffte.fft->ks_local_size();
           std::size_t index_row_major_r2c = 0u;
           for_each_3d_order<FFTConfig::k_space_order>(
               mesh_start, local_size, local_index, [&]() {
@@ -768,9 +942,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
                                                   line_stride * local_index[1] +
                                                   plane_stride * local_index[0];
                     for (int j = 0; j < 3; ++j) {
-                      auto const old_value = std::complex<FloatType>{
+                      auto const old_value = std::complex<FloatType>(
                           dp3m.mesh.rs_fields[j][2 * index_fft_legacy],
-                          dp3m.mesh.rs_fields[j][2 * index_fft_legacy + 1]};
+                          dp3m.mesh.rs_fields[j][2 * index_fft_legacy + 1]);
                       auto const &new_value = mesh_dip[j][index_row_major_r2c];
                       assert(heffte_almost_equal(new_value, old_value));
                     }
@@ -783,13 +957,14 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
             dp3m.heffte.fft->backward(
                 dp3m.heffte.ks_dipole_density[dir].data(),
                 dp3m.heffte.rs_B_fields_no_halo[dir].data());
-            // pad zeros around the B-field in real space for ghost layers
-            dp3m.heffte.rs_B_fields[d] =
-                pad_with_zeros_discard_imag<FFTConfig::r_space_order,
-                                            Utils::MemoryOrder::ROW_MAJOR>(
-                    std::span(dp3m.heffte.rs_B_fields_no_halo[dir]),
-                    dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
-                    dp3m.local_mesh.n_halo_ur);
+            // pad zeros around the B-field in real space for ghost layers,
+            // writing straight into the persistent halo-sized buffer
+            pad_with_zeros_discard_imag_into<FFTConfig::r_space_order,
+                                             Utils::MemoryOrder::ROW_MAJOR>(
+                dp3m.heffte.rs_B_fields[d].data(),
+                std::span(dp3m.heffte.rs_B_fields_no_halo[dir]),
+                dp3m.local_mesh.dim_no_halo, dp3m.local_mesh.n_halo_ld,
+                dp3m.local_mesh.n_halo_ur);
           }
           // communicate ghost layers of the B-field in real space
           auto rs_fields =
@@ -816,15 +991,21 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::long_range_kernel(
   } /* if (force_flag) */
 
   if (dp3m.params.epsilon != P3M_EPSILON_METALLIC) {
-    auto const surface_term =
-        calc_surface_term(force_flag, energy_flag or npt_flag);
+    auto const surface_term = calc_surface_term(force_flag, energy_flag);
     if (this_node == 0) {
       energy += surface_term;
     }
   }
 #ifdef ESPRESSO_NPT
-  if (npt_flag) {
-    get_system().npt_add_virial_contribution(energy);
+  if (force_flag and system.has_npt_enabled()) {
+    // reuse the validated reciprocal-space pressure tensor (same one used by
+    // the pressure observable) instead of an energy-proxy: unlike Coulomb,
+    // the dipolar structure factor is not simply homogeneous in k, so energy
+    // is not a valid substitute for the virial trace here (see
+    // long_range_pressure())
+    auto const pressure_tensor = long_range_pressure();
+    get_system().npt_add_virial_contribution(
+        pressure_tensor[0u] + pressure_tensor[4u] + pressure_tensor[8u]);
   }
 #endif
   if (not energy_flag) {
@@ -897,6 +1078,9 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::calc_surface_term(
       torque[0u] -= pref * sumix[ip];
       torque[1u] -= pref * sumiy[ip];
       torque[2u] -= pref * sumiz[ip];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      p.dip_fld() -= pref * box_dip;
+#endif
       ip++;
     }
   }
@@ -912,7 +1096,7 @@ void DipolarP3MHeffte<FloatType, Architecture,
       dp3m.params, dp3m.mesh.start, dp3m.mesh.stop,
       get_system().box_geo->length_inv());
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-  if (dp3m.heffte.world_size == 1) {
+  if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
     dp3m.heffte.g_force =
         grid_influence_function_dipolar<FloatType, 3, P3M_BRILLOUIN,
                                         FFTConfig::k_space_order>(
@@ -937,7 +1121,7 @@ void DipolarP3MHeffte<FloatType, Architecture,
       dp3m.params, dp3m.mesh.start, dp3m.mesh.stop,
       get_system().box_geo->length_inv());
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-  if (dp3m.heffte.world_size == 1) {
+  if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
     dp3m.heffte.g_energy =
         grid_influence_function_dipolar<FloatType, 2, P3M_BRILLOUIN,
                                         FFTConfig::k_space_order>(
@@ -1025,7 +1209,7 @@ public:
       /* simple heuristic to limit the tried meshes if the accuracy cannot
          be obtained with smaller meshes, but normally not all these
          meshes have to be tested */
-      auto const expo = std::log(std::cbrt(dp3m.sum_dip_part)) / std::log(2.);
+      auto const expo = std::log2(dp3m.sum_dip_part) / 3.;
       /* Medium-educated guess for the minimal mesh */
       m_mesh_min = static_cast<int>(std::round(std::pow(2., std::floor(expo))));
       /* avoid using more than 1 GB of FFT arrays */
@@ -1325,7 +1509,7 @@ void DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::scaleby_box_l() {
   calc_influence_function_energy();
   dp3m.energy_correction = 0.;
 #ifdef ESPRESSO_DP3M_HEFFTE_CROSS_CHECKS
-  if (dp3m.heffte.world_size == 1) {
+  if (dp3m.heffte.world_size == 1 and dp3m.heffte.fft != nullptr) {
     dp3m.heffte.halo_comm.resize(::comm_cart, dp3m.local_mesh);
   }
 #endif
@@ -1345,9 +1529,9 @@ void DipolarP3MHeffte<FloatType, Architecture,
 #ifdef ESPRESSO_NPT
 template <typename FloatType, Arch Architecture, class FFTConfig>
 void DipolarP3MHeffte<FloatType, Architecture,
-                      FFTConfig>::npt_add_virial_contribution(double energy)
+                      FFTConfig>::npt_add_virial_contribution(double virial)
     const {
-  get_system().npt_add_virial_contribution(energy);
+  get_system().npt_add_virial_contribution(virial);
 }
 #endif // ESPRESSO_NPT
 

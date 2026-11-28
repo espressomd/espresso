@@ -36,6 +36,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace Utils {
@@ -217,6 +218,11 @@ T const &get(Array<T, N> const &a) noexcept {
 
 } // namespace Utils
 
+// Tuple-like interface for structured bindings.
+// Specializing these for user-defined types is permitted by [namespace.std],
+// but Clang-Tidy 22 reports partial specializations as a false positive.
+// NOLINTBEGIN(bugprone-std-namespace-modification)
+
 template <std::size_t I, class T, std::size_t N>
 struct std::tuple_element<I, Utils::Array<T, N>> {
   static_assert(I < N, "Utils::Array index must be in range");
@@ -226,6 +232,8 @@ struct std::tuple_element<I, Utils::Array<T, N>> {
 template <class T, std::size_t N>
 struct std::tuple_size<Utils::Array<T, N>>
     : std::integral_constant<std::size_t, N> {};
+
+// NOLINTEND(bugprone-std-namespace-modification)
 
 UTILS_ARRAY_BOOST_MPI_T(Utils::detail::Storage, N)
 UTILS_ARRAY_BOOST_BIT_S(Utils::detail::Storage, N)

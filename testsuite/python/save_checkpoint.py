@@ -66,14 +66,16 @@ checkpoint = espressomd.checkpointing.Checkpoint(
     **config.get_checkpoint_params())
 
 # Lees-Edwards boundary conditions
+# (LB doesn't support domain decomposition along the shear direction)
 le_active = False
 if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
-        'LB' not in modes or n_nodes in (1, 2, 3)):
+        'LB' not in modes or (n_nodes in (1, 2, 3) and
+                              system.cell_system.node_grid[0] == 1)):
     le_active = True
     protocol = espressomd.lees_edwards.LinearShear(
         initial_pos_offset=0.1, time_0=0.2, shear_velocity=1.2)
     system.lees_edwards.set_boundary_conditions(
-        shear_direction="z", shear_plane_normal="y", protocol=protocol)
+        shear_direction="x", shear_plane_normal="y", protocol=protocol)
 
 lbf_class = None
 lb_lattice = None
@@ -253,7 +255,8 @@ if 'LB' not in modes:
         system.integrator.set_brownian_dynamics()
     elif 'INT.SDM' in modes and espressomd.has_features('STOKESIAN_DYNAMICS'):
         system.integrator.set_stokesian_dynamics(
-            approximation_method='ft', viscosity=0.5, radii={0: 1.5},
+            approximation_method='ft', viscosity=0.5,
+            radii={i: 1.5 + i / 10. for i in range(8)},
             pair_mobility=False, self_mobility=True)
 
 if espressomd.has_features(['VIRTUAL_SITES_RELATIVE']):
@@ -416,6 +419,7 @@ if lbf_class:
     system.lb = lbf
     if 'THERM.LB' in modes:
         system.thermostat.set_lb(LB_fluid=lbf, seed=23, gamma=2.0)
+        system.thermostat.lb.call_method("override_philox_counter", counter=2)
     if not le_active:
         system.ekcontainer = ekcontainer
     # Create a 3D grid with deterministic values to fill the LB fluid lattice
@@ -450,12 +454,12 @@ if lbf_class:
     config.recursive_unlink(vtk_root / lb_vtk_manual_id)
     lb_vtk_auto = espressomd.lb.VTKOutput(
         identifier=lb_vtk_auto_id, delta_N=1, force_pvtu=False,
-        observables=('density', 'velocity_vector'), base_folder=str(vtk_root))
+        observables=["density", "velocity_vector"], base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_auto)
     lb_vtk_auto.disable()
     lb_vtk_manual = espressomd.lb.VTKOutput(
         identifier=lb_vtk_manual_id, delta_N=0, force_pvtu=True,
-        observables=('density',), base_folder=str(vtk_root))
+        observables=["density"], base_folder=str(vtk_root))
     lbf.add_vtk_writer(vtk=lb_vtk_manual)
     lb_vtk_manual.write()
     if not le_active:
@@ -469,25 +473,26 @@ if lbf_class:
         config.recursive_unlink(vtk_root / ek_vtk_poisson_auto_id)
         config.recursive_unlink(vtk_root / ek_vtk_poisson_manual_id)
         ek_vtk_species_auto = espressomd.electrokinetics.VTKOutput(
-            identifier=ek_vtk_species_auto_id,
-            observables=('density',), delta_N=1, base_folder=str(vtk_root))
+            identifier=ek_vtk_species_auto_id, observables=["density"],
+            delta_N=1, base_folder=str(vtk_root))
         ek_species.add_vtk_writer(vtk=ek_vtk_species_auto)
         ek_vtk_species_auto.disable()
         ek_vtk_species_manual = espressomd.electrokinetics.VTKOutput(
-            identifier=ek_vtk_species_manual_id,
-            observables=('density',), delta_N=0, base_folder=str(vtk_root))
+            identifier=ek_vtk_species_manual_id, observables=["density"],
+            delta_N=0, base_folder=str(vtk_root))
         ek_species.add_vtk_writer(vtk=ek_vtk_species_manual)
         ek_vtk_species_manual.write()
-        ek_vtk_poisson_auto = espressomd.electrokinetics.VTKPoissonOutput(
-            identifier=ek_vtk_poisson_auto_id, force_pvtu=True,
-            observables=["potential"], delta_N=1, base_folder=str(vtk_root))
-        ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_auto)
-        ek_vtk_poisson_auto.disable()
-        ek_vtk_poisson_manual = espressomd.electrokinetics.VTKPoissonOutput(
-            identifier=ek_vtk_poisson_manual_id, force_pvtu=True,
-            observables=["potential"], delta_N=0, base_folder=str(vtk_root))
-        ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_manual)
-        ek_vtk_poisson_manual.write()
+        if espressomd.has_features("FFTW"):
+            ek_vtk_poisson_auto = espressomd.electrokinetics.VTKPoissonOutput(
+                identifier=ek_vtk_poisson_auto_id, observables=["potential"],
+                force_pvtu=True, delta_N=1, base_folder=str(vtk_root))
+            ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_auto)
+            ek_vtk_poisson_auto.disable()
+            ek_vtk_poisson_manual = espressomd.electrokinetics.VTKPoissonOutput(
+                identifier=ek_vtk_poisson_manual_id, observables=["potential"],
+                force_pvtu=True, delta_N=0, base_folder=str(vtk_root))
+            ek_solver.add_vtk_writer(vtk=ek_vtk_poisson_manual)
+            ek_vtk_poisson_manual.write()
 
 
 # set various properties
@@ -700,9 +705,10 @@ class TestCheckpoint(ut.TestCase):
                                 f"Path '{path}' should be a folder")
 
     def test_reaction_methods_sanity_check(self):
-        with self.assertRaisesRegex(RuntimeError, "Reaction methods do not support checkpointing"):
-            widom = espressomd.reaction_methods.WidomInsertion(kT=1, seed=1)
-            widom._serialize()
+        with self.assertRaisesRegex(NotImplementedError, "Reaction methods do not support checkpointing"):
+            widom = espressomd.reaction_methods.WidomInsertion(
+                kT=1, seed=1, system=system)
+            widom.__reduce__()
 
 
 if __name__ == '__main__':

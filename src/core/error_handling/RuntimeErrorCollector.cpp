@@ -74,7 +74,7 @@ int RuntimeErrorCollector::count() const {
                                 std::plus<>());
 }
 
-int RuntimeErrorCollector::count(RuntimeError::ErrorLevel level) {
+int RuntimeErrorCollector::count_local(RuntimeError::ErrorLevel level) {
   return static_cast<int>(std::ranges::count_if(
       m_errors, [level](auto const &e) { return e.level() >= level; }));
 }

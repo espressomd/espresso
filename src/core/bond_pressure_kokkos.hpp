@@ -38,9 +38,10 @@
 #include <cstddef>
 
 struct BondsPressureKernelData {
+  using execution_space = Kokkos::HostSpace;
   BondedInteractionsMap const &bonded_ias;
   BoxGeometry const &box_geo;
-  Kokkos::View<double **, Kokkos::LayoutRight> local_pressure;
+  Kokkos::View<double **, Kokkos::LayoutRight, execution_space> local_pressure;
   PressureBinLayout layout;
   CellStructure::AoSoA_pack const &aosoa;
 };
@@ -59,8 +60,7 @@ struct PairBondsPressureKernel {
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)), coulomb_f_kernel(coulomb_f_kernel_) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto &local_pressure = data.local_pressure;
@@ -113,8 +113,7 @@ struct AngleBondsPressureKernel {
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto &local_pressure = data.local_pressure;
@@ -163,8 +162,7 @@ struct DihedralBondsPressureKernel {
       : data(std::move(data_)), bond_list(std::move(bond_list_)),
         bond_ids(std::move(bond_ids_)) {}
 
-  ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
-  operator()(std::size_t idx) const {
+  ESPRESSO_ATTR_ALWAYS_INLINE inline void operator()(std::size_t idx) const {
     auto const &bonded_ias = data.bonded_ias;
     auto const &box_geo = data.box_geo;
     auto &local_pressure = data.local_pressure;
