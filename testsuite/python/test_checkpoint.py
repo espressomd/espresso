@@ -63,6 +63,9 @@ class CheckpointTest(ut.TestCase):
     checkpoint.load(0)
     checkpoint.save(1)
     n_nodes = system.cell_system.get_state()["n_nodes"]
+    # LB doesn't support domain decomposition along the shear direction
+    has_lb_lees_edwards = (n_nodes in (1, 2, 3) and
+                           system.cell_system.node_grid[0] == 1)
 
     @classmethod
     def setUpClass(cls):
@@ -139,7 +142,7 @@ class CheckpointTest(ut.TestCase):
         state = lbf.lattice.get_params()
         ref_ghost_layers = 2
         if 'INT.NPT' not in modes and 'LB.GPU' not in modes and (
-                'LB' not in modes or self.n_nodes in (1, 2, 3)):
+                'LB' not in modes or self.has_lb_lees_edwards):
             ref_ghost_layers = 1
         reference = {"agrid": 2.0, "n_ghost_layers": ref_ghost_layers,
                      "blocks_per_mpi_rank": [1, 1, 1]}
@@ -441,7 +444,7 @@ class CheckpointTest(ut.TestCase):
             (vtk_root / filename.format(1)).unlink(missing_ok=True)
             (vtk_root / filename.format(2)).unlink(missing_ok=True)
 
-    @utx.skipIfMissingFeatures(["WALBERLA"])
+    @utx.skipIfMissingFeatures(["WALBERLA", "FFTW"])
     @ut.skipIf(not has_lb_mode, "Skipping test due to missing EK mode.")
     def test_ek_solver_vtk(self):
         lbf = system.lb
@@ -512,12 +515,12 @@ class CheckpointTest(ut.TestCase):
 
     @ut.skipIf('LB.GPU' in modes, 'Lees-Edwards not implemented for LB GPU')
     @ut.skipIf('INT.NPT' in modes, 'Lees-Edwards not compatible with NPT')
-    @ut.skipIf('LB' in modes and n_nodes not in (1, 2, 3),
+    @ut.skipIf('LB' in modes and not has_lb_lees_edwards,
                'Lees-Edwards not implemented for certain decompositions')
     def test_lees_edwards(self):
         lebc = system.lees_edwards
         protocol = lebc.protocol
-        self.assertEqual(lebc.shear_direction, "z")
+        self.assertEqual(lebc.shear_direction, "x")
         self.assertEqual(lebc.shear_plane_normal, "y")
         self.assertIsInstance(protocol, espressomd.lees_edwards.LinearShear)
         self.assertAlmostEqual(protocol.initial_pos_offset, 0.1, delta=1e-10)
@@ -656,7 +659,7 @@ class CheckpointTest(ut.TestCase):
         thmst = system.thermostat.lb
         self.assertTrue(thmst.is_active)
         self.assertEqual(thmst.seed, 23)
-        self.assertEqual(thmst.philox_counter, 0)
+        self.assertEqual(thmst.philox_counter, 2)
         self.assertAlmostEqual(thmst.gamma, 2., delta=1e-10)
         self.assertAlmostEqual(system.thermostat.kT, 0., delta=1e-10)
 

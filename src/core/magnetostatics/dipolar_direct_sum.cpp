@@ -293,6 +293,7 @@ void DipolarDirectSum::add_long_range_forces_cpu() const {
                                               local_force(i, 1),
                                               local_force(i, 2)};
         local_particles_ptr[i]->torque() +=
+            // NOLINTNEXTLINE(clang-analyzer-security.ArrayBound)
             prefactor_local * Utils::Vector3d{local_torque(i, 0),
                                               local_torque(i, 1),
                                               local_torque(i, 2)};

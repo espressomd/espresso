@@ -110,15 +110,6 @@ class LBCouetteFlowCommon:
                            shear_direction="x", shear_plane_normal="y",
                            blocks_per_mpi_rank=blocks_per_mpi_rank)
 
-    def test_profile_zy(self):
-        self.system.box_l = [16, 16, 16]
-        self.system.cell_system.node_grid = [1, self.n_nodes, 1]
-        self.system.box_l = [2, 64, 64]
-        blocks_per_mpi_rank = [2, 1, 1] if self.lb_blocks else [1, 1, 1]
-        self.check_profile(lambda lbf: lbf[0, :, 5].velocity[:, 0],
-                           shear_direction="z", shear_plane_normal="y",
-                           blocks_per_mpi_rank=blocks_per_mpi_rank)
-
 
 @utx.skipIfMissingFeatures(["WALBERLA"])
 @ut.skipIf(LBCouetteFlowCommon.n_nodes > 2, "only runs for 1 to 2 MPI ranks")

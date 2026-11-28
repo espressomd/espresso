@@ -27,6 +27,12 @@
 #include <span>
 #include <vector>
 
+// GCC 16 -fanalyzer has false positives with boost::mpi::communicator::rank()
+#if defined(__GNUC__) and not defined(__clang__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wanalyzer-null-dereference"
+#endif
+
 namespace Utils {
 namespace Mpi {
 namespace detail {
@@ -80,3 +86,7 @@ auto iall_gatherv(boost::mpi::communicator const &comm, T const *in_values,
 }
 } // namespace Mpi
 } // namespace Utils
+
+#if defined(__GNUC__) and not defined(__clang__)
+#pragma GCC diagnostic pop
+#endif

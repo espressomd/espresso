@@ -274,17 +274,15 @@ BOOST_AUTO_TEST_CASE(validator_fires_for_mismarked_interior_cell) {
   plan.neighbors.push_back(NeighborComm{
       1, {SendRegion{&local.particles(), {}}}, {&ghost.particles()}});
 
-  auto violations = validate_halo_plan(plan, locals, ghosts);
+  auto const violations = validate_halo_plan(plan, locals, ghosts);
+  auto const message = std::string("interior cell has a ghost neighbor");
   bool found_consistency =
-      std::ranges::any_of(violations, [](std::string const &v) {
-        return v.find("interior cell has a ghost neighbor") !=
-               std::string::npos;
+      std::ranges::any_of(violations, [&](std::string const &v) {
+        return v.find(message) != std::string::npos;
       });
-  BOOST_CHECK_MESSAGE(
-      found_consistency,
-      "expected 'interior cell has a ghost neighbor' violation; "
-      "got: " +
-          (violations.empty() ? "(none)" : violations.front()));
+  BOOST_CHECK_MESSAGE(found_consistency,
+                      "expected '" + message + "' violation; got: " +
+                          (violations.empty() ? "(none)" : violations.front()));
 }
 
 // A correctly-marked boundary cell must NOT trigger the consistency violation.

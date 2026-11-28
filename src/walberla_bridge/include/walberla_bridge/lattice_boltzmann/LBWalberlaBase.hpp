@@ -230,6 +230,18 @@ public:
   /** @brief Rebuild the UBB field. This is an expensive operation. */
   virtual void reallocate_ubb_field() = 0;
 
+  /**
+   * @brief Recompute the ghost layers and the velocity field from the PDFs.
+   * With the pull scheme, the stored PDFs are post-collision and not
+   * yet streamed. The velocity field is the first moment of the streamed
+   * PDFs, which the LB step computes at its end. The boundary PDFs in the
+   * ghost layer are also written by the LB step and cannot be recovered
+   * by a ghost communication. Call this function after overwriting all
+   * PDFs, e.g. when loading a checkpoint, to restore the state at the end
+   * of an LB step. The PDFs of the local domain are left unchanged.
+   */
+  virtual void update_derived_fields() = 0;
+
   /** @brief Clear the boundary flag field and the UBB field. */
   virtual void clear_boundaries() = 0;
 

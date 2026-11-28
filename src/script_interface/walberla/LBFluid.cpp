@@ -381,6 +381,7 @@ void LBFluid::load_checkpoint(std::filesystem::path const &path, int mode) {
   auto const on_success = [&lb_obj]() {
     lb_obj.ghost_communication();
     lb_obj.reallocate_ubb_field();
+    lb_obj.update_derived_fields();
   };
 
   load_checkpoint_common(*context(), "LB", path, mode, read_metadata, read_data,
